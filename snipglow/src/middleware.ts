@@ -4,6 +4,22 @@ import { NextResponse, type NextRequest } from "next/server";
 // Routes that don't require authentication
 const publicRoutes = ["/", "/login", "/verify-otp", "/api/auth/callback"];
 
+// Routes that require authentication (dashboard section)
+const protectedPrefixes = [
+  "/dashboard",
+  "/onboarding",
+  "/appointments",
+  "/customers",
+  "/services",
+  "/staff",
+  "/branches",
+  "/billing",
+  "/analytics",
+  "/memberships",
+  "/settings",
+  "/audit-log",
+];
+
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
 
@@ -51,7 +67,8 @@ export async function middleware(request: NextRequest) {
   }
 
   // Dashboard and onboarding routes require authentication
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/onboarding")) {
+  const isProtected = protectedPrefixes.some((prefix) => pathname.startsWith(prefix));
+  if (isProtected) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/login";
