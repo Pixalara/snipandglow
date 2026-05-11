@@ -39,7 +39,6 @@ export default function HomePage() {
     return () => observer.disconnect();
   }, []);
 
-export default function HomePage() {
   return (
     <div className="min-h-screen bg-[#050810] text-white font-sans antialiased">
 
