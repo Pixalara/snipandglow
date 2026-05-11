@@ -1,8 +1,8 @@
 @import "tailwindcss";
 @import "tw-animate-css";
-@import "shadcn/tailwind.css";
 
-/* Fonts loaded via next/font/google in layout.tsx */
+/* shadcn/tailwind.css removed — it injects @import url() mid-file causing PostCSS error */
+/* shadcn components use Tailwind classes which work without this import */
 
 @custom-variant dark (&:is(.dark *));
 
