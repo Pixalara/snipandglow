@@ -260,12 +260,12 @@ export default function NewBillingPage() {
                   </svg>
                   Send via WhatsApp
                 </Button>
-                <Link href="/billing">
+        <Link href="/dashboard/billing">
                   <Button>View All Invoices</Button>
                 </Link>
               </div>
               <Link
-                href="/billing/new"
+                href="/dashboard/billing/new"
                 className="text-sm text-muted-foreground hover:text-foreground transition-colors"
                 onClick={() => {
                   setSuccessInvoice(null);
@@ -291,7 +291,7 @@ export default function NewBillingPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
-          href="/billing"
+          href="/dashboard/billing"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Back to billing"
         >
@@ -607,7 +607,7 @@ export default function NewBillingPage() {
               'Generate Bill'
             )}
           </Button>
-          <Link href="/billing">
+          <Link href="/dashboard/billing">
             <Button type="button" variant="outline">
               Cancel
             </Button>

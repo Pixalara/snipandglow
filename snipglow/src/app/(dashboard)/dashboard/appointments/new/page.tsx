@@ -171,7 +171,7 @@ export default function NewAppointmentPage() {
       setSubmitting(false);
 
       if (result.success) {
-        router.push('/appointments?success=booked');
+        router.push('/dashboard/appointments?success=booked');
       } else {
         setError(result.error);
       }
@@ -183,7 +183,7 @@ export default function NewAppointmentPage() {
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
-          href="/appointments"
+          href="/dashboard/appointments"
           className="inline-flex items-center text-sm text-muted-foreground hover:text-foreground transition-colors"
           aria-label="Back to appointments"
         >
@@ -406,7 +406,7 @@ export default function NewAppointmentPage() {
                   'Book Appointment'
                 )}
               </Button>
-              <Link href="/appointments">
+              <Link href="/dashboard/appointments">
                 <Button type="button" variant="outline">
                   Cancel
                 </Button>

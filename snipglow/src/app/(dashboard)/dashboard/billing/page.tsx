@@ -68,7 +68,7 @@ export default async function BillingPage() {
         <h1 className="text-xl font-semibold text-foreground">Billing</h1>
         <RoleGuard role={role} action="create" resource="billing">
           <Link
-            href="/billing/new"
+            href="/dashboard/billing/new"
             className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
           >
             New Bill

@@ -96,7 +96,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
 
           {/* New Booking button — owner/manager only */}
           <RoleGuard role={role} action="create" resource="appointments">
-            <Link href="/appointments/new">
+            <Link href="/dashboard/appointments/new">
               <Button>New Booking</Button>
             </Link>
           </RoleGuard>

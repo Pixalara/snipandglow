@@ -92,7 +92,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
           <CustomerSearch defaultValue={search} />
           <RoleGuard role={role} action="create" resource="customers">
             <Link
-              href="/customers/new"
+              href="/dashboard/customers/new"
               className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
             >
               New Customer
@@ -118,7 +118,7 @@ function CustomerTable({ customers }: { customers: CustomerRow[] }) {
       header: 'Name',
       render: (row) => (
         <Link
-          href={`/customers/${row.id}`}
+          href={`/dashboard/customers/${row.id}`}
           className="font-medium text-foreground hover:text-primary transition-colors"
         >
           {row.name}

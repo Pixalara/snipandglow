@@ -62,7 +62,7 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
       <div className="flex flex-col items-center justify-center gap-4 rounded-lg border border-border bg-card p-12">
         <p className="text-sm text-muted-foreground">Customer not found</p>
         <Link
-          href="/customers"
+          href="/dashboard/customers"
           className="text-sm font-medium text-primary hover:text-primary/80 transition-colors"
         >
           ← Back to Customers
@@ -98,7 +98,7 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
     <div className="space-y-6">
       {/* Back Button */}
       <Link
-        href="/customers"
+        href="/dashboard/customers"
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground transition-colors"
       >
         ← Back to Customers
