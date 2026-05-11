@@ -1,6 +1,6 @@
 ﻿'use client';
 
-import { useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import {
   Scissors,
@@ -19,6 +19,41 @@ import {
   Repeat2,
   Gift,
 } from 'lucide-react';
+
+// Animated counter that counts up when scrolled into view
+function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; suffix?: string; prefix?: string }) {
+  const ref = useRef<HTMLSpanElement>(null);
+  const [display, setDisplay] = useState(0);
+  const [hasAnimated, setHasAnimated] = useState(false);
+
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting && !hasAnimated) {
+          setHasAnimated(true);
+          const duration = 1500;
+          const steps = 40;
+          const increment = value / steps;
+          let current = 0;
+          let step = 0;
+          const timer = setInterval(() => {
+            step++;
+            current = Math.min(current + increment, value);
+            setDisplay(Math.round(current));
+            if (step >= steps) { setDisplay(value); clearInterval(timer); }
+          }, duration / steps);
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [value, hasAnimated]);
+
+  return <span ref={ref}>{prefix}{display.toLocaleString('en-IN')}{suffix}</span>;
+}
 
 export default function HomePage() {
   useEffect(() => {
@@ -513,15 +548,17 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 reveal">
             {[
-              { value: '70%', label: 'Fewer no-shows', sub: 'Thanks to auto reminders', icon: Bell, color: 'bg-emerald-50 text-emerald-600' },
-              { value: '+28%', label: 'Client retention', sub: 'Re-booking nudges work', icon: Repeat2, color: 'bg-blue-50 text-blue-600' },
-              { value: '3hrs', label: 'Saved per day', sub: 'No manual follow-ups', icon: Clock, color: 'bg-purple-50 text-purple-600' },
-            ].map(({ value, label, sub, icon: Icon, color }) => (
+              { numValue: 70, suffix: '%', label: 'Fewer no-shows', sub: 'Thanks to auto reminders', icon: Bell, color: 'bg-emerald-50 text-emerald-600' },
+              { numValue: 28, prefix: '+', suffix: '%', label: 'Client retention', sub: 'Re-booking nudges work', icon: Repeat2, color: 'bg-blue-50 text-blue-600' },
+              { numValue: 3, suffix: 'hrs', label: 'Saved per day', sub: 'No manual follow-ups', icon: Clock, color: 'bg-purple-50 text-purple-600' },
+            ].map(({ numValue, prefix, suffix, label, sub, icon: Icon, color }) => (
               <div key={label} className="bg-slate-50 rounded-2xl p-6 sm:p-8 text-center border border-slate-100">
                 <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${color}`}>
                   <Icon className="h-6 w-6" />
                 </div>
-                <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-1">{value}</p>
+                <p className="text-3xl sm:text-4xl font-bold text-slate-900 mb-1">
+                  <AnimatedNumber value={numValue} prefix={prefix || ''} suffix={suffix || ''} />
+                </p>
                 <p className="text-sm font-semibold text-slate-700 mb-1">{label}</p>
                 <p className="text-xs text-slate-500">{sub}</p>
               </div>
@@ -571,9 +608,9 @@ export default function HomePage() {
           <div className="max-w-3xl mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-emerald-200/50 reveal">
             <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
               <div>
-                <p className="text-emerald-100 text-sm font-medium mb-1">Growth Plan</p>
+                <p className="text-emerald-100 text-sm font-medium mb-1">All-in-One Plan</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl sm:text-5xl font-bold">₹1,499</span>
+                  <span className="text-4xl sm:text-5xl font-bold">₹999</span>
                   <span className="text-emerald-200 mb-1">/month</span>
                 </div>
                 <p className="text-emerald-100 text-xs mt-1">Billed monthly · Cancel anytime</p>
