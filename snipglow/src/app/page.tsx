@@ -15,6 +15,7 @@ import {
   Bell,
   FileText,
   UserCheck,
+  ChevronRight,
 } from "lucide-react";
 
 export default function HomePage() {
