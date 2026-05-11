@@ -2,13 +2,7 @@ import type { NextConfig } from 'next'
 
 const nextConfig: NextConfig = {
   experimental: {
-    serverActions: {
-      allowedOrigins: [
-        'localhost:3000',
-        'snipandglow.pixalara.io',
-        '*.vercel.app',
-      ],
-    },
+    serverActions: { allowedOrigins: ['localhost:3000'] },
   },
   images: {
     remotePatterns: [
