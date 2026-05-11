@@ -357,27 +357,6 @@ export default function HomePage() {
                 <div className="lg:pl-8" />
               </div>
 
-              {/* Node 4 — Day 3 */}
-              <div className="relative lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center lg:mb-16">
-                <div className="hidden lg:block" />
-                <div className="hidden lg:flex absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 h-10 w-10 rounded-full bg-amber-500 items-center justify-center shadow-lg shadow-amber-500/30 z-10">
-                  <Star className="h-5 w-5 text-black" />
-                </div>
-                <div className="space-y-3 pb-8 lg:pb-0 lg:pl-8">
-                  <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-500/10 border border-amber-500/20 text-amber-400 text-xs font-bold">
-                    Day 3 — Review Shield
-                  </div>
-                  <h3 className="text-xl font-bold text-white">Google Review — Only the Good Ones</h3>
-                  <p className="text-gray-400 text-sm leading-relaxed">
-                    Happy clients go to Google. Unhappy feedback comes privately to you.
-                  </p>
-                  <div className="inline-flex items-start gap-2 bg-[#0f1923] border border-amber-500/20 rounded-xl px-4 py-3">
-                    <Shield className="h-4 w-4 text-amber-400 shrink-0 mt-0.5" />
-                    <p className="text-xs text-gray-300">Your reputation is protected. Only 4-5 star reviews go public.</p>
-                  </div>
-                </div>
-              </div>
-
               {/* Node 5 — Day 30 */}
               <div className="relative lg:grid lg:grid-cols-2 lg:gap-16 lg:items-center lg:mb-16">
                 <div className="lg:text-right space-y-3 pb-8 lg:pb-0">
@@ -461,7 +440,7 @@ export default function HomePage() {
               Real ROI, Real Numbers
             </div>
             <h2 className="text-3xl sm:text-4xl font-bold mb-4">The Real Numbers — Salon Client Retention</h2>
-            <p className="text-gray-400">You spend ₹999/month. Here&apos;s what you get back.</p>
+            <p className="text-gray-400">You spend ₹699/month. Here&apos;s what you get back.</p>
           </div>
 
           {/* Stats grid */}
@@ -495,11 +474,11 @@ export default function HomePage() {
                     <span className="text-red-400 text-xs font-bold">-</span>
                   </div>
                   <div>
-                    <p className="text-sm font-medium text-white">Snip &amp; Glow Growth Plan</p>
-                    <p className="text-xs text-gray-500">Monthly subscription</p>
+                    <p className="text-sm font-medium text-white">Snip &amp; Glow All-in-One Plan</p>
+                    <p className="text-xs text-gray-500">₹699/mo + ₹499 one-time setup</p>
                   </div>
                 </div>
-                <p className="text-sm font-bold text-red-400">₹999/mo</p>
+                <p className="text-sm font-bold text-red-400">₹699/mo</p>
               </div>
               <div className="h-px bg-white/5" />
               <div className="flex items-center justify-between">
@@ -645,95 +624,92 @@ export default function HomePage() {
               <CheckCircle2 className="h-3.5 w-3.5" />
               Simple, transparent pricing
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Start Free. Grow Fast.</h2>
-            <p className="text-gray-400">No hidden fees. No contracts. Cancel anytime.</p>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">One Plan. Everything Included.</h2>
+            <p className="text-gray-400">No tiers. No hidden fees. No contracts. Cancel anytime.</p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 max-w-3xl mx-auto">
+          {/* Single pricing card — centred */}
+          <div className="max-w-lg mx-auto">
+            <div className="relative bg-[#0a0f1a] border border-[#00D084]/40 rounded-2xl overflow-hidden shadow-2xl shadow-[#00D084]/5">
+              {/* Top accent line */}
+              <div className="h-1 w-full bg-gradient-to-r from-[#00D084] via-emerald-400 to-[#00D084]" />
 
-            {/* Starter */}
-            <div className="bg-[#0a0f1a] border border-white/8 rounded-2xl p-8 flex flex-col">
-              <div className="mb-6">
-                <p className="text-sm font-medium text-gray-400 mb-1">Starter</p>
-                <div className="flex items-end gap-1 mb-3">
-                  <span className="text-4xl font-bold text-white">₹599</span>
-                  <span className="text-gray-500 text-sm mb-1">/month</span>
-                </div>
-                <p className="text-gray-400 text-sm">Perfect for single-location salons getting started.</p>
-              </div>
-
-              <div className="space-y-3 mb-8 flex-1">
-                {[
-                  '1 location',
-                  'WhatsApp booking link',
-                  'Automated reminders (24h + 2h)',
-                  'GST invoicing',
-                  'Basic staff management',
-                  'Client database',
-                  '15-day free trial',
-                ].map((f) => (
-                  <div key={f} className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-[#00D084] shrink-0" />
-                    <span className="text-sm text-gray-300">{f}</span>
+              <div className="p-8">
+                {/* Plan name + badge */}
+                <div className="flex items-center justify-between mb-6">
+                  <div>
+                    <p className="text-xs font-bold text-[#00D084] uppercase tracking-widest mb-1">Snip &amp; Glow</p>
+                    <h3 className="text-2xl font-bold text-white">All-in-One Plan</h3>
                   </div>
-                ))}
+                  <span className="px-3 py-1.5 bg-[#00D084] text-black text-xs font-bold rounded-full">
+                    15-Day Free Trial
+                  </span>
+                </div>
+
+                {/* Price */}
+                <div className="mb-2">
+                  <div className="flex items-end gap-2">
+                    <span className="text-5xl font-bold text-white">₹699</span>
+                    <span className="text-gray-400 text-base mb-1.5">/month</span>
+                  </div>
+                  <p className="text-sm text-gray-400 mt-1">
+                    + <span className="text-white font-medium">₹499</span> one-time WhatsApp API setup
+                  </p>
+                </div>
+
+                {/* Divider */}
+                <div className="h-px bg-white/8 my-6" />
+
+                {/* Features */}
+                <div className="grid sm:grid-cols-2 gap-3 mb-8">
+                  {[
+                    'Unlimited locations',
+                    'WhatsApp booking 24/7',
+                    'Auto reminders (24h + 2h)',
+                    'GST invoicing & billing',
+                    'Day 30 service reminder',
+                    'Day 60 win-back campaign',
+                    'Staff & payroll management',
+                    'Multi-branch dashboard',
+                    'Advanced analytics',
+                    'Client CRM & history',
+                    'Broadcast campaigns',
+                    'Priority WhatsApp support',
+                  ].map((f) => (
+                    <div key={f} className="flex items-center gap-2.5">
+                      <CheckCircle2 className="h-4 w-4 text-[#00D084] shrink-0" />
+                      <span className="text-sm text-gray-300">{f}</span>
+                    </div>
+                  ))}
+                </div>
+
+                {/* CTA */}
+                <Link
+                  href="/signup"
+                  className="block w-full text-center px-6 py-4 bg-[#00D084] text-black font-bold rounded-xl hover:bg-[#00e090] transition-colors text-base"
+                >
+                  Start 15-Day Free Trial
+                </Link>
+
+                <p className="text-center text-xs text-gray-500 mt-4">
+                  No credit card required · Cancel anytime · Setup in 15 minutes
+                </p>
               </div>
 
-              <Link
-                href="/signup?plan=starter"
-                className="w-full text-center px-6 py-3 border border-white/15 text-gray-300 rounded-xl hover:border-white/30 hover:text-white transition-all text-sm font-medium"
-              >
-                Start Free Trial
-              </Link>
+              {/* ROI callout */}
+              <div className="bg-[#00D084]/5 border-t border-[#00D084]/15 px-8 py-4 flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <TrendingUp className="h-4 w-4 text-[#00D084]" />
+                  <span className="text-sm text-gray-300">Average salon earns</span>
+                </div>
+                <span className="text-sm font-bold text-[#00D084]">₹32,000/mo extra → 45x ROI</span>
+              </div>
             </div>
 
-            {/* Growth — Most Popular */}
-            <div className="relative bg-[#0a0f1a] border border-[#00D084]/40 rounded-2xl p-8 flex flex-col shadow-xl shadow-[#00D084]/5">
-              {/* Badge */}
-              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
-                <span className="px-4 py-1.5 bg-[#00D084] text-black text-xs font-bold rounded-full">
-                  Most Popular
-                </span>
-              </div>
-
-              <div className="mb-6">
-                <p className="text-sm font-medium text-[#00D084] mb-1">Growth</p>
-                <div className="flex items-end gap-1 mb-3">
-                  <span className="text-4xl font-bold text-white">₹999</span>
-                  <span className="text-gray-500 text-sm mb-1">/month</span>
-                </div>
-                <p className="text-gray-400 text-sm">Everything you need to scale your salon business.</p>
-              </div>
-
-              <div className="space-y-3 mb-8 flex-1">
-                {[
-                  'Unlimited locations',
-                  'Everything in Starter',
-                  'Multi-branch dashboard',
-                  'Win-back campaigns',
-                  'Google Review Shield',
-                  'Staff payroll & commissions',
-                  'Advanced analytics',
-                  'Priority WhatsApp support',
-                  '15-day free trial',
-                ].map((f) => (
-                  <div key={f} className="flex items-center gap-3">
-                    <CheckCircle2 className="h-4 w-4 text-[#00D084] shrink-0" />
-                    <span className="text-sm text-gray-300">{f}</span>
-                  </div>
-                ))}
-              </div>
-
-              <Link
-                href="/signup?plan=growth"
-                className="w-full text-center px-6 py-3 bg-[#00D084] text-black font-semibold rounded-xl hover:bg-[#00e090] transition-colors text-sm"
-              >
-                Start Free Trial
-              </Link>
-
-              <p className="text-center text-xs text-gray-500 mt-3">19x average ROI. Pays for itself in days.</p>
-            </div>
-
+            {/* Trust note */}
+            <p className="text-center text-xs text-gray-500 mt-6">
+              Trusted by 500+ Indian salon owners · ₹499 setup is a one-time fee for WhatsApp Business API activation
+            </p>
           </div>
         </div>
       </section>
