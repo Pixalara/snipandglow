@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { Scissors } from 'lucide-react';
 
 export default function AuthLayout({
@@ -8,12 +9,31 @@ export default function AuthLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex min-h-screen flex-col items-center justify-center bg-gradient-to-br from-salon-cream via-salon-rose-light to-salon-lavender-light px-4">
-      <div className="mb-6 flex items-center gap-2 text-primary">
-        <Scissors className="size-7" />
-        <span className="text-2xl font-bold tracking-tight">Snip &amp; Glow</span>
+    <div className="min-h-screen flex flex-col bg-white">
+      {/* Minimal navbar */}
+      <nav className="border-b border-slate-100 bg-white/95 backdrop-blur-sm">
+        <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+          <Link href="/" className="flex items-center gap-2">
+            <Scissors className="h-5 w-5 text-emerald-500" />
+            <span className="text-lg font-bold tracking-tight text-slate-900">Snip &amp; Glow</span>
+            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+          </Link>
+          <Link href="/" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
+            ← Back to home
+          </Link>
+        </div>
+      </nav>
+
+      {/* Content area */}
+      <div className="flex-1 flex items-center justify-center px-4 py-12 relative overflow-hidden">
+        {/* Background orbs */}
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl pointer-events-none" />
+
+        <div className="relative w-full max-w-md">
+          {children}
+        </div>
       </div>
-      <div className="w-full max-w-md">{children}</div>
     </div>
   );
 }
