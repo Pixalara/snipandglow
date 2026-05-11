@@ -69,12 +69,6 @@ export default function HomePage() {
             .delay-400 { animation-delay: 0.4s; }
           `,
         }}
-      />            .delay-100 { animation-delay: 0.1s; }
-            .delay-200 { animation-delay: 0.2s; }
-            .delay-300 { animation-delay: 0.3s; }
-            .delay-400 { animation-delay: 0.4s; }
-          `,
-        }}
       />
 
       {/* ====== NAVBAR ====== */}
