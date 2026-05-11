@@ -113,74 +113,230 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right — WhatsApp Phone Mockup */}
+          {/* Right — WhatsApp Phone Mockup with animated scrolling conversation */}
           <div className="hidden lg:flex justify-center">
-            <div className="relative w-[300px] h-[600px] rounded-[48px] bg-black border-2 border-gray-800 shadow-2xl shadow-black/50 overflow-hidden">
-              {/* Phone notch */}
-              <div className="absolute top-0 left-1/2 -translate-x-1/2 w-32 h-6 bg-black rounded-b-2xl z-10" />
+            <div className="relative">
+              {/* Glow */}
+              <div className="absolute inset-0 rounded-[48px] bg-[#00D084]/10 blur-3xl scale-110" />
 
-              {/* WhatsApp screen */}
-              <div className="absolute inset-3 rounded-[36px] bg-[#0b141a] overflow-hidden flex flex-col">
-                {/* WA Header */}
-                <div className="bg-[#1f2c34] px-4 py-3 flex items-center gap-3 pt-8">
-                  <div className="h-9 w-9 rounded-full bg-[#00D084]/20 flex items-center justify-center">
-                    <Scissors className="h-4 w-4 text-[#00D084]" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium text-white">Glamour Salon</p>
-                    <p className="text-[10px] text-gray-400">online</p>
-                  </div>
-                </div>
+              {/* Phone shell */}
+              <div className="relative w-[300px] h-[620px] rounded-[48px] bg-[#111] border-[10px] border-[#1a1a1a] shadow-2xl shadow-black/70 overflow-hidden"
+                style={{ boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(0,208,132,0.08)' }}>
+                {/* Notch */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-[#111] rounded-b-2xl z-20" />
 
-                {/* Chat area */}
-                <div className="flex-1 px-3 py-4 space-y-3 overflow-hidden">
-                  {/* Customer message */}
-                  <div className="flex justify-end">
-                    <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
-                      <p className="text-[13px] text-white">Hi 👋</p>
-                      <p className="text-[9px] text-gray-300 text-right mt-0.5">10:01 AM</p>
+                {/* Screen */}
+                <div className="absolute inset-0 bg-[#0b141a] flex flex-col">
+                  {/* WA Header */}
+                  <div className="bg-[#1f2c34] px-4 pt-8 pb-3 flex items-center gap-3 border-b border-white/5 shrink-0">
+                    <div className="h-9 w-9 rounded-full bg-[#1a5c2a] flex items-center justify-center text-xs font-bold text-white">GS</div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">Glamour Salon</p>
+                      <div className="flex items-center gap-1">
+                        <span className="h-1.5 w-1.5 rounded-full bg-[#00D084]" />
+                        <p className="text-[10px] text-gray-400">online</p>
+                      </div>
                     </div>
                   </div>
 
-                  {/* Bot welcome */}
-                  <div className="flex justify-start">
-                    <div className="bg-[#1f2c34] px-3 py-2 rounded-xl rounded-tl-sm max-w-[220px]">
-                      <p className="text-[13px] text-gray-100">
-                        Welcome to Glamour Salon! ✨ How can I help you today?
-                      </p>
-                      <div className="mt-2 space-y-1.5">
-                        <div className="px-3 py-1.5 border border-[#00D084]/40 rounded-lg text-center">
-                          <p className="text-[11px] text-[#00D084] font-medium">📅 Book Appointment</p>
-                        </div>
-                        <div className="px-3 py-1.5 border border-white/20 rounded-lg text-center">
-                          <p className="text-[11px] text-gray-300">💇 View Services</p>
-                        </div>
-                        <div className="px-3 py-1.5 border border-white/20 rounded-lg text-center">
-                          <p className="text-[11px] text-gray-300">📞 Call Us</p>
+                  {/* Scrolling chat — CSS animation */}
+                  <style dangerouslySetInnerHTML={{ __html: `
+                    @keyframes chatScroll {
+                      0%,8%    { transform: translateY(0); }
+                      18%,26%  { transform: translateY(-200px); }
+                      36%,44%  { transform: translateY(-420px); }
+                      54%,62%  { transform: translateY(-640px); }
+                      72%,80%  { transform: translateY(-860px); }
+                      90%,100% { transform: translateY(0); }
+                    }
+                    .chat-scroll { animation: chatScroll 30s ease-in-out infinite; }
+                  `}} />
+
+                  <div className="flex-1 overflow-hidden px-3 py-3">
+                    <div className="chat-scroll space-y-3">
+
+                      {/* ── FLOW 1: Welcome + Book ── */}
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
+                          <p className="text-[12px] text-white">Hi 👋</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">10:01 AM</p>
                         </div>
                       </div>
-                      <p className="text-[9px] text-gray-400 mt-1.5">10:01 AM</p>
-                    </div>
-                  </div>
-
-                  {/* Customer taps Book */}
-                  <div className="flex justify-end">
-                    <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
-                      <p className="text-[13px] text-white">📅 Book Appointment</p>
-                      <p className="text-[9px] text-gray-300 text-right mt-0.5">10:02 AM</p>
-                    </div>
-                  </div>
-
-                  {/* Booking confirmed card */}
-                  <div className="flex justify-start">
-                    <div className="bg-[#1f2c34] px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] border border-[#00D084]/20">
-                      <p className="text-[11px] text-[#00D084] font-semibold mb-1">✅ Booking Confirmed!</p>
-                      <div className="space-y-0.5 text-[11px] text-gray-300">
-                        <p>💇 Haircut + Styling</p>
-                        <p>📅 Tomorrow, 3:00 PM</p>
-                        <p>💰 ₹499</p>
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px]">
+                          <div className="bg-gradient-to-r from-[#dcfce7] to-[#bbf7d0] px-3 py-2 border-l-4 border-[#16a34a]">
+                            <p className="text-[11px] font-bold text-[#15803d]">🏆 Glamour Studio</p>
+                          </div>
+                          <div className="px-3 py-2">
+                            <p className="text-[12px] text-gray-100 font-medium mb-1">👋 Welcome!</p>
+                            <p className="text-[11px] text-gray-300">How can we help you today?</p>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['💇 Book Appointment','📋 My Appointments','💰 Services & Prices'].map((b,i) => (
+                              <div key={i} className="px-3 py-2 border-b border-white/5 last:border-0 text-center">
+                                <p className="text-[11px] text-[#53bdeb] font-medium">{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">10:01 AM</p>
+                        </div>
                       </div>
-                      <p className="text-[9px] text-gray-400 mt-1.5">10:02 AM</p>
+
+                      {/* ── FLOW 2: Booking Confirmed ── */}
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
+                          <p className="text-[12px] text-white">💇 Book Appointment</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">10:02 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] border border-[#00D084]/20">
+                          <div className="px-3 py-2.5">
+                            <p className="text-[12px] text-[#25d366] font-bold mb-2">✅ Booking Confirmed!</p>
+                            <div className="space-y-1 text-[11px] text-gray-300">
+                              <p>👤 Priya</p>
+                              <p>✂️ Haircut</p>
+                              <p>📅 10 May 2026, 2:30 PM</p>
+                              <p>📍 Glamour Salon, Koramangala</p>
+                            </div>
+                            <p className="text-[11px] text-gray-200 mt-2">See you soon! 😊</p>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['Reschedule','Cancel'].map((b,i) => (
+                              <div key={i} className="px-3 py-2 border-b border-white/5 last:border-0 text-center">
+                                <p className="text-[11px] text-[#53bdeb] font-medium">{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">10:02 AM</p>
+                        </div>
+                      </div>
+
+                      {/* ── FLOW 3: 30-Day Reminder ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px]">
+                          <div className="bg-gradient-to-r from-[#dcfce7] to-[#bbf7d0] px-3 py-2 border-l-4 border-[#16a34a]">
+                            <p className="text-[11px] font-bold text-[#15803d]">🏆 Glamour Studio</p>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1.5">
+                            <p className="text-[12px] text-gray-100">Hi <strong className="text-white">Priya</strong>! 👋</p>
+                            <p className="text-[11px] text-gray-300">We miss you at <strong className="text-white">Glamour Studio</strong>! ✨</p>
+                            <p className="text-[11px] text-gray-300">It&apos;s been a while. Your hair deserves some love! 💕</p>
+                            <p className="text-[11px] text-gray-300">Reply <strong className="text-white">Book</strong> to schedule — or tap below! 👇</p>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['📅 Book Appointment','💰 View Our Services'].map((b,i) => (
+                              <div key={i} className="px-3 py-2 border-b border-white/5 last:border-0 text-center">
+                                <p className="text-[11px] text-[#53bdeb] font-medium">{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">10:04 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
+                          <p className="text-[12px] text-white">✅ Booking now!</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">10:05 AM</p>
+                        </div>
+                      </div>
+
+                      {/* ── FLOW 4: Digital Receipt ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[230px]">
+                          <div className="bg-gradient-to-r from-[#f3e8ff] to-[#ede9fe] px-3 py-2 border-l-4 border-[#7c3aed]">
+                            <p className="text-[11px] font-bold text-[#6d28d9]">🧾 Glamour Studio</p>
+                            <p className="text-[9px] text-[#7c3aed]">Invoice #INV-2026-00142</p>
+                          </div>
+                          <div className="px-3 py-2.5">
+                            <p className="text-[12px] text-gray-100">Hi <strong className="text-white">Priya</strong>, thank you! 🙏</p>
+                            <p className="text-[11px] text-gray-300 mb-2">Your digital bill is ready.</p>
+                            <div className="bg-[#111b21] rounded-lg p-2 space-y-1.5">
+                              <p className="text-[9px] font-bold text-gray-400 uppercase tracking-wider">Services</p>
+                              {[['Haircut','₹300'],['Hair Color','₹800']].map(([s,p]) => (
+                                <div key={s} className="flex justify-between text-[11px]">
+                                  <span className="text-gray-200">{s}</span>
+                                  <span className="text-gray-200 font-medium">{p}</span>
+                                </div>
+                              ))}
+                              <div className="border-t border-white/10 pt-1.5 space-y-1">
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-gray-400">Subtotal</span>
+                                  <span className="text-gray-300">₹1,100</span>
+                                </div>
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-[#25d366]">Gold Member (10%)</span>
+                                  <span className="text-[#25d366]">-₹110</span>
+                                </div>
+                                <div className="flex justify-between text-[12px] font-bold border-t border-white/10 pt-1">
+                                  <span className="text-white">Total</span>
+                                  <span className="text-[#25d366]">₹990</span>
+                                </div>
+                                <div className="flex justify-between text-[10px]">
+                                  <span className="text-gray-400">Payment</span>
+                                  <span className="text-gray-300">💳 UPI · Paid</span>
+                                </div>
+                              </div>
+                            </div>
+                            <p className="text-[11px] text-gray-200 mt-2">Hope to see you again! 💖</p>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['📄 Download PDF Receipt','📅 Book Next Appointment'].map((b,i) => (
+                              <div key={i} className="px-3 py-2 border-b border-white/5 last:border-0 text-center">
+                                <p className={`text-[11px] font-medium ${i===0?'text-[#ef4444]':'text-[#53bdeb]'}`}>{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">3:46 PM</p>
+                        </div>
+                      </div>
+
+                      {/* ── FLOW 5: Cancel Confirmation ── */}
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
+                          <p className="text-[12px] text-white">Cancel</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">11:00 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px]">
+                          <div className="px-3 py-2.5">
+                            <p className="text-[12px] text-[#fbbf24] font-medium mb-2">Are you sure you want to cancel?</p>
+                            <p className="text-[11px] text-gray-300">✂️ Haircut — 10 May, 2:30 PM</p>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['Yes, Cancel','Keep It 😊'].map((b,i) => (
+                              <div key={i} className="px-3 py-2 border-b border-white/5 last:border-0 text-center">
+                                <p className={`text-[11px] font-medium ${i===0?'text-[#ef4444]':'text-[#25d366]'}`}>{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">11:00 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
+                          <p className="text-[12px] text-white">Keep It 😊</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">11:01 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px]">
+                          <p className="text-[12px] text-[#25d366] font-medium">Great! Your appointment is confirmed. See you on 10 May! 💇‍♀️</p>
+                          <p className="text-[9px] text-gray-500 text-right mt-1">11:01 AM</p>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Input bar */}
+                  <div className="bg-[#1f2c34] px-3 py-2.5 flex items-center gap-2 border-t border-white/5 shrink-0">
+                    <div className="flex-1 bg-[#2a3942] rounded-full h-9 flex items-center px-4">
+                      <p className="text-[12px] text-gray-500">Type a message</p>
+                    </div>
+                    <div className="h-9 w-9 rounded-full bg-[#00D084] flex items-center justify-center shrink-0">
+                      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#000" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
                     </div>
                   </div>
                 </div>
