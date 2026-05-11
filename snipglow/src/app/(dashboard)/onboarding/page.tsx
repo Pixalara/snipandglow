@@ -7,6 +7,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { completeOnboarding } from './actions';
+import { createClient as createBrowserSupabase } from '@/lib/supabase/client';
 
 interface ServiceEntry {
   name: string;
@@ -69,6 +70,9 @@ export default function OnboardingPage() {
     setLoading(false);
 
     if (result.success) {
+      // Refresh the session so the JWT picks up the new tenant_id metadata
+      const supabase = createBrowserSupabase();
+      await supabase.auth.refreshSession();
       router.push('/dashboard?welcome=true');
     } else {
       setError(result.error);

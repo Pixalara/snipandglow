@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import type { ActionResult } from '@/types';
 
 export async function completeOnboarding(data: {
@@ -15,6 +16,7 @@ export async function completeOnboarding(data: {
 }): Promise<ActionResult<{ tenantId: string; branchId: string }>> {
   try {
     const supabase = await createClient();
+    const admin = createAdminClient();
 
     const {
       data: { user },
@@ -31,8 +33,8 @@ export async function completeOnboarding(data: {
       operatingHours[day] = { open: data.openTime, close: data.closeTime };
     }
 
-    // Create tenant
-    const { data: tenant, error: tenantError } = await supabase
+    // Create tenant (using admin client to bypass RLS — new user has no tenant_id yet)
+    const { data: tenant, error: tenantError } = await admin
       .from('tenants')
       .insert({
         name: data.salonName,
@@ -50,7 +52,7 @@ export async function completeOnboarding(data: {
     }
 
     // Create primary branch
-    const { data: branch, error: branchError } = await supabase
+    const { data: branch, error: branchError } = await admin
       .from('branches')
       .insert({
         tenant_id: tenant.id,
@@ -68,7 +70,7 @@ export async function completeOnboarding(data: {
     }
 
     // Create owner employee record
-    const { error: employeeError } = await supabase.from('employees').insert({
+    const { error: employeeError } = await admin.from('employees').insert({
       tenant_id: tenant.id,
       branch_id: branch.id,
       auth_user_id: user.id,
@@ -96,18 +98,23 @@ export async function completeOnboarding(data: {
         is_active: true,
       }));
 
-      await supabase.from('services').insert(serviceRows);
+      await admin.from('services').insert(serviceRows);
     }
 
-    // Update user metadata with tenant context
-    await supabase.auth.updateUser({
-      data: {
+    // Update user metadata with tenant context using admin API (avoids cookie/session issues)
+    const { error: metaError } = await admin.auth.admin.updateUserById(user.id, {
+      user_metadata: {
         tenant_id: tenant.id,
         branch_id: branch.id,
         role: 'owner',
         name: data.ownerName,
       },
     });
+
+    if (metaError) {
+      console.error('Failed to update user metadata:', metaError.message);
+      // Non-fatal: tenant is created, user can still proceed
+    }
 
     return { success: true, data: { tenantId: tenant.id, branchId: branch.id } };
   } catch (err) {
