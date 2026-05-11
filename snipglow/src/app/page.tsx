@@ -11,19 +11,10 @@ import {
   ArrowRight,
   Building2,
   CreditCard,
-  Clock,
   Send,
   Bell,
   FileText,
   UserCheck,
-  Shield,
-  Phone,
-  Mail,
-  MapPin,
-  ChevronRight,
-  Smartphone,
-  TrendingUp,
-  CheckCheck,
 } from "lucide-react";
 
 export default function HomePage() {
@@ -41,14 +32,44 @@ export default function HomePage() {
               from { opacity: 0; transform: translateY(20px); }
               to { opacity: 1; transform: translateY(0); }
             }
-            .animate-marquee {
-              animation: marquee 25s linear infinite;
+            @keyframes heroRollUp {
+              0%,15%   { transform: translateY(0); }
+              20%,35%  { transform: translateY(-20%); }
+              40%,55%  { transform: translateY(-40%); }
+              60%,75%  { transform: translateY(-60%); }
+              80%,95%  { transform: translateY(-80%); }
+              100%     { transform: translateY(-100%); }
             }
-            .animate-fade-in-up {
-              animation: fade-in-up 0.6s ease-out forwards;
-              opacity: 0;
+            @keyframes wa-typing {
+              0%,80%,100% { transform: translateY(0); opacity: 0.4; }
+              40%         { transform: translateY(-5px); opacity: 1; }
             }
+            @keyframes msg-pop {
+              from { opacity: 0; transform: translateY(8px) scale(0.96); }
+              to   { opacity: 1; transform: translateY(0) scale(1); }
+            }
+            @keyframes float {
+              0%,100% { transform: translateY(0); }
+              50%     { transform: translateY(-8px); }
+            }
+            @keyframes ping-dot {
+              0%,100% { box-shadow: 0 0 12px rgba(0,208,132,0.4); }
+              50%     { box-shadow: 0 0 24px rgba(0,208,132,0.7), 0 0 44px rgba(0,208,132,0.2); }
+            }
+            .animate-marquee { animation: marquee 25s linear infinite; }
+            .animate-fade-in-up { animation: fade-in-up 0.6s ease-out forwards; opacity: 0; }
+            .hero-roll-track { animation: heroRollUp 15s ease-in-out infinite; }
+            .typing-dot { animation: wa-typing 1.2s ease-in-out infinite; }
+            .msg-pop { animation: msg-pop 0.35s cubic-bezier(0.16,1,0.3,1) forwards; }
+            .float-anim { animation: float 3s ease-in-out infinite; }
+            .logo-dot { animation: ping-dot 2s ease-in-out infinite; }
             .delay-100 { animation-delay: 0.1s; }
+            .delay-200 { animation-delay: 0.2s; }
+            .delay-300 { animation-delay: 0.3s; }
+            .delay-400 { animation-delay: 0.4s; }
+          `,
+        }}
+      />            .delay-100 { animation-delay: 0.1s; }
             .delay-200 { animation-delay: 0.2s; }
             .delay-300 { animation-delay: 0.3s; }
             .delay-400 { animation-delay: 0.4s; }
@@ -57,145 +78,201 @@ export default function HomePage() {
       />
 
       {/* ====== NAVBAR ====== */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-sm border-b border-gray-100 shadow-sm">
+      <nav className="fixed top-0 left-0 right-0 z-50" style={{ background: 'rgba(5,8,16,0.88)', backdropFilter: 'blur(20px)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-4 sm:px-6 lg:px-8">
           <Link href="/" className="flex items-center gap-2.5">
-            <div className="flex size-9 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 to-pink-600 shadow-md shadow-pink-200">
+            <div className="flex size-9 items-center justify-center rounded-xl" style={{ background: 'linear-gradient(135deg, #ec4899, #db2777)' }}>
               <Scissors className="size-5 text-white" />
             </div>
-            <span className="text-xl font-bold text-gray-900">
-              Snip & Glow
-            </span>
+            <span className="text-xl font-bold text-white">Snip & Glow</span>
+            <span className="logo-dot ml-1 inline-block size-2 rounded-full" style={{ background: '#00D084' }} />
           </Link>
 
           <div className="hidden items-center gap-8 md:flex">
-            <a href="#features" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Features</a>
-            <a href="#booking" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Booking</a>
-            <a href="#analytics" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Analytics</a>
-            <a href="#pricing" className="text-sm font-medium text-gray-600 hover:text-gray-900 transition-colors">Pricing</a>
+            {['How It Works', 'Features', 'Pricing'].map((item) => (
+              <a key={item} href={`#${item.toLowerCase().replace(' ', '-')}`} className="text-sm font-medium transition-colors" style={{ color: 'rgba(240,246,255,0.75)' }}
+                onMouseEnter={e => (e.currentTarget.style.color = '#fff')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'rgba(240,246,255,0.75)')}
+              >{item}</a>
+            ))}
           </div>
 
           <div className="flex items-center gap-3">
-            <Link
-              href="/login"
-              className="hidden sm:inline-flex text-sm font-medium text-gray-700 hover:text-gray-900 transition-colors"
-            >
-              Sign In
+            <Link href="/login" className="hidden sm:inline-flex h-10 items-center rounded-lg px-5 text-sm font-semibold transition-all" style={{ border: '1px solid rgba(255,255,255,0.2)', color: '#fff', background: 'none' }}>
+              Login
             </Link>
-            <Link
-              href="/login"
-              className="inline-flex h-10 items-center rounded-lg bg-pink-600 px-5 text-sm font-semibold text-white shadow-md shadow-pink-200 transition-all hover:bg-pink-700 hover:shadow-lg hover:shadow-pink-200"
-            >
-              Request Demo
+            <Link href="/login" className="inline-flex h-10 items-center rounded-lg px-5 text-sm font-semibold text-white transition-all" style={{ background: '#00D084', color: '#020c06', boxShadow: '0 0 20px rgba(0,208,132,0.3)' }}>
+              Start Free Trial
             </Link>
           </div>
         </div>
       </nav>
 
-      {/* ====== HERO SECTION ====== */}
-      <section className="pt-28 pb-16 lg:pt-32 lg:pb-24 bg-gradient-to-b from-pink-50/50 to-white">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+      {/* ====== HERO SECTION — dark with WhatsApp phone mockup ====== */}
+      <section style={{ minHeight: '100vh', background: 'linear-gradient(180deg, #050810 0%, #0D1117 100%)', display: 'flex', alignItems: 'center', padding: '130px 0 80px', position: 'relative', overflow: 'hidden' }}>
+        {/* Ambient glow orbs */}
+        <div style={{ position: 'absolute', top: '10%', left: '5%', width: '400px', height: '400px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(236,72,153,0.08) 0%, transparent 70%)', filter: 'blur(60px)', pointerEvents: 'none' }} />
+        <div style={{ position: 'absolute', bottom: '10%', right: '10%', width: '350px', height: '350px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,208,132,0.06) 0%, transparent 70%)', filter: 'blur(50px)', pointerEvents: 'none' }} />
+
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8 w-full">
           <div className="grid items-center gap-12 lg:grid-cols-2 lg:gap-16">
-            {/* Left — Content */}
+
+            {/* LEFT — Copy */}
             <div className="animate-fade-in-up">
-              {/* Rating badge */}
-              <div className="mb-6 inline-flex items-center gap-2 rounded-full bg-amber-50 border border-amber-200 px-4 py-2">
-                <div className="flex gap-0.5">
-                  {[1, 2, 3, 4, 5].map((s) => (
-                    <Star key={s} className="size-4 fill-amber-400 text-amber-400" />
-                  ))}
-                </div>
-                <span className="text-sm font-medium text-amber-800">4.9/5 from 500+ salons</span>
+              {/* Badge */}
+              <div className="mb-7 inline-flex items-center gap-2 rounded-full px-4 py-1.5 text-xs font-bold uppercase tracking-widest" style={{ background: 'rgba(0,208,132,0.12)', border: '1px solid rgba(0,208,132,0.3)', color: '#00D084' }}>
+                <span className="logo-dot inline-block size-1.5 rounded-full" style={{ background: '#00D084' }} />
+                WhatsApp Booking for Salons
               </div>
 
-              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight text-gray-900">
-                All-in-One Salon & Spa Management Software —{" "}
-                <span className="text-pink-600">Powered by WhatsApp</span>
+              {/* Headline */}
+              <h1 className="font-bold leading-tight text-white" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 'clamp(38px, 5vw, 62px)', letterSpacing: '-0.035em', marginBottom: '0' }}>
+                Your salon on<br />WhatsApp.
               </h1>
 
-              <p className="mt-5 text-lg text-gray-600 leading-relaxed max-w-xl">
-                Streamline appointments, billing, and customer engagement. Let your clients book via WhatsApp while you focus on delivering great service.
+              {/* Rolling text */}
+              <div style={{ height: 'clamp(52px, 6vw, 72px)', overflow: 'hidden', marginBottom: '24px' }}>
+                <div className="hero-roll-track" style={{ fontFamily: "'Outfit', sans-serif", fontSize: 'clamp(38px, 5vw, 62px)', fontWeight: 800, letterSpacing: '-0.035em' }}>
+                  {['Book appointments.', 'Send reminders.', 'Manage clients.', 'Grow revenue.', 'Book appointments.'].map((text, i) => (
+                    <div key={i} style={{ height: 'clamp(52px, 6vw, 72px)', display: 'flex', alignItems: 'center', color: i % 4 === 0 ? '#ec4899' : i % 4 === 1 ? '#f59e0b' : i % 4 === 2 ? '#3b82f6' : '#8b5cf6' }}>
+                      {text}
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              <p className="text-lg leading-relaxed mb-10 max-w-lg" style={{ color: 'rgba(240,246,255,0.72)' }}>
+                Clients book appointments, check services, and get reminders — all inside WhatsApp. No app downloads. No missed bookings. Your salon runs on autopilot.
               </p>
 
               {/* CTAs */}
-              <div className="mt-8 flex flex-col sm:flex-row gap-4">
-                <Link
-                  href="/login"
-                  className="inline-flex h-12 items-center justify-center rounded-lg bg-pink-600 px-7 text-base font-semibold text-white shadow-lg shadow-pink-200 transition-all hover:bg-pink-700 hover:shadow-xl hover:shadow-pink-300"
-                >
-                  Request Demo
-                  <ArrowRight className="ml-2 size-4" />
+              <div className="flex flex-wrap gap-4 mb-12">
+                <Link href="/login" className="inline-flex h-14 items-center gap-2 rounded-xl px-7 text-base font-bold transition-all" style={{ background: '#00D084', color: '#020c06', boxShadow: '0 6px 28px rgba(0,208,132,0.35)' }}>
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="#020c06"><path d="M12 2C6.477 2 2 6.477 2 12c0 1.9.525 3.676 1.44 5.193L2 22l4.98-1.404A9.951 9.951 0 0 0 12 22c5.523 0 10-4.477 10-10S17.523 2 12 2zm5.006 14.315c-.21.588-1.228 1.13-1.7 1.17-.44.038-.855.197-2.886-.6-2.45-.97-4.015-3.476-4.135-3.638-.12-.162-.978-1.302-.978-2.483 0-1.181.617-1.763.836-2.003.22-.24.48-.3.64-.3l.46.009c.148.006.345-.056.54.413.2.48.677 1.662.736 1.782.06.12.1.26.02.42-.08.16-.12.26-.24.4-.12.14-.253.31-.36.416-.12.12-.245.25-.105.49.14.24.622.996 1.334 1.613.916.816 1.688 1.068 1.927 1.188.24.12.38.1.52-.06.14-.16.6-.7.76-.94.16-.24.32-.2.54-.12.22.08 1.4.66 1.64.78.24.12.4.18.46.28.06.1.06.58-.15 1.17z" /></svg>
+                  Start 14-Day Free Trial
                 </Link>
-                <Link
-                  href="/login"
-                  className="inline-flex h-12 items-center justify-center rounded-lg border-2 border-gray-200 bg-white px-7 text-base font-semibold text-gray-700 transition-all hover:border-pink-200 hover:bg-pink-50"
-                >
-                  Start Free Trial
+                <a href="#how-it-works" className="inline-flex h-14 items-center rounded-xl px-7 text-base font-semibold transition-all" style={{ background: 'rgba(255,255,255,0.06)', border: '1px solid rgba(255,255,255,0.15)', color: 'rgba(240,246,255,0.85)', backdropFilter: 'blur(8px)' }}>
+                  See How It Works ↓
+                </a>
+                <Link href="/login" className="inline-flex h-14 items-center rounded-xl px-7 text-base font-semibold transition-all" style={{ border: '1.5px solid #ec4899', color: '#ec4899', background: 'transparent' }}>
+                  📅 Book a Demo
                 </Link>
               </div>
 
-              <p className="mt-4 text-sm text-gray-500">No credit card required · 14-day free trial · Cancel anytime</p>
+              {/* Stats row */}
+              <div className="flex flex-wrap items-center gap-0">
+                {[
+                  { val: '💬', label: 'WhatsApp booking' },
+                  { val: '📋', label: 'Auto reminders' },
+                  { val: '💰', label: 'Service menu' },
+                  { val: '₹0', label: 'For 14 days' },
+                ].map((s, i) => (
+                  <div key={i} className="flex items-center">
+                    {i > 0 && <div style={{ width: '1px', height: '36px', background: 'rgba(255,255,255,0.12)', margin: '0 20px' }} />}
+                    <div>
+                      <div style={{ fontFamily: "'Outfit', sans-serif", fontSize: '22px', fontWeight: 900, color: ['#00D084','#3b82f6','#8b5cf6','#ec4899'][i] }}>{s.val}</div>
+                      <div style={{ fontSize: '10px', color: 'rgba(240,246,255,0.55)', textTransform: 'uppercase', letterSpacing: '0.06em', marginTop: '4px' }}>{s.label}</div>
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            {/* Right — Dashboard Mockup */}
-            <div className="animate-fade-in-up delay-200">
-              <div className="relative rounded-2xl border border-gray-200 bg-white p-1 shadow-2xl shadow-gray-200/60">
-                {/* Browser chrome */}
-                <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100 bg-gray-50 rounded-t-xl">
-                  <div className="flex gap-1.5">
-                    <div className="size-3 rounded-full bg-red-400" />
-                    <div className="size-3 rounded-full bg-amber-400" />
-                    <div className="size-3 rounded-full bg-green-400" />
-                  </div>
-                  <div className="flex-1 mx-4">
-                    <div className="h-6 rounded-md bg-gray-200/70 flex items-center px-3">
-                      <span className="text-[10px] text-gray-400">app.snipandglow.com/dashboard</span>
-                    </div>
-                  </div>
-                </div>
-                {/* Dashboard content */}
-                <div className="p-4 space-y-4 bg-gray-50/50 rounded-b-xl">
-                  {/* Top stats row */}
-                  <div className="grid grid-cols-3 gap-3">
-                    <div className="rounded-xl bg-white p-3 shadow-sm border border-gray-100">
-                      <p className="text-[10px] text-gray-500 font-medium">Today&apos;s Revenue</p>
-                      <p className="text-lg font-bold text-gray-900">₹24,500</p>
-                      <p className="text-[10px] text-green-600 font-medium">↑ 12% vs yesterday</p>
-                    </div>
-                    <div className="rounded-xl bg-white p-3 shadow-sm border border-gray-100">
-                      <p className="text-[10px] text-gray-500 font-medium">Appointments</p>
-                      <p className="text-lg font-bold text-gray-900">18</p>
-                      <p className="text-[10px] text-pink-600 font-medium">3 upcoming</p>
-                    </div>
-                    <div className="rounded-xl bg-white p-3 shadow-sm border border-gray-100">
-                      <p className="text-[10px] text-gray-500 font-medium">Walk-ins</p>
-                      <p className="text-lg font-bold text-gray-900">7</p>
-                      <p className="text-[10px] text-amber-600 font-medium">2 waiting</p>
-                    </div>
-                  </div>
-                  {/* Appointment list */}
-                  <div className="rounded-xl bg-white p-3 shadow-sm border border-gray-100">
-                    <p className="text-xs font-semibold text-gray-700 mb-2">Upcoming Appointments</p>
-                    <div className="space-y-2">
-                      {[
-                        { time: "10:30 AM", name: "Priya Sharma", service: "Haircut + Color", color: "bg-pink-100 text-pink-700" },
-                        { time: "11:00 AM", name: "Anita Desai", service: "Facial + Cleanup", color: "bg-purple-100 text-purple-700" },
-                        { time: "11:30 AM", name: "Meera Patel", service: "Bridal Package", color: "bg-amber-100 text-amber-700" },
-                      ].map((apt, i) => (
-                        <div key={i} className="flex items-center gap-3 rounded-lg bg-gray-50 px-3 py-2">
-                          <span className="text-[10px] font-medium text-gray-500 w-14">{apt.time}</span>
-                          <div className="flex-1">
-                            <p className="text-[11px] font-medium text-gray-800">{apt.name}</p>
-                            <p className="text-[10px] text-gray-500">{apt.service}</p>
-                          </div>
-                          <span className={`text-[9px] font-medium px-2 py-0.5 rounded-full ${apt.color}`}>Confirmed</span>
+            {/* RIGHT — WhatsApp Phone Mockup */}
+            <div className="animate-fade-in-up delay-200 flex justify-center">
+              <div className="float-anim" style={{ position: 'relative' }}>
+                {/* Glow behind phone */}
+                <div style={{ position: 'absolute', width: '300px', height: '300px', borderRadius: '50%', background: 'radial-gradient(circle, rgba(0,208,132,0.18) 0%, transparent 70%)', top: '50%', left: '50%', transform: 'translate(-50%,-50%)', filter: 'blur(20px)', pointerEvents: 'none' }} />
+
+                {/* Phone shell */}
+                <div style={{ width: '290px', background: '#111', borderRadius: '48px', border: '10px solid #1a1a1a', boxShadow: '0 0 0 1px rgba(255,255,255,0.06), 0 40px 80px rgba(0,0,0,0.7), 0 0 60px rgba(0,208,132,0.08)', overflow: 'hidden' }}>
+                  {/* Notch */}
+                  <div style={{ width: '90px', height: '24px', background: '#111', borderRadius: '0 0 16px 16px', margin: '0 auto', position: 'relative', zIndex: 10 }} />
+
+                  {/* Screen */}
+                  <div style={{ background: '#0b141a', display: 'flex', flexDirection: 'column', height: '560px', overflow: 'hidden' }}>
+                    {/* WA Header */}
+                    <div style={{ background: '#1f2c34', padding: '12px 14px', display: 'flex', alignItems: 'center', gap: '10px', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ width: '36px', height: '36px', borderRadius: '50%', background: '#1a5c2a', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '12px', fontWeight: 800, color: '#fff' }}>GS</div>
+                      <div>
+                        <div style={{ fontSize: '14px', fontWeight: 700, color: '#e9edef' }}>Glamour Salon</div>
+                        <div style={{ fontSize: '11px', color: '#8696a0', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00D084', display: 'inline-block' }} />
+                          online
                         </div>
-                      ))}
+                      </div>
+                    </div>
+
+                    {/* Chat body */}
+                    <div style={{ flex: 1, padding: '12px', display: 'flex', flexDirection: 'column', gap: '8px', overflowY: 'hidden' }}>
+                      {/* Customer message */}
+                      <div style={{ alignSelf: 'flex-end', background: '#005c4b', borderRadius: '12px 12px 4px 12px', padding: '8px 12px 6px' }}>
+                        <div style={{ fontSize: '13px', color: '#e9edef' }}>Hi 👋</div>
+                        <div style={{ fontSize: '10px', color: '#8696a0', textAlign: 'right', marginTop: '2px' }}>10:04 AM</div>
+                      </div>
+
+                      {/* Bot welcome card */}
+                      <div className="msg-pop" style={{ alignSelf: 'flex-start', maxWidth: '88%' }}>
+                        <div style={{ background: '#1f2c34', border: '1px solid #2a3942', borderRadius: '12px 12px 12px 4px', overflow: 'hidden' }}>
+                          {/* Green header */}
+                          <div style={{ background: 'linear-gradient(135deg, #dcfce7, #bbf7d0)', padding: '8px 12px', borderLeft: '4px solid #16a34a' }}>
+                            <span style={{ fontSize: '12px', fontWeight: 700, color: '#15803d' }}>🏆 Glamour Studio</span>
+                          </div>
+                          <div style={{ padding: '10px 13px 8px', fontSize: '12.5px', color: '#d1d7db', lineHeight: 1.6 }}>
+                            <div style={{ fontWeight: 700, color: '#e9edef', marginBottom: 4 }}>👋 Welcome to Glamour Studio!</div>
+                            <div>How can we help you today?</div>
+                          </div>
+                          <div style={{ padding: '0 13px 8px', fontSize: '10px', color: '#8696a0', textAlign: 'right' }}>10:04 AM</div>
+                        </div>
+                        {/* Quick reply buttons */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginTop: '2px' }}>
+                          {['💇 Book Appointment', '📋 My Appointments', '💰 Services & Prices'].map((btn, i) => (
+                            <div key={i} style={{ background: '#1a2730', border: '1px solid #2a3942', borderRadius: i === 2 ? '0 0 12px 12px' : '0', padding: '9px 12px', textAlign: 'center', fontSize: '12.5px', fontWeight: 600, color: '#53bdeb', borderTop: i === 0 ? '1px solid #2a3942' : '1px solid #0d1418' }}>
+                              {btn}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Customer taps Book */}
+                      <div style={{ alignSelf: 'flex-end', background: '#005c4b', borderRadius: '12px 12px 4px 12px', padding: '8px 12px 6px' }}>
+                        <div style={{ fontSize: '13px', color: '#e9edef' }}>💇 Book Appointment</div>
+                        <div style={{ fontSize: '10px', color: '#8696a0', textAlign: 'right', marginTop: '2px' }}>10:05 AM</div>
+                      </div>
+
+                      {/* Booking confirmed */}
+                      <div className="msg-pop" style={{ alignSelf: 'flex-start', maxWidth: '88%' }}>
+                        <div style={{ background: '#1f2c34', border: '1px solid #2a3942', borderRadius: '12px 12px 12px 4px', padding: '10px 13px 8px', fontSize: '12.5px', color: '#d1d7db', lineHeight: 1.6 }}>
+                          <div style={{ fontWeight: 700, color: '#25d366', marginBottom: 6 }}>✅ Booking Confirmed!</div>
+                          <div>👤 Priya</div>
+                          <div>✂️ Haircut</div>
+                          <div>📅 10 May, 2:30 PM</div>
+                          <div>📍 Glamour Salon</div>
+                          <div style={{ marginTop: 6, color: '#e9edef' }}>See you soon! 😊</div>
+                          <div style={{ fontSize: '10px', color: '#8696a0', textAlign: 'right', marginTop: 4 }}>10:05 AM</div>
+                        </div>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1px', marginTop: '2px' }}>
+                          {['Reschedule', 'Cancel'].map((btn, i) => (
+                            <div key={i} style={{ background: '#1a2730', border: '1px solid #2a3942', borderRadius: i === 1 ? '0 0 12px 12px' : '0', padding: '9px 12px', textAlign: 'center', fontSize: '12.5px', fontWeight: 600, color: '#53bdeb', borderTop: i === 0 ? '1px solid #2a3942' : '1px solid #0d1418' }}>
+                              {btn}
+                            </div>
+                          ))}
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Input bar */}
+                    <div style={{ background: '#1f2c34', padding: '10px', display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid rgba(255,255,255,0.06)' }}>
+                      <div style={{ flex: 1, background: '#2a3942', borderRadius: '22px', height: '38px', display: 'flex', alignItems: 'center', padding: '0 14px', fontSize: '13px', color: '#8696a0' }}>Type a message</div>
+                      <div style={{ width: '38px', height: '38px', borderRadius: '50%', background: '#00D084', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#fff" strokeWidth="2.5"><line x1="22" y1="2" x2="11" y2="13"/><polygon points="22 2 15 22 11 13 2 9 22 2"/></svg>
+                      </div>
                     </div>
                   </div>
                 </div>
               </div>
             </div>
+
           </div>
         </div>
       </section>
