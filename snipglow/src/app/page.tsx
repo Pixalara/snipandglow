@@ -152,21 +152,21 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right — WhatsApp Phone Mockup */}
+          {/* Right — WhatsApp Phone Mockup with auto-scrolling conversation */}
           <div className="hidden lg:flex justify-center items-center reveal-right">
             <div className="relative">
               {/* Ambient glow */}
               <div className="absolute inset-0 rounded-[48px] bg-emerald-300/20 blur-3xl scale-125" />
 
-              {/* Phone shell — white/light */}
-              <div className="relative w-[300px] rounded-[48px] bg-white border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden">
+              {/* Phone shell */}
+              <div className="relative w-[300px] h-[620px] rounded-[48px] bg-white border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden">
                 {/* Notch */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-24 h-6 bg-slate-900 rounded-b-2xl z-20" />
 
                 {/* Screen */}
-                <div className="bg-[#e5ddd5] flex flex-col pt-6">
+                <div className="absolute inset-0 bg-[#e5ddd5] flex flex-col pt-6">
                   {/* WA Header */}
-                  <div className="bg-[#075e54] px-4 pt-6 pb-3 flex items-center gap-3">
+                  <div className="bg-[#075e54] px-4 pt-6 pb-3 flex items-center gap-3 shrink-0">
                     <div className="h-9 w-9 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white shrink-0">GS</div>
                     <div>
                       <p className="text-sm font-semibold text-white">Glamour Salon</p>
@@ -177,68 +177,202 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Chat messages */}
-                  <div className="px-3 py-4 space-y-3 bg-[#e5ddd5]">
-                    {/* Incoming: booking confirmed */}
-                    <div className="flex justify-start">
-                      <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-emerald-100">
-                        <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
-                          <p className="text-[12px] font-bold text-emerald-700">Booking Confirmed!</p>
-                        </div>
-                        <div className="px-3 py-2.5 space-y-1.5">
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                            <Users className="h-3 w-3 text-slate-400 shrink-0" />
-                            <span>Priya</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                            <Scissors className="h-3 w-3 text-slate-400 shrink-0" />
-                            <span>Haircut</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                            <Calendar className="h-3 w-3 text-slate-400 shrink-0" />
-                            <span>10 May 2026, 2:30 PM</span>
-                          </div>
-                          <div className="flex items-center gap-1.5 text-[11px] text-slate-600">
-                            <MapPin className="h-3 w-3 text-slate-400 shrink-0" />
-                            <span>Glamour Salon</span>
-                          </div>
-                        </div>
-                        <div className="border-t border-slate-100">
-                          <div className="px-3 py-2 border-b border-slate-100 text-center">
-                            <p className="text-[11px] text-blue-500 font-medium">Reschedule</p>
-                          </div>
-                          <div className="px-3 py-2 text-center">
-                            <p className="text-[11px] text-blue-500 font-medium">Cancel</p>
-                          </div>
-                        </div>
-                        <p className="text-[9px] text-slate-400 text-right px-3 pb-2">10:02 AM</p>
-                      </div>
-                    </div>
+                  {/* Scrolling chat — CSS keyframe animation */}
+                  <style dangerouslySetInnerHTML={{ __html: `
+                    @keyframes chatFlow {
+                      0%,6%    { transform: translateY(0); }
+                      12%,18%  { transform: translateY(-220px); }
+                      24%,30%  { transform: translateY(-440px); }
+                      36%,42%  { transform: translateY(-660px); }
+                      48%,54%  { transform: translateY(-880px); }
+                      60%,66%  { transform: translateY(-1100px); }
+                      72%,78%  { transform: translateY(-1320px); }
+                      84%,90%  { transform: translateY(-1540px); }
+                      96%,100% { transform: translateY(0); }
+                    }
+                  `}} />
 
-                    {/* Outgoing reply */}
-                    <div className="flex justify-end">
-                      <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                        <p className="text-[12px] text-slate-800">Thanks! See you then</p>
-                        <p className="text-[9px] text-slate-500 text-right mt-0.5">10:03 AM</p>
-                      </div>
-                    </div>
+                  <div className="flex-1 overflow-hidden">
+                    <div className="px-3 py-3 space-y-3" style={{ animation: 'chatFlow 48s ease-in-out infinite' }}>
 
-                    {/* Incoming: 24h reminder */}
-                    <div className="flex justify-start">
-                      <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-blue-100">
-                        <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
-                          <p className="text-[11px] font-bold text-blue-600">Reminder — Tomorrow</p>
+                      {/* ── 1. Customer says Hi ── */}
+                      <div className="flex justify-end">
+                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
+                          <p className="text-[12px] text-slate-800">Hi 👋</p>
+                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:01 AM</p>
                         </div>
-                        <div className="px-3 py-2.5">
-                          <p className="text-[11px] text-slate-600">Hi <span className="text-slate-900 font-medium">Priya</span>! Your Haircut is tomorrow at 2:30 PM. See you!</p>
-                        </div>
-                        <p className="text-[9px] text-slate-400 text-right px-3 pb-2">9 May, 2:30 PM</p>
                       </div>
+
+                      {/* ── 2. Welcome menu ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-emerald-100">
+                          <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
+                            <p className="text-[11px] font-bold text-emerald-700">👋 Welcome to Glamour Salon!</p>
+                          </div>
+                          <div className="px-3 py-2">
+                            <p className="text-[11px] text-slate-600">How can we help you today?</p>
+                          </div>
+                          <div className="border-t border-slate-100">
+                            {['💇 Book Appointment', '📋 My Appointments', '💰 Services & Prices'].map((b) => (
+                              <div key={b} className="px-3 py-1.5 border-b border-slate-50 last:border-0 text-center">
+                                <p className="text-[10px] text-blue-500 font-medium">{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── 3. Customer books ── */}
+                      <div className="flex justify-end">
+                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
+                          <p className="text-[12px] text-slate-800">💇 Book Appointment</p>
+                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:02 AM</p>
+                        </div>
+                      </div>
+
+                      {/* ── 4. Booking confirmed ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-emerald-200">
+                          <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
+                            <p className="text-[12px] font-bold text-emerald-700">✅ Booking Confirmed!</p>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1 text-[11px] text-slate-600">
+                            <p>👤 Priya</p>
+                            <p>✂️ Haircut</p>
+                            <p>📅 10 May, 2:30 PM</p>
+                            <p>📍 Glamour Salon</p>
+                            <p className="text-slate-800 mt-1">See you soon! 😊</p>
+                          </div>
+                          <div className="border-t border-slate-100 flex">
+                            <div className="flex-1 py-1.5 text-center border-r border-slate-100">
+                              <p className="text-[10px] text-blue-500 font-medium">Reschedule</p>
+                            </div>
+                            <div className="flex-1 py-1.5 text-center">
+                              <p className="text-[10px] text-blue-500 font-medium">Cancel</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── 5. 24h Reminder ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-blue-100">
+                          <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
+                            <p className="text-[11px] font-bold text-blue-600">📅 Reminder — Tomorrow</p>
+                          </div>
+                          <div className="px-3 py-2.5">
+                            <p className="text-[11px] text-slate-600">Hi <span className="font-medium text-slate-800">Priya</span>! Your Haircut is <span className="font-medium">tomorrow at 2:30 PM</span>. Need to change plans?</p>
+                          </div>
+                          <div className="border-t border-slate-100 flex">
+                            {['✅ Confirm', '🔄 Reschedule'].map((b) => (
+                              <div key={b} className="flex-1 py-1.5 text-center border-r border-slate-100 last:border-0">
+                                <p className="text-[10px] text-blue-500 font-medium">{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── 6. 2h Before Nudge ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-amber-100">
+                          <div className="bg-amber-50 px-3 py-2 border-b border-amber-100">
+                            <p className="text-[11px] font-bold text-amber-700">⏰ Starting in 2 Hours!</p>
+                          </div>
+                          <div className="px-3 py-2.5">
+                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! Your appointment is in 2 hours. We&apos;re getting ready for you! 🌟</p>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── 7. Invoice / Receipt ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-purple-100">
+                          <div className="bg-purple-50 px-3 py-2 border-b border-purple-100">
+                            <p className="text-[11px] font-bold text-purple-700">🧾 Invoice #INV-0142</p>
+                          </div>
+                          <div className="px-3 py-2.5">
+                            <p className="text-[11px] text-slate-600 mb-2">Hi <span className="font-medium text-slate-800">Priya</span>, your bill is ready! 🙏</p>
+                            <div className="bg-slate-50 rounded-lg p-2 space-y-1 text-[10px]">
+                              <div className="flex justify-between"><span>Haircut</span><span className="font-medium">₹300</span></div>
+                              <div className="flex justify-between"><span>Hair Color</span><span className="font-medium">₹800</span></div>
+                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>₹990</span></div>
+                              <p className="text-slate-400">💳 UPI · Paid</p>
+                            </div>
+                          </div>
+                          <div className="border-t border-slate-100 flex">
+                            <div className="flex-1 py-1.5 text-center border-r border-slate-100">
+                              <p className="text-[10px] text-red-500 font-medium">📄 PDF Receipt</p>
+                            </div>
+                            <div className="flex-1 py-1.5 text-center">
+                              <p className="text-[10px] text-blue-500 font-medium">📅 Book Again</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── 8. Day 30 Service Reminder ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-violet-100">
+                          <div className="bg-violet-50 px-3 py-2 border-b border-violet-100">
+                            <p className="text-[11px] font-bold text-violet-700">💜 Time for a Touch-Up!</p>
+                            <p className="text-[9px] text-violet-500">Day 30</p>
+                          </div>
+                          <div className="px-3 py-2.5">
+                            <p className="text-[11px] text-slate-600">Hi <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 30 days. Your hair color is due for a refresh! ✨</p>
+                            <div className="bg-violet-50 rounded-lg p-2 mt-2 text-center">
+                              <p className="text-[11px] text-violet-700 font-bold">🎁 10% off this week</p>
+                            </div>
+                          </div>
+                          <div className="border-t border-slate-100">
+                            <div className="px-3 py-1.5 text-center">
+                              <p className="text-[10px] text-blue-500 font-medium">📅 Book Now</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* ── 9. Day 60 Win-Back ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-pink-200">
+                          <div className="bg-pink-50 px-3 py-2 border-b border-pink-100">
+                            <p className="text-[11px] font-bold text-pink-700">💕 We Miss You!</p>
+                            <p className="text-[9px] text-pink-500">Day 60</p>
+                          </div>
+                          <div className="px-3 py-2.5">
+                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 2 months — we miss you! 💖</p>
+                            <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-2.5 mt-2 text-center">
+                              <p className="text-[13px] text-pink-600 font-bold">🎉 15% OFF</p>
+                              <p className="text-[9px] text-slate-500">your next visit · Code: MISSYOU15</p>
+                            </div>
+                          </div>
+                          <div className="border-t border-slate-100 flex">
+                            <div className="flex-1 py-1.5 text-center border-r border-slate-100">
+                              <p className="text-[10px] text-pink-500 font-medium">💅 Claim 15% Off</p>
+                            </div>
+                            <div className="flex-1 py-1.5 text-center">
+                              <p className="text-[10px] text-blue-500 font-medium">📋 Services</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px] shadow-sm">
+                          <p className="text-[12px] text-slate-800">💅 Claim 15% Off</p>
+                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:04 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-start">
+                        <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
+                          <p className="text-[11px] text-emerald-700 font-medium">Welcome back! 🎉 Your 15% discount is applied. Book now!</p>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
 
                   {/* Input bar */}
-                  <div className="bg-[#f0f0f0] px-3 py-2.5 flex items-center gap-2">
+                  <div className="bg-[#f0f0f0] px-3 py-2.5 flex items-center gap-2 shrink-0">
                     <div className="flex-1 bg-white rounded-full h-8 flex items-center px-3 border border-slate-200">
                       <p className="text-[11px] text-slate-400">Type a message</p>
                     </div>
