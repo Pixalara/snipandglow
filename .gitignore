@@ -1,0 +1,47 @@
+# Dependencies
+node_modules/
+**/node_modules/
+
+# Build outputs
+dist/
+.next/
+out/
+build/
+**/dist/
+**/.next/
+
+# Environment files — NEVER commit secrets
+.env
+.env.local
+.env.*.local
+**/.env.local
+
+# Supabase temp files
+supabase/.temp/
+**/supabase/.temp/
+
+# Firebase
+.firebase/
+**/.firebase/
+
+# Logs
+*.log
+npm-debug.log*
+debug.txt
+deploy_log.txt
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Editor
+.vscode/
+*.swp
+*.swo
+
+# TypeScript
+*.tsbuildinfo
+**/tsconfig.tsbuildinfo
+
+# Test coverage
+coverage/

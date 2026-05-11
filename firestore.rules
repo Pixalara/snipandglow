@@ -1,0 +1,108 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    // ─── Helper functions ─────────────────────────────────────────────────
+    function isAdmin(gymId) {
+      return request.auth != null && request.auth.uid == gymId;
+    }
+
+    function isLinkedEmployee(gymId) {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/employeeLinks/$(request.auth.uid)) &&
+        get(/databases/$(database)/documents/employeeLinks/$(request.auth.uid)).data.gymId == gymId &&
+        get(/databases/$(database)/documents/employeeLinks/$(request.auth.uid)).data.isActive == true;
+    }
+
+    function employeeHasBranch(branchId) {
+      return request.auth != null &&
+        exists(/databases/$(database)/documents/employeeLinks/$(request.auth.uid)) &&
+        branchId in get(/databases/$(database)/documents/employeeLinks/$(request.auth.uid)).data.assignedBranches;
+    }
+
+    // ─── Employee lookup docs ─────────────────────────────────────────────
+    match /employeeLinks/{userId} {
+      allow read: if request.auth != null && request.auth.uid == userId;
+      allow write: if request.auth != null &&
+        (resource == null || resource.data.gymId == request.auth.uid);
+      allow create: if request.auth != null;
+    }
+
+    // ─── Gym profile ──────────────────────────────────────────────────────
+    match /gyms/{gymId} {
+      allow read, write: if isAdmin(gymId);
+      allow read: if isLinkedEmployee(gymId);
+    }
+
+    // ─── Expense subcollection (Pro feature) ─────────────────────────────────
+    match /gyms/{gymId}/expenses/{expenseId} {
+      allow read, write: if request.auth != null && request.auth.uid == gymId;
+    }
+
+    // ─── WhatsApp config — admin read only, Cloud Functions for write ────────
+    match /gyms/{gymId}/whatsappConfig/{docId} {
+      allow read: if isAdmin(gymId);
+      allow write: if false;
+    }
+
+    // ─── Gym top-level subcollections (employees, auditLogs, walletTxns, settings, members, plans, payments) ──
+    match /gyms/{gymId}/{subcollection}/{docId} {
+      allow read, write: if isAdmin(gymId);
+      allow read: if isLinkedEmployee(gymId);
+      // Employees can write to members, payments, plans (role enforcement is on the frontend)
+      allow write: if subcollection in ['members', 'payments', 'plans'] && isLinkedEmployee(gymId);
+      // Employees can create audit logs
+      allow create: if subcollection == 'auditLogs' && isLinkedEmployee(gymId);
+    }
+
+    // ─── Branch documents ─────────────────────────────────────────────────
+    match /gyms/{gymId}/branches/{branchId} {
+      allow read, write: if isAdmin(gymId);
+      allow read: if isLinkedEmployee(gymId) && employeeHasBranch(branchId);
+    }
+
+    // ─── Branch-scoped data (members, plans, payments under a branch) ────
+    match /gyms/{gymId}/branches/{branchId}/{subcollection}/{docId} {
+      // Admin: full access to all branches
+      allow read, write: if isAdmin(gymId);
+      // Employee: read/write only if branch is in their assignedBranches
+      allow read, write: if isLinkedEmployee(gymId) && employeeHasBranch(branchId);
+    }
+
+    // ─── Deep nested (e.g., branches/{id}/members/{id}/automationLogs) ───
+    match /gyms/{gymId}/branches/{branchId}/{sub1}/{doc1}/{sub2}/{doc2} {
+      allow read, write: if isAdmin(gymId);
+      allow read: if isLinkedEmployee(gymId) && employeeHasBranch(branchId);
+    }
+
+    // ─── Deep nested without branch (legacy: members/{id}/automationLogs, settings/billing) ─
+    match /gyms/{gymId}/{sub1}/{doc1}/{sub2}/{doc2} {
+      allow read, write: if isAdmin(gymId);
+      allow read: if isLinkedEmployee(gymId);
+      allow write: if sub1 == 'settings' && isLinkedEmployee(gymId);
+    }
+
+    // ─── Audit logs — create-only, no tampering ───────────────────────────
+    match /gyms/{gymId}/auditLogs/{logId} {
+      allow read: if isAdmin(gymId) || isLinkedEmployee(gymId);
+      allow create: if request.auth != null;
+      allow update, delete: if false;
+    }
+
+    // ─── Collection group queries for automationLogs ──────────────────────
+    match /{path=**}/automationLogs/{logId} {
+      allow read: if request.auth != null;
+    }
+
+    // ─── Pending verifications — Cloud Functions only ─────────────────────
+    match /pendingVerifications/{docId} {
+      allow read, write: if false;
+    }
+
+    // ─── Demo requests — public create, no read ──────────────────────────
+    match /demoRequests/{docId} {
+      allow create: if true;
+      allow read, update, delete: if false;
+    }
+  }
+}

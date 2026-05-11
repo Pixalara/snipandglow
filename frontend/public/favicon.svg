@@ -1,0 +1,25 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" fill="none">
+  <!-- Dark background circle -->
+  <rect width="64" height="64" rx="16" fill="#050810"/>
+
+  <!-- Outer glow ring -->
+  <rect width="64" height="64" rx="16" fill="none" stroke="#00D084" stroke-width="1.5" stroke-opacity="0.35"/>
+
+  <!-- "P" letterform — bold, clean -->
+  <text
+    x="12"
+    y="46"
+    font-family="'Outfit', 'Arial Black', sans-serif"
+    font-size="42"
+    font-weight="900"
+    fill="#00D084"
+    letter-spacing="-2"
+  >P</text>
+
+  <!-- Ping dot — top-right of the P -->
+  <circle cx="48" cy="16" r="6" fill="#00D084"/>
+  <!-- Pulse ring 1 -->
+  <circle cx="48" cy="16" r="9" fill="none" stroke="#00D084" stroke-width="1.5" stroke-opacity="0.45"/>
+  <!-- Pulse ring 2 -->
+  <circle cx="48" cy="16" r="12" fill="none" stroke="#00D084" stroke-width="1" stroke-opacity="0.2"/>
+</svg>

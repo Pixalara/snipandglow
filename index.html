@@ -1,0 +1,1585 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>PingFlow | Automated WhatsApp Revenue Recovery for Gyms</title>
+  
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&family=JetBrains+Mono:wght@500;700&family=Syne:wght@600;700;800&display=swap');
+
+    :root {
+      --bg: #080C14;
+      --surface: #0F1724;
+      --card: #141D2E;
+      --border: #1E2D45;
+      --primary: #00D084;
+      --accent: #3B82F6;
+      --text-primary: #F0F6FF;
+      --text-muted: #64748B;
+      --font-heading: 'Syne', sans-serif;
+      --font-body: 'DM Sans', sans-serif;
+      --font-mono: 'JetBrains Mono', monospace;
+      --transition: all 0.3s ease;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text-primary);
+      font-family: var(--font-body);
+      line-height: 1.6;
+      overflow-x: hidden;
+      scroll-behavior: smooth;
+    }
+
+    h1, h2, h3, h4, h5, h6 {
+      font-family: var(--font-heading);
+      font-weight: 700;
+      line-height: 1.1;
+      margin-bottom: 1rem;
+    }
+
+    p { margin-bottom: 1rem; color: var(--text-muted); }
+    a { text-decoration: none; color: inherit; transition: var(--transition); }
+    ul { list-style: none; }
+    
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1.5rem;
+    }
+
+    section { padding: 6rem 0; position: relative; }
+
+    /* Button Styles */
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      padding: 0.75rem 1.75rem;
+      border-radius: 999px;
+      font-weight: 600;
+      font-family: var(--font-body);
+      cursor: pointer;
+      transition: var(--transition);
+      border: 1px solid transparent;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--bg);
+      box-shadow: 0 0 20px rgba(0, 208, 132, 0);
+    }
+
+    .btn-primary:hover {
+      box-shadow: 0 0 20px rgba(0, 208, 132, 0.4);
+      transform: translateY(-2px);
+    }
+
+    .btn-ghost {
+      background: transparent;
+      color: var(--text-primary);
+      border-color: var(--border);
+    }
+
+    .btn-ghost:hover {
+      background: var(--surface);
+      border-color: var(--text-muted);
+    }
+
+    .btn-outline {
+      background: transparent;
+      color: var(--primary);
+      border: 1px solid var(--primary);
+      box-shadow: 0 0 10px rgba(0,208,132,0);
+    }
+    
+    .btn-outline:hover {
+      box-shadow: 0 0 15px rgba(0,208,132,0.3);
+      background: rgba(0, 208, 132, 0.1);
+    }
+
+    /* Navbar */
+    header {
+      position: fixed;
+      top: 0;
+      left: 0;
+      right: 0;
+      z-index: 1000;
+      padding: 1.25rem 0;
+      transition: var(--transition);
+      background: transparent;
+    }
+
+    header.scrolled {
+      background: rgba(8, 12, 20, 0.8);
+      backdrop-filter: blur(12px);
+      -webkit-backdrop-filter: blur(12px);
+      border-bottom: 1px solid var(--border);
+    }
+
+    .nav-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      font-family: var(--font-heading);
+      font-size: 1.5rem;
+      font-weight: 800;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .ping-dot {
+      width: 10px;
+      height: 10px;
+      background: var(--primary);
+      border-radius: 50%;
+      position: relative;
+    }
+
+    .ping-dot::after {
+      content: '';
+      position: absolute;
+      width: 100%;
+      height: 100%;
+      background: var(--primary);
+      border-radius: 50%;
+      top: 0;
+      left: 0;
+      animation: ping 2s cubic-bezier(0, 0, 0.2, 1) infinite;
+    }
+
+    @keyframes ping {
+      75%, 100% {
+        transform: scale(2.5);
+        opacity: 0;
+      }
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 2rem;
+    }
+    .nav-links a:hover { color: var(--primary); }
+
+    /* Background Mesh Gradient */
+    .mesh-bg {
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      overflow: hidden;
+    }
+
+    .mesh-orb {
+      position: absolute;
+      border-radius: 50%;
+      filter: blur(100px);
+      opacity: 0.15;
+      animation: float 20s infinite alternate;
+    }
+
+    .orb-1 {
+      width: 600px;
+      height: 600px;
+      background: var(--primary);
+      top: -200px;
+      right: -100px;
+    }
+
+    .orb-2 {
+      width: 500px;
+      height: 500px;
+      background: var(--accent);
+      bottom: 100px;
+      left: -200px;
+      animation-delay: -5s;
+    }
+
+    @keyframes float {
+      0% { transform: translate(0, 0) scale(1); }
+      100% { transform: translate(-100px, 100px) scale(1.1); }
+    }
+
+    /* Hero Section */
+    .hero {
+      padding-top: 10rem;
+      padding-bottom: 8rem;
+      display: flex;
+      align-items: center;
+      min-height: 100vh;
+    }
+
+    .hero-content {
+      display: grid;
+      grid-template-columns: 1.2fr 0.8fr;
+      gap: 4rem;
+      align-items: center;
+    }
+
+    .eyebrow {
+      display: inline-block;
+      padding: 0.5rem 1rem;
+      background: rgba(0, 208, 132, 0.1);
+      color: var(--primary);
+      border-radius: 999px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      margin-bottom: 1.5rem;
+      border: 1px solid rgba(0, 208, 132, 0.2);
+    }
+
+    .hero h1 {
+      font-size: clamp(3rem, 5vw, 4.5rem);
+      letter-spacing: -0.02em;
+    }
+
+    .hero-title-word {
+      display: inline-block;
+      opacity: 0;
+      transform: translateY(20px);
+      animation: fadeUp 0.8s forwards;
+    }
+
+    @keyframes fadeUp {
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    .hero p.subheadline {
+      font-size: 1.25rem;
+      margin-bottom: 2.5rem;
+      max-width: 500px;
+    }
+
+    .hero-ctas {
+      display: flex;
+      gap: 1rem;
+    }
+
+    /* Phone Mockup */
+    .phone-mockup {
+      background: #111;
+      border: 12px solid #222;
+      border-radius: 40px;
+      height: 600px;
+      width: 100%;
+      max-width: 320px;
+      margin: 0 auto;
+      position: relative;
+      overflow: hidden;
+      box-shadow: 0 25px 50px -12px rgba(0,0,0,0.5);
+      display: flex;
+      flex-direction: column;
+    }
+
+    .phone-notch {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 150px;
+      height: 25px;
+      background: #222;
+      border-bottom-left-radius: 12px;
+      border-bottom-right-radius: 12px;
+      z-index: 10;
+    }
+
+    .chat-header {
+      background: #075e54;
+      padding: 2.5rem 1rem 1rem;
+      color: white;
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+    }
+
+    .chat-avatar {
+      width: 36px;
+      height: 36px;
+      background: #eee;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: #333;
+      font-weight: bold;
+    }
+
+    .chat-body {
+      flex: 1;
+      background: #efe7dd;
+      background-image: url('data:image/svg+xml,%3Csvg width="20" height="20" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg"%3E%3Cg fill="%23000000" fill-opacity="0.05" fill-rule="evenodd"%3E%3Ccircle cx="3" cy="3" r="3"/%3E%3Ccircle cx="13" cy="13" r="3"/%3E%3C/g%3E%3C/svg%3E');
+      padding: 1rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+      overflow-y: auto;
+    }
+
+    .msg {
+      max-width: 85%;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      position: relative;
+      opacity: 0;
+      transform: translateY(10px);
+      box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+      color: #111;
+    }
+
+    .msg-in {
+      background: #fff;
+      align-self: flex-start;
+      border-top-left-radius: 0;
+    }
+
+    .msg-out {
+      background: #dcf8c6;
+      align-self: flex-end;
+      border-top-right-radius: 0;
+    }
+
+    .typing-indicator {
+      display: inline-flex;
+      gap: 4px;
+      padding: 0.5rem;
+      background: #fff;
+      border-radius: 16px;
+      align-self: flex-start;
+      margin-bottom: 0.5rem;
+      display: none;
+    }
+
+    .typing-dot {
+      width: 6px;
+      height: 6px;
+      background: #999;
+      border-radius: 50%;
+      animation: typing 1.4s infinite;
+    }
+    .typing-dot:nth-child(2) { animation-delay: 0.2s; }
+    .typing-dot:nth-child(3) { animation-delay: 0.4s; }
+
+    @keyframes typing {
+      0%, 100% { transform: translateY(0); }
+      50% { transform: translateY(-4px); }
+    }
+
+    /* Problem Section */
+    .section-header {
+      text-align: center;
+      max-width: 800px;
+      margin: 0 auto 4rem;
+    }
+
+    .section-header h2 { font-size: 2.5rem; }
+
+    .problem-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 16px;
+      padding: 2rem;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .problem-card {
+      border-left: 4px solid #ef4444;
+    }
+
+    .problem-card:hover {
+      transform: translateY(-5px);
+      background: var(--card);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .card-icon {
+      font-size: 2rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .card h3 { font-size: 1.25rem; color: var(--text-primary); }
+
+    /* How It Works */
+    .flow-container {
+      position: relative;
+      margin-top: 4rem;
+    }
+
+    .flow-steps {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      position: relative;
+      z-index: 2;
+    }
+
+    .flow-step {
+      text-align: center;
+      background: var(--surface);
+      padding: 2rem;
+      border-radius: 16px;
+      border: 1px solid var(--border);
+      position: relative;
+    }
+
+    .flow-icon {
+      width: 64px;
+      height: 64px;
+      background: rgba(0, 208, 132, 0.1);
+      color: var(--primary);
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0 auto 1.5rem;
+      font-size: 1.5rem;
+    }
+
+    .flow-connector {
+      position: absolute;
+      top: 50%;
+      left: 10%;
+      width: 80%;
+      height: 2px;
+      background: var(--border);
+      z-index: 1;
+      transform: translateY(-50%);
+    }
+
+    .flow-connector-active {
+      height: 100%;
+      width: 0;
+      background: var(--primary);
+      transition: width 1.5s ease-out;
+    }
+
+    .timeline {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      margin-top: 4rem;
+      padding: 1.5rem;
+      background: var(--card);
+      border-radius: 999px;
+      border: 1px solid var(--border);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .timeline-item {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 0.5rem;
+      z-index: 2;
+      flex: 1;
+    }
+
+    .timeline-dot {
+      width: 12px;
+      height: 12px;
+      background: var(--border);
+      border-radius: 50%;
+      transition: var(--transition);
+    }
+
+    .timeline-item.active .timeline-dot {
+      background: var(--primary);
+      box-shadow: 0 0 10px var(--primary);
+    }
+
+    .timeline-item span {
+      font-family: var(--font-mono);
+      font-size: 0.75rem;
+      color: var(--text-muted);
+    }
+
+    .timeline-item.active span {
+      color: var(--primary);
+    }
+
+    .timeline-line {
+      position: absolute;
+      top: 24px;
+      left: 5%;
+      width: 90%;
+      height: 2px;
+      background: var(--border);
+      z-index: 1;
+    }
+
+    /* Features Bento */
+    .bento-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      grid-auto-rows: 240px;
+      gap: 1.5rem;
+    }
+
+    .bento-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 2rem;
+      position: relative;
+      overflow: hidden;
+      transition: var(--transition);
+      opacity: 0;
+      transform: translateY(20px);
+    }
+
+    .bento-card.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .bento-card:hover {
+      border-color: rgba(0, 208, 132, 0.4);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.5);
+    }
+
+    .bento-large-1 { grid-column: span 2; grid-row: span 2; }
+    .bento-large-2 { grid-column: span 2; grid-row: span 2; }
+    .bento-small { grid-column: span 1; grid-row: span 1; }
+
+    @media (max-width: 992px) {
+      .bento-grid { grid-template-columns: repeat(2, 1fr); }
+      .bento-large-1, .bento-large-2 { grid-column: span 2; }
+      .bento-small { grid-column: span 1; }
+    }
+    
+    @media (max-width: 768px) {
+      .bento-grid { grid-template-columns: 1fr; }
+      .bento-large-1, .bento-large-2, .bento-small { grid-column: span 1; }
+    }
+
+    .bento-card::before {
+      content: '';
+      position: absolute;
+      top: 0; left: 0; right: 0; bottom: 0;
+      background: radial-gradient(circle at center, rgba(0,208,132,0.1) 0%, transparent 70%);
+      opacity: 0;
+      transition: var(--transition);
+      pointer-events: none;
+    }
+
+    .bento-card:hover::before { opacity: 1; }
+
+    .bento-icon {
+      color: var(--primary);
+      margin-bottom: 1rem;
+    }
+
+    /* Stats Section */
+    .stats-section {
+      background: rgba(0, 208, 132, 0.05);
+      border-top: 1px solid rgba(0, 208, 132, 0.1);
+      border-bottom: 1px solid rgba(0, 208, 132, 0.1);
+      padding: 4rem 0;
+    }
+
+    .stats-grid {
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 2rem;
+      text-align: center;
+    }
+
+    .stat-number {
+      font-family: var(--font-mono);
+      font-size: 3.5rem;
+      font-weight: 700;
+      color: var(--primary);
+      margin-bottom: 0.5rem;
+      text-shadow: 0 0 20px rgba(0, 208, 132, 0.3);
+    }
+
+    /* Pricing Section */
+    .pricing-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+      gap: 2rem;
+      max-width: 900px;
+      margin: 0 auto;
+    }
+
+    .pricing-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-radius: 20px;
+      padding: 3rem 2rem;
+      display: flex;
+      flex-direction: column;
+    }
+
+    .pricing-card.popular {
+      background: var(--card);
+      border-color: var(--primary);
+      box-shadow: 0 0 30px rgba(0, 208, 132, 0.1);
+      position: relative;
+      transform: scale(1.05);
+    }
+
+    .badge-popular {
+      position: absolute;
+      top: 0;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      background: var(--primary);
+      color: var(--bg);
+      font-size: 0.75rem;
+      font-weight: 700;
+      padding: 0.25rem 1rem;
+      border-radius: 999px;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+    }
+
+    .price {
+      font-family: var(--font-heading);
+      font-size: 3rem;
+      font-weight: 800;
+      margin: 1.5rem 0;
+      color: var(--text-primary);
+    }
+
+    .price span { font-size: 1rem; font-weight: 400; color: var(--text-muted); }
+
+    .features-list { margin: 2rem 0; flex: 1; }
+    .features-list li {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      margin-bottom: 1rem;
+      color: var(--text-primary);
+    }
+    .features-list li svg { color: var(--primary); flex-shrink: 0; }
+    
+    .pricing-footer {
+      text-align: center;
+      margin-top: 2rem;
+      font-size: 0.875rem;
+    }
+
+    /* Testimonials */
+    .testimonial-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+      gap: 2rem;
+    }
+
+    .testimonial-card {
+      background: var(--surface);
+      border: 1px solid var(--border);
+      border-left: 4px solid var(--primary);
+      border-radius: 12px;
+      padding: 2rem;
+    }
+
+    .quote { font-size: 1.125rem; font-style: italic; margin-bottom: 1.5rem; }
+
+    .author {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+
+    .avatar {
+      width: 48px;
+      height: 48px;
+      border-radius: 50%;
+      background: var(--border);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-family: var(--font-heading);
+      font-weight: 700;
+      color: var(--text-primary);
+    }
+
+    .author-info h4 { margin-bottom: 0.25rem; font-size: 1rem; }
+    .author-info p { margin-bottom: 0; font-size: 0.875rem; }
+
+    /* Final CTA */
+    .final-cta {
+      text-align: center;
+      padding: 8rem 0;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .final-cta-bg {
+      position: absolute;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: radial-gradient(circle at center, rgba(0,208,132,0.15) 0%, transparent 70%);
+      z-index: -1;
+    }
+
+    .final-cta h2 { font-size: 3rem; margin-bottom: 1rem; }
+    .final-cta p { font-size: 1.25rem; margin-bottom: 2.5rem; }
+
+    .wa-powered {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      margin-top: 1.5rem;
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Footer */
+    footer {
+      background: #05080d;
+      border-top: 1px solid var(--border);
+      padding: 4rem 0 2rem;
+    }
+
+    .footer-content {
+      display: flex;
+      justify-content: space-between;
+      flex-wrap: wrap;
+      gap: 2rem;
+      margin-bottom: 4rem;
+    }
+
+    .footer-brand p { max-width: 300px; margin-top: 1rem; }
+
+    .footer-links {
+      display: flex;
+      gap: 4rem;
+    }
+
+    .footer-col h4 { margin-bottom: 1.5rem; }
+    .footer-col a { display: block; margin-bottom: 0.75rem; color: var(--text-muted); }
+    .footer-col a:hover { color: var(--primary); }
+
+    .footer-bottom {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 2rem;
+      border-top: 1px solid var(--border);
+      font-size: 0.875rem;
+      color: var(--text-muted);
+    }
+
+    /* Responsive adjustments */
+    @media (max-width: 768px) {
+      .hero-content { grid-template-columns: 1fr; text-align: center; }
+      .hero-ctas { justify-content: center; }
+      .nav-links { display: none; }
+      .flow-steps { grid-template-columns: 1fr; gap: 1rem; }
+      .flow-connector { display: none; }
+      .timeline { flex-direction: column; border-radius: 16px; gap: 1rem; }
+      .pricing-card.popular { transform: scale(1); }
+      .footer-content { flex-direction: column; }
+    }
+
+    /* Prefers reduced motion */
+    @media (prefers-reduced-motion: reduce) {
+      * {
+        animation-duration: 0.01ms !important;
+        animation-iteration-count: 1 !important;
+        transition-duration: 0.01ms !important;
+        scroll-behavior: auto !important;
+      }
+    }
+
+    /* Auth Modal & Navbar Styles */
+    .auth-backdrop {
+      position: fixed;
+      top: 0; left: 0; width: 100%; height: 100%;
+      background: rgba(0, 0, 0, 0.75);
+      backdrop-filter: blur(8px);
+      -webkit-backdrop-filter: blur(8px);
+      z-index: 2000;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      opacity: 0;
+      pointer-events: none;
+      transition: opacity 0.2s ease-out;
+    }
+    .auth-backdrop.visible {
+      opacity: 1;
+      pointer-events: auto;
+    }
+    .auth-modal {
+      background: #0F1724;
+      border: 1px solid #1E2D45;
+      border-radius: 16px;
+      padding: 2.5rem;
+      width: 100%;
+      max-width: 400px;
+      text-align: center;
+      transform: scale(0.95);
+      transition: transform 0.2s ease-out;
+    }
+    .auth-backdrop.visible .auth-modal {
+      transform: scale(1);
+    }
+    .auth-modal h3 { font-size: 1.5rem; margin-bottom: 0.5rem; color: #F0F6FF; }
+    .auth-modal p.subtitle { color: #64748B; margin-bottom: 2rem; font-size: 0.95rem; }
+    
+    .google-btn {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.75rem;
+      width: 100%;
+      background: #1a1a1a;
+      color: white;
+      border: 1px solid #333;
+      padding: 0.75rem;
+      border-radius: 8px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: background 0.2s;
+      font-family: inherit;
+      font-size: 1rem;
+    }
+    .google-btn:hover { background: #2a2a2a; }
+    .trial-text { font-size: 0.8rem; color: #00D084; margin-top: 1.5rem; margin-bottom: 0.5rem; }
+    .legal-text { font-size: 0.75rem; color: #64748B; margin-bottom: 0; }
+    .auth-error { color: #ef4444; font-size: 0.875rem; margin-top: 1rem; display: none; }
+
+    .nav-auth-container {
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+      position: relative;
+    }
+    .google-icon { width: 18px; height: 18px; }
+    
+    .user-dropdown-btn {
+      display: flex; align-items: center; gap: 0.5rem;
+      background: rgba(255,255,255,0.05); padding: 0.25rem 0.75rem 0.25rem 0.25rem;
+      border-radius: 999px; cursor: pointer; border: 1px solid var(--border);
+      color: var(--text-primary); transition: var(--transition);
+    }
+    .user-dropdown-btn:hover { background: rgba(255,255,255,0.1); }
+    .user-avatar { width: 32px; height: 32px; border-radius: 50%; object-fit: cover; }
+    
+    .dropdown-menu {
+      position: absolute;
+      top: 100%; right: 0; margin-top: 0.5rem;
+      background: rgba(15, 23, 36, 0.95);
+      backdrop-filter: blur(10px);
+      border: 1px solid var(--border);
+      border-radius: 8px;
+      min-width: 200px;
+      display: flex; flex-direction: column;
+      opacity: 0; pointer-events: none;
+      transform: translateY(-10px);
+      transition: all 0.2s ease-out;
+    }
+    .dropdown-menu.visible { opacity: 1; pointer-events: auto; transform: translateY(0); }
+    .dropdown-item {
+      padding: 0.75rem 1rem;
+      color: var(--text-primary);
+      text-align: left;
+      border: none; background: transparent; cursor: pointer;
+      font-family: inherit; font-size: 0.95rem;
+      border-bottom: 1px solid var(--border);
+    }
+    .dropdown-item:last-child { border-bottom: none; }
+    .dropdown-item:hover { background: rgba(255,255,255,0.05); color: var(--primary); }
+  </style>
+</head>
+<body>
+
+  <!-- Mesh Gradient Background -->
+  <div class="mesh-bg">
+    <div class="mesh-orb orb-1"></div>
+    <div class="mesh-orb orb-2"></div>
+  </div>
+
+  <!-- Navbar -->
+  <header id="navbar">
+    <div class="container nav-container">
+      <a href="#" class="logo">
+        PingFlow <div class="ping-dot"></div>
+      </a>
+      <nav class="nav-links">
+        <a href="#features">Features</a>
+        <a href="#how-it-works">How it Works</a>
+        <a href="#pricing">Pricing</a>
+        <a href="#contact">Contact</a>
+      </nav>
+      <div class="nav-auth-container" id="nav-auth-state">
+        <button class="btn btn-ghost auth-trigger" style="padding: 0.5rem 1rem; gap: 0.5rem;" data-plan="trial_starter">
+          <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+          Sign in with Google
+        </button>
+        <button class="btn btn-outline auth-trigger" style="padding: 0.5rem 1.25rem;" data-plan="trial_starter">Start Free Trial</button>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container hero-content">
+      <div class="hero-text">
+        <div class="eyebrow">WhatsApp Automation for Gyms</div>
+        <h1 id="hero-headline"></h1>
+        <p class="subheadline">
+          PingFlow automatically sends WhatsApp reminders when memberships expire or members go inactive — so you never lose a renewal again.
+        </p>
+        <div class="hero-ctas">
+          <button class="btn btn-primary auth-trigger" data-plan="trial_starter">Get Started Free</button>
+          <a href="#how-it-works" class="btn btn-ghost">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="margin-right:0.5rem"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            See How It Works
+          </a>
+        </div>
+      </div>
+      <div class="hero-visual">
+        <div class="phone-mockup">
+          <div class="phone-notch"></div>
+          <div class="chat-header">
+            <div class="chat-avatar">PF</div>
+            <div>
+              <div style="font-weight:600; font-size:14px;">PingFlow Assistant</div>
+              <div style="font-size:11px; opacity:0.8;">Online</div>
+            </div>
+          </div>
+          <div class="chat-body" id="chat-container">
+            <!-- Messages added via JS -->
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Problem Section -->
+  <section class="problem-section" id="problem">
+    <div class="container">
+      <div class="section-header">
+        <h2>Gyms Lose Revenue Every Single Day</h2>
+        <p>You can't depend on manual follow-ups to grow your business.</p>
+      </div>
+      <div class="problem-grid">
+        <div class="card problem-card">
+          <div class="card-icon">🔴</div>
+          <h3>Members forget to renew</h3>
+          <p>"67% of gym drop-offs are silent — no call, no message, just gone."</p>
+        </div>
+        <div class="card problem-card">
+          <div class="card-icon">⏳</div>
+          <h3>Manual follow-ups don't scale</h3>
+          <p>"Your staff has 200 members to track. They can't call everyone."</p>
+        </div>
+        <div class="card problem-card">
+          <div class="card-icon">📉</div>
+          <h3>No system detects inactivity</h3>
+          <p>"By the time you notice, the member has already joined a competitor."</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- How It Works Section -->
+  <section id="how-it-works">
+    <div class="container">
+      <div class="section-header">
+        <h2>PingFlow Works While You Sleep</h2>
+        <p>Set it up once, and let automation handle your renewals.</p>
+      </div>
+      
+      <div class="flow-container">
+        <div class="flow-connector">
+          <div class="flow-connector-active" id="connector-line"></div>
+        </div>
+        <div class="flow-steps">
+          <div class="flow-step">
+            <div class="flow-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"></path><circle cx="8.5" cy="7" r="4"></circle><line x1="20" y1="8" x2="20" y2="14"></line><line x1="23" y1="11" x2="17" y2="11"></line></svg>
+            </div>
+            <h4>Step 1: Data Added</h4>
+            <p>Member data syncs with PingFlow automatically.</p>
+          </div>
+          <div class="flow-step">
+            <div class="flow-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M18 8A6 6 0 0 0 6 8c0 7-3 9-3 9h18s-3-2-3-9"></path><path d="M13.73 21a2 2 0 0 1-3.46 0"></path></svg>
+            </div>
+            <h4>Step 2: Detection</h4>
+            <p>PingFlow detects nearing expiry or long inactivity.</p>
+          </div>
+          <div class="flow-step">
+            <div class="flow-icon">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 11.5a8.38 8.38 0 0 1-.9 3.8 8.5 8.5 0 0 1-7.6 4.7 8.38 8.38 0 0 1-3.8-.9L3 21l1.9-5.7a8.38 8.38 0 0 1-.9-3.8 8.5 8.5 0 0 1 4.7-7.6 8.38 8.38 0 0 1 3.8-.9h.5a8.48 8.48 0 0 1 8 8v.5z"></path><polyline points="9 12 12 15 16 10"></polyline></svg>
+            </div>
+            <h4>Step 3: Auto-Message</h4>
+            <p>Personalized WhatsApp reminder sent automatically.</p>
+          </div>
+        </div>
+      </div>
+
+      <div class="timeline">
+        <div class="timeline-line"></div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <span>D-3: Reminder</span>
+        </div>
+        <div class="timeline-item active">
+          <div class="timeline-dot"></div>
+          <span>D-0: Alert</span>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <span>D+2: Follow-up</span>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <span>D+5: Inactivity</span>
+        </div>
+        <div class="timeline-item">
+          <div class="timeline-dot"></div>
+          <span>D+10: Re-engage</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Features Section -->
+  <section id="features">
+    <div class="container">
+      <div class="section-header">
+        <h2>Everything a Gym Owner Needs</h2>
+        <p>Powerful tools packaged in a simple interface.</p>
+      </div>
+
+      <div class="bento-grid">
+        <div class="bento-card bento-large-1 bento-animate">
+          <div class="bento-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path></svg>
+          </div>
+          <h3>Automated WhatsApp Reminders</h3>
+          <p>Send personalized messages right to your members' phones. High open rates guaranteed.</p>
+          <div style="margin-top:2rem; background:rgba(255,255,255,0.05); padding:1rem; border-radius:12px; border:1px solid var(--border);">
+            <div style="font-size:0.875rem; color:var(--text-primary);">"Hi Rahul, your Gold Plan expires in 3 days. Tap to renew and keep the streak alive! 💪"</div>
+          </div>
+        </div>
+
+        <div class="bento-card bento-large-2 bento-animate">
+          <div class="bento-icon">
+            <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg>
+          </div>
+          <h3>Live Member Dashboard</h3>
+          <p>Track everything in real-time. Know exactly who is active, inactive, or expiring.</p>
+          <div style="display:flex; gap:1rem; margin-top:1.5rem;">
+            <div style="flex:1; background:var(--bg); padding:1rem; border-radius:8px;">
+              <div style="font-size:0.75rem; color:var(--text-muted);">Active</div>
+              <div style="font-size:1.5rem; font-weight:700; color:var(--primary);">412</div>
+            </div>
+            <div style="flex:1; background:var(--bg); padding:1rem; border-radius:8px;">
+              <div style="font-size:0.75rem; color:var(--text-muted);">Expiring Soon</div>
+              <div style="font-size:1.5rem; font-weight:700; color:#ef4444;">18</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="bento-card bento-small bento-animate">
+          <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="10"></circle><polyline points="12 6 12 12 16 14"></polyline></svg></div>
+          <h4>Expiry Detection</h4>
+          <p style="font-size:0.875rem;">Automatically trigger flows based on customized timelines.</p>
+        </div>
+
+        <div class="bento-card bento-small bento-animate">
+          <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg></div>
+          <h4>Inactivity Alerts</h4>
+          <p style="font-size:0.875rem;">Detect when members skip the gym for 5+ days.</p>
+        </div>
+
+        <div class="bento-card bento-small bento-animate">
+          <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polygon points="3 11 22 2 13 21 11 13 3 11"></polygon></svg></div>
+          <h4>Broadcast Campaigns</h4>
+          <p style="font-size:0.875rem;">Send bulk offers or announcements safely.</p>
+        </div>
+
+        <div class="bento-card bento-small bento-animate">
+          <div class="bento-icon"><svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect><line x1="3" y1="9" x2="21" y2="9"></line><line x1="9" y1="21" x2="9" y2="9"></line></svg></div>
+          <h4>Automation Logs</h4>
+          <p style="font-size:0.875rem;">Complete visibility into every message sent.</p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Stats Section -->
+  <section class="stats-section">
+    <div class="container stats-grid">
+      <div>
+        <div class="stat-number" data-target="2.4" data-suffix="L+">0</div>
+        <p>Average revenue recovered per gym per year</p>
+      </div>
+      <div>
+        <div class="stat-number" data-target="3" data-suffix=" mins">0</div>
+        <p>Setup time to go live</p>
+      </div>
+      <div>
+        <div class="stat-number" data-target="94" data-suffix="%">0</div>
+        <p>Renewal rate improvement</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- Pricing Section -->
+  <section id="pricing">
+    <div class="container">
+      <div class="section-header">
+        <h2>Simple Pricing. Clear ROI.</h2>
+        <p>Pay for itself with just ONE recovered member.</p>
+      </div>
+
+      <div class="pricing-grid">
+        <div class="pricing-card">
+          <h3>Starter</h3>
+          <p>Perfect for growing individual gyms.</p>
+          <div class="price">₹999<span>/month</span></div>
+          <ul class="features-list">
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Up to 200 members</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Automated reminders</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Expiry + inactivity flows</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> WhatsApp integration</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Dashboard</li>
+          </ul>
+          <button class="btn btn-outline auth-trigger" style="width: 100%;" data-plan="trial_starter">Start Free Trial</button>
+        </div>
+
+        <div class="pricing-card popular">
+          <div class="badge-popular">Popular</div>
+          <h3>Pro</h3>
+          <p>For established gyms wanting full control.</p>
+          <div class="price">₹2,499<span>/month</span></div>
+          <ul class="features-list">
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> <b>Everything in Starter +</b></li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Unlimited members</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Broadcast campaigns</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Automation logs</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Custom message templates</li>
+            <li><svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg> Priority support</li>
+          </ul>
+          <button class="btn btn-primary auth-trigger" style="width: 100%;" data-plan="trial_pro">Start Free Trial</button>
+        </div>
+      </div>
+      <p class="pricing-footer">No setup fee. No contracts. Cancel anytime.</p>
+    </div>
+  </section>
+
+  <!-- Testimonials Section -->
+  <section class="testimonials">
+    <div class="container">
+      <div class="section-header">
+        <h2>Gym Owners Love PingFlow</h2>
+      </div>
+      
+      <div class="testimonial-grid">
+        <div class="testimonial-card">
+          <div class="quote">"We recovered 23 lapsed members in the first month alone."</div>
+          <div class="author">
+            <div class="avatar">RK</div>
+            <div class="author-info">
+              <h4>Rajesh K.</h4>
+              <p>FitZone Gym, Bengaluru</p>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="quote">"I used to spend 2 hours a day calling members. Now PingFlow does it."</div>
+          <div class="author">
+            <div class="avatar">PM</div>
+            <div class="author-info">
+              <h4>Priya M.</h4>
+              <p>Iron Temple, Hyderabad</p>
+            </div>
+          </div>
+        </div>
+        <div class="testimonial-card">
+          <div class="quote">"Setup was under 5 minutes. First reminder sent the same evening."</div>
+          <div class="author">
+            <div class="avatar">AS</div>
+            <div class="author-info">
+              <h4>Arun S.</h4>
+              <p>PowerHouse Fitness, Chennai</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Final CTA Section -->
+  <section class="final-cta">
+    <div class="final-cta-bg"></div>
+    <div class="container">
+      <h2>Your Next Renewal Is One Message Away</h2>
+      <p>Join 100+ gyms already using PingFlow to automate their revenue.</p>
+      <button class="btn btn-primary auth-trigger" style="font-size: 1.125rem; padding: 1rem 2.5rem;" data-plan="trial_starter">Get Started Free — No Credit Card Required</button>
+      <div class="wa-powered">
+        <svg width="24" height="24" viewBox="0 0 24 24" fill="var(--primary)"><path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51a12.8 12.8 0 0 0-.57-.01c-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 0 1-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 0 1-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 0 1 2.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0 0 12.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 0 0 5.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 0 0-3.48-8.413Z"/></svg>
+        Powered by WhatsApp Business API
+      </div>
+    </div>
+  </section>
+
+  <!-- Footer -->
+  <footer>
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-brand">
+          <div class="logo">
+            PingFlow <div class="ping-dot"></div>
+          </div>
+          <p>Revenue Automation for Gyms. Turn this on and automatically recover lost members.</p>
+        </div>
+        <div class="footer-links">
+          <div class="footer-col">
+            <h4>Product</h4>
+            <a href="#features">Features</a>
+            <a href="#how-it-works">How it works</a>
+            <a href="#pricing">Pricing</a>
+          </div>
+          <div class="footer-col">
+            <h4>Company</h4>
+            <a href="#">About Us</a>
+            <a href="#contact">Contact</a>
+            <a href="#">Privacy Policy</a>
+            <a href="#">Terms of Service</a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <div>© 2025 PingFlow. All rights reserved.</div>
+        <div>Built with ❤️ in India</div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Scripts -->
+  <script>
+    document.addEventListener('DOMContentLoaded', () => {
+      
+      // 1. Navbar Scrolled State
+      const header = document.getElementById('navbar');
+      window.addEventListener('scroll', () => {
+        if (window.scrollY > 50) header.classList.add('scrolled');
+        else header.classList.remove('scrolled');
+      });
+
+      // 2. Hero Headline Animation
+      const headlineStr = "Stop Losing Members.\nStart Recovering Revenue.";
+      const headlineEl = document.getElementById('hero-headline');
+      const lines = headlineStr.split('\n');
+      
+      lines.forEach((line, lineIdx) => {
+        const words = line.split(' ');
+        const lineDiv = document.createElement('div');
+        words.forEach((word, wordIdx) => {
+          const span = document.createElement('span');
+          span.className = 'hero-title-word';
+          span.innerHTML = word + '&nbsp;';
+          span.style.animationDelay = `${(lineIdx * 5 + wordIdx) * 0.1}s`;
+          lineDiv.appendChild(span);
+        });
+        headlineEl.appendChild(lineDiv);
+      });
+
+      // 3. WhatsApp Chat Animation
+      const chatContainer = document.getElementById('chat-container');
+      const messages = [
+        { type: 'out', text: 'Hi Rahul! Your Gold Plan at FitZone expires in 3 days. Ready to renew and keep the momentum going? 💪', delay: 1000 },
+        { type: 'in', text: 'Yes, renew!', delay: 3000 },
+        { type: 'out', text: 'Awesome! Here is your secure payment link: https://pay.pingflow.in/1932 -- Let us know if you need help.', delay: 5000 }
+      ];
+
+      const typingIndicator = document.createElement('div');
+      typingIndicator.className = 'typing-indicator';
+      typingIndicator.innerHTML = '<div class="typing-dot"></div><div class="typing-dot"></div><div class="typing-dot"></div>';
+
+      let msgQueue = [...messages];
+
+      function showNextMessage() {
+        if (msgQueue.length === 0) return;
+        const msg = msgQueue.shift();
+        
+        setTimeout(() => {
+          if (msg.type === 'in') {
+            chatContainer.appendChild(typingIndicator);
+            typingIndicator.style.display = 'inline-flex';
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+            
+            setTimeout(() => {
+              typingIndicator.style.display = 'none';
+              appendMessage(msg);
+              showNextMessage();
+            }, 1000);
+          } else {
+            appendMessage(msg);
+            showNextMessage();
+          }
+        }, msg.delay - (msg.type === 'in' ? 1000 : 0)); // adjust delay
+      }
+
+      function appendMessage(msg) {
+        const div = document.createElement('div');
+        div.className = `msg msg-${msg.type}`;
+        div.innerText = msg.text;
+        chatContainer.insertBefore(div, typingIndicator);
+        
+        // Trigger reflow
+        void div.offsetWidth;
+        div.style.opacity = '1';
+        div.style.transform = 'translateY(0)';
+        div.style.transition = 'all 0.3s ease';
+        
+        chatContainer.scrollTop = chatContainer.scrollHeight;
+      }
+
+      setTimeout(showNextMessage, 500);
+
+      // 4. Statistics Count-up Observer
+      const stats = document.querySelectorAll('.stat-number');
+      let statsAnimated = false;
+
+      const observer = new IntersectionObserver((entries) => {
+        entries.forEach(entry => {
+          // Flow connector
+          if (entry.target.id === 'how-it-works' && entry.isIntersecting) {
+            document.getElementById('connector-line').style.width = '100%';
+          }
+          
+          // Stats
+          if (entry.target.classList.contains('stats-section') && entry.isIntersecting && !statsAnimated) {
+            statsAnimated = true;
+            stats.forEach(stat => {
+              const target = parseFloat(stat.getAttribute('data-target'));
+              const suffix = stat.getAttribute('data-suffix') || '';
+              const duration = 2000;
+              const frames = 60;
+              const step = target / frames;
+              let current = 0;
+              
+              const timer = setInterval(() => {
+                current += step;
+                if (current >= target) {
+                  clearInterval(timer);
+                  current = target;
+                }
+                // format depending on if it has decimals
+                stat.innerText = (current % 1 === 0 ? current : current.toFixed(1)) + suffix;
+              }, duration / frames);
+            });
+          }
+
+          // Bento boxes stagger
+          if(entry.target.classList.contains('bento-grid') && entry.isIntersecting) {
+            const boxes = entry.target.querySelectorAll('.bento-animate');
+            boxes.forEach((box, i) => {
+              setTimeout(() => {
+                box.classList.add('visible');
+              }, i * 150);
+            });
+            observer.unobserve(entry.target);
+          }
+        });
+      }, { threshold: 0.2 });
+
+      observer.observe(document.getElementById('how-it-works'));
+      observer.observe(document.querySelector('.stats-section'));
+      observer.observe(document.querySelector('.bento-grid'));
+      
+    });
+  </script>
+
+  <!-- Auth Modal -->
+  <div id="auth-backdrop" class="auth-backdrop">
+    <div class="auth-modal" id="auth-modal-card">
+      <h3>✦ Welcome to PingFlow</h3>
+      <p class="subtitle">Start recovering lost members in under 3 minutes.</p>
+      
+      <button id="google-signIn-btn" class="google-btn">
+        <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Continue with Google
+      </button>
+      
+      <p class="trial-text">Free 14-day trial · No card needed</p>
+      <p class="legal-text">Terms of Service · Privacy Policy</p>
+      
+      <div id="auth-error-message" class="auth-error"></div>
+    </div>
+  </div>
+
+  <!-- Firebase Auth Logic -->
+  <script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+    import { getAuth, signInWithPopup, GoogleAuthProvider, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-auth.js";
+    import { getFirestore, doc, getDoc, setDoc, serverTimestamp } from "https://www.gstatic.com/firebasejs/10.12.0/firebase-firestore.js";
+
+    const firebaseConfig = {
+      apiKey: "YOUR_API_KEY",
+      authDomain: "YOUR_AUTH_DOMAIN",
+      projectId: "YOUR_PROJECT_ID",
+      storageBucket: "YOUR_STORAGE_BUCKET",
+      messagingSenderId: "YOUR_SENDER_ID",
+      appId: "YOUR_APP_ID"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const auth = getAuth(app);
+    const db = getFirestore(app);
+
+    const backdrop = document.getElementById('auth-backdrop');
+    const googleBtn = document.getElementById('google-signIn-btn');
+    const errorMsg = document.getElementById('auth-error-message');
+    const navState = document.getElementById('nav-auth-state');
+    
+    let currentSelectedPlan = "trial_starter";
+
+    // Global click delegation for Auth triggers and menu
+    document.addEventListener('click', (e) => {
+      // 1. Auth Triggers
+      const trigger = e.target.closest('.auth-trigger');
+      if (trigger) {
+        e.preventDefault();
+        const plan = trigger.getAttribute('data-plan') || "trial_starter";
+        currentSelectedPlan = plan;
+        errorMsg.style.display = 'none';
+        backdrop.classList.add('visible');
+      }
+
+      // 2. Dropdown Toggle
+      const dropdown = document.getElementById('user-dropdown');
+      if (dropdown) {
+        if (e.target.closest('#user-menu-btn')) {
+          dropdown.classList.toggle('visible');
+        } else {
+          dropdown.classList.remove('visible');
+        }
+      }
+      
+      // 3. Dropdown Actions
+      if (e.target.closest('#sign-out-btn')) {
+        signOut(auth);
+      }
+      if (e.target.closest('#go-to-dashboard-btn') || e.target.closest('#go-to-dashboard-btn-main')) {
+        window.location.href = '/dashboard';
+      }
+    });
+
+    // Close Modal logic
+    backdrop.addEventListener('click', (e) => {
+      if (e.target === backdrop) backdrop.classList.remove('visible');
+    });
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') backdrop.classList.remove('visible');
+    });
+
+    // Sign In Logic
+    googleBtn.addEventListener('click', async () => {
+      const provider = new GoogleAuthProvider();
+      errorMsg.style.display = 'none';
+      try {
+        const result = await signInWithPopup(auth, provider);
+        const user = result.user;
+        const userRef = doc(db, 'gyms', user.uid);
+        const userSnap = await getDoc(userRef);
+        
+        if (!userSnap.exists()) {
+          // New user
+          const endDate = new Date();
+          endDate.setDate(endDate.getDate() + 14);
+          
+          await setDoc(userRef, {
+            ownerName: user.displayName,
+            email: user.email,
+            phone: "",
+            photoURL: user.photoURL,
+            plan: currentSelectedPlan,
+            trialStartDate: serverTimestamp(),
+            trialEndDate: endDate,
+            isActive: true,
+            onboardingComplete: false,
+            createdAt: serverTimestamp()
+          });
+          window.location.href = '/onboarding';
+        } else {
+          // Existing user
+          window.location.href = '/dashboard';
+        }
+      } catch (error) {
+        if (error.code === 'auth/popup-closed-by-user') {
+          backdrop.classList.remove('visible');
+          return;
+        }
+        
+        let msg = "Something went wrong. Please try again.";
+        if (error.code === 'auth/popup-blocked') msg = "Please allow popups and try again.";
+        else if (error.code === 'auth/network-request-failed') msg = "Connection error. Check your internet.";
+        else if (error.code === 'auth/too-many-requests') msg = "Too many attempts. Please wait.";
+        
+        errorMsg.innerText = msg;
+        errorMsg.style.display = 'block';
+      }
+    });
+
+    // Auth State Observer
+    const unauthenticatedHtml = `
+      <button class="btn btn-ghost auth-trigger" style="padding: 0.5rem 1rem; gap: 0.5rem;" data-plan="trial_starter">
+        <svg class="google-icon" viewBox="0 0 24 24"><path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path fill="#FBBC05" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>
+        Sign in with Google
+      </button>
+      <button class="btn btn-outline auth-trigger" style="padding: 0.5rem 1.25rem;" data-plan="trial_starter">Start Free Trial</button>
+    `;
+
+    onAuthStateChanged(auth, (user) => {
+      if (user) {
+        const photo = user.photoURL || 'https://ui-avatars.com/api/?name=' + encodeURIComponent(user.displayName || 'U');
+        const name = user.displayName ? user.displayName.split(' ')[0] : 'User';
+        navState.innerHTML = `
+          <div style="position: relative;">
+            <button id="user-menu-btn" class="user-dropdown-btn">
+              <img src="${photo}" class="user-avatar" alt="Avatar">
+              <span style="font-weight: 500;">${name} ▾</span>
+            </button>
+            <div id="user-dropdown" class="dropdown-menu">
+              <button id="go-to-dashboard-btn" class="dropdown-item">Go to Dashboard →</button>
+              <button id="sign-out-btn" class="dropdown-item" style="color: #ef4444;">Sign Out</button>
+            </div>
+          </div>
+          <button id="go-to-dashboard-btn-main" class="btn btn-outline" style="padding: 0.5rem 1.25rem;">Go to Dashboard →</button>
+        `;
+        backdrop.classList.remove('visible'); // hide modal if open
+      } else {
+        navState.innerHTML = unauthenticatedHtml;
+      }
+    });
+
+  </script>
+</body>
+</html>

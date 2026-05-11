@@ -1,0 +1,10 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Gym logos — only the gym admin can upload/delete
+    match /gyms/{gymId}/{allPaths=**} {
+      allow read: if true; // Logos are public (shown in invoices, sidebar)
+      allow write: if request.auth != null && request.auth.uid == gymId;
+    }
+  }
+}
