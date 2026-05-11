@@ -5,20 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const publicRoutes = ["/", "/login", "/verify-otp", "/api/auth/callback"];
 
 // Routes that require authentication (dashboard section)
-const protectedPrefixes = [
-  "/dashboard",
-  "/onboarding",
-  "/appointments",
-  "/customers",
-  "/services",
-  "/staff",
-  "/branches",
-  "/billing",
-  "/analytics",
-  "/memberships",
-  "/settings",
-  "/audit-log",
-];
+const protectedPrefixes = ["/dashboard", "/onboarding"];
 
 export async function middleware(request: NextRequest) {
   let supabaseResponse = NextResponse.next({ request });
