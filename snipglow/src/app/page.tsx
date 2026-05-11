@@ -16,6 +16,10 @@ import {
   FileText,
   UserCheck,
   ChevronRight,
+  TrendingUp,
+  Phone,
+  Mail,
+  MapPin,
 } from "lucide-react";
 
 export default function HomePage() {
