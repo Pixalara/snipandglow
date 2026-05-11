@@ -142,14 +142,18 @@ export default function HomePage() {
                   {/* Scrolling chat — CSS animation */}
                   <style dangerouslySetInnerHTML={{ __html: `
                     @keyframes chatScroll {
-                      0%,8%    { transform: translateY(0); }
-                      18%,26%  { transform: translateY(-200px); }
-                      36%,44%  { transform: translateY(-420px); }
-                      54%,62%  { transform: translateY(-640px); }
-                      72%,80%  { transform: translateY(-860px); }
-                      90%,100% { transform: translateY(0); }
+                      0%,5%    { transform: translateY(0); }
+                      11%,16%  { transform: translateY(-200px); }
+                      22%,27%  { transform: translateY(-420px); }
+                      33%,38%  { transform: translateY(-640px); }
+                      44%,49%  { transform: translateY(-860px); }
+                      55%,60%  { transform: translateY(-1060px); }
+                      66%,71%  { transform: translateY(-1260px); }
+                      77%,82%  { transform: translateY(-1460px); }
+                      88%,93%  { transform: translateY(-1660px); }
+                      99%,100% { transform: translateY(0); }
                     }
-                    .chat-scroll { animation: chatScroll 30s ease-in-out infinite; }
+                    .chat-scroll { animation: chatScroll 54s ease-in-out infinite; }
                   `}} />
 
                   <div className="flex-1 overflow-hidden px-3 py-3">
@@ -327,6 +331,133 @@ export default function HomePage() {
                         </div>
                       </div>
 
+                      {/* ── FLOW 6: 24h Appointment Reminder ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] border border-[#3b82f6]/20">
+                          <div className="bg-gradient-to-r from-[#eff6ff] to-[#dbeafe] px-3 py-2 border-l-4 border-[#3b82f6]">
+                            <p className="text-[11px] font-bold text-[#1d4ed8]">📅 Appointment Reminder</p>
+                            <p className="text-[9px] text-[#3b82f6]">Glamour Studio</p>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1">
+                            <p className="text-[12px] text-gray-100">Hi <strong className="text-white">Priya</strong>! 👋</p>
+                            <p className="text-[11px] text-gray-300">Just a reminder — you have an appointment <strong className="text-white">tomorrow</strong>:</p>
+                            <div className="bg-[#111b21] rounded-lg p-2 space-y-0.5 text-[11px] text-gray-300 mt-1">
+                              <p>✂️ Haircut</p>
+                              <p>📅 10 May, 2:30 PM</p>
+                              <p>👤 Stylist: Priya</p>
+                              <p>📍 Glamour Salon</p>
+                            </div>
+                            <p className="text-[11px] text-gray-300 mt-1">Need to change plans?</p>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['✅ Confirm','🔄 Reschedule','❌ Cancel'].map((b,i) => (
+                              <div key={i} className="px-3 py-1.5 border-b border-white/5 last:border-0 text-center">
+                                <p className="text-[11px] text-[#53bdeb] font-medium">{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">2:30 PM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
+                          <p className="text-[12px] text-white">✅ Confirm</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">2:31 PM</p>
+                        </div>
+                      </div>
+
+                      {/* ── FLOW 7: 2h Before Reminder ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] border border-[#f59e0b]/20">
+                          <div className="bg-gradient-to-r from-[#fffbeb] to-[#fef3c7] px-3 py-2 border-l-4 border-[#f59e0b]">
+                            <p className="text-[11px] font-bold text-[#b45309]">⏰ Starting in 2 Hours!</p>
+                            <p className="text-[9px] text-[#d97706]">Glamour Studio</p>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1">
+                            <p className="text-[12px] text-gray-100">Hey <strong className="text-white">Priya</strong>! 💇‍♀️</p>
+                            <p className="text-[11px] text-gray-300">Your appointment is in <strong className="text-white">2 hours</strong>. We&apos;re getting ready for you!</p>
+                            <div className="bg-[#111b21] rounded-lg p-2 text-[11px] text-gray-300 mt-1">
+                              <p>✂️ Haircut · 2:30 PM today</p>
+                              <p>📍 Glamour Salon, Koramangala</p>
+                            </div>
+                            <p className="text-[11px] text-gray-300 mt-1">See you soon! 🌟</p>
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">12:30 PM</p>
+                        </div>
+                      </div>
+
+                      {/* ── FLOW 8: Day 30 Service Reminder ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] border border-[#8b5cf6]/20">
+                          <div className="bg-gradient-to-r from-[#f5f3ff] to-[#ede9fe] px-3 py-2 border-l-4 border-[#8b5cf6]">
+                            <p className="text-[11px] font-bold text-[#6d28d9]">💜 Time for a Touch-Up!</p>
+                            <p className="text-[9px] text-[#8b5cf6]">Glamour Studio · Day 30</p>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1.5">
+                            <p className="text-[12px] text-gray-100">Hi <strong className="text-white">Priya</strong>! 🌸</p>
+                            <p className="text-[11px] text-gray-300">It&apos;s been <strong className="text-white">30 days</strong> since your last visit.</p>
+                            <p className="text-[11px] text-gray-300">Your hair color is due for a refresh — book now before slots fill up! ✨</p>
+                            <div className="bg-[#111b21] rounded-lg p-2 text-[11px] text-gray-300 mt-1">
+                              <p className="text-[#8b5cf6] font-medium">🎁 Special: 10% off this week</p>
+                            </div>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['📅 Book Now','💰 View Services'].map((b,i) => (
+                              <div key={i} className="px-3 py-1.5 border-b border-white/5 last:border-0 text-center">
+                                <p className="text-[11px] text-[#53bdeb] font-medium">{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">10:00 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px]">
+                          <p className="text-[12px] text-white">📅 Book Now</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">10:03 AM</p>
+                        </div>
+                      </div>
+
+                      {/* ── FLOW 9: Day 60 Win-Back ── */}
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] border border-[#ec4899]/20">
+                          <div className="bg-gradient-to-r from-[#fdf2f8] to-[#fce7f3] px-3 py-2 border-l-4 border-[#ec4899]">
+                            <p className="text-[11px] font-bold text-[#be185d]">💕 We Miss You!</p>
+                            <p className="text-[9px] text-[#ec4899]">Glamour Studio · Day 60</p>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-1.5">
+                            <p className="text-[12px] text-gray-100">Hey <strong className="text-white">Priya</strong>! 💖</p>
+                            <p className="text-[11px] text-gray-300">It&apos;s been <strong className="text-white">2 months</strong> — we miss you at Glamour Studio!</p>
+                            <div className="bg-gradient-to-r from-[#ec4899]/10 to-[#f43f5e]/10 border border-[#ec4899]/30 rounded-lg p-2.5 mt-1">
+                              <p className="text-[12px] text-[#ec4899] font-bold text-center">🎉 15% OFF</p>
+                              <p className="text-[10px] text-gray-300 text-center">your next visit</p>
+                              <p className="text-[9px] text-gray-400 text-center mt-0.5">Valid for 7 days · Code: MISSYOU15</p>
+                            </div>
+                            <p className="text-[11px] text-gray-300">Come back and treat yourself — your stylist is waiting! ✨</p>
+                          </div>
+                          <div className="border-t border-white/5">
+                            {['💅 Claim My 15% Off','📋 View Services'].map((b,i) => (
+                              <div key={i} className="px-3 py-1.5 border-b border-white/5 last:border-0 text-center">
+                                <p className={`text-[11px] font-medium ${i===0?'text-[#ec4899]':'text-[#53bdeb]'}`}>{b}</p>
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[9px] text-gray-500 text-right px-3 pb-2">10:00 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-end">
+                        <div className="bg-[#005c4b] px-3 py-2 rounded-xl rounded-tr-sm max-w-[200px]">
+                          <p className="text-[12px] text-white">💅 Claim My 15% Off</p>
+                          <p className="text-[9px] text-gray-300 text-right mt-0.5">10:04 AM</p>
+                        </div>
+                      </div>
+                      <div className="flex justify-start">
+                        <div className="bg-[#1f2c34] px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px]">
+                          <p className="text-[12px] text-[#25d366] font-medium">Welcome back! 🎉 Your 15% discount has been applied. Book your appointment now!</p>
+                          <p className="text-[9px] text-gray-500 text-right mt-1">10:04 AM</p>
+                        </div>
+                      </div>
+
                     </div>
                   </div>
 
@@ -359,6 +490,133 @@ export default function HomePage() {
               <div key={item.text} className="flex items-center gap-3">
                 <item.icon className="h-5 w-5 text-[#00D084] shrink-0" />
                 <span className="text-sm text-gray-300">{item.text}</span>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
+      {/* ===== SMART REMINDERS ===== */}
+      <section id="reminders" className="relative py-24 bg-[#050810]">
+        <div className="mx-auto max-w-7xl px-6">
+          <div className="text-center mb-16">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00D084]/30 bg-[#00D084]/10 text-[#00D084] text-xs font-medium mb-4">
+              <Bell className="h-3.5 w-3.5" />
+              Automated Retention Engine
+            </div>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4">
+              The right message, at the right time
+            </h2>
+            <p className="text-gray-400 max-w-2xl mx-auto">
+              Snip &amp; Glow runs 4 automated WhatsApp flows that keep clients coming back — without you lifting a finger.
+            </p>
+          </div>
+
+          <div className="grid md:grid-cols-2 gap-6">
+            {/* 24h Reminder */}
+            <div className="group relative p-6 rounded-2xl bg-[#0a0f1a] border border-white/5 hover:border-[#3b82f6]/30 transition-all overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#3b82f6]/5 rounded-full blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-[#3b82f6]/10 flex items-center justify-center text-lg">📅</div>
+                  <div>
+                    <p className="text-xs font-bold text-[#3b82f6] uppercase tracking-wider">24h Before</p>
+                    <h3 className="text-base font-semibold text-white">Appointment Reminder</h3>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                  Sent automatically 24 hours before every appointment. Clients confirm, reschedule, or cancel — reducing no-shows by up to 60%.
+                </p>
+                <div className="bg-[#111b21] rounded-xl p-3 border border-white/5">
+                  <p className="text-[11px] text-[#3b82f6] font-medium mb-1">📅 Tomorrow at 2:30 PM</p>
+                  <p className="text-[11px] text-gray-300">&quot;Hi Priya! Just a reminder — you have a Haircut tomorrow at 2:30 PM with Stylist Neha at Glamour Salon. Need to change plans?&quot;</p>
+                  <div className="flex gap-2 mt-2">
+                    {['✅ Confirm','🔄 Reschedule','❌ Cancel'].map(b => (
+                      <span key={b} className="text-[9px] text-[#53bdeb] border border-[#53bdeb]/30 rounded px-1.5 py-0.5">{b}</span>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 2h Reminder */}
+            <div className="group relative p-6 rounded-2xl bg-[#0a0f1a] border border-white/5 hover:border-[#f59e0b]/30 transition-all overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#f59e0b]/5 rounded-full blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-[#f59e0b]/10 flex items-center justify-center text-lg">⏰</div>
+                  <div>
+                    <p className="text-xs font-bold text-[#f59e0b] uppercase tracking-wider">2h Before</p>
+                    <h3 className="text-base font-semibold text-white">Same-Day Nudge</h3>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                  A friendly heads-up 2 hours before the appointment. Keeps clients on track and reduces last-minute cancellations.
+                </p>
+                <div className="bg-[#111b21] rounded-xl p-3 border border-white/5">
+                  <p className="text-[11px] text-[#f59e0b] font-medium mb-1">⏰ Starting in 2 hours!</p>
+                  <p className="text-[11px] text-gray-300">&quot;Hey Priya! Your Haircut is in 2 hours at 2:30 PM. We&apos;re getting ready for you! See you soon 🌟&quot;</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Day 30 */}
+            <div className="group relative p-6 rounded-2xl bg-[#0a0f1a] border border-white/5 hover:border-[#8b5cf6]/30 transition-all overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#8b5cf6]/5 rounded-full blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-[#8b5cf6]/10 flex items-center justify-center text-lg">💜</div>
+                  <div>
+                    <p className="text-xs font-bold text-[#8b5cf6] uppercase tracking-wider">Day 30</p>
+                    <h3 className="text-base font-semibold text-white">Service Refresh Reminder</h3>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                  30 days after their last visit, clients get a personalized reminder that their hair color, facial, or treatment is due for a refresh — with a special offer.
+                </p>
+                <div className="bg-[#111b21] rounded-xl p-3 border border-white/5">
+                  <p className="text-[11px] text-[#8b5cf6] font-medium mb-1">💜 Time for a Touch-Up! · Day 30</p>
+                  <p className="text-[11px] text-gray-300">&quot;Hi Priya! It&apos;s been 30 days since your last visit. Your hair color is due for a refresh — book now before slots fill up! 🎁 10% off this week.&quot;</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Day 60 Win-Back */}
+            <div className="group relative p-6 rounded-2xl bg-[#0a0f1a] border border-white/5 hover:border-[#ec4899]/30 transition-all overflow-hidden">
+              <div className="absolute top-0 right-0 w-32 h-32 bg-[#ec4899]/5 rounded-full blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-10 w-10 rounded-xl bg-[#ec4899]/10 flex items-center justify-center text-lg">💕</div>
+                  <div>
+                    <p className="text-xs font-bold text-[#ec4899] uppercase tracking-wider">Day 60 · Win-Back</p>
+                    <h3 className="text-base font-semibold text-white">Re-Engagement Offer</h3>
+                  </div>
+                </div>
+                <p className="text-sm text-gray-400 leading-relaxed mb-4">
+                  Clients who haven&apos;t visited in 60 days get a personalized win-back message with a 15% discount — re-engaging them before they&apos;re lost forever.
+                </p>
+                <div className="bg-[#111b21] rounded-xl p-3 border border-white/5">
+                  <p className="text-[11px] text-[#ec4899] font-medium mb-1">💕 We Miss You! · Day 60</p>
+                  <p className="text-[11px] text-gray-300">&quot;Hey Priya! It&apos;s been 2 months — we miss you! 🎉 <strong className="text-[#ec4899]">15% OFF</strong> your next visit. Valid 7 days. Code: MISSYOU15&quot;</p>
+                  <div className="flex gap-2 mt-2">
+                    <span className="text-[9px] text-[#ec4899] border border-[#ec4899]/30 rounded px-1.5 py-0.5">💅 Claim 15% Off</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats row */}
+          <div className="mt-12 grid grid-cols-2 md:grid-cols-4 gap-6 p-6 rounded-2xl bg-[#0a0f1a] border border-white/5">
+            {[
+              { val: '60%', label: 'Fewer no-shows', color: 'text-[#3b82f6]' },
+              { val: '30%', label: 'More repeat visits', color: 'text-[#8b5cf6]' },
+              { val: '15%', label: 'Win-back rate', color: 'text-[#ec4899]' },
+              { val: '₹0', label: 'Extra effort needed', color: 'text-[#00D084]' },
+            ].map(s => (
+              <div key={s.label} className="text-center">
+                <p className={`text-3xl font-bold ${s.color}`}>{s.val}</p>
+                <p className="text-xs text-gray-400 mt-1">{s.label}</p>
               </div>
             ))}
           </div>
