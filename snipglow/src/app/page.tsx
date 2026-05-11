@@ -1,5 +1,6 @@
 'use client';
 
+import { useEffect } from 'react';
 import Link from 'next/link';
 import {
   Scissors,
@@ -20,6 +21,23 @@ import {
   Repeat2,
   Gift,
 } from 'lucide-react';
+
+export default function HomePage() {
+  // Scroll reveal observer
+  useEffect(() => {
+    const observer = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            entry.target.classList.add('visible');
+          }
+        });
+      },
+      { threshold: 0.12, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach((el) => observer.observe(el));
+    return () => observer.disconnect();
+  }, []);
 
 export default function HomePage() {
   return (
@@ -66,7 +84,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-6 grid lg:grid-cols-2 gap-16 items-center w-full">
           {/* Left */}
-          <div className="space-y-8">
+          <div className="space-y-8 reveal-left">
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00D084]/30 bg-[#00D084]/8 text-[#00D084] text-xs font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-[#00D084] animate-pulse" />
@@ -74,7 +92,7 @@ export default function HomePage() {
             </div>
 
             <div className="space-y-4">
-              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.1] tracking-tight">
+              <h1 className="text-4xl sm:text-5xl lg:text-[3.5rem] font-bold leading-[1.1] tracking-tight" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>
                 The Salon Management
                 <br />
                 <span className="text-[#00D084]">Software That Brings</span>
@@ -139,7 +157,7 @@ export default function HomePage() {
           </div>
 
           {/* Right — WhatsApp Phone Mockup */}
-          <div className="hidden lg:flex justify-center items-center">
+          <div className="hidden lg:flex justify-center items-center reveal-right">
             <div className="relative">
               {/* Ambient glow */}
               <div className="absolute inset-0 rounded-[48px] bg-[#00D084]/8 blur-3xl scale-125" />
@@ -269,12 +287,12 @@ export default function HomePage() {
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_50%,rgba(0,208,132,0.03),transparent)]" />
         <div className="relative mx-auto max-w-7xl px-6">
           {/* Header */}
-          <div className="text-center max-w-3xl mx-auto mb-20">
+          <div className="text-center max-w-3xl mx-auto mb-20 reveal">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00D084]/30 bg-[#00D084]/8 text-[#00D084] text-xs font-medium mb-6">
               <Zap className="h-3.5 w-3.5" />
               Set it once. Runs forever.
             </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-4">
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold leading-tight mb-4" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>
               Fully Automated Client Journey
             </h2>
             <p className="text-lg text-[#00D084] font-medium mb-3">
@@ -434,19 +452,19 @@ export default function HomePage() {
       <section className="relative py-28 bg-[#080d18]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_60%_at_50%_50%,rgba(0,208,132,0.04),transparent)]" />
         <div className="relative mx-auto max-w-7xl px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-16 reveal">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-500/30 bg-emerald-500/8 text-emerald-400 text-xs font-medium mb-6">
               <TrendingUp className="h-3.5 w-3.5" />
               Real ROI, Real Numbers
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">The Real Numbers — Salon Client Retention</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>The Real Numbers — Salon Client Retention</h2>
             <p className="text-gray-400">You spend ₹699/month. Here&apos;s what you get back.</p>
           </div>
 
           {/* Stats grid */}
-          <div className="grid sm:grid-cols-3 gap-6 mb-10">
-            <div className="bg-[#0a0f1a] border border-white/8 rounded-2xl p-8 text-center group hover:border-[#00D084]/30 transition-colors">
-              <div className="text-4xl font-bold text-[#00D084] mb-2">+28%</div>
+          <div className="grid sm:grid-cols-3 gap-6 mb-10 stagger">
+            <div className="bg-[#0a0f1a] border border-white/8 rounded-2xl p-8 text-center group hover:border-[#00D084]/30 transition-colors reveal">
+              <div className="text-4xl font-bold text-[#00D084] mb-2" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>+28%</div>
               <div className="text-white font-semibold mb-1">Client Return Rate</div>
               <div className="text-gray-500 text-sm">More clients come back after automated follow-ups</div>
             </div>
@@ -510,16 +528,16 @@ export default function HomePage() {
       <section id="features" className="relative py-28 bg-[#050810]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_60%_40%_at_50%_0%,rgba(99,102,241,0.04),transparent)]" />
         <div className="relative mx-auto max-w-7xl px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-16 reveal">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-indigo-500/30 bg-indigo-500/8 text-indigo-400 text-xs font-medium mb-6">
               <Zap className="h-3.5 w-3.5" />
               Everything you need
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">Built for Indian Salons</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>Built for Indian Salons</h2>
             <p className="text-gray-400">Every feature designed around how Indian salons actually work.</p>
           </div>
 
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-6 stagger">
 
             {/* Feature 1 */}
             <div className="group bg-[#0a0f1a] border border-white/8 rounded-2xl p-6 hover:border-[#00D084]/30 transition-all hover:bg-[#0d1520]">
@@ -619,17 +637,17 @@ export default function HomePage() {
       <section id="pricing" className="relative py-28 bg-[#080d18]">
         <div className="absolute inset-0 bg-[radial-gradient(ellipse_50%_50%_at_50%_50%,rgba(0,208,132,0.03),transparent)]" />
         <div className="relative mx-auto max-w-7xl px-6">
-          <div className="text-center max-w-2xl mx-auto mb-16">
+          <div className="text-center max-w-2xl mx-auto mb-16 reveal">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-[#00D084]/30 bg-[#00D084]/8 text-[#00D084] text-xs font-medium mb-6">
               <CheckCircle2 className="h-3.5 w-3.5" />
               Simple, transparent pricing
             </div>
-            <h2 className="text-3xl sm:text-4xl font-bold mb-4">One Plan. Everything Included.</h2>
+            <h2 className="text-3xl sm:text-4xl font-bold mb-4" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>One Plan. Everything Included.</h2>
             <p className="text-gray-400">No tiers. No hidden fees. No contracts. Cancel anytime.</p>
           </div>
 
           {/* Single pricing card — centred */}
-          <div className="max-w-lg mx-auto">
+          <div className="max-w-lg mx-auto reveal-scale">
             <div className="relative bg-[#0a0f1a] border border-[#00D084]/40 rounded-2xl overflow-hidden shadow-2xl shadow-[#00D084]/5">
               {/* Top accent line */}
               <div className="h-1 w-full bg-gradient-to-r from-[#00D084] via-emerald-400 to-[#00D084]" />
@@ -639,7 +657,7 @@ export default function HomePage() {
                 <div className="flex items-center justify-between mb-6">
                   <div>
                     <p className="text-xs font-bold text-[#00D084] uppercase tracking-widest mb-1">Snip &amp; Glow</p>
-                    <h3 className="text-2xl font-bold text-white">All-in-One Plan</h3>
+                    <h3 className="text-2xl font-bold text-white" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>All-in-One Plan</h3>
                   </div>
                   <span className="px-3 py-1.5 bg-[#00D084] text-black text-xs font-bold rounded-full">
                     15-Day Free Trial
@@ -727,7 +745,7 @@ export default function HomePage() {
             Join 500+ salons already on autopilot
           </div>
 
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight">
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 leading-tight" style={{ fontFamily: 'var(--font-syne), system-ui, sans-serif' }}>
             Ready to stop losing clients?
           </h2>
           <p className="text-gray-300 text-lg mb-10 max-w-xl mx-auto">
