@@ -85,7 +85,7 @@ export async function createAppointment(
     return { success: false, error: 'Failed to create appointment. Please try again.' };
   }
 
-  revalidatePath('/appointments');
+  revalidatePath('/dashboard/appointments');
   return { success: true, data: data as Appointment };
 }
 
@@ -148,7 +148,7 @@ export async function updateAppointmentStatus(
   }
 
   // 5. Revalidate /appointments path
-  revalidatePath('/appointments');
+  revalidatePath('/dashboard/appointments');
   return { success: true, data: undefined };
 }
 
@@ -202,7 +202,18 @@ export async function getAvailableSlots(
   const openMinutes = openH * 60 + openM;
   const closeMinutes = closeH * 60 + closeM;
 
+  // If booking for today, skip past time slots (use IST timezone)
+  const now = new Date();
+  const istOffset = 5.5 * 60; // IST is UTC+5:30
+  const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
+  const currentISTMinutes = utcMinutes + istOffset;
+  const todayIST = new Date(now.getTime() + istOffset * 60000).toISOString().split('T')[0];
+  const isToday = date === todayIST;
+
   for (let start = openMinutes; start + serviceDuration <= closeMinutes; start += 30) {
+    // Skip slots that have already passed today
+    if (isToday && start <= currentISTMinutes) continue;
+
     const end = start + serviceDuration;
     const startStr = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}:00`;
     const endStr = `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}:00`;

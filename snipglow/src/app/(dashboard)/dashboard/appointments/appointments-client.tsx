@@ -1,12 +1,13 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { formatDateIN, formatTimeIST } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
 import { CalendarView } from './calendar-view';
+import { updateAppointmentStatus } from './actions';
 import {
   Calendar,
   List,
@@ -17,6 +18,9 @@ import {
   User,
   Scissors,
   CalendarCheck,
+  CheckCircle2,
+  XCircle,
+  CircleCheck,
 } from 'lucide-react';
 import type { AppointmentRow } from './page';
 import type { AppointmentStatus, UserRole } from '@/types';
@@ -161,6 +165,17 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
 // =============================================================================
 
 function AppointmentListView({ appointments }: { appointments: AppointmentRow[] }) {
+  const [isPending, startTransition] = useTransition();
+  const [actionId, setActionId] = useState<string | null>(null);
+
+  function handleStatusChange(id: string, newStatus: AppointmentStatus) {
+    setActionId(id);
+    startTransition(async () => {
+      await updateAppointmentStatus(id, newStatus);
+      setActionId(null);
+    });
+  }
+
   const columns: Column<AppointmentRow>[] = [
     {
       key: 'customer',
@@ -215,6 +230,64 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
       key: 'status',
       header: 'Status',
       render: (row) => <StatusBadge status={row.status} />,
+    },
+    {
+      key: 'actions',
+      header: 'Actions',
+      render: (row) => {
+        const loading = isPending && actionId === row.id;
+        return (
+          <div className="flex items-center gap-1">
+            {row.status === 'booked' && (
+              <>
+                <button
+                  onClick={() => handleStatusChange(row.id, 'confirmed')}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
+                  title="Confirm"
+                >
+                  <CheckCircle2 className="size-3.5" />
+                  Confirm
+                </button>
+                <button
+                  onClick={() => handleStatusChange(row.id, 'cancelled')}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                  title="Cancel"
+                >
+                  <XCircle className="size-3.5" />
+                  Cancel
+                </button>
+              </>
+            )}
+            {row.status === 'confirmed' && (
+              <>
+                <button
+                  onClick={() => handleStatusChange(row.id, 'completed')}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                  title="Complete"
+                >
+                  <CircleCheck className="size-3.5" />
+                  Complete
+                </button>
+                <button
+                  onClick={() => handleStatusChange(row.id, 'cancelled')}
+                  disabled={loading}
+                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                  title="Cancel"
+                >
+                  <XCircle className="size-3.5" />
+                  Cancel
+                </button>
+              </>
+            )}
+            {(row.status === 'completed' || row.status === 'cancelled') && (
+              <span className="text-xs text-muted-foreground italic">—</span>
+            )}
+          </div>
+        );
+      },
     },
   ];
 
