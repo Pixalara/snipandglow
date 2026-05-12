@@ -891,7 +891,14 @@ export default function HomePage() {
               <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
               <Link href="/login" className="hover:text-white transition-colors">Login</Link>
             </div>
-            <p className="text-xs text-slate-600">� {new Date().getFullYear()} snipandglow. All rights reserved.</p>
+            <div className="flex flex-wrap gap-x-6 gap-y-2 text-sm text-slate-400">
+              <Link href="/privacy" className="hover:text-white transition-colors">Privacy Policy</Link>
+              <Link href="/terms" className="hover:text-white transition-colors">Terms</Link>
+              <Link href="/refund" className="hover:text-white transition-colors">Refund Policy</Link>
+            </div>
+          </div>
+          <div className="mt-6 pt-6 border-t border-slate-800">
+            <p className="text-xs text-slate-600 text-center">&copy; {new Date().getFullYear()} snipandglow. All rights reserved.</p>
           </div>
         </div>
       </footer>

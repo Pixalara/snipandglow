@@ -1,5 +1,6 @@
 @import "tailwindcss";
 @import "tw-animate-css";
+@plugin "@tailwindcss/typography";
 
 /* shadcn/tailwind.css removed — it injects @import url() mid-file causing PostCSS error */
 /* shadcn components use Tailwind classes which work without this import */
