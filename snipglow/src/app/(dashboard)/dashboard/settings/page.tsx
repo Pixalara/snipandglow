@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
+import { GstSettingsCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -72,6 +73,12 @@ export default async function SettingsPage() {
     now.getTime() - subscriptionEnd.getTime() > 7 * 24 * 60 * 60 * 1000;
 
   const statusCfg = statusConfig[subscriptionStatus];
+
+  // Get GST settings from tenant
+  const settings = (tenant.settings as Record<string, unknown>) ?? {};
+  const gstNumber = (settings.gst_number as string) ?? '';
+  const gstRate = (settings.gst_rate as number) ?? 18;
+  const gstEnabled = (settings.gst_enabled as boolean) ?? false;
 
   return (
     <div className="space-y-6">
@@ -146,6 +153,13 @@ export default async function SettingsPage() {
           )}
         </div>
       </div>
+
+      {/* GST Configuration */}
+      <GstSettingsCard
+        currentGstNumber={gstNumber}
+        currentGstRate={gstRate}
+        gstEnabled={gstEnabled}
+      />
 
       {/* Available Plans */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">

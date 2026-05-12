@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { calculateInvoiceTotal, formatINR } from '@/lib/utils';
 import { searchCustomers, getActiveServices } from '../../appointments/actions';
-import { createInvoice, getCustomerActiveMembership } from '../actions';
+import { createInvoice, getCustomerActiveMembership, getTenantGstSettings } from '../actions';
 import type { Service, PaymentMethod, Membership, CreateInvoiceItemInput } from '@/types';
 
 // =============================================================================
@@ -49,7 +49,7 @@ export default function NewBillingPage() {
 
   // Billing options
   const [gstEnabled, setGstEnabled] = useState(false);
-  const [gstRate] = useState(18); // Default GST rate
+  const [gstRate, setGstRate] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
 
   // UI state
@@ -60,13 +60,18 @@ export default function NewBillingPage() {
     id: string;
   } | null>(null);
 
-  // Load services on mount
+  // Load services and GST settings on mount
   useEffect(() => {
-    async function loadServices() {
-      const svcData = await getActiveServices();
+    async function loadData() {
+      const [svcData, gstSettings] = await Promise.all([
+        getActiveServices(),
+        getTenantGstSettings(),
+      ]);
       setServices(svcData);
+      setGstEnabled(gstSettings.gst_enabled);
+      setGstRate(gstSettings.gst_rate);
     }
-    loadServices();
+    loadData();
   }, []);
 
   // Customer search with debounce
@@ -273,7 +278,6 @@ export default function NewBillingPage() {
                   setCustomerSearch('');
                   setLineItems([]);
                   setActiveMembership(null);
-                  setGstEnabled(false);
                   setPaymentMethod('cash');
                 }}
               >
@@ -495,29 +499,18 @@ export default function NewBillingPage() {
             <CardTitle className="text-base">Billing Options</CardTitle>
           </CardHeader>
           <CardContent className="space-y-4">
-            {/* GST Toggle */}
-            <div className="flex items-center justify-between">
-              <div>
-                <p className="text-sm font-medium text-foreground">Apply GST ({gstRate}%)</p>
-                <p className="text-xs text-muted-foreground">Add Goods & Services Tax to the bill</p>
+            {/* GST Info (auto from settings) */}
+            {gstEnabled && (
+              <div className="flex items-center justify-between rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-3">
+                <div>
+                  <p className="text-sm font-medium text-emerald-800 dark:text-emerald-200">GST ({gstRate}%) will be applied</p>
+                  <p className="text-xs text-emerald-600 dark:text-emerald-400">Configured in Settings</p>
+                </div>
+                <Link href="/dashboard/settings" className="text-xs text-emerald-700 dark:text-emerald-400 hover:underline">
+                  Change
+                </Link>
               </div>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={gstEnabled}
-                aria-label="Toggle GST"
-                onClick={() => setGstEnabled(!gstEnabled)}
-                className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-                  gstEnabled ? 'bg-primary' : 'bg-muted'
-                }`}
-              >
-                <span
-                  className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
-                    gstEnabled ? 'translate-x-5' : 'translate-x-0'
-                  }`}
-                />
-              </button>
-            </div>
+            )}
 
             {/* Payment Method */}
             <div className="space-y-2">

@@ -194,3 +194,31 @@ export async function updateInvoicePayment(
   revalidatePath('/dashboard/billing');
   return { success: true, data: undefined };
 }
+
+/**
+ * Get the tenant's GST settings.
+ */
+export async function getTenantGstSettings(): Promise<{ gst_enabled: boolean; gst_rate: number; gst_number: string | null }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { gst_enabled: false, gst_rate: 0, gst_number: null };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { gst_enabled: false, gst_rate: 0, gst_number: null };
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .single();
+
+  if (!tenant) return { gst_enabled: false, gst_rate: 0, gst_number: null };
+
+  const settings = (tenant.settings as Record<string, unknown>) ?? {};
+  return {
+    gst_enabled: (settings.gst_enabled as boolean) ?? false,
+    gst_rate: (settings.gst_rate as number) ?? 18,
+    gst_number: (settings.gst_number as string) ?? null,
+  };
+}
