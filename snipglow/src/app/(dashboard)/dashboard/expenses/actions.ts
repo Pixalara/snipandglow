@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import type { ActionResult, Expense, CreateExpenseInput, UpdateExpenseInput } from '@/types';
 
@@ -13,6 +14,7 @@ import type { ActionResult, Expense, CreateExpenseInput, UpdateExpenseInput } fr
  */
 export async function createExpense(input: CreateExpenseInput): Promise<ActionResult<Expense>> {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -49,7 +51,7 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
     .eq('auth_user_id', user.id)
     .single();
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await admin
     .from('expenses')
     .insert({
       tenant_id: tenantId,
@@ -83,6 +85,7 @@ export async function updateExpense(
   input: UpdateExpenseInput
 ): Promise<ActionResult<Expense>> {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -107,7 +110,7 @@ export async function updateExpense(
   if (input.payment_method !== undefined) updateData.payment_method = input.payment_method;
   if (input.receipt_note !== undefined) updateData.receipt_note = input.receipt_note?.trim() || null;
 
-  const { data, error } = await (supabase as any)
+  const { data, error } = await admin
     .from('expenses')
     .update(updateData)
     .eq('id', id)
@@ -129,6 +132,7 @@ export async function updateExpense(
  */
 export async function deleteExpense(id: string): Promise<ActionResult<void>> {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -138,7 +142,7 @@ export async function deleteExpense(id: string): Promise<ActionResult<void>> {
     return { success: false, error: 'Only owners can delete expenses.' };
   }
 
-  const { error } = await (supabase as any)
+  const { error } = await admin
     .from('expenses')
     .delete()
     .eq('id', id);

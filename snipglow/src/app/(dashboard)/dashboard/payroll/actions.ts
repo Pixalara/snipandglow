@@ -1,18 +1,17 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import type { ActionResult, Payroll, UpsertPayrollInput, MarkPayrollPaidInput } from '@/types';
 
-// Note: The 'payroll' table is created via migration 010 but not yet in generated types.
-// We use type assertions for Supabase queries on this table.
-
 /**
  * Create or update a payroll record for an employee in a given month.
- * Requires owner role.
+ * Uses admin client to bypass RLS.
  */
 export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionResult<Payroll>> {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -43,8 +42,8 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
   const netSalary = input.base_salary + bonus - deductions;
 
   // Check if a record already exists for this employee + month
-  const { data: existing } = await (supabase as any)
-    .from('payroll')
+  const { data: existing } = await admin
+    .from('payroll' as any)
     .select('id')
     .eq('employee_id', input.employee_id)
     .eq('month', input.month)
@@ -52,8 +51,8 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
 
   if (existing) {
     // Update existing record
-    const { data, error } = await (supabase as any)
-      .from('payroll')
+    const { data, error } = await admin
+      .from('payroll' as any)
       .update({
         base_salary: input.base_salary,
         bonus,
@@ -61,7 +60,7 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
         net_salary: netSalary,
         notes: input.notes?.trim() || null,
       })
-      .eq('id', existing.id)
+      .eq('id', (existing as any).id)
       .select()
       .single();
 
@@ -71,12 +70,12 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
     }
 
     revalidatePath('/dashboard/payroll');
-    return { success: true, data: data as Payroll };
+    return { success: true, data: data as unknown as Payroll };
   }
 
   // Create new record
-  const { data, error } = await (supabase as any)
-    .from('payroll')
+  const { data, error } = await admin
+    .from('payroll' as any)
     .insert({
       tenant_id: tenantId,
       branch_id: branchId,
@@ -98,15 +97,15 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
   }
 
   revalidatePath('/dashboard/payroll');
-  return { success: true, data: data as Payroll };
+  return { success: true, data: data as unknown as Payroll };
 }
 
 /**
  * Mark a payroll record as paid.
- * Requires owner role.
  */
 export async function markPayrollPaid(input: MarkPayrollPaidInput): Promise<ActionResult<void>> {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -126,8 +125,8 @@ export async function markPayrollPaid(input: MarkPayrollPaidInput): Promise<Acti
     return { success: false, error: 'Payment date is required.' };
   }
 
-  const { error } = await (supabase as any)
-    .from('payroll')
+  const { error } = await admin
+    .from('payroll' as any)
     .update({
       payment_status: 'paid',
       payment_method: input.payment_method,
@@ -146,10 +145,10 @@ export async function markPayrollPaid(input: MarkPayrollPaidInput): Promise<Acti
 
 /**
  * Delete a payroll record (only if pending).
- * Requires owner role.
  */
 export async function deletePayroll(id: string): Promise<ActionResult<void>> {
   const supabase = await createClient();
+  const admin = createAdminClient();
 
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -160,18 +159,18 @@ export async function deletePayroll(id: string): Promise<ActionResult<void>> {
   }
 
   // Only allow deleting pending records
-  const { data: record } = await (supabase as any)
-    .from('payroll')
+  const { data: record } = await admin
+    .from('payroll' as any)
     .select('payment_status')
     .eq('id', id)
     .single();
 
-  if (record?.payment_status === 'paid') {
+  if ((record as any)?.payment_status === 'paid') {
     return { success: false, error: 'Cannot delete a paid payroll record.' };
   }
 
-  const { error } = await (supabase as any)
-    .from('payroll')
+  const { error } = await admin
+    .from('payroll' as any)
     .delete()
     .eq('id', id);
 

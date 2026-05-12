@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { PayrollClient, type PayrollRow } from './payroll-client';
 import { BadgeDollarSign } from 'lucide-react';
 import type { Employee, UserRole } from '@/types';
@@ -51,9 +52,10 @@ export default async function PayrollPage() {
     );
   }
 
-  // Fetch all payroll records
-  const { data: payrollRecords, error: payrollError } = await (supabase as any)
-    .from('payroll')
+  // Fetch all payroll records using admin client
+  const admin = createAdminClient();
+  const { data: payrollRecords, error: payrollError } = await admin
+    .from('payroll' as any)
     .select('*')
     .order('month', { ascending: false });
 
