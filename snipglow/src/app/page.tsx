@@ -605,41 +605,164 @@ export default function HomePage() {
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">Start free for 15 days. No credit card required.</p>
           </div>
 
-          <div className="max-w-3xl mx-auto bg-gradient-to-br from-emerald-500 to-emerald-600 rounded-3xl p-6 sm:p-8 text-white shadow-xl shadow-emerald-200/50 reveal">
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 mb-6 sm:mb-8">
-              <div>
-                <p className="text-emerald-100 text-sm font-medium mb-1">All-in-One Plan</p>
+          {/* Two Plan Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto reveal">
+
+            {/* STARTER PLAN */}
+            <div className="relative rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm hover:shadow-lg transition-shadow">
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">STARTER</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Essentials done right.</h3>
+              <p className="text-slate-500 text-sm mb-5">
+                Appointments, billing, client history, staff management. Everything you need to run a clean, organised salon.
+              </p>
+
+              {/* Pricing */}
+              <div className="mb-5">
+                <p className="text-slate-400 text-sm line-through">₹1,499 /mo</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl sm:text-5xl font-bold">₹999</span>
-                  <span className="text-emerald-200 mb-1">/month</span>
+                  <span className="text-4xl font-bold text-slate-900">₹799</span>
+                  <span className="text-slate-500 mb-1">/mo</span>
                 </div>
-                <p className="text-emerald-100 text-xs mt-1">Billed monthly · Cancel anytime</p>
+                <p className="text-slate-400 text-xs mt-1">Billed ₹9,588/year · Cancel in 15 days for full refund</p>
               </div>
+
+              {/* CTA */}
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-white text-emerald-600 font-semibold rounded-xl hover:bg-emerald-50 transition-colors text-sm shadow-sm w-full sm:w-auto"
+                className="flex items-center justify-center w-full py-3 rounded-xl border-2 border-slate-900 text-slate-900 font-semibold text-sm hover:bg-slate-900 hover:text-white transition-colors mb-5"
               >
                 Start Free Trial
-                <ArrowRight className="h-4 w-4" />
               </Link>
+
+              <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />No credit card</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />15-day money-back</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Live in 2 days</span>
+              </div>
+
+              {/* Features */}
+              <div className="space-y-3">
+                {[
+                  'Unlimited appointments & calendar',
+                  'GST billing & WhatsApp invoices',
+                  'Staff scheduling & attendance',
+                  'Client history, notes & preferences',
+                  'Membership & packages',
+                  'Cash register & daily ledger',
+                  'Expense tracking',
+                  'Feedback collection via WhatsApp',
+                  'Business reports & analytics',
+                  'WhatsApp notifications (via Snip & Glow)',
+                  'WhatsApp & in-app support',
+                  'Free setup & training',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-slate-700">{feature}</span>
+                  </div>
+                ))}
+              </div>
             </div>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-              {[
-                'Unlimited appointments',
-                'WhatsApp automation',
-                'GST billing & invoices',
-                'Client loyalty program',
-                'Analytics dashboard',
-                'Multi-branch support',
-                'Staff management',
-                'Priority support',
-              ].map((feature) => (
-                <div key={feature} className="flex items-center gap-2">
-                  <CheckCircle2 className="h-4 w-4 text-emerald-200 shrink-0" />
-                  <span className="text-sm text-white/90">{feature}</span>
+            {/* PRO PLAN */}
+            <div className="relative rounded-2xl border-2 border-emerald-500 bg-white p-6 sm:p-8 shadow-lg shadow-emerald-100/50">
+              {/* Most Popular Badge */}
+              <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
+                <span className="inline-flex items-center rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white shadow-md">
+                  Most Popular
+                </span>
+              </div>
+
+              <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2 mt-2">PRO</p>
+              <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">The full growth engine.</h3>
+              <p className="text-slate-500 text-sm mb-5">
+                WhatsApp automation from your own business number, marketing campaigns, referrals. The complete system for salons that want to grow.
+              </p>
+
+              {/* Pricing */}
+              <div className="mb-5">
+                <div className="flex items-center gap-2">
+                  <p className="text-slate-400 text-sm line-through">₹2,499 /mo</p>
+                  <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">Launch pricing</span>
                 </div>
-              ))}
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-bold text-slate-900">₹1,199</span>
+                  <span className="text-slate-500 mb-1">/mo</span>
+                </div>
+                <p className="text-slate-400 text-xs mt-1">Billed ₹14,388/year · Cancel in 15 days for full refund</p>
+              </div>
+
+              {/* Social proof */}
+              <p className="text-emerald-600 text-xs font-medium mb-4">Most salons recover this cost within 2 weeks from win-back campaigns alone.</p>
+
+              {/* CTA */}
+              <Link
+                href="/signup"
+                className="flex items-center justify-center w-full py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors mb-5"
+              >
+                Start Free Trial
+              </Link>
+
+              <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />No credit card</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />15-day money-back</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Live in 2 days</span>
+              </div>
+
+              {/* Features */}
+              <div className="space-y-3">
+                {[
+                  'Everything in Starter',
+                  'WhatsApp appointment reminders',
+                  'Targeted marketing offers',
+                  'Staff incentives & commissions',
+                  'Referral program with tracking',
+                  'Lead management',
+                  'Client wallet & prepaid packages',
+                  'Manager task list & tracking',
+                  'Online booking portal',
+                  'Priority support & account manager',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-slate-700">{feature}</span>
+                  </div>
+                ))}
+              </div>
+
+              {/* Add-on section */}
+              <div className="mt-6 pt-5 border-t border-slate-200">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">ADD-ON: OWN WABA</p>
+                <div className="space-y-2">
+                  {[
+                    'Win-back & birthday campaigns',
+                    'Service reminder automation',
+                    'Messages from your own number',
+                  ].map((feature) => (
+                    <div key={feature} className="flex items-start gap-2.5">
+                      <CheckCircle2 className="h-3.5 w-3.5 text-slate-400 shrink-0 mt-0.5" />
+                      <span className="text-xs text-slate-500">{feature}</span>
+                    </div>
+                  ))}
+                </div>
+                <p className="text-xs text-slate-400 mt-3">₹3,000 one-time WABA setup · Meta per-message charges apply</p>
+              </div>
+            </div>
+          </div>
+
+          {/* Trust badges */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-12 reveal">
+            <div className="text-center rounded-xl border border-slate-200 p-4">
+              <p className="font-bold text-slate-900 text-sm">₹0 setup fee</p>
+              <p className="text-xs text-slate-500 mt-1">Competitors charge ₹2,000+ before you even see the software. We set up everything for free.</p>
+            </div>
+            <div className="text-center rounded-xl border border-slate-200 p-4">
+              <p className="font-bold text-slate-900 text-sm">No additional GST</p>
+              <p className="text-xs text-slate-500 mt-1">The price shown is exactly what you pay — nothing added at checkout.</p>
+            </div>
+            <div className="text-center rounded-xl border border-slate-200 p-4">
+              <p className="font-bold text-slate-900 text-sm">15-day full refund</p>
+              <p className="text-xs text-slate-500 mt-1">If Snip & Glow doesn&apos;t work for you in 15 days, we refund your payment. No questions asked.</p>
             </div>
           </div>
         </div>
