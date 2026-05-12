@@ -51,7 +51,7 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Action
     return { success: false, error: 'Failed to create customer. Please try again.' };
   }
 
-  revalidatePath('/customers');
+  revalidatePath('/dashboard/customers');
   return { success: true, data: data as Customer };
 }
 
@@ -90,8 +90,8 @@ export async function updateCustomer(id: string, input: UpdateCustomerInput): Pr
     return { success: false, error: 'Failed to update customer. Please try again.' };
   }
 
-  revalidatePath('/customers');
-  revalidatePath(`/customers/${id}`);
+  revalidatePath('/dashboard/customers');
+  revalidatePath(`/dashboard/customers/${id}`);
   return { success: true, data: data as Customer };
 }
 
