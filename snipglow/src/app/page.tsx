@@ -56,6 +56,8 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
 }
 
 export default function HomePage() {
+  const [showDemoModal, setShowDemoModal] = useState(false);
+
   useEffect(() => {
     const observer = new IntersectionObserver(
       (entries) => {
@@ -821,6 +823,29 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== BOOK A DEMO SECTION ===== */}
+      <section className="relative py-16 sm:py-20 overflow-hidden" style={{ background: 'linear-gradient(135deg, #c084fc 0%, #1e1b4b 30%, #0f172a 50%, #1e1b4b 70%, #f472b6 100%)' }}>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+            Ready to run your salon like this?
+          </h2>
+          <p className="text-slate-300 mb-8 text-sm sm:text-base max-w-lg mx-auto">
+            Get your own Snip & Glow dashboard and start automating bookings, billing, and growth — all in one place.
+          </p>
+          <button
+            onClick={() => setShowDemoModal(true)}
+            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white text-base shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+          >
+            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            Book a Live Demo
+          </button>
+        </div>
+      </section>
+
+      {/* Demo Booking Modal */}
+      {showDemoModal && <DemoBookingModal onClose={() => setShowDemoModal(false)} />}
+
       {/* ===== FOOTER ===== */}
       <footer className="bg-slate-950 py-10 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -841,6 +866,226 @@ export default function HomePage() {
         </div>
       </footer>
 
+    </div>
+  );
+}
+
+// =============================================================================
+// Demo Booking Modal
+// =============================================================================
+
+const TIME_SLOTS = [
+  '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM',
+  '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
+];
+
+function DemoBookingModal({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [salonName, setSalonName] = useState('');
+  const [businessType, setBusinessType] = useState('');
+  const [date, setDate] = useState('');
+  const [city, setCity] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const isFormValid = name.trim() && phone.trim() && date && selectedSlot;
+
+  function getMinDate() {
+    const d = new Date();
+    d.setDate(d.getDate() + 1);
+    return d.toISOString().split('T')[0];
+  }
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isFormValid) return;
+    setSubmitting(true);
+
+    // Simulate API call (replace with actual endpoint later)
+    await new Promise((resolve) => setTimeout(resolve, 1500));
+
+    setSubmitting(false);
+    setSuccess(true);
+  }
+
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative z-10 w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 mx-auto mb-4">
+            <CheckCircle2 className="size-8 text-emerald-600" />
+          </div>
+          <h3 className="text-xl font-bold text-slate-900 mb-2">Demo Booked!</h3>
+          <p className="text-slate-500 text-sm mb-6">
+            We&apos;ll call you on <span className="font-medium text-slate-700">{date}</span> at{' '}
+            <span className="font-medium text-slate-700">{selectedSlot}</span>. Check your WhatsApp for confirmation.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
+        {/* Header with gradient */}
+        <div className="relative px-6 py-5" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 flex size-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+            aria-label="Close"
+          >
+            <svg className="size-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <h2 className="text-xl font-bold text-white">Book a Live Demo</h2>
+          <p className="text-white/80 text-sm mt-1">Pick a time that works for you</p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+          {/* Row 1: Name + Phone */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Your Name"
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                required
+              />
+            </div>
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 5a2 2 0 012-2h3.28a1 1 0 01.948.684l1.498 4.493a1 1 0 01-.502 1.21l-2.257 1.13a11.042 11.042 0 005.516 5.516l1.13-2.257a1 1 0 011.21-.502l4.493 1.498a1 1 0 01.684.949V19a2 2 0 01-2 2h-1C9.716 21 3 14.284 3 6V5z" />
+              </svg>
+              <input
+                type="tel"
+                placeholder="Mobile Number"
+                value={phone}
+                onChange={(e) => setPhone(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                required
+              />
+            </div>
+          </div>
+
+          {/* Row 2: Salon Name + Business Type */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+              </svg>
+              <input
+                type="text"
+                placeholder="Salon/Business Name"
+                value={salonName}
+                onChange={(e) => setSalonName(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+              />
+            </div>
+            <select
+              value={businessType}
+              onChange={(e) => setBusinessType(e.target.value)}
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+            >
+              <option value="">Select Business Type</option>
+              <option value="salon">Salon</option>
+              <option value="spa">Spa</option>
+              <option value="barbershop">Barbershop</option>
+              <option value="beauty_parlour">Beauty Parlour</option>
+              <option value="wellness_center">Wellness Center</option>
+              <option value="other">Other</option>
+            </select>
+          </div>
+
+          {/* Row 3: Date + City */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+              <input
+                type="date"
+                value={date}
+                onChange={(e) => setDate(e.target.value)}
+                min={getMinDate()}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                required
+              />
+            </div>
+            <div className="relative">
+              <svg className="absolute left-3 top-1/2 -translate-y-1/2 size-4 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z" />
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 11a3 3 0 11-6 0 3 3 0 016 0z" />
+              </svg>
+              <input
+                type="text"
+                placeholder="City / Area"
+                value={city}
+                onChange={(e) => setCity(e.target.value)}
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+              />
+            </div>
+          </div>
+
+          {/* Time Slots */}
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-widest text-slate-500 mb-3">Select Time Slot</p>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
+              {TIME_SLOTS.map((slot) => (
+                <button
+                  key={slot}
+                  type="button"
+                  onClick={() => setSelectedSlot(slot)}
+                  className={`rounded-xl border py-2.5 px-2 text-sm font-medium transition-all ${
+                    selectedSlot === slot
+                      ? 'border-pink-500 bg-pink-50 text-pink-600 shadow-sm'
+                      : 'border-slate-200 text-slate-600 hover:border-pink-300 hover:bg-pink-50/50'
+                  }`}
+                >
+                  {slot}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Submit */}
+          <button
+            type="submit"
+            disabled={!isFormValid || submitting}
+            className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
+            style={{
+              background: isFormValid ? 'linear-gradient(135deg, #f97316, #ec4899)' : '#e2e8f0',
+              color: isFormValid ? 'white' : '#94a3b8',
+            }}
+          >
+            {submitting ? (
+              <span className="flex items-center justify-center gap-2">
+                <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                Booking...
+              </span>
+            ) : (
+              'Book Demo'
+            )}
+          </button>
+        </form>
+      </div>
     </div>
   );
 }
