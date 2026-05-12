@@ -57,19 +57,25 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Hero Welcome Section */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-salon-rose/10 via-salon-rose/5 to-transparent border border-salon-rose/20 p-6 md:p-8">
-        <div className="relative z-10">
-          <p className="text-sm font-medium text-salon-rose">{greeting}</p>
-          <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
-            {userName.split(' ')[0]} ✨
-          </h1>
-          <p className="text-muted-foreground mt-2 max-w-md">
-            Here&apos;s your salon overview. Manage appointments, customers, and grow your business.
-          </p>
+      <div className="relative overflow-hidden rounded-2xl border border-transparent p-6 md:p-8" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%)' }}>
+        <div className="absolute inset-0 bg-black/30" />
+        <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-sm font-medium text-white/80">{greeting}</p>
+            <h1 className="text-2xl md:text-3xl font-bold text-white mt-1">
+              {userName.split(' ')[0]}
+            </h1>
+            <p className="text-white/70 mt-2 max-w-md text-sm">
+              Here&apos;s your salon overview. Manage appointments, customers, and grow your business.
+            </p>
+          </div>
+          <div className="hidden md:block max-w-xs text-right">
+            <p className="text-white/90 text-sm italic leading-relaxed">
+              &ldquo;Your most unhappy customers are your greatest source of learning.&rdquo;
+            </p>
+            <p className="text-white/60 text-xs mt-2">— Bill Gates</p>
+          </div>
         </div>
-        {/* Decorative circles */}
-        <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-salon-rose/5" />
-        <div className="absolute -right-4 top-12 h-24 w-24 rounded-full bg-salon-gold/5" />
       </div>
 
       {/* Stats Grid */}
