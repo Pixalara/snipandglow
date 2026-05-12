@@ -268,11 +268,6 @@ export async function completeAndGenerateBill(
     line_total: service.price,
   });
 
-  // 8. Update customer stats
-  await supabase.rpc('increment_customer_visits', { p_customer_id: appointment.customer_id }).catch(() => {
-    // Non-critical — if the RPC doesn't exist, skip
-  });
-
   revalidatePath('/dashboard/appointments');
   revalidatePath('/dashboard/billing');
   return { success: true, data: { invoiceId: invoice.id, invoiceNumber: invoice.invoice_number } };
