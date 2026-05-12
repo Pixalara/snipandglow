@@ -95,6 +95,7 @@ export default function HomePage() {
             <a href="#features" className="hover:text-white transition-colors">Features</a>
             <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
             <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
@@ -128,6 +129,7 @@ export default function HomePage() {
             <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Features</a>
             <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">How It Works</a>
             <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Pricing</a>
+            <Link href="/blog" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Blog</Link>
             <div className="pt-2 border-t border-slate-800 flex flex-col gap-2">
               <button onClick={() => { setMobileMenuOpen(false); setShowDemoModal(true); }} className="flex items-center justify-center py-2.5 text-sm text-white border border-slate-600 rounded-full hover:border-pink-400 transition-all">
                 Live Demo
