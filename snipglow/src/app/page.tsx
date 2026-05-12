@@ -80,38 +80,39 @@ export default function HomePage() {
     <div className="min-h-screen bg-white text-slate-900 font-sans antialiased">
 
       {/* ===== NAVBAR ===== */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-white/95 backdrop-blur-xl border-b border-slate-100 shadow-sm">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 sm:py-4 flex items-center justify-between">
+      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl shadow-lg shadow-slate-900/10">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2 min-w-0">
-            <span className="text-base sm:text-lg font-bold tracking-tight">
-              <span className="text-slate-900">snipand</span>
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+            <span className="text-lg sm:text-xl font-bold tracking-tight">
+              <span className="text-white">snipand</span>
+              <span className="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">glow</span>
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-8 text-sm text-slate-600">
-            <a href="#features" className="hover:text-emerald-600 transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-emerald-600 transition-colors">How It Works</a>
-            <a href="#pricing" className="hover:text-emerald-600 transition-colors">Pricing</a>
+          <div className="hidden md:flex items-center gap-7 text-sm text-slate-300">
+            <a href="#features" className="hover:text-white transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
+            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
+            <button
+              onClick={() => setShowDemoModal(true)}
+              className="hidden sm:inline-flex px-4 py-2 text-sm text-white border border-slate-600 rounded-full hover:border-pink-400 hover:text-pink-300 transition-all"
+            >
+              Live Demo
+            </button>
             <Link
               href="/login"
-              className="hidden sm:inline-flex px-3 sm:px-4 py-2 text-sm text-slate-700 border border-slate-200 rounded-lg hover:border-emerald-400 hover:text-emerald-600 transition-all"
+              className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
+              style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
             >
               Login
-            </Link>
-            <Link
-              href="/signup"
-              className="hidden sm:inline-flex px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm whitespace-nowrap"
-            >
-              Start Free Trial
             </Link>
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg text-white hover:bg-slate-800 transition-colors"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -121,16 +122,16 @@ export default function HomePage() {
 
         {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-4 space-y-3">
-            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors">Features</a>
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors">How It Works</a>
-            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors">Pricing</a>
-            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm text-slate-700 border border-slate-200 rounded-lg hover:border-emerald-400 hover:text-emerald-600 transition-all">
+          <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 py-4 space-y-3">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Features</a>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">How It Works</a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Pricing</a>
+            <div className="pt-2 border-t border-slate-800 flex flex-col gap-2">
+              <button onClick={() => { setMobileMenuOpen(false); setShowDemoModal(true); }} className="flex items-center justify-center py-2.5 text-sm text-white border border-slate-600 rounded-full hover:border-pink-400 transition-all">
+                Live Demo
+              </button>
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm font-semibold text-white rounded-full" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
                 Login
-              </Link>
-              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">
-                Start Free Trial
               </Link>
             </div>
           </div>
