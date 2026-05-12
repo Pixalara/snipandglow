@@ -9,6 +9,7 @@ export type Resource =
   | 'dashboard'
   | 'appointments'
   | 'customers'
+  | 'leads'
   | 'services'
   | 'billing'
   | 'expenses'
@@ -36,6 +37,7 @@ const permissionMatrix: Record<UserRole, Partial<Record<Resource, Action[]>>> = 
     dashboard: ['read', 'create', 'update', 'delete'],
     appointments: ['read', 'create', 'update', 'delete'],
     customers: ['read', 'create', 'update', 'delete'],
+    leads: ['read', 'create', 'update', 'delete'],
     services: ['read', 'create', 'update', 'delete'],
     billing: ['read', 'create', 'update', 'delete'],
     expenses: ['read', 'create', 'update', 'delete'],
@@ -51,6 +53,7 @@ const permissionMatrix: Record<UserRole, Partial<Record<Resource, Action[]>>> = 
     dashboard: ['read'],
     appointments: ['read', 'create', 'update'],
     customers: ['read', 'create', 'update'],
+    leads: ['read', 'create', 'update'],
     services: ['read', 'create', 'update'],
     billing: ['read', 'create'],
     expenses: ['read', 'create'],
@@ -61,6 +64,7 @@ const permissionMatrix: Record<UserRole, Partial<Record<Resource, Action[]>>> = 
     dashboard: ['read'],
     appointments: ['read'],
     customers: ['read'],
+    leads: ['read'],
     services: ['read'],
   },
 };

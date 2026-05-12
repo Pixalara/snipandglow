@@ -345,6 +345,60 @@ export interface MarkPayrollPaidInput {
 }
 
 // =============================================================================
+// Lead Management Types
+// =============================================================================
+
+/** Lead status lifecycle */
+export type LeadStatus = 'new' | 'contacted' | 'interested' | 'not_interested' | 'converted';
+
+/** Lead acquisition source */
+export type LeadSource = 'walk_in' | 'social_media' | 'referral' | 'website' | 'whatsapp' | 'other';
+
+/** A potential customer who hasn't booked yet */
+export interface Lead {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  name: string;
+  phone: string;
+  email: string | null;
+  source: LeadSource;
+  status: LeadStatus;
+  notes: string | null;
+  interested_services: string[];
+  follow_up_date: string | null;
+  assigned_to: string | null;
+  converted_customer_id: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** Input for creating a lead */
+export interface CreateLeadInput {
+  name: string;
+  phone: string;
+  email?: string;
+  source: LeadSource;
+  notes?: string;
+  interested_services?: string[];
+  follow_up_date?: string;
+  assigned_to?: string;
+}
+
+/** Input for updating a lead */
+export interface UpdateLeadInput {
+  name?: string;
+  phone?: string;
+  email?: string | null;
+  source?: LeadSource;
+  status?: LeadStatus;
+  notes?: string | null;
+  interested_services?: string[];
+  follow_up_date?: string | null;
+  assigned_to?: string | null;
+}
+
+// =============================================================================
 // Server Action Response Type
 // =============================================================================
 
