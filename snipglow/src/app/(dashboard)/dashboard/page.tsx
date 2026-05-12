@@ -2,6 +2,16 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatINR } from '@/lib/utils';
+import {
+  Calendar,
+  Users,
+  Scissors,
+  Receipt,
+  Plus,
+  TrendingUp,
+  Clock,
+  Star,
+} from 'lucide-react';
 import type { UserRole } from '@/types';
 
 export default async function DashboardPage() {
@@ -14,111 +24,255 @@ export default async function DashboardPage() {
 
   const userName = user.user_metadata?.name ?? user.email ?? 'there';
   const tenantId = user.user_metadata?.tenant_id;
-  const branchId = user.user_metadata?.branch_id;
 
   // Fetch quick stats
   let customerCount = 0;
   let appointmentCount = 0;
   let serviceCount = 0;
   let todayAppointments = 0;
+  let recentCustomers: { name: string; phone: string }[] = [];
 
   if (tenantId) {
     const today = new Date().toISOString().split('T')[0];
 
-    const [custRes, apptRes, svcRes, todayRes] = await Promise.all([
+    const [custRes, apptRes, svcRes, todayRes, recentRes] = await Promise.all([
       supabase.from('customers').select('id', { count: 'exact', head: true }),
       supabase.from('appointments').select('id', { count: 'exact', head: true }),
       supabase.from('services').select('id', { count: 'exact', head: true }).eq('is_active', true),
       supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', today).in('status', ['booked', 'confirmed']),
+      supabase.from('customers').select('name, phone').order('created_at', { ascending: false }).limit(5),
     ]);
 
     customerCount = custRes.count ?? 0;
     appointmentCount = apptRes.count ?? 0;
     serviceCount = svcRes.count ?? 0;
     todayAppointments = todayRes.count ?? 0;
+    recentCustomers = (recentRes.data ?? []) as { name: string; phone: string }[];
   }
 
+  // Get greeting based on time
+  const hour = new Date().getHours();
+  const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
+
   return (
-    <div className="space-y-6">
-      {/* Welcome */}
-      <div>
-        <h1 className="text-2xl font-bold text-foreground">
-          Welcome back, {userName.split(' ')[0]}!
-        </h1>
-        <p className="text-muted-foreground mt-1">
-          Here&apos;s what&apos;s happening at your salon today.
-        </p>
+    <div className="space-y-8">
+      {/* Hero Welcome Section */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-salon-rose/10 via-salon-rose/5 to-transparent border border-salon-rose/20 p-6 md:p-8">
+        <div className="relative z-10">
+          <p className="text-sm font-medium text-salon-rose">{greeting}</p>
+          <h1 className="text-2xl md:text-3xl font-bold text-foreground mt-1">
+            {userName.split(' ')[0]} ✨
+          </h1>
+          <p className="text-muted-foreground mt-2 max-w-md">
+            Here&apos;s your salon overview. Manage appointments, customers, and grow your business.
+          </p>
+        </div>
+        {/* Decorative circles */}
+        <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-salon-rose/5" />
+        <div className="absolute -right-4 top-12 h-24 w-24 rounded-full bg-salon-gold/5" />
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
         <StatCard
-          title="Today's Appointments"
+          icon={<Clock className="size-5" />}
+          title="Today"
           value={String(todayAppointments)}
+          subtitle="appointments"
           href="/dashboard/appointments"
+          gradient="from-blue-500/10 to-blue-600/5"
+          iconColor="text-blue-600 dark:text-blue-400"
         />
         <StatCard
-          title="Total Customers"
+          icon={<Users className="size-5" />}
+          title="Customers"
           value={String(customerCount)}
+          subtitle="total"
           href="/dashboard/customers"
+          gradient="from-emerald-500/10 to-emerald-600/5"
+          iconColor="text-emerald-600 dark:text-emerald-400"
         />
         <StatCard
-          title="Total Appointments"
+          icon={<Calendar className="size-5" />}
+          title="Appointments"
           value={String(appointmentCount)}
+          subtitle="all time"
           href="/dashboard/appointments"
+          gradient="from-violet-500/10 to-violet-600/5"
+          iconColor="text-violet-600 dark:text-violet-400"
         />
         <StatCard
-          title="Active Services"
+          icon={<Scissors className="size-5" />}
+          title="Services"
           value={String(serviceCount)}
+          subtitle="active"
           href="/dashboard/services"
+          gradient="from-amber-500/10 to-amber-600/5"
+          iconColor="text-amber-600 dark:text-amber-400"
         />
       </div>
 
-      {/* Quick Actions */}
-      <div>
-        <h2 className="text-lg font-semibold text-foreground mb-3">Quick Actions</h2>
-        <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
-          <QuickAction
-            title="New Appointment"
-            description="Book a new appointment"
-            href="/dashboard/appointments/new"
-          />
-          <QuickAction
-            title="New Customer"
-            description="Add a new customer"
-            href="/dashboard/customers/new"
-          />
-          <QuickAction
-            title="Create Bill"
-            description="Generate a new invoice"
-            href="/dashboard/billing/new"
-          />
+      {/* Quick Actions + Recent Activity */}
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+        {/* Quick Actions */}
+        <div className="lg:col-span-2 space-y-4">
+          <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+            <QuickActionCard
+              icon={<Calendar className="size-5" />}
+              title="New Appointment"
+              description="Book a slot"
+              href="/dashboard/appointments/new"
+              color="bg-blue-50 text-blue-600 dark:bg-blue-900/20 dark:text-blue-400"
+            />
+            <QuickActionCard
+              icon={<Users className="size-5" />}
+              title="New Customer"
+              description="Add to database"
+              href="/dashboard/customers/new"
+              color="bg-emerald-50 text-emerald-600 dark:bg-emerald-900/20 dark:text-emerald-400"
+            />
+            <QuickActionCard
+              icon={<Receipt className="size-5" />}
+              title="Create Bill"
+              description="Generate invoice"
+              href="/dashboard/billing/new"
+              color="bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400"
+            />
+          </div>
+        </div>
+
+        {/* Recent Customers */}
+        <div className="space-y-4">
+          <div className="flex items-center justify-between">
+            <h2 className="text-lg font-semibold text-foreground">Recent Customers</h2>
+            <Link
+              href="/dashboard/customers"
+              className="text-xs font-medium text-salon-rose hover:text-salon-rose/80 transition-colors"
+            >
+              View all →
+            </Link>
+          </div>
+          <div className="rounded-xl border border-border bg-card overflow-hidden">
+            {recentCustomers.length === 0 ? (
+              <div className="flex flex-col items-center justify-center p-8 text-center">
+                <div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
+                  <Users className="size-5 text-muted-foreground" />
+                </div>
+                <p className="text-sm text-muted-foreground">No customers yet</p>
+                <Link
+                  href="/dashboard/customers/new"
+                  className="mt-2 text-xs font-medium text-salon-rose hover:text-salon-rose/80"
+                >
+                  Add your first customer →
+                </Link>
+              </div>
+            ) : (
+              <ul className="divide-y divide-border">
+                {recentCustomers.map((customer, i) => (
+                  <li key={i} className="flex items-center gap-3 px-4 py-3 hover:bg-muted/50 transition-colors">
+                    <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-salon-rose/20 to-salon-gold/20 text-xs font-semibold text-salon-rose">
+                      {customer.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="min-w-0 flex-1">
+                      <p className="text-sm font-medium text-foreground truncate">{customer.name}</p>
+                      <p className="text-xs text-muted-foreground">{customer.phone}</p>
+                    </div>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* Tips Section */}
+      <div className="rounded-xl border border-border bg-gradient-to-r from-salon-gold/5 to-transparent p-5">
+        <div className="flex items-start gap-3">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-salon-gold/10">
+            <Star className="size-4 text-salon-gold" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-foreground">Pro Tip</p>
+            <p className="text-sm text-muted-foreground mt-0.5">
+              Add your services and staff members to start booking appointments. WhatsApp automation will be available soon!
+            </p>
+          </div>
         </div>
       </div>
     </div>
   );
 }
 
-function StatCard({ title, value, href }: { title: string; value: string; href: string }) {
+// =============================================================================
+// Stat Card
+// =============================================================================
+
+function StatCard({
+  icon,
+  title,
+  value,
+  subtitle,
+  href,
+  gradient,
+  iconColor,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  value: string;
+  subtitle: string;
+  href: string;
+  gradient: string;
+  iconColor: string;
+}) {
   return (
     <Link
       href={href}
-      className="rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50"
+      className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md hover:border-border/80 hover:-translate-y-0.5"
     >
-      <p className="text-sm text-muted-foreground">{title}</p>
-      <p className="text-2xl font-bold text-foreground mt-1">{value}</p>
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
+      <div className="relative">
+        <div className={`flex size-9 items-center justify-center rounded-lg bg-background/80 shadow-sm ${iconColor}`}>
+          {icon}
+        </div>
+        <p className="text-2xl font-bold text-foreground mt-3">{value}</p>
+        <p className="text-xs text-muted-foreground mt-0.5">
+          <span className="font-medium">{title}</span> · {subtitle}
+        </p>
+      </div>
     </Link>
   );
 }
 
-function QuickAction({ title, description, href }: { title: string; description: string; href: string }) {
+// =============================================================================
+// Quick Action Card
+// =============================================================================
+
+function QuickActionCard({
+  icon,
+  title,
+  description,
+  href,
+  color,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  description: string;
+  href: string;
+  color: string;
+}) {
   return (
     <Link
       href={href}
-      className="flex items-center gap-3 rounded-lg border border-border bg-card p-4 transition-colors hover:bg-muted/50"
+      className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md hover:border-border/80 hover:-translate-y-0.5"
     >
+      <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
+        {icon}
+      </div>
       <div>
-        <p className="text-sm font-medium text-foreground">{title}</p>
+        <p className="text-sm font-semibold text-foreground group-hover:text-salon-rose transition-colors">
+          {title}
+        </p>
         <p className="text-xs text-muted-foreground">{description}</p>
       </div>
     </Link>
