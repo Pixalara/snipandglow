@@ -769,30 +769,55 @@ export default function HomePage() {
       </section>
 
       {/* ===== CTA BANNER ===== */}
-      <section className="py-16 sm:py-24 bg-slate-900">
-        <div className="mx-auto max-w-4xl px-4 sm:px-6 text-center reveal">
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
-            Ready to put your salon on autopilot?
-          </h2>
-          <p className="text-slate-400 mb-8 sm:mb-10 text-sm sm:text-base max-w-xl mx-auto">
-            Join 500+ salon owners who save hours every week and bring clients back automatically.
-          </p>
-          <div className="flex flex-col sm:flex-row items-center justify-center gap-3 sm:gap-4">
-            <Link
-              href="/signup"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-colors text-sm shadow-md shadow-emerald-900/30"
-            >
-              Start Free 15-Day Trial
-              <ArrowRight className="h-4 w-4" />
-            </Link>
-            <a
-              href="#features"
-              className="w-full sm:w-auto inline-flex items-center justify-center gap-2 px-8 py-3.5 border border-slate-700 text-slate-300 rounded-xl hover:border-slate-500 hover:text-white transition-all text-sm"
-            >
-              See All Features
-            </a>
+      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
+        {/* Subtle radial glow */}
+        <div className="absolute inset-0 flex items-center justify-center">
+          <div className="w-[600px] h-[400px] rounded-full bg-gradient-to-r from-violet-600/20 via-pink-500/10 to-orange-500/20 blur-3xl" />
+        </div>
+
+        <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 text-center reveal">
+          {/* Badge */}
+          <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-1.5 mb-8">
+            <span className="text-lg">✨</span>
+            <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-violet-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
+              Ready for the future?
+            </span>
           </div>
-          <p className="text-slate-500 text-xs mt-6">No credit card required · Cancel anytime · Setup in 5 minutes</p>
+
+          {/* Heading */}
+          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            See your salon running<br />
+            <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-violet-500 bg-clip-text text-transparent italic">
+              on autopilot.
+            </span>
+          </h2>
+
+          {/* Subtext */}
+          <p className="text-slate-400 mb-10 text-sm sm:text-base max-w-lg mx-auto">
+            From smart bookings to WhatsApp automation — get everything you need in one powerful dashboard.
+          </p>
+
+          {/* CTA Button with gradient */}
+          <Link
+            href="/signup"
+            className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-semibold text-white text-base shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #f97316, #ec4899, #8b5cf6)' }}
+          >
+            <Zap className="h-5 w-5" />
+            Get Started
+          </Link>
+
+          {/* Trust points */}
+          <div className="flex items-center justify-center gap-6 mt-8 text-sm text-slate-400">
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              No credit card required
+            </span>
+            <span className="flex items-center gap-1.5">
+              <Zap className="h-4 w-4 text-amber-400" />
+              Setup in 10 mins
+            </span>
+          </div>
         </div>
       </section>
 
