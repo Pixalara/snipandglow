@@ -1,17 +1,21 @@
 'use client';
 
+import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { formatINR, formatDateIN } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
+import { updateInvoicePayment } from './actions';
 import {
   Receipt,
   Plus,
   CreditCard,
   Banknote,
   Smartphone,
+  Pencil,
+  CheckCircle2,
 } from 'lucide-react';
-import type { DeliveryStatus, PaymentMethod } from '@/types';
+import type { PaymentMethod, PaymentStatus } from '@/types';
 
 /** Invoice row shape (serialized-safe) */
 export interface InvoiceRow {
@@ -21,7 +25,7 @@ export interface InvoiceRow {
   created_at: string;
   total: number;
   payment_method: PaymentMethod;
-  delivery_status: DeliveryStatus;
+  payment_status: PaymentStatus;
 }
 
 interface InvoicesTableProps {
@@ -36,6 +40,8 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 };
 
 export function InvoicesTable({ invoices }: InvoicesTableProps) {
+  const [editTarget, setEditTarget] = useState<InvoiceRow | null>(null);
+
   const columns: Column<InvoiceRow>[] = [
     {
       key: 'invoice_number',
@@ -84,9 +90,23 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       },
     },
     {
-      key: 'delivery_status',
-      header: 'Delivery',
-      render: (row) => <DeliveryStatusBadge status={row.delivery_status} />,
+      key: 'payment_status',
+      header: 'Status',
+      render: (row) => <PaymentStatusBadge status={row.payment_status} />,
+    },
+    {
+      key: 'actions',
+      header: '',
+      render: (row) => (
+        <button
+          onClick={() => setEditTarget(row)}
+          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+          title="Edit invoice"
+        >
+          <Pencil className="size-3.5" />
+          Edit
+        </button>
+      ),
     },
   ];
 
@@ -111,41 +131,41 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
   }
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden">
-      <DataTable
-        columns={columns}
-        data={invoices}
-        getRowKey={(row) => row.id}
-        emptyMessage="No invoices yet"
-      />
-    </div>
+    <>
+      <div className="rounded-xl border border-border overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={invoices}
+          getRowKey={(row) => row.id}
+          emptyMessage="No invoices yet"
+        />
+      </div>
+
+      {editTarget && (
+        <EditInvoiceModal invoice={editTarget} onClose={() => setEditTarget(null)} />
+      )}
+    </>
   );
 }
 
-function DeliveryStatusBadge({ status }: { status: string }) {
+// =============================================================================
+// Payment Status Badge
+// =============================================================================
+
+function PaymentStatusBadge({ status }: { status: string }) {
   const config: Record<string, { label: string; className: string; dotColor: string }> = {
-    pending: {
-      label: 'Pending',
+    paid: {
+      label: 'Paid',
+      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+      dotColor: 'bg-emerald-500',
+    },
+    partial: {
+      label: 'Partial',
       className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
       dotColor: 'bg-yellow-500',
     },
-    sent: {
-      label: 'Sent',
-      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-      dotColor: 'bg-blue-500',
-    },
-    delivered: {
-      label: 'Delivered',
-      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-      dotColor: 'bg-emerald-500',
-    },
-    read: {
-      label: 'Read',
-      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-      dotColor: 'bg-emerald-500',
-    },
-    failed: {
-      label: 'Failed',
+    pending: {
+      label: 'Pending',
       className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
       dotColor: 'bg-red-500',
     },
@@ -162,5 +182,142 @@ function DeliveryStatusBadge({ status }: { status: string }) {
       <span className={`size-1.5 rounded-full ${dotColor}`} />
       {label}
     </span>
+  );
+}
+
+// =============================================================================
+// Edit Invoice Modal
+// =============================================================================
+
+function EditInvoiceModal({ invoice, onClose }: { invoice: InvoiceRow; onClose: () => void }) {
+  const [isPending, startTransition] = useTransition();
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>(invoice.payment_method);
+  const [paymentStatus, setPaymentStatus] = useState<PaymentStatus>(invoice.payment_status);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  function handleSave() {
+    setError('');
+    startTransition(async () => {
+      const result = await updateInvoicePayment(invoice.id, {
+        payment_method: paymentMethod,
+        payment_status: paymentStatus,
+      });
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(onClose, 1000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+        <div className="space-y-5">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/20">
+              <Pencil className="size-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Edit Invoice</h2>
+              <p className="text-xs text-muted-foreground font-mono">{invoice.invoice_number}</p>
+            </div>
+          </div>
+
+          {/* Summary */}
+          <div className="rounded-xl bg-muted/50 p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Customer</span>
+              <span className="font-medium text-foreground">{invoice.customer_name}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Total</span>
+              <span className="font-bold text-foreground">{formatINR(invoice.total)}</span>
+            </div>
+          </div>
+
+          {success && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+              <CheckCircle2 className="size-4 text-emerald-600" />
+              <p className="text-sm text-emerald-800 dark:text-emerald-200">Invoice updated!</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          {/* Payment Method */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Payment Method</p>
+            <div className="flex gap-2" role="radiogroup">
+              {(['cash', 'upi', 'card'] as PaymentMethod[]).map((method) => (
+                <label
+                  key={method}
+                  className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                    paymentMethod === method
+                      ? 'border-primary bg-primary/5 text-primary font-medium shadow-sm'
+                      : 'border-border text-muted-foreground hover:border-foreground/30'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="edit-payment-method"
+                    value={method}
+                    checked={paymentMethod === method}
+                    onChange={() => setPaymentMethod(method)}
+                    className="sr-only"
+                  />
+                  {method === 'upi' ? 'UPI' : method.charAt(0).toUpperCase() + method.slice(1)}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Payment Status */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Payment Status</p>
+            <div className="flex gap-2" role="radiogroup">
+              {(['paid', 'partial', 'pending'] as PaymentStatus[]).map((status) => (
+                <label
+                  key={status}
+                  className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-1.5 rounded-xl border px-3 py-2.5 text-sm transition-all capitalize ${
+                    paymentStatus === status
+                      ? 'border-primary bg-primary/5 text-primary font-medium shadow-sm'
+                      : 'border-border text-muted-foreground hover:border-foreground/30'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="edit-payment-status"
+                    value={status}
+                    checked={paymentStatus === status}
+                    onChange={() => setPaymentStatus(status)}
+                    className="sr-only"
+                  />
+                  {status}
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="outline" className="rounded-xl" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button className="rounded-xl" onClick={handleSave} disabled={isPending || success}>
+              {isPending ? 'Saving...' : 'Save Changes'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
   );
 }

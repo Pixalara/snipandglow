@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
 import { Receipt, Plus } from 'lucide-react';
-import type { DeliveryStatus, PaymentMethod, UserRole } from '@/types';
+import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
 
 // =============================================================================
 // Invoice List Page — Server Component
@@ -23,7 +23,7 @@ export default async function BillingPage() {
   // Fetch invoices (RLS enforces tenant/branch scoping)
   const { data: invoices, error } = await supabase
     .from('invoices')
-    .select('id, invoice_number, created_at, total, payment_method, delivery_status, customer_id')
+    .select('id, invoice_number, created_at, total, payment_method, payment_status, customer_id')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -72,7 +72,7 @@ export default async function BillingPage() {
     created_at: inv.created_at ?? '',
     total: inv.total,
     payment_method: inv.payment_method as PaymentMethod,
-    delivery_status: inv.delivery_status as DeliveryStatus,
+    payment_status: (inv.payment_status as PaymentStatus) ?? 'paid',
   }));
 
   return (

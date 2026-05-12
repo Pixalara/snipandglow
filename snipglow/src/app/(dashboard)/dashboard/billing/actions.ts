@@ -166,3 +166,31 @@ export async function sendInvoiceWhatsApp(invoiceId: string): Promise<ActionResu
   revalidatePath('/dashboard/billing');
   return { success: true, data: undefined };
 }
+
+/**
+ * Update an invoice's payment method and payment status.
+ */
+export async function updateInvoicePayment(
+  invoiceId: string,
+  updates: { payment_method: 'cash' | 'upi' | 'card'; payment_status: 'paid' | 'partial' | 'pending' }
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const { error } = await supabase
+    .from('invoices')
+    .update({
+      payment_method: updates.payment_method,
+      payment_status: updates.payment_status,
+    })
+    .eq('id', invoiceId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update invoice. Please try again.' };
+  }
+
+  revalidatePath('/dashboard/billing');
+  return { success: true, data: undefined };
+}
