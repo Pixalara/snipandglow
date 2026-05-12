@@ -215,7 +215,7 @@ function EditInvoiceModal({ invoice, onClose }: { invoice: InvoiceRow; onClose: 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="space-y-5">
           {/* Header */}
           <div className="flex items-center gap-3">

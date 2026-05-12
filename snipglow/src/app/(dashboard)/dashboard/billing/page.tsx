@@ -94,7 +94,7 @@ export default async function BillingPage() {
           <RoleGuard role={role} action="create" resource="billing">
             <Link
               href="/dashboard/billing/new"
-              className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              className="inline-flex h-11 sm:h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
             >
               <Plus className="size-4" />
               New Bill

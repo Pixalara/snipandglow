@@ -229,7 +229,7 @@ export default function NewBillingPage() {
   // Success state
   if (successInvoice) {
     return (
-      <div className="mx-auto max-w-lg space-y-4">
+      <div className="mx-auto w-full max-w-lg space-y-4 px-0 sm:px-0">
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4 text-center">
@@ -294,7 +294,7 @@ export default function NewBillingPage() {
   }
 
   return (
-    <div className="mx-auto max-w-3xl space-y-4">
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-0 sm:px-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link

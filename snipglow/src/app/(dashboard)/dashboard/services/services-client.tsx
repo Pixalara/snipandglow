@@ -138,7 +138,7 @@ export function ServicesClient({ grouped, role }: ServicesClientProps) {
               </h2>
               <span className="text-xs text-muted-foreground">({grouped[category].length})</span>
             </div>
-            <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3">
+            <div className="grid gap-3 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
               {grouped[category].map((service) => (
                 <ServiceCard
                   key={service.id}
@@ -288,7 +288,7 @@ function Modal({ children, onClose }: ModalProps) {
         aria-hidden="true"
       />
       {/* Content */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
         {children}
       </div>
     </div>

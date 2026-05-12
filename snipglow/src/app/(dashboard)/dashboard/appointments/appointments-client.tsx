@@ -113,7 +113,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as AppointmentStatus | 'all')}
-                className="h-9 rounded-xl border border-border bg-background pl-8 pr-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
+                className="h-9 min-h-[44px] sm:min-h-0 rounded-xl border border-border bg-background pl-8 pr-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
                 aria-label="Filter by status"
               >
                 <option value="all">All Status</option>
@@ -127,7 +127,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
             <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1">
               <button
                 onClick={() => setView('list')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 min-h-[44px] sm:min-h-0 text-xs font-medium transition-all ${
                   view === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-label="List view"
@@ -137,7 +137,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               </button>
               <button
                 onClick={() => setView('calendar')}
-                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 min-h-[44px] sm:min-h-0 text-xs font-medium transition-all ${
                   view === 'calendar' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-label="Calendar view"
@@ -149,9 +149,10 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
 
             <RoleGuard role={role} action="create" resource="appointments">
               <Link href="/dashboard/appointments/new">
-                <Button className="rounded-xl gap-1.5">
+                <Button className="rounded-xl gap-1.5 min-h-[44px] sm:min-h-0">
                   <Plus className="size-4" />
-                  New Booking
+                  <span className="hidden sm:inline">New Booking</span>
+                  <span className="sm:hidden">Book</span>
                 </Button>
               </Link>
             </RoleGuard>
@@ -254,54 +255,54 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
             {canReschedule && (
               <button
                 onClick={() => setRescheduleTarget(row)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-colors"
+                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-colors"
                 title="Reschedule"
               >
-                <CalendarClock className="size-3.5" />
-                Reschedule
+                <CalendarClock className="size-4 sm:size-3.5" />
+                <span className="hidden sm:inline">Reschedule</span>
               </button>
             )}
             {row.status === 'booked' && (
               <button
                 onClick={() => handleStatusChange(row.id, 'confirmed')}
                 disabled={loading}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
                 title="Confirm"
               >
-                <CheckCircle2 className="size-3.5" />
-                Confirm
+                <CheckCircle2 className="size-4 sm:size-3.5" />
+                <span className="hidden sm:inline">Confirm</span>
               </button>
             )}
             {row.status === 'confirmed' && (
               <button
                 onClick={() => setCompleteTarget(row)}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
                 title="Complete & Bill"
               >
-                <CircleCheck className="size-3.5" />
-                Complete
+                <CircleCheck className="size-4 sm:size-3.5" />
+                <span className="hidden sm:inline">Complete</span>
               </button>
             )}
             {row.status === 'booked' && (
               <button
                 onClick={() => setCompleteTarget(row)}
                 disabled={isPending && actionId === row.id}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
                 title="Complete & Bill"
               >
-                <CircleCheck className="size-3.5" />
-                Complete
+                <CircleCheck className="size-4 sm:size-3.5" />
+                <span className="hidden sm:inline">Complete</span>
               </button>
             )}
             {canReschedule && (
               <button
                 onClick={() => handleStatusChange(row.id, 'cancelled')}
                 disabled={loading}
-                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                 title="Cancel"
               >
-                <XCircle className="size-3.5" />
-                Cancel
+                <XCircle className="size-4 sm:size-3.5" />
+                <span className="hidden sm:inline">Cancel</span>
               </button>
             )}
             {(row.status === 'completed' || row.status === 'cancelled') && (
@@ -426,7 +427,7 @@ function RescheduleModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="space-y-5">
           {/* Header */}
           <div className="flex items-center gap-3">
@@ -553,7 +554,7 @@ function CompleteAndBillModal({
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
         <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-        <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+        <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="flex size-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/20">
               <CheckCircle2 className="size-7 text-emerald-600 dark:text-emerald-400" />
@@ -583,7 +584,7 @@ function CompleteAndBillModal({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
         <div className="space-y-5">
           {/* Header */}
           <div className="flex items-center gap-3">

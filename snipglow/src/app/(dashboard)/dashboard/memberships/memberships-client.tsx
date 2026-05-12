@@ -118,7 +118,7 @@ export function MembershipsClient({ memberships, activeMembershipCount, role }: 
 
       {/* Membership plans grid */}
       {memberships.length > 0 && (
-        <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 lg:grid-cols-3">
           {memberships.map((membership) => (
             <MembershipCard
               key={membership.id}
@@ -277,7 +277,7 @@ function Modal({ children, onClose }: ModalProps) {
         aria-hidden="true"
       />
       {/* Content */}
-      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
         {children}
       </div>
     </div>

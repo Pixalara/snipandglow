@@ -45,7 +45,7 @@ export default function NewCustomerPage() {
   }
 
   return (
-    <div className="mx-auto max-w-lg space-y-4">
+    <div className="mx-auto w-full max-w-lg space-y-4 px-0 sm:px-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link

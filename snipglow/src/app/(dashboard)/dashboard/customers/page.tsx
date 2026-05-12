@@ -94,17 +94,18 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-3">
-            <Suspense fallback={<div className="h-9 w-64 animate-pulse rounded-xl bg-muted" />}>
+          <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+            <Suspense fallback={<div className="h-9 w-full sm:w-64 animate-pulse rounded-xl bg-muted" />}>
               <CustomerSearch defaultValue={search} />
             </Suspense>
             <RoleGuard role={role} action="create" resource="customers">
               <Link
                 href="/dashboard/customers/new"
-                className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+                className="inline-flex h-11 sm:h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
               >
                 <UserPlus className="size-4" />
-                New Customer
+                <span className="hidden sm:inline">New Customer</span>
+                <span className="sm:hidden">Add</span>
               </Link>
             </RoleGuard>
           </div>

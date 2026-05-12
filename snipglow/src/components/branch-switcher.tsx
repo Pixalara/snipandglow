@@ -40,7 +40,7 @@ export function BranchSwitcher({ branches, activeBranchId }: BranchSwitcherProps
         value={activeBranchId}
         onChange={handleBranchChange}
         disabled={isPending}
-        className="appearance-none rounded-md border border-border bg-background px-3 py-1.5 pr-8 text-sm text-foreground transition-colors hover:border-ring focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:opacity-50"
+        className="appearance-none rounded-md border border-border bg-background px-3 py-1.5 pr-8 text-sm text-foreground transition-colors hover:border-ring focus:border-ring focus:outline-none focus:ring-2 focus:ring-ring/20 disabled:opacity-50 max-w-[120px] sm:max-w-none truncate"
         aria-label="Switch branch"
       >
         {branches.map((branch) => (

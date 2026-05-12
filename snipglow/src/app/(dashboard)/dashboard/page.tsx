@@ -57,7 +57,7 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Hero Welcome Section */}
-      <div className="relative overflow-hidden rounded-2xl border border-transparent p-6 md:p-8" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%)' }}>
+      <div className="relative overflow-hidden rounded-2xl border border-transparent p-4 sm:p-6 md:p-8" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%)' }}>
         <div className="absolute inset-0 bg-black/30" />
         <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
@@ -79,7 +79,7 @@ export default async function DashboardPage() {
       </div>
 
       {/* Stats Grid */}
-      <div className="grid grid-cols-2 gap-4 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
         <StatCard
           icon={<Clock className="size-5" />}
           title="Today"
@@ -123,7 +123,7 @@ export default async function DashboardPage() {
         {/* Quick Actions */}
         <div className="lg:col-span-2 space-y-4">
           <h2 className="text-lg font-semibold text-foreground">Quick Actions</h2>
-          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 md:grid-cols-3">
             <QuickActionCard
               icon={<Calendar className="size-5" />}
               title="New Appointment"
