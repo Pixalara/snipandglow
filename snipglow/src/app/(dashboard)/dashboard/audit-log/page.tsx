@@ -81,5 +81,28 @@ export default async function AuditLogPage() {
 
   const logs = (auditLogs ?? []) as AuditLog[];
 
-  return <AuditLogClient logs={logs} />;
+  // Resolve actor names from employees table if actor_name is empty
+  const actorIds = [...new Set(logs.map((l) => l.actor_id).filter(Boolean))];
+  const actorNameMap: Record<string, string> = {};
+
+  if (actorIds.length > 0) {
+    const { data: employees } = await supabase
+      .from('employees')
+      .select('id, name')
+      .in('id', actorIds);
+
+    if (employees) {
+      for (const emp of employees) {
+        actorNameMap[emp.id] = emp.name;
+      }
+    }
+  }
+
+  // Fill in missing actor names
+  const enrichedLogs = logs.map((log) => ({
+    ...log,
+    actor_name: log.actor_name || actorNameMap[log.actor_id] || user.user_metadata?.name || 'Owner',
+  }));
+
+  return <AuditLogClient logs={enrichedLogs} />;
 }
