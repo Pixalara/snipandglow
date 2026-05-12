@@ -17,6 +17,7 @@ import {
   X,
   Wallet,
   BadgeDollarSign,
+  MessageCircle,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { can, type Resource } from '@/lib/permissions';
@@ -41,6 +42,7 @@ const navItems: NavItem[] = [
   { label: 'Staff', href: '/dashboard/staff', icon: UserCog, resource: 'staff' },
   { label: 'Payroll', href: '/dashboard/payroll', icon: BadgeDollarSign, resource: 'payroll' },
   { label: 'Branches', href: '/dashboard/branches', icon: Building2, resource: 'branches' },
+  { label: 'WhatsApp', href: '/dashboard/whatsapp', icon: MessageCircle, resource: 'settings' },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
   { label: 'Audit Log', href: '/dashboard/audit-log', icon: FileText, resource: 'audit' },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings, resource: 'settings' },
