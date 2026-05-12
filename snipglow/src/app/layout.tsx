@@ -21,6 +21,9 @@ export const metadata: Metadata = {
   title: 'Snip & Glow — Salon Management Software',
   description:
     'WhatsApp-native salon management SaaS for Indian salons. Manage appointments, billing, customers, and staff.',
+  icons: {
+    icon: '/icon.svg',
+  },
 }
 
 export default function RootLayout({
