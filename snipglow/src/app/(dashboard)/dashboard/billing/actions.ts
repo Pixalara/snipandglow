@@ -141,7 +141,7 @@ export async function createInvoice(
     return { success: true, data: invoice as Invoice };
   }
 
-  revalidatePath('/billing');
+  revalidatePath('/dashboard/billing');
   return { success: true, data: invoice as Invoice };
 }
 
@@ -163,6 +163,6 @@ export async function sendInvoiceWhatsApp(invoiceId: string): Promise<ActionResu
     return { success: false, error: 'Failed to send invoice via WhatsApp. Please try again.' };
   }
 
-  revalidatePath('/billing');
+  revalidatePath('/dashboard/billing');
   return { success: true, data: undefined };
 }

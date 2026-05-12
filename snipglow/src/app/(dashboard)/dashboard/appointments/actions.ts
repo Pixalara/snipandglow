@@ -153,6 +153,132 @@ export async function updateAppointmentStatus(
 }
 
 /**
+ * Complete an appointment AND generate an invoice for it.
+ * Marks appointment as completed, creates invoice with the service as a line item.
+ */
+export async function completeAndGenerateBill(
+  appointmentId: string,
+  paymentMethod: 'cash' | 'upi' | 'card'
+): Promise<ActionResult<{ invoiceId: string; invoiceNumber: string }>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  const branchId = user.user_metadata?.branch_id;
+  if (!tenantId || !branchId) {
+    return { success: false, error: 'No tenant or branch context found.' };
+  }
+
+  // 1. Fetch the appointment with service details
+  const { data: appointment, error: fetchError } = await supabase
+    .from('appointments')
+    .select('id, status, customer_id, service_id, employee_id')
+    .eq('id', appointmentId)
+    .single();
+
+  if (fetchError || !appointment) {
+    return { success: false, error: 'Appointment not found.' };
+  }
+
+  if (appointment.status !== 'confirmed' && appointment.status !== 'booked') {
+    return { success: false, error: 'Only booked or confirmed appointments can be completed.' };
+  }
+
+  // 2. Fetch service details for the invoice line item
+  const { data: service } = await supabase
+    .from('services')
+    .select('id, name, price')
+    .eq('id', appointment.service_id)
+    .single();
+
+  if (!service) {
+    return { success: false, error: 'Service not found.' };
+  }
+
+  // 3. Check for active membership discount
+  let discountPct = 0;
+  const today = new Date().toISOString().split('T')[0];
+  const { data: activeMembership } = await supabase
+    .from('customer_memberships')
+    .select('membership_id, memberships(discount_pct)')
+    .eq('customer_id', appointment.customer_id)
+    .eq('status', 'active')
+    .gte('end_date', today)
+    .limit(1)
+    .maybeSingle();
+
+  if (activeMembership) {
+    const membership = activeMembership.memberships as unknown as { discount_pct: number } | null;
+    discountPct = membership?.discount_pct ?? 0;
+  }
+
+  // 4. Calculate totals
+  const subtotal = service.price;
+  const discountAmount = Math.round((subtotal * discountPct) / 100);
+  const taxableAmount = subtotal - discountAmount;
+  const total = taxableAmount; // No GST by default for quick bill
+
+  // 5. Mark appointment as completed
+  const { error: updateError } = await supabase
+    .from('appointments')
+    .update({ status: 'completed' })
+    .eq('id', appointmentId);
+
+  if (updateError) {
+    return { success: false, error: 'Failed to complete appointment.' };
+  }
+
+  // 6. Create invoice
+  const { data: invoice, error: invoiceError } = await supabase
+    .from('invoices')
+    .insert({
+      tenant_id: tenantId,
+      branch_id: branchId,
+      customer_id: appointment.customer_id,
+      appointment_id: appointmentId,
+      invoice_number: '', // trigger will generate
+      subtotal,
+      discount_amount: discountAmount,
+      discount_pct: discountPct,
+      gst_amount: 0,
+      gst_rate: 0,
+      total,
+      payment_method: paymentMethod,
+      payment_status: 'paid',
+      delivery_status: 'pending',
+    })
+    .select('id, invoice_number')
+    .single();
+
+  if (invoiceError) {
+    console.error('Invoice creation error:', invoiceError);
+    // Appointment is already completed, just report the invoice failure
+    return { success: false, error: 'Appointment completed but failed to generate bill.' };
+  }
+
+  // 7. Create invoice line item
+  await supabase.from('invoice_items').insert({
+    invoice_id: invoice.id,
+    service_id: service.id,
+    service_name: service.name,
+    unit_price: service.price,
+    quantity: 1,
+    line_total: service.price,
+  });
+
+  // 8. Update customer stats
+  await supabase.rpc('increment_customer_visits', { p_customer_id: appointment.customer_id }).catch(() => {
+    // Non-critical — if the RPC doesn't exist, skip
+  });
+
+  revalidatePath('/dashboard/appointments');
+  revalidatePath('/dashboard/billing');
+  return { success: true, data: { invoiceId: invoice.id, invoiceNumber: invoice.invoice_number } };
+}
+
+/**
  * Reschedule an existing appointment to a new date and time.
  * Only works for booked or confirmed appointments.
  */

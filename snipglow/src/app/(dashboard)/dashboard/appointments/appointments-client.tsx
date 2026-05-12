@@ -8,7 +8,7 @@ import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
-import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule } from './actions';
+import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill } from './actions';
 import {
   Calendar,
   List,
@@ -178,6 +178,7 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
   const [isPending, startTransition] = useTransition();
   const [actionId, setActionId] = useState<string | null>(null);
   const [rescheduleTarget, setRescheduleTarget] = useState<AppointmentRow | null>(null);
+  const [completeTarget, setCompleteTarget] = useState<AppointmentRow | null>(null);
 
   function handleStatusChange(id: string, newStatus: AppointmentStatus) {
     setActionId(id);
@@ -273,10 +274,20 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
             )}
             {row.status === 'confirmed' && (
               <button
-                onClick={() => handleStatusChange(row.id, 'completed')}
-                disabled={loading}
+                onClick={() => setCompleteTarget(row)}
                 className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
-                title="Complete"
+                title="Complete & Bill"
+              >
+                <CircleCheck className="size-3.5" />
+                Complete
+              </button>
+            )}
+            {row.status === 'booked' && (
+              <button
+                onClick={() => setCompleteTarget(row)}
+                disabled={isPending && actionId === row.id}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                title="Complete & Bill"
               >
                 <CircleCheck className="size-3.5" />
                 Complete
@@ -338,6 +349,14 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
         <RescheduleModal
           appointment={rescheduleTarget}
           onClose={() => setRescheduleTarget(null)}
+        />
+      )}
+
+      {/* Complete & Bill Modal */}
+      {completeTarget && (
+        <CompleteAndBillModal
+          appointment={completeTarget}
+          onClose={() => setCompleteTarget(null)}
         />
       )}
     </>
@@ -493,6 +512,169 @@ function RescheduleModal({
               disabled={!newDate || !selectedSlot || isPending}
             >
               {isPending ? 'Rescheduling...' : 'Reschedule'}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Complete & Generate Bill Modal
+// =============================================================================
+
+function CompleteAndBillModal({
+  appointment,
+  onClose,
+}: {
+  appointment: AppointmentRow;
+  onClose: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState<{ invoiceNumber: string } | null>(null);
+
+  function handleConfirm() {
+    setError('');
+    startTransition(async () => {
+      const result = await completeAndGenerateBill(appointment.id, paymentMethod);
+      if (result.success) {
+        setSuccess({ invoiceNumber: result.data.invoiceNumber });
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  // Success state
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-50 flex items-center justify-center">
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+        <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+          <div className="flex flex-col items-center gap-4 text-center">
+            <div className="flex size-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/20">
+              <CheckCircle2 className="size-7 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Bill Generated!</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Invoice <span className="font-mono font-medium text-foreground">{success.invoiceNumber}</span> has been created.
+              </p>
+            </div>
+            <div className="flex gap-2 w-full">
+              <Link href="/dashboard/billing" className="flex-1">
+                <Button variant="outline" className="w-full rounded-xl">
+                  View Bills
+                </Button>
+              </Link>
+              <Button className="flex-1 rounded-xl" onClick={onClose}>
+                Done
+              </Button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+        <div className="space-y-5">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+              <CircleCheck className="size-5 text-blue-600 dark:text-blue-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Complete & Generate Bill</h2>
+              <p className="text-xs text-muted-foreground">
+                {appointment.customer_name} · {appointment.service_name}
+              </p>
+            </div>
+          </div>
+
+          {/* Appointment summary */}
+          <div className="rounded-xl bg-muted/50 p-4 space-y-2">
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Customer</span>
+              <span className="font-medium text-foreground">{appointment.customer_name}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Service</span>
+              <span className="font-medium text-foreground">{appointment.service_name}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Stylist</span>
+              <span className="text-foreground">{appointment.employee_name}</span>
+            </div>
+            <div className="flex items-center justify-between text-sm">
+              <span className="text-muted-foreground">Date & Time</span>
+              <span className="text-foreground">
+                {formatDateIN(appointment.appointment_date)}, {formatTimeIST(`1970-01-01T${appointment.start_time}`)}
+              </span>
+            </div>
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          {/* Payment Method */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Payment Method</p>
+            <div className="flex gap-3" role="radiogroup" aria-label="Payment method">
+              {(['cash', 'upi', 'card'] as const).map((method) => (
+                <label
+                  key={method}
+                  className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                    paymentMethod === method
+                      ? 'border-primary bg-primary/5 text-primary font-medium shadow-sm'
+                      : 'border-border text-muted-foreground hover:border-foreground/30'
+                  }`}
+                >
+                  <input
+                    type="radio"
+                    name="payment-method"
+                    value={method}
+                    checked={paymentMethod === method}
+                    onChange={() => setPaymentMethod(method)}
+                    className="sr-only"
+                  />
+                  <span className="capitalize">{method === 'upi' ? 'UPI' : method.charAt(0).toUpperCase() + method.slice(1)}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {/* Info */}
+          <p className="text-xs text-muted-foreground">
+            This will mark the appointment as completed and generate an invoice. The bill will appear in the Billing section.
+          </p>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="outline" className="rounded-xl" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button className="rounded-xl gap-1.5" onClick={handleConfirm} disabled={isPending}>
+              {isPending ? (
+                <span className="flex items-center gap-2">
+                  <span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" />
+                  Generating...
+                </span>
+              ) : (
+                <>
+                  <CheckCircle2 className="size-4" />
+                  Complete & Bill
+                </>
+              )}
             </Button>
           </div>
         </div>
