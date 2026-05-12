@@ -34,7 +34,7 @@ export default async function BillingPage() {
   // Fetch invoices with joined customer name (RLS enforces tenant/branch scoping)
   const { data: invoices, error } = await supabase
     .from('invoices')
-    .select('id, invoice_number, created_at, total, payment_method, delivery_status, customers(name)')
+    .select('id, invoice_number, created_at, total, payment_method, delivery_status, customer_id')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -50,11 +50,28 @@ export default async function BillingPage() {
     );
   }
 
+  // Fetch customer names separately to avoid join issues
+  const customerIds = [...new Set((invoices ?? []).map((inv) => inv.customer_id).filter(Boolean))];
+  const customerNameMap: Record<string, string> = {};
+
+  if (customerIds.length > 0) {
+    const { data: customers } = await supabase
+      .from('customers')
+      .select('id, name')
+      .in('id', customerIds);
+
+    if (customers) {
+      for (const c of customers) {
+        customerNameMap[c.id] = c.name;
+      }
+    }
+  }
+
   // Map rows to flatten the joined customer name
   const rows: InvoiceRow[] = (invoices ?? []).map((inv) => ({
     id: inv.id,
     invoice_number: inv.invoice_number,
-    customer_name: (inv.customers as unknown as { name: string })?.name ?? '—',
+    customer_name: customerNameMap[inv.customer_id ?? ''] ?? '—',
     created_at: inv.created_at ?? '',
     total: inv.total,
     payment_method: inv.payment_method as PaymentMethod,

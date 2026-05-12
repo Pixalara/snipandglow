@@ -24,7 +24,7 @@ export function CustomerSearch({ defaultValue }: CustomerSearchProps) {
       }
 
       startTransition(() => {
-        router.push(`/customers?${params.toString()}`);
+        router.push(`/dashboard/customers?${params.toString()}`);
       });
     },
     [router, searchParams, startTransition]

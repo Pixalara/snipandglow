@@ -42,9 +42,9 @@ export default async function AppointmentsPage() {
       end_time,
       status,
       source,
-      customers(name),
-      services(name),
-      employees(name)
+      customer_id,
+      service_id,
+      employee_id
     `)
     .order('appointment_date', { ascending: false })
     .order('start_time', { ascending: true });
@@ -57,17 +57,36 @@ export default async function AppointmentsPage() {
     );
   }
 
+  // Fetch related names separately to avoid join issues
+  const appts = appointments ?? [];
+  const custIds = [...new Set(appts.map((a) => a.customer_id).filter(Boolean))];
+  const svcIds = [...new Set(appts.map((a) => a.service_id).filter(Boolean))];
+  const empIds = [...new Set(appts.map((a) => a.employee_id).filter(Boolean))];
+
+  const [custRes, svcRes, empRes] = await Promise.all([
+    custIds.length > 0 ? supabase.from('customers').select('id, name').in('id', custIds) : { data: [] },
+    svcIds.length > 0 ? supabase.from('services').select('id, name').in('id', svcIds) : { data: [] },
+    empIds.length > 0 ? supabase.from('employees').select('id, name').in('id', empIds) : { data: [] },
+  ]);
+
+  const custMap: Record<string, string> = {};
+  const svcMap: Record<string, string> = {};
+  const empMap: Record<string, string> = {};
+  for (const c of custRes.data ?? []) custMap[c.id] = c.name;
+  for (const s of svcRes.data ?? []) svcMap[s.id] = s.name;
+  for (const e of empRes.data ?? []) empMap[e.id] = e.name;
+
   // Transform joined data into flat rows
-  const rows: AppointmentRow[] = (appointments ?? []).map((apt) => ({
+  const rows: AppointmentRow[] = appts.map((apt) => ({
     id: apt.id,
     appointment_date: apt.appointment_date,
     start_time: apt.start_time,
     end_time: apt.end_time,
     status: apt.status as AppointmentStatus,
     source: apt.source ?? 'dashboard',
-    customer_name: (apt.customers as unknown as { name: string })?.name ?? '—',
-    service_name: (apt.services as unknown as { name: string })?.name ?? '—',
-    employee_name: (apt.employees as unknown as { name: string })?.name ?? '—',
+    customer_name: custMap[apt.customer_id ?? ''] ?? '—',
+    service_name: svcMap[apt.service_id ?? ''] ?? '—',
+    employee_name: empMap[apt.employee_id ?? ''] ?? '—',
   }));
 
   return <AppointmentsClient appointments={rows} role={role} />;

@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import { Suspense } from 'react';
 import { createClient } from '@/lib/supabase/server';
 import { formatINR, formatDateIN } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
@@ -89,7 +90,9 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h1 className="text-xl font-semibold text-foreground">Customers</h1>
         <div className="flex items-center gap-3">
-          <CustomerSearch defaultValue={search} />
+          <Suspense fallback={<div className="h-8 w-64 animate-pulse rounded-lg bg-muted" />}>
+            <CustomerSearch defaultValue={search} />
+          </Suspense>
           <RoleGuard role={role} action="create" resource="customers">
             <Link
               href="/dashboard/customers/new"
