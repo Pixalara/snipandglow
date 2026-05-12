@@ -18,9 +18,28 @@ const syne = Syne({
 })
 
 export const metadata: Metadata = {
-  title: 'snipandglow — Salon Management Software',
+  metadataBase: new URL('https://snipandglow.com'),
+  title: {
+    default: 'snipandglow — Salon Management Software for India',
+    template: '%s | snipandglow',
+  },
   description:
-    'WhatsApp-native salon management SaaS for Indian salons. Manage appointments, billing, customers, and staff.',
+    'WhatsApp-native salon management software for Indian salons. Manage appointments, billing, customers, staff, and grow your business on autopilot. Start free 15-day trial.',
+  keywords: [
+    'salon management software',
+    'salon software India',
+    'WhatsApp salon booking',
+    'salon CRM',
+    'salon billing software',
+    'appointment scheduling',
+    'beauty salon software',
+    'spa management',
+    'salon POS',
+    'salon WhatsApp automation',
+  ],
+  authors: [{ name: 'Pixalara', url: 'https://pixalara.io' }],
+  creator: 'Pixalara',
+  publisher: 'snipandglow',
   icons: {
     icon: [
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
@@ -30,6 +49,60 @@ export const metadata: Metadata = {
     apple: '/apple-touch-icon.png',
   },
   manifest: '/site.webmanifest',
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    url: 'https://snipandglow.com',
+    siteName: 'snipandglow',
+    title: 'snipandglow — Salon Management Software for India',
+    description:
+      'WhatsApp-native salon management software. Manage appointments, billing, customers & staff. Start free 15-day trial.',
+    images: [
+      {
+        url: '/og-image.png',
+        width: 1200,
+        height: 630,
+        alt: 'snipandglow — Salon Management Software',
+      },
+    ],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'snipandglow — Salon Management Software for India',
+    description:
+      'WhatsApp-native salon management software. Manage appointments, billing, customers & staff.',
+    images: ['/og-image.png'],
+    creator: '@pixalara',
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  alternates: {
+    canonical: 'https://snipandglow.com',
+    languages: {
+      'en-IN': 'https://snipandglow.com',
+    },
+  },
+  verification: {
+    google: 'REPLACE_WITH_GOOGLE_SEARCH_CONSOLE_TOKEN',
+    other: {
+      'msvalidate.01': 'REPLACE_WITH_BING_TOKEN',
+      'facebook-domain-verification': 'REPLACE_WITH_META_BUSINESS_TOKEN',
+    },
+  },
+  other: {
+    'geo.region': 'IN',
+    'geo.placename': 'India',
+    'content-language': 'en-IN',
+  },
 }
 
 export default function RootLayout({
@@ -39,10 +112,20 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className={`${inter.variable} ${syne.variable} h-full antialiased`} suppressHydrationWarning>
+      <head>
+        {/* Preconnect to Google Fonts */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* DNS Prefetch for third-party services */}
+        <link rel="dns-prefetch" href="https://ndnigqeucfdeimlwevsr.supabase.co" />
+        <link rel="dns-prefetch" href="https://connect.facebook.net" />
+        <link rel="dns-prefetch" href="https://api.web3forms.com" />
+        {/* Hreflang */}
+        <link rel="alternate" hrefLang="en-in" href="https://snipandglow.com" />
+      </head>
       <body className="min-h-full flex flex-col" style={{ fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
         <Providers>{children}</Providers>
       </body>
     </html>
   )
 }
-
