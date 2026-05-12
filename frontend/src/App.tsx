@@ -34,6 +34,8 @@ const PrivacyPage = lazy(() => import('@/pages/Privacy'));
 const TermsPage = lazy(() => import('@/pages/Terms'));
 const RefundPage = lazy(() => import('@/pages/Refund'));
 const BookDemoPage = lazy(() => import('@/pages/BookDemo'));
+const BlogListingPage = lazy(() => import('@/pages/Blog/BlogListing'));
+const BlogDetailPage = lazy(() => import('@/pages/Blog/BlogDetail'));
 
 import LoadingScreen from '@/components/layout/LoadingScreen';
 import PageSkeleton from '@/components/layout/PageSkeleton';
@@ -123,6 +125,8 @@ export default function App() {
         <Route path="/terms" element={<Suspense fallback={<LoadingScreen />}><TermsPage /></Suspense>} />
         <Route path="/refund" element={<Suspense fallback={<LoadingScreen />}><RefundPage /></Suspense>} />
         <Route path="/book-demo" element={<Suspense fallback={<LoadingScreen />}><BookDemoPage /></Suspense>} />
+        <Route path="/blog" element={<Suspense fallback={<LoadingScreen />}><BlogListingPage /></Suspense>} />
+        <Route path="/blog/:slug" element={<Suspense fallback={<LoadingScreen />}><BlogDetailPage /></Suspense>} />
         <Route path="*" element={<AppRoutes />} />
       </Routes>
       <ToastContainer />

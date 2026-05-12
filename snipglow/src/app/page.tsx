@@ -221,7 +221,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right � WhatsApp Phone Mockup with auto-scrolling conversation */}
+          {/* Right — WhatsApp Phone Mockup with auto-scrolling conversation */}
           <div className="hidden lg:flex justify-center items-center reveal-right">
             <div className="relative">
               {/* Ambient glow */}
@@ -246,7 +246,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Scrolling chat � CSS keyframe animation */}
+                  {/* Scrolling chat — CSS keyframe animation */}
                   <style dangerouslySetInnerHTML={{ __html: `
                     @keyframes chatFlow {
                       0%,6%    { transform: translateY(0); }
@@ -267,7 +267,7 @@ export default function HomePage() {
                       {/* -- 1. Customer says Hi -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">Hi ??</p>
+                          <p className="text-[12px] text-slate-800">Hi 👋</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">10:01 AM</p>
                         </div>
                       </div>
@@ -276,13 +276,13 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-emerald-100">
                           <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
-                            <p className="text-[11px] font-bold text-emerald-700">?? Welcome to Glamour Salon!</p>
+                            <p className="text-[11px] font-bold text-emerald-700">👋 Welcome to Glamour Salon!</p>
                           </div>
                           <div className="px-3 py-2">
                             <p className="text-[11px] text-slate-600">How can we help you today?</p>
                           </div>
                           <div className="border-t border-slate-100">
-                            {['?? Book Appointment', '?? My Appointments', '?? Services & Prices'].map((b) => (
+                            {['💇 Book Appointment', '📋 My Appointments', '💰 Services & Prices'].map((b) => (
                               <div key={b} className="px-3 py-1.5 border-b border-slate-50 last:border-0 text-center">
                                 <p className="text-[10px] text-blue-500 font-medium">{b}</p>
                               </div>
@@ -294,7 +294,7 @@ export default function HomePage() {
                       {/* -- 3. Customer books -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">?? Book Appointment</p>
+                          <p className="text-[12px] text-slate-800">💇 Book Appointment</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">10:02 AM</p>
                         </div>
                       </div>
@@ -306,11 +306,11 @@ export default function HomePage() {
                             <p className="text-[12px] font-bold text-emerald-700">? Booking Confirmed!</p>
                           </div>
                           <div className="px-3 py-2.5 space-y-1 text-[11px] text-slate-600">
-                            <p>?? Priya</p>
-                            <p>?? Haircut</p>
-                            <p>?? 10 May, 2:30 PM</p>
-                            <p>?? Glamour Salon</p>
-                            <p className="text-slate-800 mt-1">See you soon! ??</p>
+                            <p>👤 Priya</p>
+                            <p>✂️ Haircut</p>
+                            <p>📅 10 May, 2:30 PM</p>
+                            <p>📍 Glamour Salon</p>
+                            <p className="text-slate-800 mt-1">See you soon! 😊</p>
                           </div>
                           <div className="border-t border-slate-100 flex">
                             <div className="flex-1 py-1.5 text-center border-r border-slate-100">
@@ -327,13 +327,13 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-blue-100">
                           <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
-                            <p className="text-[11px] font-bold text-blue-600">?? Reminder � Tomorrow</p>
+                            <p className="text-[11px] font-bold text-blue-600">📅 Reminder — Tomorrow</p>
                           </div>
                           <div className="px-3 py-2.5">
                             <p className="text-[11px] text-slate-600">Hi <span className="font-medium text-slate-800">Priya</span>! Your Haircut is <span className="font-medium">tomorrow at 2:30 PM</span>. Need to change plans?</p>
                           </div>
                           <div className="border-t border-slate-100 flex">
-                            {['? Confirm', '?? Reschedule'].map((b) => (
+                            {['✅ Confirm', '🔄 Reschedule'].map((b) => (
                               <div key={b} className="flex-1 py-1.5 text-center border-r border-slate-100 last:border-0">
                                 <p className="text-[10px] text-blue-500 font-medium">{b}</p>
                               </div>
@@ -349,7 +349,7 @@ export default function HomePage() {
                             <p className="text-[11px] font-bold text-amber-700">? Starting in 2 Hours!</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! Your appointment is in 2 hours. We&apos;re getting ready for you! ??</p>
+                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! Your appointment is in 2 hours. We&apos;re getting ready for you! 🌟</p>
                           </div>
                         </div>
                       </div>
@@ -358,23 +358,23 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-purple-100">
                           <div className="bg-purple-50 px-3 py-2 border-b border-purple-100">
-                            <p className="text-[11px] font-bold text-purple-700">?? Invoice #INV-0142</p>
+                            <p className="text-[11px] font-bold text-purple-700">🧾 Invoice #INV-0142</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600 mb-2">Hi <span className="font-medium text-slate-800">Priya</span>, your bill is ready! ??</p>
+                            <p className="text-[11px] text-slate-600 mb-2">Hi <span className="font-medium text-slate-800">Priya</span>, your bill is ready! 🙏</p>
                             <div className="bg-slate-50 rounded-lg p-2 space-y-1 text-[10px]">
-                              <div className="flex justify-between"><span>Haircut</span><span className="font-medium">?300</span></div>
-                              <div className="flex justify-between"><span>Hair Color</span><span className="font-medium">?800</span></div>
-                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>?990</span></div>
-                              <p className="text-slate-400">?? UPI � Paid</p>
+                              <div className="flex justify-between"><span>Haircut</span><span className="font-medium">₹300</span></div>
+                              <div className="flex justify-between"><span>Hair Color</span><span className="font-medium">₹800</span></div>
+                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>₹990</span></div>
+                              <p className="text-slate-400">💳 UPI — Paid</p>
                             </div>
                           </div>
                           <div className="border-t border-slate-100 flex">
                             <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-red-500 font-medium">?? PDF Receipt</p>
+                              <p className="text-[10px] text-red-500 font-medium">—— PDF Receipt</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">?? Book Again</p>
+                              <p className="text-[10px] text-blue-500 font-medium">📅 Book Again</p>
                             </div>
                           </div>
                         </div>
@@ -384,18 +384,18 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-violet-100">
                           <div className="bg-violet-50 px-3 py-2 border-b border-violet-100">
-                            <p className="text-[11px] font-bold text-violet-700">?? Time for a Touch-Up!</p>
+                            <p className="text-[11px] font-bold text-violet-700">💜 Time for a Touch-Up!</p>
                             <p className="text-[9px] text-violet-500">Day 30</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hi <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 30 days. Your hair color is due for a refresh! ?</p>
+                            <p className="text-[11px] text-slate-600">Hi <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 30 days. Your hair color is due for a refresh! ✨</p>
                             <div className="bg-violet-50 rounded-lg p-2 mt-2 text-center">
-                              <p className="text-[11px] text-violet-700 font-bold">?? 10% off this week</p>
+                              <p className="text-[11px] text-violet-700 font-bold">🎁 10% off this week</p>
                             </div>
                           </div>
                           <div className="border-t border-slate-100">
                             <div className="px-3 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">?? Book Now</p>
+                              <p className="text-[10px] text-blue-500 font-medium">📅 Book Now</p>
                             </div>
                           </div>
                         </div>
@@ -405,35 +405,35 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-pink-200">
                           <div className="bg-pink-50 px-3 py-2 border-b border-pink-100">
-                            <p className="text-[11px] font-bold text-pink-700">?? We Miss You!</p>
+                            <p className="text-[11px] font-bold text-pink-700">💕 We Miss You!</p>
                             <p className="text-[9px] text-pink-500">Day 60</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 2 months � we miss you! ??</p>
+                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 2 months — we miss you! 💖</p>
                             <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-2.5 mt-2 text-center">
-                              <p className="text-[13px] text-pink-600 font-bold">?? 15% OFF</p>
-                              <p className="text-[9px] text-slate-500">your next visit � Code: MISSYOU15</p>
+                              <p className="text-[13px] text-pink-600 font-bold">🎉 15% OFF</p>
+                              <p className="text-[9px] text-slate-500">your next visit — Code: MISSYOU15</p>
                             </div>
                           </div>
                           <div className="border-t border-slate-100 flex">
                             <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-pink-500 font-medium">?? Claim 15% Off</p>
+                              <p className="text-[10px] text-pink-500 font-medium">💅 Claim 15% Off</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">?? Services</p>
+                              <p className="text-[10px] text-blue-500 font-medium">📋 Services</p>
                             </div>
                           </div>
                         </div>
                       </div>
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">?? Claim 15% Off</p>
+                          <p className="text-[12px] text-slate-800">💅 Claim 15% Off</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">10:04 AM</p>
                         </div>
                       </div>
                       <div className="flex justify-start">
                         <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
-                          <p className="text-[11px] text-emerald-700 font-medium">Welcome back! ?? Your 15% discount is applied. Book now!</p>
+                          <p className="text-[11px] text-emerald-700 font-medium">Welcome back! 🎉 Your 15% discount is applied. Book now!</p>
                         </div>
                       </div>
 
@@ -452,7 +452,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge � bottom left */}
+              {/* Floating badge — bottom left */}
               <div className="absolute -bottom-4 -left-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
@@ -465,7 +465,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge � top right */}
+              {/* Floating badge — top right */}
               <div className="absolute -top-4 -right-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
@@ -506,7 +506,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Glamour Salon</p>
-                    <p className="text-xs text-slate-500">3 staff � 12 services</p>
+                    <p className="text-xs text-slate-500">3 staff — 12 services</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -529,7 +529,7 @@ export default function HomePage() {
                     <div key={appt.name} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-slate-900">{appt.name}</p>
-                        <p className="text-xs text-slate-500">{appt.service} � {appt.time}</p>
+                        <p className="text-xs text-slate-500">{appt.service} — {appt.time}</p>
                       </div>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-pink-100 text-pink-700' : appt.status === 'Reminded' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                     </div>
@@ -554,7 +554,7 @@ export default function HomePage() {
                 <div className="space-y-3">
                   {[
                     { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-pink-100 text-pink-600' },
-                    { icon: FileText, label: 'Invoice ?450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
+                    { icon: FileText, label: 'Invoice ₹450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
                     { icon: Gift, label: 'Loyalty points added', color: 'bg-violet-100 text-violet-600' },
                     { icon: Repeat2, label: 'Re-booking nudge scheduled', color: 'bg-purple-100 text-purple-600' },
                   ].map(({ icon: Icon, label, color }) => (
@@ -612,7 +612,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
               { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
-              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges � all sent automatically.', color: 'bg-green-100 text-green-600' },
+              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges — all sent automatically.', color: 'bg-green-100 text-green-600' },
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
@@ -652,12 +652,12 @@ export default function HomePage() {
 
               {/* Pricing */}
               <div className="mb-5">
-                <p className="text-slate-400 text-sm line-through">?1,499 /mo</p>
+                <p className="text-slate-400 text-sm line-through">₹1,499 /mo</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-slate-900">?799</span>
+                  <span className="text-4xl font-bold text-slate-900">₹799</span>
                   <span className="text-slate-500 mb-1">/mo</span>
                 </div>
-                <p className="text-slate-400 text-xs mt-1">Billed ?9,588/year � Cancel in 15 days for full refund</p>
+                <p className="text-slate-400 text-xs mt-1">Billed ₹9,588/year — Cancel in 15 days for full refund</p>
               </div>
 
               {/* CTA */}
@@ -716,14 +716,14 @@ export default function HomePage() {
               {/* Pricing */}
               <div className="mb-5">
                 <div className="flex flex-wrap items-center gap-2">
-                  <p className="text-slate-400 text-sm line-through">?2,499 /mo</p>
+                  <p className="text-slate-400 text-sm line-through">₹2,499 /mo</p>
                   <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">Launch pricing</span>
                 </div>
                 <div className="flex items-end gap-1">
-                  <span className="text-4xl font-bold text-slate-900">?1,199</span>
+                  <span className="text-4xl font-bold text-slate-900">₹1,199</span>
                   <span className="text-slate-500 mb-1">/mo</span>
                 </div>
-                <p className="text-slate-400 text-xs mt-1">Billed ?14,388/year � Cancel in 15 days for full refund</p>
+                <p className="text-slate-400 text-xs mt-1">Billed ₹14,388/year — Cancel in 15 days for full refund</p>
               </div>
 
               {/* Social proof */}
@@ -779,7 +779,7 @@ export default function HomePage() {
                     </div>
                   ))}
                 </div>
-                <p className="text-xs text-slate-400 mt-3">?3,000 one-time WABA setup � Meta per-message charges apply</p>
+                <p className="text-xs text-slate-400 mt-3">₹3,000 one-time WABA setup — Meta per-message charges apply</p>
               </div>
             </div>
           </div>
@@ -787,12 +787,12 @@ export default function HomePage() {
           {/* Trust badges */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-12 reveal">
             <div className="text-center rounded-xl border border-slate-200 p-4">
-              <p className="font-bold text-slate-900 text-sm">?0 setup fee</p>
-              <p className="text-xs text-slate-500 mt-1">Competitors charge ?2,000+ before you even see the software. We set up everything for free.</p>
+              <p className="font-bold text-slate-900 text-sm">₹0 setup fee</p>
+              <p className="text-xs text-slate-500 mt-1">Competitors charge ₹2,000+ before you even see the software. We set up everything for free.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">No additional GST</p>
-              <p className="text-xs text-slate-500 mt-1">The price shown is exactly what you pay � nothing added at checkout.</p>
+              <p className="text-xs text-slate-500 mt-1">The price shown is exactly what you pay — nothing added at checkout.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">15-day full refund</p>
@@ -828,7 +828,7 @@ export default function HomePage() {
 
           {/* Subtext */}
           <p className="text-slate-400 mb-10 text-sm sm:text-base max-w-lg mx-auto">
-            From smart bookings to WhatsApp automation � get everything you need in one powerful dashboard.
+            From smart bookings to WhatsApp automation — get everything you need in one powerful dashboard.
           </p>
 
           {/* CTA Button with gradient */}
@@ -862,7 +862,7 @@ export default function HomePage() {
             Ready to run your salon like this?
           </h2>
           <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
-            Get your own snipandglow dashboard and start automating bookings, billing, and growth � all in one place.
+            Get your own snipandglow dashboard and start automating bookings, billing, and growth — all in one place.
           </p>
           <button
             onClick={() => setShowDemoModal(true)}
