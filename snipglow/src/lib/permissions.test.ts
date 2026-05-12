@@ -8,8 +8,10 @@ const allResources: Resource[] = [
   'customers',
   'services',
   'billing',
+  'expenses',
   'memberships',
   'staff',
+  'payroll',
   'branches',
   'analytics',
   'audit',
@@ -67,8 +69,15 @@ describe('permissions', () => {
       expect(can('manager', 'read', 'analytics')).toBe(true);
     });
 
-    it('cannot access staff, branches, audit, or settings', () => {
-      const deniedResources: Resource[] = ['staff', 'branches', 'audit', 'settings'];
+    it('can read and create expenses', () => {
+      expect(can('manager', 'read', 'expenses')).toBe(true);
+      expect(can('manager', 'create', 'expenses')).toBe(true);
+      expect(can('manager', 'update', 'expenses')).toBe(false);
+      expect(can('manager', 'delete', 'expenses')).toBe(false);
+    });
+
+    it('cannot access staff, payroll, branches, audit, or settings', () => {
+      const deniedResources: Resource[] = ['staff', 'payroll', 'branches', 'audit', 'settings'];
       for (const resource of deniedResources) {
         for (const action of allActions) {
           expect(can('manager', action, resource)).toBe(false);
@@ -94,11 +103,13 @@ describe('permissions', () => {
       }
     });
 
-    it('cannot access billing, memberships, staff, branches, analytics, audit, or settings', () => {
+    it('cannot access billing, expenses, memberships, staff, payroll, branches, analytics, audit, or settings', () => {
       const deniedResources: Resource[] = [
         'billing',
+        'expenses',
         'memberships',
         'staff',
+        'payroll',
         'branches',
         'analytics',
         'audit',

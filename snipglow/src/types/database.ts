@@ -261,6 +261,90 @@ export interface AnalyticsSnapshot {
 }
 
 // =============================================================================
+// Expense & Payroll Types
+// =============================================================================
+
+/** Expense category options */
+export type ExpenseCategory = 'rent' | 'supplies' | 'utilities' | 'marketing' | 'maintenance' | 'other';
+
+/** Expense payment method options */
+export type ExpensePaymentMethod = 'cash' | 'upi' | 'card' | 'bank_transfer';
+
+/** Payroll payment status */
+export type PayrollPaymentStatus = 'pending' | 'paid';
+
+/** A tracked business expense (excluding salaries) */
+export interface Expense {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  expense_date: string;
+  payment_method: ExpensePaymentMethod;
+  receipt_note: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+/** A payroll record for an employee in a given month */
+export interface Payroll {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  employee_id: string;
+  month: string; // '2026-05' format
+  base_salary: number;
+  bonus: number;
+  deductions: number;
+  net_salary: number;
+  payment_status: PayrollPaymentStatus;
+  paid_date: string | null;
+  payment_method: string | null;
+  notes: string | null;
+  created_at: string;
+}
+
+/** Input for creating an expense */
+export interface CreateExpenseInput {
+  category: ExpenseCategory;
+  description: string;
+  amount: number;
+  expense_date: string;
+  payment_method: ExpensePaymentMethod;
+  receipt_note?: string;
+}
+
+/** Input for updating an expense */
+export interface UpdateExpenseInput {
+  category?: ExpenseCategory;
+  description?: string;
+  amount?: number;
+  expense_date?: string;
+  payment_method?: ExpensePaymentMethod;
+  receipt_note?: string | null;
+}
+
+/** Input for creating/updating a payroll record */
+export interface UpsertPayrollInput {
+  employee_id: string;
+  month: string;
+  base_salary: number;
+  bonus?: number;
+  deductions?: number;
+  payment_method?: string;
+  notes?: string;
+}
+
+/** Input for marking payroll as paid */
+export interface MarkPayrollPaidInput {
+  payroll_id: string;
+  payment_method: string;
+  paid_date: string;
+}
+
+// =============================================================================
 // Server Action Response Type
 // =============================================================================
 

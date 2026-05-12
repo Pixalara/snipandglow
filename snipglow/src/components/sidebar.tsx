@@ -15,6 +15,8 @@ import {
   FileText,
   Settings,
   X,
+  Wallet,
+  BadgeDollarSign,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { can, type Resource } from '@/lib/permissions';
@@ -34,8 +36,10 @@ const navItems: NavItem[] = [
   { label: 'Customers', href: '/dashboard/customers', icon: Users, resource: 'customers' },
   { label: 'Services', href: '/dashboard/services', icon: Scissors, resource: 'services' },
   { label: 'Billing', href: '/dashboard/billing', icon: Receipt, resource: 'billing' },
+  { label: 'Expenses', href: '/dashboard/expenses', icon: Wallet, resource: 'expenses' },
   { label: 'Memberships', href: '/dashboard/memberships', icon: CreditCard, resource: 'memberships' },
   { label: 'Staff', href: '/dashboard/staff', icon: UserCog, resource: 'staff' },
+  { label: 'Payroll', href: '/dashboard/payroll', icon: BadgeDollarSign, resource: 'payroll' },
   { label: 'Branches', href: '/dashboard/branches', icon: Building2, resource: 'branches' },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
   { label: 'Audit Log', href: '/dashboard/audit-log', icon: FileText, resource: 'audit' },

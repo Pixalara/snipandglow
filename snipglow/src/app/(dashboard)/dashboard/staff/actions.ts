@@ -2,7 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import type { ActionResult, Employee, CreateEmployeeInput } from '@/types';
+import type { ActionResult, Employee, CreateEmployeeInput, UserRole } from '@/types';
 
 /**
  * Create a new employee.
@@ -135,5 +135,53 @@ export async function deactivateEmployee(id: string): Promise<ActionResult<void>
   }
 
   revalidatePath('/staff');
+  return { success: true, data: undefined };
+}
+
+/**
+ * Change an employee's role.
+ * Requires owner role. Cannot change own role.
+ */
+export async function changeEmployeeRole(
+  employeeId: string,
+  newRole: UserRole
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const currentRole = user.user_metadata?.role;
+  if (currentRole !== 'owner') {
+    return { success: false, error: 'Only owners can change employee roles.' };
+  }
+
+  // Validate role
+  const validRoles: UserRole[] = ['owner', 'manager', 'staff'];
+  if (!validRoles.includes(newRole)) {
+    return { success: false, error: 'Invalid role specified.' };
+  }
+
+  // Prevent changing own role
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('auth_user_id')
+    .eq('id', employeeId)
+    .single();
+
+  if (employee?.auth_user_id === user.id) {
+    return { success: false, error: 'You cannot change your own role.' };
+  }
+
+  const { error } = await supabase
+    .from('employees')
+    .update({ role: newRole })
+    .eq('id', employeeId);
+
+  if (error) {
+    return { success: false, error: 'Failed to change role. Please try again.' };
+  }
+
+  revalidatePath('/dashboard/staff');
   return { success: true, data: undefined };
 }

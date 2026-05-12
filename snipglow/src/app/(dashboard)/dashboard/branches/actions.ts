@@ -2,7 +2,104 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import type { ActionResult, Branch, CreateBranchInput } from '@/types';
+import type { ActionResult, Branch, CreateBranchInput, OperatingHours } from '@/types';
+
+/** Branch stats for the performance comparison */
+export interface BranchStats {
+  branch_id: string;
+  appointment_count: number;
+  customer_count: number;
+  revenue: number;
+}
+
+/**
+ * Fetch branch performance stats (appointments, customers, revenue).
+ */
+export async function getBranchStats(): Promise<ActionResult<BranchStats[]>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const role = user.user_metadata?.role;
+  if (role !== 'owner') {
+    return { success: false, error: 'Only owners can view branch stats.' };
+  }
+
+  // Get branches
+  const { data: branches } = await supabase
+    .from('branches')
+    .select('id')
+    .eq('is_active', true);
+
+  if (!branches || branches.length === 0) {
+    return { success: true, data: [] };
+  }
+
+  const stats: BranchStats[] = [];
+
+  for (const branch of branches) {
+    // Count appointments
+    const { count: appointmentCount } = await supabase
+      .from('appointments')
+      .select('*', { count: 'exact', head: true })
+      .eq('branch_id', branch.id);
+
+    // Count customers
+    const { count: customerCount } = await supabase
+      .from('customers')
+      .select('*', { count: 'exact', head: true })
+      .eq('branch_id', branch.id);
+
+    // Sum revenue from invoices
+    const { data: invoices } = await supabase
+      .from('invoices')
+      .select('total')
+      .eq('branch_id', branch.id);
+
+    const revenue = (invoices ?? []).reduce((sum, inv) => sum + (inv.total ?? 0), 0);
+
+    stats.push({
+      branch_id: branch.id,
+      appointment_count: appointmentCount ?? 0,
+      customer_count: customerCount ?? 0,
+      revenue,
+    });
+  }
+
+  return { success: true, data: stats };
+}
+
+/**
+ * Update branch operating hours.
+ * Requires owner role.
+ */
+export async function updateBranchHours(
+  branchId: string,
+  operatingHours: OperatingHours
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const role = user.user_metadata?.role;
+  if (role !== 'owner') {
+    return { success: false, error: 'Only owners can update branch hours.' };
+  }
+
+  const { error } = await supabase
+    .from('branches')
+    .update({ operating_hours: operatingHours })
+    .eq('id', branchId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update operating hours. Please try again.' };
+  }
+
+  revalidatePath('/dashboard/branches');
+  return { success: true, data: undefined };
+}
 
 /**
  * Create a new branch.

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { EmployeeForm } from './employee-form';
-import { deactivateEmployee } from './actions';
+import { deactivateEmployee, changeEmployeeRole } from './actions';
 import {
   Users,
   Plus,
@@ -15,6 +15,7 @@ import {
   MapPin,
   Sparkles,
   AlertTriangle,
+  ChevronDown,
 } from 'lucide-react';
 import type { Employee, Branch, UserRole } from '@/types';
 
@@ -50,6 +51,10 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
   const [deactivateTarget, setDeactivateTarget] = useState<Employee | null>(null);
   const [deactivateError, setDeactivateError] = useState('');
   const [isDeactivating, setIsDeactivating] = useState(false);
+  const [roleChangeTarget, setRoleChangeTarget] = useState<Employee | null>(null);
+  const [roleChangeError, setRoleChangeError] = useState('');
+  const [isChangingRole, setIsChangingRole] = useState(false);
+  const [showPermissions, setShowPermissions] = useState(false);
 
   function handleEdit(employee: Employee) {
     setEditingEmployee(employee);
@@ -76,6 +81,23 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
     }
 
     setDeactivateTarget(null);
+  }
+
+  async function handleRoleChange(newRole: UserRole) {
+    if (!roleChangeTarget) return;
+    setIsChangingRole(true);
+    setRoleChangeError('');
+
+    const result = await changeEmployeeRole(roleChangeTarget.id, newRole);
+
+    setIsChangingRole(false);
+
+    if (!result.success) {
+      setRoleChangeError(result.error);
+      return;
+    }
+
+    setRoleChangeTarget(null);
   }
 
   /** Get branch name by ID */
@@ -168,6 +190,16 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
           <RoleGuard role={role} action="update" resource="staff">
             <Button variant="ghost" size="sm" className="rounded-lg text-xs" onClick={() => handleEdit(row)}>
               Edit
+            </Button>
+          </RoleGuard>
+          <RoleGuard role={role} action="update" resource="staff">
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-lg text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
+              onClick={() => { setRoleChangeTarget(row); setRoleChangeError(''); }}
+            >
+              Role
             </Button>
           </RoleGuard>
           <RoleGuard role={role} action="delete" resource="staff">
@@ -297,6 +329,125 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
           </div>
         </Modal>
       )}
+
+      {/* Role Change Modal */}
+      {roleChangeTarget && (
+        <Modal onClose={() => setRoleChangeTarget(null)}>
+          <div className="space-y-4">
+            <div className="flex items-center gap-3">
+              <div className="flex size-10 items-center justify-center rounded-full bg-blue-100 dark:bg-blue-900/20">
+                <Shield className="size-5 text-blue-600 dark:text-blue-400" />
+              </div>
+              <div>
+                <h2 className="text-lg font-semibold text-foreground">Change Role</h2>
+                <p className="text-sm text-muted-foreground">{roleChangeTarget.name}</p>
+              </div>
+            </div>
+
+            <p className="text-sm text-muted-foreground">
+              Current role:{' '}
+              <span className="font-medium text-foreground capitalize">{roleChangeTarget.role}</span>
+            </p>
+
+            {roleChangeError && (
+              <div className="rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+                <p className="text-sm text-red-800 dark:text-red-200">{roleChangeError}</p>
+              </div>
+            )}
+
+            <div className="space-y-2">
+              {(['owner', 'manager', 'staff'] as UserRole[]).map((r) => (
+                <button
+                  key={r}
+                  onClick={() => handleRoleChange(r)}
+                  disabled={isChangingRole || r === roleChangeTarget.role}
+                  className={`w-full flex items-center gap-3 rounded-xl border p-3 text-left transition-all ${
+                    r === roleChangeTarget.role
+                      ? 'border-primary bg-primary/5 cursor-default'
+                      : 'border-border hover:border-primary/50 hover:bg-muted/50'
+                  } disabled:opacity-50`}
+                >
+                  <div className={`flex size-8 items-center justify-center rounded-lg ${ROLE_CONFIG[r].color}`}>
+                    {r === 'owner' ? <ShieldCheck className="size-4" /> : r === 'manager' ? <Shield className="size-4" /> : <UserCog className="size-4" />}
+                  </div>
+                  <div className="flex-1">
+                    <span className="font-medium text-foreground capitalize">{r}</span>
+                    <p className="text-xs text-muted-foreground">
+                      {r === 'owner' && 'Full access to all features and settings'}
+                      {r === 'manager' && 'Manage appointments, customers, billing, and expenses'}
+                      {r === 'staff' && 'View-only access to appointments and customers'}
+                    </p>
+                  </div>
+                  {r === roleChangeTarget.role && (
+                    <span className="text-xs font-medium text-primary">Current</span>
+                  )}
+                </button>
+              ))}
+            </div>
+
+            <div className="flex items-center justify-end pt-2">
+              <Button variant="outline" className="rounded-xl" onClick={() => setRoleChangeTarget(null)} disabled={isChangingRole}>
+                {isChangingRole ? 'Changing...' : 'Close'}
+              </Button>
+            </div>
+          </div>
+        </Modal>
+      )}
+
+      {/* Permission Matrix */}
+      <RoleGuard role={role} action="read" resource="staff">
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <button
+            onClick={() => setShowPermissions(!showPermissions)}
+            className="w-full flex items-center justify-between p-4 text-left hover:bg-muted/50 transition-colors"
+          >
+            <div className="flex items-center gap-2">
+              <Shield className="size-4 text-muted-foreground" />
+              <span className="text-sm font-medium text-foreground">Role Permissions Matrix</span>
+            </div>
+            <ChevronDown className={`size-4 text-muted-foreground transition-transform ${showPermissions ? 'rotate-180' : ''}`} />
+          </button>
+          {showPermissions && (
+            <div className="border-t border-border p-4">
+              <div className="overflow-x-auto">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="border-b border-border">
+                      <th className="text-left py-2 pr-4 font-medium text-muted-foreground">Feature</th>
+                      <th className="text-center py-2 px-3 font-medium text-purple-600">Owner</th>
+                      <th className="text-center py-2 px-3 font-medium text-blue-600">Manager</th>
+                      <th className="text-center py-2 px-3 font-medium text-gray-600">Staff</th>
+                    </tr>
+                  </thead>
+                  <tbody className="divide-y divide-border">
+                    {[
+                      { feature: 'Dashboard', owner: 'Full', manager: 'View', staff: 'View' },
+                      { feature: 'Appointments', owner: 'Full CRUD', manager: 'Create/Edit', staff: 'View' },
+                      { feature: 'Customers', owner: 'Full CRUD', manager: 'Create/Edit', staff: 'View' },
+                      { feature: 'Services', owner: 'Full CRUD', manager: 'Create/Edit', staff: 'View' },
+                      { feature: 'Billing', owner: 'Full CRUD', manager: 'Create', staff: '—' },
+                      { feature: 'Expenses', owner: 'Full CRUD', manager: 'Create', staff: '—' },
+                      { feature: 'Memberships', owner: 'Full CRUD', manager: 'View', staff: '—' },
+                      { feature: 'Staff', owner: 'Full CRUD', manager: '—', staff: '—' },
+                      { feature: 'Payroll', owner: 'Full CRUD', manager: '—', staff: '—' },
+                      { feature: 'Branches', owner: 'Full CRUD', manager: '—', staff: '—' },
+                      { feature: 'Analytics', owner: 'Full', manager: 'View', staff: '—' },
+                      { feature: 'Settings', owner: 'Full', manager: '—', staff: '—' },
+                    ].map((row) => (
+                      <tr key={row.feature}>
+                        <td className="py-2 pr-4 font-medium text-foreground">{row.feature}</td>
+                        <td className="py-2 px-3 text-center text-purple-600">{row.owner}</td>
+                        <td className="py-2 px-3 text-center text-blue-600">{row.manager}</td>
+                        <td className="py-2 px-3 text-center text-gray-500">{row.staff}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+        </div>
+      </RoleGuard>
     </div>
   );
 }

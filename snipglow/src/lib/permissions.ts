@@ -11,8 +11,10 @@ export type Resource =
   | 'customers'
   | 'services'
   | 'billing'
+  | 'expenses'
   | 'memberships'
   | 'staff'
+  | 'payroll'
   | 'branches'
   | 'analytics'
   | 'audit'
@@ -36,8 +38,10 @@ const permissionMatrix: Record<UserRole, Partial<Record<Resource, Action[]>>> = 
     customers: ['read', 'create', 'update', 'delete'],
     services: ['read', 'create', 'update', 'delete'],
     billing: ['read', 'create', 'update', 'delete'],
+    expenses: ['read', 'create', 'update', 'delete'],
     memberships: ['read', 'create', 'update', 'delete'],
     staff: ['read', 'create', 'update', 'delete'],
+    payroll: ['read', 'create', 'update', 'delete'],
     branches: ['read', 'create', 'update', 'delete'],
     analytics: ['read', 'create', 'update', 'delete'],
     audit: ['read', 'create', 'update', 'delete'],
@@ -49,6 +53,7 @@ const permissionMatrix: Record<UserRole, Partial<Record<Resource, Action[]>>> = 
     customers: ['read', 'create', 'update'],
     services: ['read', 'create', 'update'],
     billing: ['read', 'create'],
+    expenses: ['read', 'create'],
     memberships: ['read'],
     analytics: ['read'],
   },
