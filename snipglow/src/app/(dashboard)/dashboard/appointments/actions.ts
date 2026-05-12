@@ -154,7 +154,7 @@ export async function updateAppointmentStatus(
 
 /**
  * Get available time slots for a given employee on a specific date.
- * Calls the `get_available_slots` PostgreSQL function via supabase.rpc().
+ * Generates slots based on branch operating hours and excludes booked appointments.
  */
 export async function getAvailableSlots(
   employeeId: string,
@@ -163,18 +163,82 @@ export async function getAvailableSlots(
 ): Promise<TimeSlot[]> {
   const supabase = await createClient();
 
-  const { data, error } = await supabase.rpc('get_available_slots', {
-    p_employee_id: employeeId,
-    p_date: date,
-    p_duration: serviceDuration,
-  });
+  // 1. Get employee's branch
+  const { data: employee } = await supabase
+    .from('employees')
+    .select('branch_id')
+    .eq('id', employeeId)
+    .single();
 
-  if (error) {
-    console.error('Error fetching available slots:', error);
-    return [];
+  if (!employee) return [];
+
+  // 2. Get branch operating hours
+  const { data: branch } = await supabase
+    .from('branches')
+    .select('operating_hours')
+    .eq('id', employee.branch_id)
+    .single();
+
+  if (!branch || !branch.operating_hours) return [];
+
+  // 3. Determine the day name from the date
+  const dateObj = new Date(date + 'T00:00:00');
+  const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+  const dayName = dayNames[dateObj.getDay()];
+
+  // Try multiple key formats (full name, 3-letter abbreviation)
+  const hours = branch.operating_hours as Record<string, { open?: string; close?: string } | undefined>;
+  const dayHours = hours[dayName] ?? hours[dayName.slice(0, 3)] ?? null;
+
+  if (!dayHours || !dayHours.open || !dayHours.close) return [];
+
+  const openTime = dayHours.open; // e.g. "09:00"
+  const closeTime = dayHours.close; // e.g. "21:00"
+
+  // 4. Generate all possible slots at 30-minute intervals
+  const slots: TimeSlot[] = [];
+  const [openH, openM] = openTime.split(':').map(Number);
+  const [closeH, closeM] = closeTime.split(':').map(Number);
+  const openMinutes = openH * 60 + openM;
+  const closeMinutes = closeH * 60 + closeM;
+
+  for (let start = openMinutes; start + serviceDuration <= closeMinutes; start += 30) {
+    const end = start + serviceDuration;
+    const startStr = `${String(Math.floor(start / 60)).padStart(2, '0')}:${String(start % 60).padStart(2, '0')}:00`;
+    const endStr = `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}:00`;
+    slots.push({ slot_start: startStr, slot_end: endStr });
   }
 
-  return (data ?? []) as TimeSlot[];
+  // 5. Fetch existing appointments for this employee on this date (non-cancelled)
+  const { data: existingAppts } = await supabase
+    .from('appointments')
+    .select('start_time, end_time')
+    .eq('employee_id', employeeId)
+    .eq('appointment_date', date)
+    .neq('status', 'cancelled');
+
+  if (!existingAppts || existingAppts.length === 0) return slots;
+
+  // 6. Filter out slots that overlap with existing appointments
+  const available = slots.filter((slot) => {
+    const slotStart = timeToMinutes(slot.slot_start);
+    const slotEnd = timeToMinutes(slot.slot_end);
+
+    return !existingAppts.some((appt) => {
+      const apptStart = timeToMinutes(appt.start_time);
+      const apptEnd = timeToMinutes(appt.end_time);
+      // Overlap check: slot overlaps if it starts before appt ends AND ends after appt starts
+      return slotStart < apptEnd && slotEnd > apptStart;
+    });
+  });
+
+  return available;
+}
+
+/** Convert HH:MM:SS or HH:MM time string to minutes since midnight */
+function timeToMinutes(time: string): number {
+  const parts = time.split(':').map(Number);
+  return parts[0] * 60 + parts[1];
 }
 
 /**
