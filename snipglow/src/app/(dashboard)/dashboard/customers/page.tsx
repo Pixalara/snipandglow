@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { CustomerSearch } from './customer-search';
 import { CustomersTable, type CustomerRow } from './customers-client';
+import { Users, UserPlus, Search } from 'lucide-react';
 import type { UserRole } from '@/types';
 
 // =============================================================================
@@ -42,7 +43,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
   if (error) {
     return (
-      <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12">
+      <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-12 text-center">
         <p className="text-sm text-destructive">Failed to load customers. Please try again.</p>
       </div>
     );
@@ -78,23 +79,38 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   }));
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Customers</h1>
-        <div className="flex items-center gap-3">
-          <Suspense fallback={<div className="h-8 w-64 animate-pulse rounded-lg bg-muted" />}>
-            <CustomerSearch defaultValue={search} />
-          </Suspense>
-          <RoleGuard role={role} action="create" resource="customers">
-            <Link
-              href="/dashboard/customers/new"
-              className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
-            >
-              New Customer
-            </Link>
-          </RoleGuard>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-emerald-500/10 via-emerald-500/5 to-transparent border border-emerald-200/50 dark:border-emerald-800/30 p-6">
+        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30">
+              <Users className="size-5 text-emerald-600 dark:text-emerald-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Customers</h1>
+              <p className="text-sm text-muted-foreground">
+                {rows.length} customer{rows.length !== 1 ? 's' : ''} in your database
+              </p>
+            </div>
+          </div>
+          <div className="flex items-center gap-3">
+            <Suspense fallback={<div className="h-9 w-64 animate-pulse rounded-xl bg-muted" />}>
+              <CustomerSearch defaultValue={search} />
+            </Suspense>
+            <RoleGuard role={role} action="create" resource="customers">
+              <Link
+                href="/dashboard/customers/new"
+                className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <UserPlus className="size-4" />
+                New Customer
+              </Link>
+            </RoleGuard>
+          </div>
         </div>
+        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-500/5" />
+        <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-emerald-400/5" />
       </div>
 
       {/* Customer Table (Client Component) */}

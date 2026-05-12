@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
+import { Receipt, Plus } from 'lucide-react';
 import type { DeliveryStatus, PaymentMethod, UserRole } from '@/types';
 
 // =============================================================================
@@ -27,11 +28,19 @@ export default async function BillingPage() {
 
   if (error) {
     return (
-      <div className="space-y-4">
-        <div className="flex items-center justify-between">
-          <h1 className="text-xl font-semibold text-foreground">Billing</h1>
+      <div className="space-y-6">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent border border-violet-200/50 dark:border-violet-800/30 p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
+              <Receipt className="size-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Billing</h1>
+              <p className="text-sm text-destructive">Failed to load invoices</p>
+            </div>
+          </div>
         </div>
-        <div className="flex items-center justify-center rounded-lg border border-border bg-card p-12">
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-12 text-center">
           <p className="text-sm text-destructive">Failed to load invoices. Please try again.</p>
         </div>
       </div>
@@ -67,18 +76,33 @@ export default async function BillingPage() {
   }));
 
   return (
-    <div className="space-y-4">
-      {/* Header */}
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-xl font-semibold text-foreground">Billing</h1>
-        <RoleGuard role={role} action="create" resource="billing">
-          <Link
-            href="/dashboard/billing/new"
-            className="inline-flex h-8 shrink-0 items-center justify-center rounded-lg bg-primary px-3 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/80"
-          >
-            New Bill
-          </Link>
-        </RoleGuard>
+    <div className="space-y-6">
+      {/* Page Header */}
+      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent border border-violet-200/50 dark:border-violet-800/30 p-6">
+        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
+              <Receipt className="size-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Billing</h1>
+              <p className="text-sm text-muted-foreground">
+                {rows.length} invoice{rows.length !== 1 ? 's' : ''} generated
+              </p>
+            </div>
+          </div>
+          <RoleGuard role={role} action="create" resource="billing">
+            <Link
+              href="/dashboard/billing/new"
+              className="inline-flex h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+            >
+              <Plus className="size-4" />
+              New Bill
+            </Link>
+          </RoleGuard>
+        </div>
+        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-violet-500/5" />
+        <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-violet-400/5" />
       </div>
 
       {/* Invoice Table (Client Component) */}
