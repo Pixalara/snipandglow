@@ -981,11 +981,35 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
     if (!isFormValid) return;
     setSubmitting(true);
 
-    // Simulate API call (replace with actual endpoint later)
-    await new Promise((resolve) => setTimeout(resolve, 1500));
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: '75debe40-e347-41ce-a203-93266c993232',
+          subject: `New Demo Booking — ${name}`,
+          name,
+          phone,
+          salon_name: salonName || 'Not provided',
+          business_type: businessType || 'Not specified',
+          preferred_date: date,
+          preferred_time: selectedSlot,
+          city: city || 'Not provided',
+          from_name: 'snipandglow Demo Booking',
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setSuccess(true);
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    } catch {
+      alert('Network error. Please try again.');
+    }
 
     setSubmitting(false);
-    setSuccess(true);
   }
 
   if (success) {
