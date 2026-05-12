@@ -12,7 +12,7 @@ export default function AuthLayout({
     <div className="min-h-screen flex flex-col bg-white">
       {/* Minimal navbar */}
       <nav className="border-b border-slate-100 bg-white/95 backdrop-blur-sm">
-        <div className="mx-auto max-w-7xl px-6 py-4 flex items-center justify-between">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
             <Scissors className="h-5 w-5 text-emerald-500" />
             <span className="text-lg font-bold tracking-tight text-slate-900">Snip &amp; Glow</span>

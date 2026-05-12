@@ -229,7 +229,7 @@ export default function NewBillingPage() {
   // Success state
   if (successInvoice) {
     return (
-      <div className="mx-auto w-full max-w-lg space-y-4 px-0 sm:px-0">
+      <div className="mx-auto w-full max-w-lg space-y-4 px-4 sm:px-0">
         <Card>
           <CardContent className="pt-6">
             <div className="flex flex-col items-center gap-4 text-center">
@@ -294,7 +294,7 @@ export default function NewBillingPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-3xl space-y-4 px-0 sm:px-0">
+    <div className="mx-auto w-full max-w-3xl space-y-4 px-4 sm:px-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
@@ -518,11 +518,11 @@ export default function NewBillingPage() {
             {/* Payment Method */}
             <div className="space-y-2">
               <p className="text-sm font-medium text-foreground">Payment Method</p>
-              <div className="flex flex-wrap gap-3" role="radiogroup" aria-label="Payment method">
+              <div className="flex flex-wrap gap-2 sm:gap-3" role="radiogroup" aria-label="Payment method">
                 {(['cash', 'upi', 'card'] as PaymentMethod[]).map((method) => (
                   <label
                     key={method}
-                    className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2 text-sm transition-colors ${
+                    className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 sm:py-2 text-sm transition-colors min-h-[44px] ${
                       paymentMethod === method
                         ? 'border-primary bg-primary/5 text-primary font-medium'
                         : 'border-border text-muted-foreground hover:border-foreground/30'

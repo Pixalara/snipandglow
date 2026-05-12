@@ -239,12 +239,12 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
       </div>
 
       {/* Filter */}
-      <div className="flex items-center gap-3">
-        <Filter className="size-4 text-muted-foreground" />
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
+        <Filter className="size-4 text-muted-foreground hidden sm:block" />
         <select
           value={filterCategory}
           onChange={(e) => setFilterCategory(e.target.value)}
-          className="rounded-lg border border-border bg-card px-3 py-1.5 text-sm text-foreground"
+          className="w-full sm:w-auto rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
         >
           <option value="all">All Categories</option>
           {Object.entries(CATEGORY_LABELS).map(([key, label]) => (

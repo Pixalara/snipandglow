@@ -241,14 +241,14 @@ export function PayrollClient({ payrollRecords, employees, currentMonth, role }:
       </div>
 
       {/* Month Selector */}
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center gap-2 sm:gap-3">
         <Label htmlFor="month-select" className="text-sm font-medium">Month:</Label>
         <Input
           id="month-select"
           type="month"
           value={selectedMonth}
           onChange={(e) => setSelectedMonth(e.target.value)}
-          className="w-auto rounded-lg"
+          className="w-full sm:w-auto rounded-lg"
         />
       </div>
 

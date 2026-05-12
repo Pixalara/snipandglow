@@ -18,6 +18,8 @@ import {
   MapPin,
   Repeat2,
   Gift,
+  Menu,
+  X,
 } from 'lucide-react';
 
 // Animated counter that counts up when scrolled into view
@@ -57,6 +59,7 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
 
 export default function HomePage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -100,12 +103,37 @@ export default function HomePage() {
             </Link>
             <Link
               href="/signup"
-              className="px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm whitespace-nowrap"
+              className="hidden sm:inline-flex px-3 sm:px-4 py-2 text-xs sm:text-sm font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors shadow-sm whitespace-nowrap"
             >
               Start Free Trial
             </Link>
+            {/* Mobile hamburger */}
+            <button
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
+            </button>
           </div>
         </div>
+
+        {/* Mobile menu dropdown */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-slate-100 bg-white px-4 py-4 space-y-3">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors">Features</a>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors">How It Works</a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-600 hover:text-emerald-600 transition-colors">Pricing</a>
+            <div className="pt-2 border-t border-slate-100 flex flex-col gap-2">
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm text-slate-700 border border-slate-200 rounded-lg hover:border-emerald-400 hover:text-emerald-600 transition-all">
+                Login
+              </Link>
+              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm font-semibold bg-emerald-500 text-white rounded-lg hover:bg-emerald-600 transition-colors">
+                Start Free Trial
+              </Link>
+            </div>
+          </div>
+        )}
       </nav>
 
       {/* ===== HERO ===== */}
@@ -636,7 +664,7 @@ export default function HomePage() {
                 Start Free Trial
               </Link>
 
-              <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-500 mb-6">
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />No credit card</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />15-day money-back</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Live in 2 days</span>
@@ -683,7 +711,7 @@ export default function HomePage() {
 
               {/* Pricing */}
               <div className="mb-5">
-                <div className="flex items-center gap-2">
+                <div className="flex flex-wrap items-center gap-2">
                   <p className="text-slate-400 text-sm line-through">₹2,499 /mo</p>
                   <span className="inline-flex items-center rounded-full bg-orange-100 px-2 py-0.5 text-xs font-semibold text-orange-700">Launch pricing</span>
                 </div>
@@ -705,7 +733,7 @@ export default function HomePage() {
                 Start Free Trial
               </Link>
 
-              <div className="flex items-center gap-4 text-xs text-slate-500 mb-6">
+              <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-500 mb-6">
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />No credit card</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />15-day money-back</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Live in 2 days</span>
@@ -787,8 +815,8 @@ export default function HomePage() {
           </div>
 
           {/* Heading */}
-          <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-            See your salon running<br />
+          <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+            See your salon running{' '}
             <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-violet-500 bg-clip-text text-transparent italic">
               on autopilot.
             </span>
@@ -802,7 +830,7 @@ export default function HomePage() {
           {/* CTA Button with gradient */}
           <Link
             href="/signup"
-            className="inline-flex items-center justify-center gap-2 px-10 py-4 rounded-2xl font-semibold text-white text-base shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
+            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 sm:px-10 py-4 rounded-2xl font-semibold text-white text-base shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
             style={{ background: 'linear-gradient(135deg, #f97316, #ec4899, #8b5cf6)' }}
           >
             <Zap className="h-5 w-5" />
@@ -810,7 +838,7 @@ export default function HomePage() {
           </Link>
 
           {/* Trust points */}
-          <div className="flex items-center justify-center gap-6 mt-8 text-sm text-slate-400">
+          <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-slate-400">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4 text-emerald-400" />
               No credit card required
@@ -825,7 +853,7 @@ export default function HomePage() {
 
       {/* ===== BOOK A DEMO SECTION ===== */}
       <section className="py-12 sm:py-16 px-4 sm:px-6" style={{ background: 'linear-gradient(135deg, #c4b5fd 0%, #e9d5ff 25%, #fce7f3 50%, #e9d5ff 75%, #93c5fd 100%)' }}>
-        <div className="mx-auto max-w-4xl rounded-3xl px-6 py-12 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
+        <div className="mx-auto max-w-4xl rounded-3xl px-5 py-10 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to run your salon like this?
           </h2>
@@ -834,7 +862,7 @@ export default function HomePage() {
           </p>
           <button
             onClick={() => setShowDemoModal(true)}
-            className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full font-semibold text-white text-sm shadow-lg shadow-pink-500/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-pink-500/40"
+            className="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-8 py-3.5 rounded-full font-semibold text-white text-sm shadow-lg shadow-pink-500/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-pink-500/40"
             style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
           >
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
@@ -849,7 +877,7 @@ export default function HomePage() {
       {/* ===== FOOTER ===== */}
       <footer className="bg-slate-950 py-10 sm:py-12">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-6">
+          <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-2">
               <Scissors className="h-5 w-5 text-emerald-500 shrink-0" />
               <span className="text-base font-bold text-white">Snip &amp; Glow</span>

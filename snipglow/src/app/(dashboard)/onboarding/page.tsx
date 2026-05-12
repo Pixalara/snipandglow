@@ -80,7 +80,7 @@ export default function OnboardingPage() {
   };
 
   return (
-    <div className="flex min-h-[80vh] items-center justify-center">
+    <div className="flex min-h-[80vh] items-center justify-center px-4">
       <Card className="w-full max-w-lg">
         <CardHeader>
           <CardTitle>Set Up Your Salon</CardTitle>
@@ -157,7 +157,7 @@ export default function OnboardingPage() {
                   placeholder="Street, City, State"
                 />
               </div>
-              <div className="grid grid-cols-2 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label htmlFor="openTime">Opening Time</Label>
                   <Input
@@ -198,7 +198,7 @@ export default function OnboardingPage() {
                   ))}
                 </ul>
               )}
-              <div className="grid grid-cols-2 gap-2">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                 <Input
                   placeholder="Service name"
                   value={newService.name}

@@ -333,7 +333,7 @@ function UpgradeCard({ currentPlan }: { currentPlan: PlanTier }) {
 
           {/* Comparison */}
           <div className="rounded-xl border border-amber-200/50 dark:border-amber-800/30 bg-white/60 dark:bg-gray-900/40 p-4 max-w-sm mx-auto">
-            <div className="grid grid-cols-2 gap-3 text-xs">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-3 text-xs">
               <div className="space-y-2">
                 <p className="font-semibold text-muted-foreground uppercase tracking-wider">Starter</p>
                 <div className="space-y-1.5 text-muted-foreground">
