@@ -20,11 +20,11 @@ const syne = Syne({
 export const metadata: Metadata = {
   metadataBase: new URL('https://snipandglow.com'),
   title: {
-    default: 'snipandglow — Salon Management Software for India',
+    default: '#1 India\'s Salon & Spa Software | snipandglow',
     template: '%s | snipandglow',
   },
   description:
-    'WhatsApp-native salon management software for Indian salons. Manage appointments, billing, customers, staff, and grow your business on autopilot. Start free 15-day trial.',
+    'snipandglow: India\'s #1 salon and spa management software. WhatsApp automation, appointment booking, billing, CRM & staff management. All-in-one platform to streamline operations & grow your business. Start free 15-day trial.',
   keywords: [
     'salon management software',
     'salon software India',
@@ -54,23 +54,23 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: 'https://snipandglow.com',
     siteName: 'snipandglow',
-    title: 'snipandglow — Salon Management Software for India',
+    title: '#1 India\'s Salon & Spa Software | snipandglow',
     description:
-      'WhatsApp-native salon management software. Manage appointments, billing, customers & staff. Start free 15-day trial.',
+      'India\'s #1 salon and spa management software. WhatsApp automation, appointment booking, billing, CRM & staff management. Start free 15-day trial.',
     images: [
       {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'snipandglow — Salon Management Software',
+        alt: 'snipandglow — #1 India\'s Salon & Spa Software',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'snipandglow — Salon Management Software for India',
+    title: '#1 India\'s Salon & Spa Software | snipandglow',
     description:
-      'WhatsApp-native salon management software. Manage appointments, billing, customers & staff.',
+      'India\'s #1 salon and spa management software. WhatsApp automation, appointment booking, billing & CRM.',
     images: ['/og-image.png'],
     creator: '@pixalara',
   },
