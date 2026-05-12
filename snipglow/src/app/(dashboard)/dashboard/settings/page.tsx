@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
-import { GstSettingsCard, SalonProfileCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -94,6 +94,10 @@ export default async function SettingsPage() {
   const gstRate = (settings.gst_rate as number) ?? 18;
   const gstEnabled = (settings.gst_enabled as boolean) ?? false;
 
+  // Discount settings
+  const discountEnabled = (settings.discount_enabled as boolean) ?? false;
+  const discountValue = (settings.discount_value as number) ?? 0;
+
   // Salon profile data
   const salonProfile = {
     salonName: tenant.name ?? '',
@@ -145,6 +149,12 @@ export default async function SettingsPage() {
         currentGstNumber={gstNumber}
         currentGstRate={gstRate}
         gstEnabled={gstEnabled}
+      />
+
+      {/* Discount Settings */}
+      <DiscountSettingsCard
+        discountEnabled={discountEnabled}
+        discountValue={discountValue}
       />
 
       {/* Current Subscription Card */}

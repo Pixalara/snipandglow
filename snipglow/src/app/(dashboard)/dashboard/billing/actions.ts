@@ -196,16 +196,16 @@ export async function updateInvoicePayment(
 }
 
 /**
- * Get the tenant's GST settings.
+ * Get the tenant's GST and discount settings.
  */
-export async function getTenantGstSettings(): Promise<{ gst_enabled: boolean; gst_rate: number; gst_number: string | null }> {
+export async function getTenantGstSettings(): Promise<{ gst_enabled: boolean; gst_rate: number; gst_number: string | null; discount_enabled: boolean; discount_value: number }> {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
-  if (!user) return { gst_enabled: false, gst_rate: 0, gst_number: null };
+  if (!user) return { gst_enabled: false, gst_rate: 0, gst_number: null, discount_enabled: false, discount_value: 0 };
 
   const tenantId = user.user_metadata?.tenant_id;
-  if (!tenantId) return { gst_enabled: false, gst_rate: 0, gst_number: null };
+  if (!tenantId) return { gst_enabled: false, gst_rate: 0, gst_number: null, discount_enabled: false, discount_value: 0 };
 
   const { data: tenant } = await supabase
     .from('tenants')
@@ -213,12 +213,14 @@ export async function getTenantGstSettings(): Promise<{ gst_enabled: boolean; gs
     .eq('id', tenantId)
     .single();
 
-  if (!tenant) return { gst_enabled: false, gst_rate: 0, gst_number: null };
+  if (!tenant) return { gst_enabled: false, gst_rate: 0, gst_number: null, discount_enabled: false, discount_value: 0 };
 
   const settings = (tenant.settings as Record<string, unknown>) ?? {};
   return {
     gst_enabled: (settings.gst_enabled as boolean) ?? false,
     gst_rate: (settings.gst_rate as number) ?? 18,
     gst_number: (settings.gst_number as string) ?? null,
+    discount_enabled: (settings.discount_enabled as boolean) ?? false,
+    discount_value: (settings.discount_value as number) ?? 0,
   };
 }

@@ -3,8 +3,8 @@
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateGstSettings, updateSalonProfile } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil } from 'lucide-react';
+import { updateGstSettings, updateSalonProfile, updateDiscountSettings } from './actions';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent } from 'lucide-react';
 
 // =============================================================================
 // Salon Profile Card
@@ -321,6 +321,155 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
               Remove GSTIN
             </Button>
           )}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =============================================================================
+// Discount Settings Card
+// =============================================================================
+
+interface DiscountSettingsProps {
+  discountEnabled: boolean;
+  discountValue: number;
+}
+
+export function DiscountSettingsCard({ discountEnabled: initialEnabled, discountValue: initialValue }: DiscountSettingsProps) {
+  const [isPending, startTransition] = useTransition();
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [value, setValue] = useState(initialValue || 10);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+
+    if (enabled && (value < 1 || value > 100)) {
+      setError('Discount must be between 1% and 100%');
+      return;
+    }
+
+    startTransition(async () => {
+      const result = await updateDiscountSettings({
+        discount_enabled: enabled,
+        discount_value: enabled ? value : 0,
+      });
+
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Percent className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">Default Discount</h2>
+          {initialEnabled && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="size-3" />
+              {initialValue}% Active
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="p-6 space-y-5">
+        <p className="text-sm text-muted-foreground">
+          Enable a default discount that will be automatically applied to all new invoices.
+        </p>
+
+        {/* Toggle */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">Auto-apply discount</p>
+            <p className="text-xs text-muted-foreground">Apply to every new invoice automatically</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled}
+            aria-label="Toggle discount"
+            onClick={() => setEnabled(!enabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+              enabled ? 'bg-primary' : 'bg-muted'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                enabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        {/* Discount Value */}
+        {enabled && (
+          <div className="space-y-2">
+            <label htmlFor="discount-value" className="text-sm font-medium text-foreground">
+              Discount Percentage (%)
+            </label>
+            <div className="flex items-center gap-3">
+              <Input
+                id="discount-value"
+                type="number"
+                min={1}
+                max={100}
+                value={value}
+                onChange={(e) => setValue(Number(e.target.value))}
+                className="w-24"
+              />
+              <span className="text-sm text-muted-foreground">% off on every invoice</span>
+            </div>
+          </div>
+        )}
+
+        {/* Status */}
+        {enabled && value > 0 && (
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <Percent className="size-4 text-emerald-600 dark:text-emerald-400" />
+              <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                {value}% discount will be applied to all new invoices.
+              </p>
+            </div>
+          </div>
+        )}
+
+        {!enabled && (
+          <div className="rounded-lg bg-muted/50 px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              No default discount. Membership discounts will still apply if customer has an active membership.
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+            <AlertTriangle className="size-4 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Discount settings saved!</p>
+          </div>
+        )}
+
+        <div className="pt-2">
+          <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+            {isPending ? 'Saving...' : 'Save Discount Settings'}
+          </Button>
         </div>
       </div>
     </div>

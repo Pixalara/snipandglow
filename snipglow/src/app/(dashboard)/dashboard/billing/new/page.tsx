@@ -50,6 +50,7 @@ export default function NewBillingPage() {
   // Billing options
   const [gstEnabled, setGstEnabled] = useState(false);
   const [gstRate, setGstRate] = useState(0);
+  const [defaultDiscount, setDefaultDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
 
   // UI state
@@ -70,6 +71,7 @@ export default function NewBillingPage() {
       setServices(svcData);
       setGstEnabled(gstSettings.gst_enabled);
       setGstRate(gstSettings.gst_rate);
+      setDefaultDiscount(gstSettings.discount_enabled ? gstSettings.discount_value : 0);
     }
     loadData();
   }, []);
@@ -111,8 +113,9 @@ export default function NewBillingPage() {
     }
   }, [selectedCustomer, fetchMembership]);
 
-  // Calculate totals
-  const discountPct = activeMembership?.discount_pct ?? 0;
+  // Calculate totals — use the higher of membership discount or default discount
+  const membershipDiscount = activeMembership?.discount_pct ?? 0;
+  const discountPct = Math.max(membershipDiscount, defaultDiscount);
   const totals = calculateInvoiceTotal({
     lineItems: lineItems.map((item) => ({
       price: item.unit_price,
@@ -557,7 +560,7 @@ export default function NewBillingPage() {
               {discountPct > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-green-600 dark:text-green-400">
-                    Membership Discount ({discountPct}%)
+                    {membershipDiscount > defaultDiscount ? 'Membership' : 'Default'} Discount ({discountPct}%)
                   </span>
                   <span className="text-green-600 dark:text-green-400">
                     −{formatINR(totals.discountAmount)}
