@@ -58,14 +58,22 @@ export default async function SettingsPage() {
   if (!tenant) redirect('/dashboard');
 
   // Fetch primary branch details
-  let branchData: { name: string; address: string | null; phone: string | null; operating_hours: Record<string, { open: string; close: string }> | null } | null = null;
+  let branchName = '';
+  let branchAddress = '';
+  let branchOperatingHours: Record<string, { open: string; close: string }> | null = null;
+
   if (branchId) {
     const { data } = await supabase
       .from('branches')
       .select('name, address, phone, operating_hours')
       .eq('id', branchId)
       .single();
-    branchData = data as typeof branchData;
+
+    if (data) {
+      branchName = data.name ?? '';
+      branchAddress = data.address ?? '';
+      branchOperatingHours = data.operating_hours as Record<string, { open: string; close: string }> | null;
+    }
   }
 
   const subscriptionStatus = tenant.subscription_status as SubscriptionStatus;
@@ -92,9 +100,9 @@ export default async function SettingsPage() {
     ownerName: tenant.owner_name ?? '',
     phone: tenant.phone ?? '',
     email: user.email ?? '',
-    branchName: branchData?.name ?? '',
-    address: branchData?.address ?? '',
-    operatingHours: branchData?.operating_hours ?? null,
+    branchName: branchName,
+    address: branchAddress,
+    operatingHours: branchOperatingHours,
   };
 
   return (
