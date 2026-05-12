@@ -1,9 +1,14 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { formatINR, formatDateIN, formatTimeIST } from '@/lib/utils';
-import { DataTable, type Column } from '@/components/data-table';
+import { formatINR, formatDateIN } from '@/lib/utils';
 import { ProfileTabs } from './profile-tabs';
+import {
+  VisitHistoryTable,
+  BillingHistoryTable,
+  type VisitRow,
+  type BillingHistoryRow,
+} from './history-tables';
 
 // =============================================================================
 // Customer Profile Page — Server Component
@@ -13,31 +18,12 @@ interface CustomerProfilePageProps {
   params: Promise<{ id: string }>;
 }
 
-/** Appointment row with joined service and employee names */
-interface AppointmentRow {
-  id: string;
-  appointment_date: string;
-  start_time: string;
-  status: string;
-  services: { name: string } | null;
-  employees: { name: string } | null;
-}
-
-/** Invoice row for billing history */
-interface InvoiceRow {
-  id: string;
-  invoice_number: string;
-  total: number;
-  payment_method: string;
-  delivery_status: string;
-  created_at: string;
-}
-
 /** Active membership with plan details */
 interface ActiveMembership {
   id: string;
   end_date: string;
-  memberships: { name: string; discount_pct: number } | null;
+  membership_name: string;
+  discount_pct: number;
 }
 
 export default async function CustomerProfilePage({ params }: CustomerProfilePageProps) {
@@ -71,28 +57,76 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
     );
   }
 
-  // Fetch completed appointments with service and employee names
+  // Fetch completed appointments
   const { data: appointments } = await supabase
     .from('appointments')
-    .select('*, services(name), employees(name)')
+    .select('id, appointment_date, start_time, service_id, employee_id')
     .eq('customer_id', id)
     .eq('status', 'completed')
     .order('appointment_date', { ascending: false });
 
+  // Fetch service and employee names separately (avoid join issues)
+  const apptList = appointments ?? [];
+  const svcIds = [...new Set(apptList.map((a) => a.service_id).filter(Boolean))];
+  const empIds = [...new Set(apptList.map((a) => a.employee_id).filter(Boolean))];
+
+  const [svcRes, empRes] = await Promise.all([
+    svcIds.length > 0 ? supabase.from('services').select('id, name').in('id', svcIds) : { data: [] },
+    empIds.length > 0 ? supabase.from('employees').select('id, name').in('id', empIds) : { data: [] },
+  ]);
+
+  const svcMap: Record<string, string> = {};
+  const empMap: Record<string, string> = {};
+  for (const s of svcRes.data ?? []) svcMap[s.id] = s.name;
+  for (const e of empRes.data ?? []) empMap[e.id] = e.name;
+
+  const visitRows: VisitRow[] = apptList.map((a) => ({
+    id: a.id,
+    appointment_date: a.appointment_date,
+    start_time: a.start_time,
+    service_name: svcMap[a.service_id ?? ''] ?? '—',
+    employee_name: empMap[a.employee_id ?? ''] ?? '—',
+  }));
+
   // Fetch invoices
   const { data: invoices } = await supabase
     .from('invoices')
-    .select('*')
+    .select('id, invoice_number, total, payment_method, delivery_status, created_at')
     .eq('customer_id', id)
     .order('created_at', { ascending: false });
 
+  const billingRows: BillingHistoryRow[] = (invoices ?? []).map((inv) => ({
+    id: inv.id,
+    invoice_number: inv.invoice_number,
+    total: inv.total,
+    payment_method: inv.payment_method,
+    delivery_status: inv.delivery_status ?? 'pending',
+    created_at: inv.created_at ?? '',
+  }));
+
   // Fetch active membership
-  const { data: activeMembership } = await supabase
+  const { data: activeMembershipData } = await supabase
     .from('customer_memberships')
-    .select('*, memberships(name, discount_pct)')
+    .select('id, end_date, membership_id')
     .eq('customer_id', id)
     .eq('status', 'active')
-    .single();
+    .maybeSingle();
+
+  let activeMembership: ActiveMembership | null = null;
+  if (activeMembershipData) {
+    const { data: plan } = await supabase
+      .from('memberships')
+      .select('name, discount_pct')
+      .eq('id', activeMembershipData.membership_id)
+      .maybeSingle();
+
+    activeMembership = {
+      id: activeMembershipData.id,
+      end_date: activeMembershipData.end_date,
+      membership_name: plan?.name ?? 'Membership',
+      discount_pct: plan?.discount_pct ?? 0,
+    };
+  }
 
   return (
     <div className="space-y-6">
@@ -107,29 +141,29 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
       {/* Profile Header */}
       <CustomerProfileHeader
         customer={{
-          ...customer,
+          name: customer.name,
+          phone: customer.phone,
+          email: customer.email,
+          gender: customer.gender,
+          notes: customer.notes,
           total_visits: customer.total_visits ?? 0,
           total_spent: customer.total_spent ?? 0,
           created_at: customer.created_at ?? '',
         }}
-        activeMembership={activeMembership as ActiveMembership | null}
+        activeMembership={activeMembership}
       />
 
-      {/* Tabs: Visit History & Billing History */}
+      {/* Tabs: Visit History & Billing History (Client Components) */}
       <ProfileTabs
-        visitHistory={
-          <VisitHistoryTable appointments={(appointments ?? []) as AppointmentRow[]} />
-        }
-        billingHistory={
-          <BillingHistoryTable invoices={(invoices ?? []) as InvoiceRow[]} />
-        }
+        visitHistory={<VisitHistoryTable appointments={visitRows} />}
+        billingHistory={<BillingHistoryTable invoices={billingRows} />}
       />
     </div>
   );
 }
 
 // =============================================================================
-// Profile Header
+// Profile Header (Server Component — no function props passed)
 // =============================================================================
 
 function CustomerProfileHeader({
@@ -155,7 +189,7 @@ function CustomerProfileHeader({
         <h1 className="text-2xl font-bold text-foreground">{customer.name}</h1>
         {activeMembership && (
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
-            <span>🏅 {activeMembership.memberships?.name ?? 'Membership'}</span>
+            <span>🏅 {activeMembership.membership_name}</span>
             <span className="text-emerald-600 dark:text-emerald-500">
               · Expires {formatDateIN(activeMembership.end_date)}
             </span>
@@ -197,156 +231,4 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 
 function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
-}
-
-// =============================================================================
-// Visit History Table
-// =============================================================================
-
-function VisitHistoryTable({ appointments }: { appointments: AppointmentRow[] }) {
-  const columns: Column<AppointmentRow>[] = [
-    {
-      key: 'service',
-      header: 'Service',
-      render: (row) => (
-        <span className="font-medium text-foreground">
-          {row.services?.name ?? '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'stylist',
-      header: 'Stylist',
-      render: (row) => (
-        <span className="text-muted-foreground">
-          {row.employees?.name ?? '—'}
-        </span>
-      ),
-    },
-    {
-      key: 'date',
-      header: 'Date',
-      render: (row) => <span>{formatDateIN(row.appointment_date)}</span>,
-    },
-    {
-      key: 'time',
-      header: 'Time',
-      render: (row) => (
-        <span className="text-muted-foreground">
-          {formatTimeFromTimeField(row.start_time)}
-        </span>
-      ),
-    },
-  ];
-
-  return (
-    <DataTable
-      columns={columns}
-      data={appointments}
-      getRowKey={(row) => row.id}
-      emptyMessage="No visit history yet"
-    />
-  );
-}
-
-/**
- * Format a time field (HH:MM:SS or HH:MM) to 12-hour format.
- * The start_time from appointments is a TIME field, not a full timestamp.
- */
-function formatTimeFromTimeField(time: string): string {
-  // Create a date with the time to use formatTimeIST
-  // Use a fixed date since we only care about the time portion
-  const dateStr = `2026-01-01T${time}`;
-  return formatTimeIST(dateStr);
-}
-
-// =============================================================================
-// Billing History Table
-// =============================================================================
-
-function BillingHistoryTable({ invoices }: { invoices: InvoiceRow[] }) {
-  const columns: Column<InvoiceRow>[] = [
-    {
-      key: 'invoice_number',
-      header: 'Invoice #',
-      render: (row) => (
-        <span className="font-medium text-foreground">{row.invoice_number}</span>
-      ),
-    },
-    {
-      key: 'date',
-      header: 'Date',
-      render: (row) => <span>{formatDateIN(row.created_at)}</span>,
-    },
-    {
-      key: 'total',
-      header: 'Total',
-      render: (row) => (
-        <span className="font-medium text-foreground">{formatINR(row.total)}</span>
-      ),
-    },
-    {
-      key: 'payment_method',
-      header: 'Payment',
-      render: (row) => (
-        <span className="text-muted-foreground uppercase text-xs">
-          {row.payment_method}
-        </span>
-      ),
-    },
-    {
-      key: 'delivery_status',
-      header: 'Delivery',
-      render: (row) => <DeliveryStatusBadge status={row.delivery_status} />,
-    },
-  ];
-
-  return (
-    <DataTable
-      columns={columns}
-      data={invoices}
-      getRowKey={(row) => row.id}
-      emptyMessage="No billing history yet"
-    />
-  );
-}
-
-// =============================================================================
-// Delivery Status Badge
-// =============================================================================
-
-function DeliveryStatusBadge({ status }: { status: string }) {
-  const config: Record<string, { label: string; className: string }> = {
-    pending: {
-      label: 'Pending',
-      className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    },
-    sent: {
-      label: 'Sent',
-      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    },
-    delivered: {
-      label: 'Delivered',
-      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    },
-    read: {
-      label: 'Read',
-      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    },
-    failed: {
-      label: 'Failed',
-      className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
-    },
-  };
-
-  const { label, className } = config[status] ?? {
-    label: status,
-    className: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
-  };
-
-  return (
-    <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>
-      {label}
-    </span>
-  );
 }
