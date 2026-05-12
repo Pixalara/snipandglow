@@ -52,7 +52,7 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
     .single();
 
   const { data, error } = await admin
-    .from('expenses')
+    .from('expenses' as any)
     .insert({
       tenant_id: tenantId,
       branch_id: branchId,
@@ -73,7 +73,7 @@ export async function createExpense(input: CreateExpenseInput): Promise<ActionRe
   }
 
   revalidatePath('/dashboard/expenses');
-  return { success: true, data: data as Expense };
+  return { success: true, data: data as unknown as Expense };
 }
 
 /**
@@ -111,7 +111,7 @@ export async function updateExpense(
   if (input.receipt_note !== undefined) updateData.receipt_note = input.receipt_note?.trim() || null;
 
   const { data, error } = await admin
-    .from('expenses')
+    .from('expenses' as any)
     .update(updateData)
     .eq('id', id)
     .select()
@@ -123,7 +123,7 @@ export async function updateExpense(
   }
 
   revalidatePath('/dashboard/expenses');
-  return { success: true, data: data as Expense };
+  return { success: true, data: data as unknown as Expense };
 }
 
 /**
@@ -143,7 +143,7 @@ export async function deleteExpense(id: string): Promise<ActionResult<void>> {
   }
 
   const { error } = await admin
-    .from('expenses')
+    .from('expenses' as any)
     .delete()
     .eq('id', id);
 
