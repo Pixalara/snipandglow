@@ -3,7 +3,7 @@ import type { NextConfig } from 'next'
 const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
-      allowedOrigins: ['localhost:3000', 'snipandglow.pixalara.io'],
+      allowedOrigins: ['localhost:3000', 'snipandglow.com', 'www.snipandglow.com', 'snipandglow.pixalara.io'],
     },
   },
   images: {
