@@ -824,20 +824,20 @@ export default function HomePage() {
       </section>
 
       {/* ===== BOOK A DEMO SECTION ===== */}
-      <section className="relative py-16 sm:py-20 overflow-hidden" style={{ background: 'linear-gradient(135deg, #c084fc 0%, #1e1b4b 30%, #0f172a 50%, #1e1b4b 70%, #f472b6 100%)' }}>
-        <div className="mx-auto max-w-3xl px-4 sm:px-6 text-center">
+      <section className="py-12 sm:py-16 px-4 sm:px-6" style={{ background: 'linear-gradient(135deg, #c4b5fd 0%, #e9d5ff 25%, #fce7f3 50%, #e9d5ff 75%, #93c5fd 100%)' }}>
+        <div className="mx-auto max-w-4xl rounded-3xl px-6 py-12 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to run your salon like this?
           </h2>
-          <p className="text-slate-300 mb-8 text-sm sm:text-base max-w-lg mx-auto">
+          <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
             Get your own Snip & Glow dashboard and start automating bookings, billing, and growth — all in one place.
           </p>
           <button
             onClick={() => setShowDemoModal(true)}
-            className="inline-flex items-center justify-center gap-2 px-8 py-3.5 rounded-2xl font-semibold text-white text-base shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
+            className="inline-flex items-center justify-center gap-2.5 px-8 py-3.5 rounded-full font-semibold text-white text-sm shadow-lg shadow-pink-500/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-pink-500/40"
             style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
           >
-            <svg className="h-5 w-5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
+            <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             Book a Live Demo
           </button>
         </div>
