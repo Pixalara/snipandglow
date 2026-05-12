@@ -1,7 +1,8 @@
 'use client';
 
 import { useTransition } from 'react';
-import { Menu, LogOut } from 'lucide-react';
+import { useTheme } from 'next-themes';
+import { Menu, LogOut, Sun, Moon } from 'lucide-react';
 import type { UserRole, Branch } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ interface TopbarProps {
 export function Topbar({ role, userName, branches, activeBranchId, onMenuToggle }: TopbarProps) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
+  const { theme, setTheme } = useTheme();
 
   const initials = userName
     .split(' ')
@@ -37,6 +39,10 @@ export function Topbar({ role, userName, branches, activeBranchId, onMenuToggle 
     });
   }
 
+  function toggleTheme() {
+    setTheme(theme === 'dark' ? 'light' : 'dark');
+  }
+
   return (
     <header className="flex h-14 items-center justify-between border-b border-border bg-background px-4">
       {/* Left: mobile menu toggle */}
@@ -52,12 +58,24 @@ export function Topbar({ role, userName, branches, activeBranchId, onMenuToggle 
         </Button>
       </div>
 
-      {/* Right: branch switcher + user info + logout */}
+      {/* Right: branch switcher + theme toggle + user info + logout */}
       <div className="flex items-center gap-2 sm:gap-3 min-w-0">
         {/* Branch switcher (owner only) */}
         {role === 'owner' && (
           <BranchSwitcher branches={branches} activeBranchId={activeBranchId} />
         )}
+
+        {/* Dark mode toggle */}
+        <Button
+          variant="ghost"
+          size="icon"
+          onClick={toggleTheme}
+          aria-label="Toggle dark mode"
+          className="relative overflow-hidden"
+        >
+          <Sun className="size-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
+          <Moon className="absolute size-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
+        </Button>
 
         {/* User avatar + role badge */}
         <div className="flex items-center gap-2">
