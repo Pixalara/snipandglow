@@ -1,13 +1,14 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { formatDateIN, formatTimeIST } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
-import { updateAppointmentStatus } from './actions';
+import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule } from './actions';
 import {
   Calendar,
   List,
@@ -21,9 +22,10 @@ import {
   CheckCircle2,
   XCircle,
   CircleCheck,
+  CalendarClock,
 } from 'lucide-react';
 import type { AppointmentRow } from './page';
-import type { AppointmentStatus, UserRole } from '@/types';
+import type { AppointmentStatus, UserRole, TimeSlot } from '@/types';
 
 // =============================================================================
 // AppointmentsClient — Client component with view toggle and status filter
@@ -62,11 +64,28 @@ function StatusBadge({ status }: { status: AppointmentStatus }) {
   );
 }
 
+/** Format a time string (HH:MM:SS) to 12-hour AM/PM */
+function formatSlotTime(time: string): string {
+  const [hours, minutes] = time.split(':').map(Number);
+  const period = hours >= 12 ? 'PM' : 'AM';
+  const displayHour = hours % 12 || 12;
+  return `${displayHour}:${minutes.toString().padStart(2, '0')} ${period}`;
+}
+
+function getToday(): string {
+  return new Date().toISOString().split('T')[0];
+}
+
+function getMaxDate(): string {
+  const d = new Date();
+  d.setDate(d.getDate() + 30);
+  return d.toISOString().split('T')[0];
+}
+
 export function AppointmentsClient({ appointments, role }: AppointmentsClientProps) {
   const [view, setView] = useState<ViewMode>('list');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
 
-  // Filter appointments by status
   const filtered = statusFilter === 'all'
     ? appointments
     : appointments.filter((apt) => apt.status === statusFilter);
@@ -89,7 +108,6 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Status filter */}
             <div className="relative">
               <Filter className="absolute left-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
               <select
@@ -106,14 +124,11 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               </select>
             </div>
 
-            {/* View toggle */}
             <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1">
               <button
                 onClick={() => setView('list')}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                  view === 'list'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
+                  view === 'list' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-label="List view"
               >
@@ -123,9 +138,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               <button
                 onClick={() => setView('calendar')}
                 className={`flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                  view === 'calendar'
-                    ? 'bg-background text-foreground shadow-sm'
-                    : 'text-muted-foreground hover:text-foreground'
+                  view === 'calendar' ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
                 }`}
                 aria-label="Calendar view"
               >
@@ -134,7 +147,6 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               </button>
             </div>
 
-            {/* New Booking button — owner/manager only */}
             <RoleGuard role={role} action="create" resource="appointments">
               <Link href="/dashboard/appointments/new">
                 <Button className="rounded-xl gap-1.5">
@@ -145,12 +157,10 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
             </RoleGuard>
           </div>
         </div>
-        {/* Decorative circles */}
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-blue-500/5" />
         <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-blue-400/5" />
       </div>
 
-      {/* Content */}
       {view === 'list' ? (
         <AppointmentListView appointments={filtered} />
       ) : (
@@ -161,12 +171,13 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
 }
 
 // =============================================================================
-// List View — DataTable with appointment columns
+// List View with Actions + Reschedule Modal
 // =============================================================================
 
 function AppointmentListView({ appointments }: { appointments: AppointmentRow[] }) {
   const [isPending, startTransition] = useTransition();
   const [actionId, setActionId] = useState<string | null>(null);
+  const [rescheduleTarget, setRescheduleTarget] = useState<AppointmentRow | null>(null);
 
   function handleStatusChange(id: string, newStatus: AppointmentStatus) {
     setActionId(id);
@@ -236,51 +247,51 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
       header: 'Actions',
       render: (row) => {
         const loading = isPending && actionId === row.id;
+        const canReschedule = row.status === 'booked' || row.status === 'confirmed';
         return (
-          <div className="flex items-center gap-1">
+          <div className="flex items-center gap-1 flex-wrap">
+            {canReschedule && (
+              <button
+                onClick={() => setRescheduleTarget(row)}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-colors"
+                title="Reschedule"
+              >
+                <CalendarClock className="size-3.5" />
+                Reschedule
+              </button>
+            )}
             {row.status === 'booked' && (
-              <>
-                <button
-                  onClick={() => handleStatusChange(row.id, 'confirmed')}
-                  disabled={loading}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
-                  title="Confirm"
-                >
-                  <CheckCircle2 className="size-3.5" />
-                  Confirm
-                </button>
-                <button
-                  onClick={() => handleStatusChange(row.id, 'cancelled')}
-                  disabled={loading}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                  title="Cancel"
-                >
-                  <XCircle className="size-3.5" />
-                  Cancel
-                </button>
-              </>
+              <button
+                onClick={() => handleStatusChange(row.id, 'confirmed')}
+                disabled={loading}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
+                title="Confirm"
+              >
+                <CheckCircle2 className="size-3.5" />
+                Confirm
+              </button>
             )}
             {row.status === 'confirmed' && (
-              <>
-                <button
-                  onClick={() => handleStatusChange(row.id, 'completed')}
-                  disabled={loading}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
-                  title="Complete"
-                >
-                  <CircleCheck className="size-3.5" />
-                  Complete
-                </button>
-                <button
-                  onClick={() => handleStatusChange(row.id, 'cancelled')}
-                  disabled={loading}
-                  className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
-                  title="Cancel"
-                >
-                  <XCircle className="size-3.5" />
-                  Cancel
-                </button>
-              </>
+              <button
+                onClick={() => handleStatusChange(row.id, 'completed')}
+                disabled={loading}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                title="Complete"
+              >
+                <CircleCheck className="size-3.5" />
+                Complete
+              </button>
+            )}
+            {canReschedule && (
+              <button
+                onClick={() => handleStatusChange(row.id, 'cancelled')}
+                disabled={loading}
+                className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                title="Cancel"
+              >
+                <XCircle className="size-3.5" />
+                Cancel
+              </button>
             )}
             {(row.status === 'completed' || row.status === 'cancelled') && (
               <span className="text-xs text-muted-foreground italic">—</span>
@@ -312,13 +323,180 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
   }
 
   return (
-    <div className="rounded-xl border border-border overflow-hidden">
-      <DataTable
-        columns={columns}
-        data={appointments}
-        getRowKey={(row) => row.id}
-        emptyMessage="No appointments found"
-      />
+    <>
+      <div className="rounded-xl border border-border overflow-hidden">
+        <DataTable
+          columns={columns}
+          data={appointments}
+          getRowKey={(row) => row.id}
+          emptyMessage="No appointments found"
+        />
+      </div>
+
+      {/* Reschedule Modal */}
+      {rescheduleTarget && (
+        <RescheduleModal
+          appointment={rescheduleTarget}
+          onClose={() => setRescheduleTarget(null)}
+        />
+      )}
+    </>
+  );
+}
+
+// =============================================================================
+// Reschedule Modal
+// =============================================================================
+
+function RescheduleModal({
+  appointment,
+  onClose,
+}: {
+  appointment: AppointmentRow;
+  onClose: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [newDate, setNewDate] = useState('');
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [slots, setSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [error, setError] = useState('');
+
+  // We need the employee_id and service duration to fetch slots.
+  // These are stored on the appointment row from the server.
+  // Since AppointmentRow doesn't have employee_id directly, we'll use the
+  // rescheduleAppointment action which handles fetching internally.
+
+  // Fetch slots when date changes
+  const fetchSlots = useCallback(async () => {
+    if (!newDate || !appointment.id) return;
+    setLoadingSlots(true);
+    setSlots([]);
+    setSelectedSlot('');
+
+    const available = await getSlotsForReschedule(appointment.id, newDate);
+    setSlots(available);
+    setLoadingSlots(false);
+  }, [newDate, appointment.id]);
+
+  useEffect(() => {
+    if (newDate) fetchSlots();
+  }, [newDate, fetchSlots]);
+
+  function handleSubmit() {
+    if (!newDate || !selectedSlot) return;
+    setError('');
+
+    const [startTime, endTime] = selectedSlot.split('|');
+
+    startTransition(async () => {
+      const result = await rescheduleAppointment(appointment.id, {
+        appointment_date: newDate,
+        start_time: startTime,
+        end_time: endTime,
+      });
+
+      if (result.success) {
+        onClose();
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4">
+        <div className="space-y-5">
+          {/* Header */}
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/20">
+              <CalendarClock className="size-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Reschedule Appointment</h2>
+              <p className="text-xs text-muted-foreground">
+                {appointment.customer_name} · {appointment.service_name}
+              </p>
+            </div>
+          </div>
+
+          {/* Current date/time */}
+          <div className="rounded-lg bg-muted/50 px-4 py-3">
+            <p className="text-xs text-muted-foreground">Current Schedule</p>
+            <p className="text-sm font-medium text-foreground mt-0.5">
+              {formatDateIN(appointment.appointment_date)} at {formatTimeIST(`1970-01-01T${appointment.start_time}`)}
+            </p>
+          </div>
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          {/* New Date */}
+          <div className="space-y-1.5">
+            <label htmlFor="reschedule-date" className="text-sm font-medium text-foreground">
+              New Date
+            </label>
+            <Input
+              id="reschedule-date"
+              type="date"
+              value={newDate}
+              onChange={(e) => setNewDate(e.target.value)}
+              min={getToday()}
+              max={getMaxDate()}
+            />
+          </div>
+
+          {/* Time Slot */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">New Time Slot</label>
+            {!newDate ? (
+              <p className="text-xs text-muted-foreground">Select a date first</p>
+            ) : loadingSlots ? (
+              <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                Loading slots...
+              </div>
+            ) : slots.length === 0 ? (
+              <p className="text-sm text-muted-foreground">No available slots for this date.</p>
+            ) : (
+              <select
+                value={selectedSlot}
+                onChange={(e) => setSelectedSlot(e.target.value)}
+                className="h-9 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Select a time slot...</option>
+                {slots.map((slot) => (
+                  <option
+                    key={`${slot.slot_start}-${slot.slot_end}`}
+                    value={`${slot.slot_start}|${slot.slot_end}`}
+                  >
+                    {formatSlotTime(slot.slot_start)} – {formatSlotTime(slot.slot_end)}
+                  </option>
+                ))}
+              </select>
+            )}
+          </div>
+
+          {/* Actions */}
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="outline" className="rounded-xl" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button
+              className="rounded-xl gap-1.5"
+              onClick={handleSubmit}
+              disabled={!newDate || !selectedSlot || isPending}
+            >
+              {isPending ? 'Rescheduling...' : 'Reschedule'}
+            </Button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 }

@@ -153,6 +153,85 @@ export async function updateAppointmentStatus(
 }
 
 /**
+ * Reschedule an existing appointment to a new date and time.
+ * Only works for booked or confirmed appointments.
+ */
+export async function rescheduleAppointment(
+  appointmentId: string,
+  newSchedule: { appointment_date: string; start_time: string; end_time: string }
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  // Fetch the appointment to verify it can be rescheduled
+  const { data: appointment, error: fetchError } = await supabase
+    .from('appointments')
+    .select('id, status')
+    .eq('id', appointmentId)
+    .single();
+
+  if (fetchError || !appointment) {
+    return { success: false, error: 'Appointment not found.' };
+  }
+
+  if (appointment.status !== 'booked' && appointment.status !== 'confirmed') {
+    return { success: false, error: 'Only booked or confirmed appointments can be rescheduled.' };
+  }
+
+  // Update the appointment date and time
+  const { error: updateError } = await supabase
+    .from('appointments')
+    .update({
+      appointment_date: newSchedule.appointment_date,
+      start_time: newSchedule.start_time,
+      end_time: newSchedule.end_time,
+    })
+    .eq('id', appointmentId);
+
+  if (updateError) {
+    if (updateError.code === '23P01') {
+      return { success: false, error: 'This time slot overlaps with another appointment.' };
+    }
+    return { success: false, error: 'Failed to reschedule. Please try again.' };
+  }
+
+  revalidatePath('/dashboard/appointments');
+  return { success: true, data: undefined };
+}
+
+/**
+ * Get available slots for rescheduling — resolves employee and duration from the appointment.
+ */
+export async function getSlotsForReschedule(
+  appointmentId: string,
+  date: string
+): Promise<TimeSlot[]> {
+  const supabase = await createClient();
+
+  // Get the appointment's employee and service
+  const { data: appointment } = await supabase
+    .from('appointments')
+    .select('employee_id, service_id')
+    .eq('id', appointmentId)
+    .single();
+
+  if (!appointment) return [];
+
+  // Get service duration
+  const { data: service } = await supabase
+    .from('services')
+    .select('duration_minutes')
+    .eq('id', appointment.service_id)
+    .single();
+
+  const duration = service?.duration_minutes ?? 30;
+
+  return getAvailableSlots(appointment.employee_id, date, duration);
+}
+
+/**
  * Get available time slots for a given employee on a specific date.
  * Generates slots based on branch operating hours and excludes booked appointments.
  */
