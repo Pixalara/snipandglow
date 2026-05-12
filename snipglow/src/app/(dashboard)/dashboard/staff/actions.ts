@@ -1,6 +1,7 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import type { ActionResult, Employee, CreateEmployeeInput, UserRole } from '@/types';
 
@@ -37,23 +38,25 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
     return { success: false, error: 'Branch assignment is required.' };
   }
 
-  const { data, error } = await supabase
+  const admin = createAdminClient();
+
+  const { data, error } = await admin
     .from('employees')
     .insert({
       tenant_id: tenantId,
       branch_id: input.branch_id,
-      auth_user_id: '', // Will be linked when employee logs in
       name: input.name.trim(),
       phone: input.phone.trim(),
       email: input.email?.trim() || null,
       role: input.role,
       specializations: input.specializations ?? [],
       is_active: true,
-    })
+    } as any)
     .select()
     .single();
 
   if (error) {
+    console.error('Employee creation error:', error);
     return { success: false, error: 'Failed to create employee. Please try again.' };
   }
 
