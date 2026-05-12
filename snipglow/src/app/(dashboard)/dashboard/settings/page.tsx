@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
-import { GstSettingsCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -42,13 +42,11 @@ const statusConfig: Record<SubscriptionStatus, { label: string; color: string; d
 export default async function SettingsPage() {
   const supabase = await createClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
-
+  const { data: { user } } = await supabase.auth.getUser();
   if (!user) redirect('/login');
 
   const tenantId = user.user_metadata?.tenant_id;
+  const branchId = user.user_metadata?.branch_id;
   if (!tenantId) redirect('/onboarding');
 
   const { data: tenant } = await supabase
@@ -59,13 +57,21 @@ export default async function SettingsPage() {
 
   if (!tenant) redirect('/dashboard');
 
+  // Fetch primary branch details
+  let branchData: { name: string; address: string | null; phone: string | null; operating_hours: Record<string, { open: string; close: string }> | null } | null = null;
+  if (branchId) {
+    const { data } = await supabase
+      .from('branches')
+      .select('name, address, phone, operating_hours')
+      .eq('id', branchId)
+      .single();
+    branchData = data as typeof branchData;
+  }
+
   const subscriptionStatus = tenant.subscription_status as SubscriptionStatus;
   const planTier = tenant.plan_tier as PlanTier;
-  const subscriptionEnd = tenant.subscription_end
-    ? new Date(tenant.subscription_end)
-    : null;
+  const subscriptionEnd = tenant.subscription_end ? new Date(tenant.subscription_end) : null;
 
-  // Check if subscription is expired > 7 days
   const now = new Date();
   const isExpiredOver7Days =
     subscriptionEnd &&
@@ -74,11 +80,22 @@ export default async function SettingsPage() {
 
   const statusCfg = statusConfig[subscriptionStatus];
 
-  // Get GST settings from tenant
+  // GST settings
   const settings = (tenant.settings as Record<string, unknown>) ?? {};
   const gstNumber = (settings.gst_number as string) ?? '';
   const gstRate = (settings.gst_rate as number) ?? 18;
   const gstEnabled = (settings.gst_enabled as boolean) ?? false;
+
+  // Salon profile data
+  const salonProfile = {
+    salonName: tenant.name ?? '',
+    ownerName: tenant.owner_name ?? '',
+    phone: tenant.phone ?? '',
+    email: user.email ?? '',
+    branchName: branchData?.name ?? '',
+    address: branchData?.address ?? '',
+    operatingHours: branchData?.operating_hours ?? null,
+  };
 
   return (
     <div className="space-y-6">
@@ -90,7 +107,7 @@ export default async function SettingsPage() {
           </div>
           <div>
             <h1 className="text-xl font-bold text-foreground">Settings</h1>
-            <p className="text-sm text-muted-foreground">Manage your subscription and preferences</p>
+            <p className="text-sm text-muted-foreground">Manage your salon profile, billing, and subscription</p>
           </div>
         </div>
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-gray-500/5" />
@@ -104,15 +121,23 @@ export default async function SettingsPage() {
             <AlertTriangle className="size-4 text-red-600 dark:text-red-400" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-red-800 dark:text-red-200">
-              Subscription Expired
-            </p>
+            <p className="text-sm font-semibold text-red-800 dark:text-red-200">Subscription Expired</p>
             <p className="text-sm text-red-700 dark:text-red-300 mt-0.5">
               Your account is in read-only mode. Please renew to continue managing your salon.
             </p>
           </div>
         </div>
       )}
+
+      {/* Salon Profile */}
+      <SalonProfileCard profile={salonProfile} />
+
+      {/* GST Configuration */}
+      <GstSettingsCard
+        currentGstNumber={gstNumber}
+        currentGstRate={gstRate}
+        gstEnabled={gstEnabled}
+      />
 
       {/* Current Subscription Card */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -143,23 +168,12 @@ export default async function SettingsPage() {
             <div className="rounded-lg bg-muted/50 px-4 py-3">
               <p className="text-xs text-muted-foreground">Next Payment Date</p>
               <p className="text-sm font-semibold text-foreground mt-0.5">
-                {subscriptionEnd.toLocaleDateString('en-IN', {
-                  day: '2-digit',
-                  month: 'short',
-                  year: 'numeric',
-                })}
+                {subscriptionEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
               </p>
             </div>
           )}
         </div>
       </div>
-
-      {/* GST Configuration */}
-      <GstSettingsCard
-        currentGstNumber={gstNumber}
-        currentGstRate={gstRate}
-        gstEnabled={gstEnabled}
-      />
 
       {/* Available Plans */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -184,18 +198,12 @@ export default async function SettingsPage() {
                   }`}
                 >
                   <div className="space-y-3">
-                    <div className={`flex size-10 items-center justify-center rounded-xl ${
-                      isCurrent
-                        ? 'bg-salon-rose/10'
-                        : 'bg-muted'
-                    }`}>
+                    <div className={`flex size-10 items-center justify-center rounded-xl ${isCurrent ? 'bg-salon-rose/10' : 'bg-muted'}`}>
                       <Icon className={`size-5 ${isCurrent ? 'text-salon-rose' : 'text-muted-foreground'}`} />
                     </div>
                     <div>
                       <h3 className="font-bold text-foreground">{planLabels[tier]}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">
-                        {planDescriptions[tier]}
-                      </p>
+                      <p className="mt-1 text-xs text-muted-foreground">{planDescriptions[tier]}</p>
                     </div>
                     {isCurrent ? (
                       <span className="inline-flex items-center gap-1.5 rounded-full bg-salon-rose/10 px-3 py-1 text-xs font-medium text-salon-rose">

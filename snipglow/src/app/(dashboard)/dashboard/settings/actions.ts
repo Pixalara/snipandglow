@@ -50,3 +50,47 @@ export async function updateGstSettings(input: {
   revalidatePath('/dashboard/billing');
   return { success: true, data: undefined };
 }
+
+/**
+ * Update salon profile (tenant name, owner name, phone, branch address).
+ */
+export async function updateSalonProfile(input: {
+  salon_name: string;
+  owner_name: string;
+  phone: string;
+  address: string;
+}): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  const branchId = user.user_metadata?.branch_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  // Update tenant
+  const { error: tenantError } = await supabase
+    .from('tenants')
+    .update({
+      name: input.salon_name,
+      owner_name: input.owner_name,
+      phone: input.phone,
+    })
+    .eq('id', tenantId);
+
+  if (tenantError) {
+    return { success: false, error: 'Failed to update salon profile.' };
+  }
+
+  // Update branch address if branch exists
+  if (branchId && input.address) {
+    await supabase
+      .from('branches')
+      .update({ address: input.address })
+      .eq('id', branchId);
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { success: true, data: undefined };
+}

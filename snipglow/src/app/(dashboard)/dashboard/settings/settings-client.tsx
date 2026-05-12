@@ -3,8 +3,165 @@
 import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateGstSettings } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle } from 'lucide-react';
+import { updateGstSettings, updateSalonProfile } from './actions';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil } from 'lucide-react';
+
+// =============================================================================
+// Salon Profile Card
+// =============================================================================
+
+interface SalonProfileProps {
+  profile: {
+    salonName: string;
+    ownerName: string;
+    phone: string;
+    email: string;
+    branchName: string;
+    address: string;
+    operatingHours: Record<string, { open: string; close: string }> | null;
+  };
+}
+
+export function SalonProfileCard({ profile }: SalonProfileProps) {
+  const [isEditing, setIsEditing] = useState(false);
+  const [isPending, startTransition] = useTransition();
+  const [salonName, setSalonName] = useState(profile.salonName);
+  const [ownerName, setOwnerName] = useState(profile.ownerName);
+  const [phone, setPhone] = useState(profile.phone);
+  const [address, setAddress] = useState(profile.address);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Format operating hours for display
+  const hours = profile.operatingHours;
+  const firstDay = hours ? Object.values(hours).find((h) => h?.open) : null;
+  const hoursDisplay = firstDay ? `${firstDay.open} – ${firstDay.close}` : 'Not set';
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const result = await updateSalonProfile({
+        salon_name: salonName.trim(),
+        owner_name: ownerName.trim(),
+        phone: phone.trim(),
+        address: address.trim(),
+      });
+      if (result.success) {
+        setSuccess(true);
+        setIsEditing(false);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  function handleCancel() {
+    setSalonName(profile.salonName);
+    setOwnerName(profile.ownerName);
+    setPhone(profile.phone);
+    setAddress(profile.address);
+    setIsEditing(false);
+    setError('');
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Scissors className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">Salon Profile</h2>
+          </div>
+          {!isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <Pencil className="size-3" />
+              Edit
+            </button>
+          )}
+        </div>
+      </div>
+      <div className="p-6">
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20 mb-4">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Profile updated!</p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20 mb-4">
+            <AlertTriangle className="size-4 text-red-600" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {isEditing ? (
+          <div className="space-y-4">
+            <div className="grid gap-4 sm:grid-cols-2">
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Salon Name</label>
+                <Input value={salonName} onChange={(e) => setSalonName(e.target.value)} placeholder="Salon name" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Owner Name</label>
+                <Input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="Owner name" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Phone</label>
+                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">Email</label>
+                <Input value={profile.email} disabled className="opacity-60" />
+                <p className="text-xs text-muted-foreground">Email is linked to your Google account</p>
+              </div>
+            </div>
+            <div className="space-y-1.5">
+              <label className="text-xs font-medium text-muted-foreground">Address</label>
+              <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Salon address" />
+            </div>
+            <div className="flex items-center gap-2 pt-2">
+              <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+                {isPending ? 'Saving...' : 'Save Changes'}
+              </Button>
+              <Button variant="outline" className="rounded-xl" onClick={handleCancel} disabled={isPending}>
+                Cancel
+              </Button>
+            </div>
+          </div>
+        ) : (
+          <div className="grid gap-4 sm:grid-cols-2">
+            <ProfileField icon={<Scissors className="size-3.5" />} label="Salon Name" value={profile.salonName} />
+            <ProfileField icon={<User className="size-3.5" />} label="Owner" value={profile.ownerName} />
+            <ProfileField icon={<Phone className="size-3.5" />} label="Phone" value={profile.phone} />
+            <ProfileField icon={<Mail className="size-3.5" />} label="Email" value={profile.email} />
+            <ProfileField icon={<MapPin className="size-3.5" />} label="Address" value={profile.address || 'Not set'} />
+            <ProfileField icon={<Clock className="size-3.5" />} label="Operating Hours" value={hoursDisplay} />
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ProfileField({ icon, label, value }: { icon: React.ReactNode; label: string; value: string }) {
+  return (
+    <div className="flex items-start gap-3 rounded-lg bg-muted/30 px-4 py-3">
+      <div className="flex size-7 shrink-0 items-center justify-center rounded-md bg-background text-muted-foreground">
+        {icon}
+      </div>
+      <div className="min-w-0">
+        <p className="text-xs text-muted-foreground">{label}</p>
+        <p className="text-sm font-medium text-foreground truncate">{value}</p>
+      </div>
+    </div>
+  );
+}
 
 interface GstSettingsProps {
   currentGstNumber: string;
