@@ -82,8 +82,10 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
         {/* Logo header */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
           <Link href="/dashboard" className="flex items-center gap-2">
-            <Scissors className="size-5 text-sidebar-primary" />
-            <span className="text-lg font-bold text-sidebar-primary">Snip &amp; Glow</span>
+            <span className="font-bold tracking-tight text-lg">
+              <span className="text-sidebar-foreground">snipand</span>
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+            </span>
           </Link>
           {/* Mobile close button */}
           <Button

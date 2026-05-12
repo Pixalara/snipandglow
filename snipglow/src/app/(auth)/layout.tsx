@@ -1,7 +1,6 @@
 'use client';
 
 import Link from 'next/link';
-import { Scissors } from 'lucide-react';
 
 export default function AuthLayout({
   children,
@@ -14,9 +13,10 @@ export default function AuthLayout({
       <nav className="border-b border-slate-100 bg-white/95 backdrop-blur-sm">
         <div className="mx-auto max-w-7xl px-4 sm:px-6 py-4 flex items-center justify-between">
           <Link href="/" className="flex items-center gap-2">
-            <Scissors className="h-5 w-5 text-emerald-500" />
-            <span className="text-lg font-bold tracking-tight text-slate-900">Snip &amp; Glow</span>
-            <span className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse" />
+            <span className="text-lg font-bold tracking-tight">
+              <span className="text-slate-900">snipand</span>
+              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+            </span>
           </Link>
           <Link href="/" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
             ← Back to home

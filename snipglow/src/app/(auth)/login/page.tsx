@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { createClient } from '@/lib/supabase/client';
-import { Scissors, ArrowRight } from 'lucide-react';
+import { ArrowRight } from 'lucide-react';
 
 export default function LoginPage() {
   const [googleLoading, setGoogleLoading] = useState(false);
@@ -34,10 +34,10 @@ export default function LoginPage() {
     <div className="space-y-8">
       {/* Header */}
       <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-emerald-50 border border-emerald-100 mx-auto mb-2">
-          <Scissors className="h-7 w-7 text-emerald-600" />
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-100 to-violet-100 border border-pink-200 mx-auto mb-2">
+          <span className="text-lg font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">G</span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome to Snip &amp; Glow</h1>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Welcome to <span className="text-slate-900">snipand</span><span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span></h1>
         <p className="text-sm text-slate-500">Sign in to manage your salon on autopilot</p>
       </div>
 

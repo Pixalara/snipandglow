@@ -1,4 +1,4 @@
-'use client';
+﻿'use client';
 
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
@@ -237,7 +237,7 @@ function WhatsAppConnectCard() {
                 </Button>
 
                 <p className="text-center text-xs text-muted-foreground">
-                  Or continue using the default Snip &amp; Glow number
+                  Or continue using the default snipandglow number
                 </p>
               </div>
             </>
@@ -385,3 +385,4 @@ function UpgradeCard({ currentPlan }: { currentPlan: PlanTier }) {
     </div>
   );
 }
+
