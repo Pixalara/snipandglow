@@ -141,9 +141,9 @@ export default function HomePage() {
       </nav>
 
       {/* ===== HERO ===== */}
-      <section className="relative min-h-screen flex items-center pt-20 sm:pt-24 pb-12 sm:pb-16 bg-gradient-to-br from-white via-emerald-50/30 to-pink-50/20 overflow-hidden">
+      <section className="relative min-h-screen flex items-center pt-20 sm:pt-24 pb-12 sm:pb-16 bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20 overflow-hidden">
         {/* Colorful floating orbs */}
-        <div className="absolute top-1/4 left-1/6 w-96 h-96 bg-emerald-200/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/6 w-96 h-96 bg-pink-200/30 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 right-1/6 w-80 h-80 bg-pink-200/25 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 left-1/2 w-72 h-72 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
 
@@ -151,8 +151,8 @@ export default function HomePage() {
           {/* Left */}
           <div className="space-y-8 reveal-left">
             {/* Trust badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-emerald-200 bg-emerald-50 text-emerald-700 text-xs font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
+              <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
               Trusted by 500+ Indian Salon Owners
             </div>
 
@@ -160,7 +160,7 @@ export default function HomePage() {
               <h1 className="text-3xl sm:text-4xl lg:text-[3.5rem] font-bold leading-[1.1] tracking-tight text-slate-900">
                 The Salon Management
                 <br />
-                <span className="text-emerald-500">Software That Brings</span>
+                <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">Software That Brings</span>
                 <br />
                 Clients Back
               </h1>
@@ -175,8 +175,8 @@ export default function HomePage() {
             {/* Stats row */}
             <div className="flex flex-wrap gap-4 py-2">
               <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
-                <div className="h-8 w-8 rounded-lg bg-emerald-100 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-emerald-600" />
+                <div className="h-8 w-8 rounded-lg bg-pink-100 flex items-center justify-center">
+                  <Users className="h-4 w-4 text-pink-600" />
                 </div>
                 <div>
                   <p className="text-sm font-bold text-slate-900">500+ Salons</p>
@@ -207,14 +207,14 @@ export default function HomePage() {
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-emerald-500 text-white font-semibold rounded-xl hover:bg-emerald-600 transition-colors text-sm shadow-md shadow-emerald-200"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-violet-500 text-white font-semibold rounded-xl hover:from-pink-600 hover:to-violet-600 transition-colors text-sm shadow-md shadow-pink-200"
               >
                 Start Free Trial
                 <ArrowRight className="h-4 w-4" />
               </Link>
               <a
                 href="#how-it-works"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl hover:border-emerald-300 hover:text-emerald-600 transition-all text-sm bg-white"
+                className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl hover:border-pink-300 hover:text-pink-600 transition-all text-sm bg-white"
               >
                 See How It Works
               </a>
@@ -225,7 +225,7 @@ export default function HomePage() {
           <div className="hidden lg:flex justify-center items-center reveal-right">
             <div className="relative">
               {/* Ambient glow */}
-              <div className="absolute inset-0 rounded-[48px] bg-emerald-300/20 blur-3xl scale-125" />
+              <div className="absolute inset-0 rounded-[48px] bg-pink-300/20 blur-3xl scale-125" />
 
               {/* Phone shell */}
               <div className="relative w-[300px] h-[620px] rounded-[48px] bg-white border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden">
@@ -455,8 +455,8 @@ export default function HomePage() {
               {/* Floating badge � bottom left */}
               <div className="absolute -bottom-4 -left-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
-                    <Bell className="h-4 w-4 text-emerald-600" />
+                  <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
+                    <Bell className="h-4 w-4 text-pink-600" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-900">No-shows down 70%</p>
@@ -468,8 +468,8 @@ export default function HomePage() {
               {/* Floating badge � top right */}
               <div className="absolute -top-4 -right-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-blue-100 flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-blue-600" />
+                  <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
+                    <TrendingUp className="h-4 w-4 text-violet-600" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-900">+28% retention</p>
@@ -486,7 +486,7 @@ export default function HomePage() {
       <section id="how-it-works" className="py-16 sm:py-24 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 sm:mb-16 reveal">
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">How It Works</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">How It Works</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Up and running in minutes</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">No tech skills needed. Set it up once and let automation handle the rest.</p>
           </div>
@@ -495,14 +495,14 @@ export default function HomePage() {
             {/* Step 1 */}
             <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-16 items-center reveal">
               <div className="w-full lg:text-right mb-6 lg:mb-0">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-emerald-100 text-emerald-700 text-xs font-semibold mb-3">Step 1</div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-700 text-xs font-semibold mb-3">Step 1</div>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Add your salon details</h3>
                 <p className="text-slate-500 text-sm sm:text-base leading-relaxed">Enter your services, staff, and working hours. Takes less than 5 minutes.</p>
               </div>
               <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl bg-emerald-100 flex items-center justify-center shrink-0">
-                    <Scissors className="h-5 w-5 text-emerald-600" />
+                  <div className="h-10 w-10 rounded-xl bg-pink-100 flex items-center justify-center shrink-0">
+                    <Scissors className="h-5 w-5 text-pink-600" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Glamour Salon</p>
@@ -531,13 +531,13 @@ export default function HomePage() {
                         <p className="text-sm font-medium text-slate-900">{appt.name}</p>
                         <p className="text-xs text-slate-500">{appt.service} � {appt.time}</p>
                       </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-emerald-100 text-emerald-700' : appt.status === 'Reminded' ? 'bg-blue-100 text-blue-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-pink-100 text-pink-700' : appt.status === 'Reminded' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                     </div>
                   ))}
                 </div>
               </div>
               <div className="w-full order-1 lg:order-2 mb-6 lg:mb-0">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-blue-100 text-blue-700 text-xs font-semibold mb-3">Step 2</div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-100 text-fuchsia-700 text-xs font-semibold mb-3">Step 2</div>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Clients book appointments</h3>
                 <p className="text-slate-500 text-sm sm:text-base leading-relaxed">Clients book via WhatsApp or your booking link. Every appointment auto-confirms instantly.</p>
               </div>
@@ -546,24 +546,24 @@ export default function HomePage() {
             {/* Step 3 */}
             <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-16 items-center reveal">
               <div className="w-full lg:text-right mb-6 lg:mb-0">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-100 text-purple-700 text-xs font-semibold mb-3">Step 3</div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-violet-100 text-violet-700 text-xs font-semibold mb-3">Step 3</div>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Automation handles the rest</h3>
                 <p className="text-slate-500 text-sm sm:text-base leading-relaxed">Reminders go out automatically. Bills are generated. Clients get loyalty points. You just focus on the service.</p>
               </div>
               <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
                 <div className="space-y-3">
                   {[
-                    { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-emerald-100 text-emerald-600' },
-                    { icon: FileText, label: 'Invoice ?450 generated', color: 'bg-blue-100 text-blue-600' },
-                    { icon: Gift, label: 'Loyalty points added', color: 'bg-purple-100 text-purple-600' },
-                    { icon: Repeat2, label: 'Re-booking nudge scheduled', color: 'bg-amber-100 text-amber-600' },
+                    { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-pink-100 text-pink-600' },
+                    { icon: FileText, label: 'Invoice ?450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
+                    { icon: Gift, label: 'Loyalty points added', color: 'bg-violet-100 text-violet-600' },
+                    { icon: Repeat2, label: 'Re-booking nudge scheduled', color: 'bg-purple-100 text-purple-600' },
                   ].map(({ icon: Icon, label, color }) => (
                     <div key={label} className="flex items-center gap-3">
                       <div className={`h-8 w-8 rounded-lg flex items-center justify-center shrink-0 ${color}`}>
                         <Icon className="h-4 w-4" />
                       </div>
                       <p className="text-sm text-slate-700">{label}</p>
-                      <CheckCircle2 className="h-4 w-4 text-emerald-500 ml-auto shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-pink-500 ml-auto shrink-0" />
                     </div>
                   ))}
                 </div>
@@ -577,14 +577,14 @@ export default function HomePage() {
       <section className="py-16 sm:py-24 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 reveal">
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">Real Results</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Real Results</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">What salon owners see in 30 days</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 reveal">
             {[
-              { numValue: 70, suffix: '%', label: 'Fewer no-shows', sub: 'Thanks to auto reminders', icon: Bell, color: 'bg-emerald-50 text-emerald-600' },
-              { numValue: 28, prefix: '+', suffix: '%', label: 'Client retention', sub: 'Re-booking nudges work', icon: Repeat2, color: 'bg-blue-50 text-blue-600' },
-              { numValue: 3, suffix: 'hrs', label: 'Saved per day', sub: 'No manual follow-ups', icon: Clock, color: 'bg-purple-50 text-purple-600' },
+              { numValue: 70, suffix: '%', label: 'Fewer no-shows', sub: 'Thanks to auto reminders', icon: Bell, color: 'bg-pink-50 text-pink-600' },
+              { numValue: 28, prefix: '+', suffix: '%', label: 'Client retention', sub: 'Re-booking nudges work', icon: Repeat2, color: 'bg-fuchsia-50 text-fuchsia-600' },
+              { numValue: 3, suffix: 'hrs', label: 'Saved per day', sub: 'No manual follow-ups', icon: Clock, color: 'bg-violet-50 text-violet-600' },
             ].map(({ numValue, prefix, suffix, label, sub, icon: Icon, color }) => (
               <div key={label} className="bg-slate-50 rounded-2xl p-6 sm:p-8 text-center border border-slate-100">
                 <div className={`h-12 w-12 rounded-2xl flex items-center justify-center mx-auto mb-4 ${color}`}>
@@ -605,17 +605,17 @@ export default function HomePage() {
       <section id="features" className="py-16 sm:py-24 bg-slate-50">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 reveal">
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">Features</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Features</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Everything your salon needs</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">One platform. No juggling apps.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
-              { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-emerald-100 text-emerald-600' },
+              { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
               { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges � all sent automatically.', color: 'bg-green-100 text-green-600' },
-              { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-blue-100 text-blue-600' },
-              { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-purple-100 text-purple-600' },
-              { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-amber-100 text-amber-600' },
+              { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
+              { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
+              { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
               { icon: Zap, title: 'Multi-Branch Support', desc: 'Manage multiple salon locations from a single dashboard with branch-level reporting.', color: 'bg-pink-100 text-pink-600' },
             ].map(({ icon: Icon, title, desc, color }) => (
               <div key={title} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow reveal-scale">
@@ -634,7 +634,7 @@ export default function HomePage() {
       <section id="pricing" className="py-16 sm:py-24 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 reveal">
-            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-3">Pricing</p>
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Pricing</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Simple, transparent pricing</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">Start free for 15 days. No credit card required.</p>
           </div>
@@ -669,9 +669,9 @@ export default function HomePage() {
               </Link>
 
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-500 mb-6">
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />No credit card</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />15-day money-back</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Live in 2 days</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />No credit card</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />15-day money-back</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />Live in 2 days</span>
               </div>
 
               {/* Features */}
@@ -691,7 +691,7 @@ export default function HomePage() {
                   'Free setup & training',
                 ].map((feature) => (
                   <div key={feature} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-4 w-4 text-pink-500 shrink-0 mt-0.5" />
                     <span className="text-sm text-slate-700">{feature}</span>
                   </div>
                 ))}
@@ -699,7 +699,7 @@ export default function HomePage() {
             </div>
 
             {/* PRO PLAN */}
-            <div className="relative rounded-2xl border-2 border-emerald-500 bg-white p-6 sm:p-8 shadow-lg shadow-emerald-100/50">
+            <div className="relative rounded-2xl border-2 border-pink-500 bg-white p-6 sm:p-8 shadow-lg shadow-pink-100/50">
               {/* Most Popular Badge */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                 <span className="inline-flex items-center rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white shadow-md">
@@ -727,7 +727,7 @@ export default function HomePage() {
               </div>
 
               {/* Social proof */}
-              <p className="text-emerald-600 text-xs font-medium mb-4">Most salons recover this cost within 2 weeks from win-back campaigns alone.</p>
+              <p className="text-pink-600 text-xs font-medium mb-4">Most salons recover this cost within 2 weeks from win-back campaigns alone.</p>
 
               {/* CTA */}
               <Link
@@ -738,9 +738,9 @@ export default function HomePage() {
               </Link>
 
               <div className="flex flex-wrap items-center gap-3 sm:gap-4 text-xs text-slate-500 mb-6">
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />No credit card</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />15-day money-back</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" />Live in 2 days</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />No credit card</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />15-day money-back</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />Live in 2 days</span>
               </div>
 
               {/* Features */}
@@ -758,7 +758,7 @@ export default function HomePage() {
                   'Priority support & account manager',
                 ].map((feature) => (
                   <div key={feature} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-emerald-500 shrink-0 mt-0.5" />
+                    <CheckCircle2 className="h-4 w-4 text-pink-500 shrink-0 mt-0.5" />
                     <span className="text-sm text-slate-700">{feature}</span>
                   </div>
                 ))}
@@ -844,7 +844,7 @@ export default function HomePage() {
           {/* Trust points */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-slate-400">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              <CheckCircle2 className="h-4 w-4 text-pink-400" />
               No credit card required
             </span>
             <span className="flex items-center gap-1.5">
@@ -889,7 +889,7 @@ export default function HomePage() {
                 <span className="text-white">snipand</span>
                 <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
               </span>
-              <span className="h-2 w-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span className="h-2 w-2 rounded-full bg-pink-400 animate-pulse" />
             </Link>
 
             {/* Nav links */}
@@ -902,7 +902,7 @@ export default function HomePage() {
             {/* CTA */}
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-emerald-500 text-white text-sm font-semibold hover:bg-emerald-600 transition-colors shadow-lg shadow-emerald-500/20"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/20"
             >
               Start Free Trial
             </Link>
@@ -913,7 +913,7 @@ export default function HomePage() {
             <p className="text-sm text-slate-500">
               &copy; {new Date().getFullYear()} snipandglow. WhatsApp CRM built for salon owners. Crafted with{' '}
               <span className="text-pink-500">♥</span> by{' '}
-              <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-emerald-400 hover:text-emerald-300 font-medium transition-colors">
+              <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
                 Pixalara
               </a>
               {' '}· A DPIIT Recognized Startup by Govt. of India
@@ -1019,8 +1019,8 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
         <div className="relative z-10 w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl text-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 mx-auto mb-4">
-            <CheckCircle2 className="size-8 text-emerald-600" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-pink-100 mx-auto mb-4">
+            <CheckCircle2 className="size-8 text-pink-600" />
           </div>
           <h3 className="text-xl font-bold text-slate-900 mb-2">Demo Booked!</h3>
           <p className="text-slate-500 text-sm mb-6">
