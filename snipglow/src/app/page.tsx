@@ -916,9 +916,9 @@ export default function HomePage() {
               &copy; {new Date().getFullYear()} snipandglow. WhatsApp CRM built for salon owners. Crafted with{' '}
               <span className="text-pink-500">♥</span> by{' '}
               <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
-                Pixalara
+                Pixalara LLP
               </a>
-              {' '}· A DPIIT Recognized Startup by Govt. of India
+              {' '}· A DPIIT Recognized Technology Company by Govt. of India
             </p>
           </div>
 
