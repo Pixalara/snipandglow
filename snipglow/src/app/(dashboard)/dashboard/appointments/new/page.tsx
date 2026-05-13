@@ -60,7 +60,7 @@ export default function NewAppointmentPage() {
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const [serviceId, setServiceId] = useState('');
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
   const [employeeId, setEmployeeId] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
@@ -71,9 +71,9 @@ export default function NewAppointmentPage() {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Derived
-  const selectedService = services.find((s) => s.id === serviceId);
-  const duration = selectedService?.duration_minutes ?? 0;
+  // Derived — total duration of all selected services
+  const selectedServices = services.filter((s) => selectedServiceIds.includes(s.id));
+  const duration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
 
   // Error/success state
   const [error, setError] = useState('');
@@ -128,7 +128,7 @@ export default function NewAppointmentPage() {
   }, [fetchSlots]);
 
   // Form validation
-  const isFormValid = customerId && serviceId && employeeId && appointmentDate && selectedSlot;
+  const isFormValid = customerId && selectedServiceIds.length > 0 && employeeId && appointmentDate && selectedSlot;
 
   // Handle customer selection
   function handleSelectCustomer(customer: CustomerOption) {
@@ -161,7 +161,7 @@ export default function NewAppointmentPage() {
     startTransition(async () => {
       const result = await createAppointment({
         customer_id: customerId,
-        service_id: serviceId,
+        service_id: selectedServiceIds[0], // Primary service
         employee_id: employeeId,
         appointment_date: appointmentDate,
         start_time: startTime,
@@ -279,29 +279,57 @@ export default function NewAppointmentPage() {
 
             {/* Service selection */}
             <div className="space-y-1.5">
-              <label htmlFor="service" className="text-sm font-medium text-foreground">
-                Service <span className="text-destructive">*</span>
+              <label className="text-sm font-medium text-foreground">
+                Services <span className="text-destructive">*</span>
               </label>
+
+              {/* Selected services chips */}
+              {selectedServices.length > 0 && (
+                <div className="flex flex-wrap gap-2 mb-2">
+                  {selectedServices.map((svc) => (
+                    <span
+                      key={svc.id}
+                      className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 px-3 py-1 text-xs font-medium text-pink-700 dark:text-pink-300"
+                    >
+                      {svc.name} ({svc.duration_minutes}min)
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setSelectedServiceIds((prev) => prev.filter((id) => id !== svc.id));
+                          setSelectedSlot('');
+                        }}
+                        className="ml-0.5 text-pink-500 hover:text-pink-700 dark:hover:text-pink-200"
+                        aria-label={`Remove ${svc.name}`}
+                      >
+                        ×
+                      </button>
+                    </span>
+                  ))}
+                </div>
+              )}
+
+              {/* Service dropdown to add */}
               <select
-                id="service"
-                value={serviceId}
+                value=""
                 onChange={(e) => {
-                  setServiceId(e.target.value);
-                  setSelectedSlot('');
+                  if (e.target.value && !selectedServiceIds.includes(e.target.value)) {
+                    setSelectedServiceIds((prev) => [...prev, e.target.value]);
+                    setSelectedSlot('');
+                  }
                 }}
                 className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                aria-label="Select a service"
+                aria-label="Add a service"
               >
-                <option value="">Select a service...</option>
-                {services.map((svc) => (
+                <option value="">{selectedServiceIds.length === 0 ? 'Select services...' : '+ Add another service'}</option>
+                {services.filter((svc) => !selectedServiceIds.includes(svc.id)).map((svc) => (
                   <option key={svc.id} value={svc.id}>
                     {svc.name} — {svc.duration_minutes} min — ₹{svc.price}
                   </option>
                 ))}
               </select>
-              {selectedService && (
+              {duration > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Duration: {selectedService.duration_minutes} minutes
+                  Total duration: {duration} minutes ({selectedServices.length} service{selectedServices.length !== 1 ? 's' : ''})
                 </p>
               )}
             </div>
@@ -357,7 +385,7 @@ export default function NewAppointmentPage() {
               <label htmlFor="timeslot" className="text-sm font-medium text-foreground">
                 Time Slot <span className="text-destructive">*</span>
               </label>
-              {!employeeId || !appointmentDate || !serviceId ? (
+              {!employeeId || !appointmentDate || selectedServiceIds.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
                   Select a service, stylist, and date to see available slots.
                 </p>
