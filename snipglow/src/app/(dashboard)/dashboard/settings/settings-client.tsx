@@ -523,22 +523,22 @@ export function QrCodeGeneratorCard({ salonName, salonPhone }: QrCodeGeneratorPr
           </span>
         </div>
       </div>
-      <div className="p-6 space-y-6">
+      <div className="p-4 sm:p-6 space-y-6">
         {/* Hero Section with Visual */}
-        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 text-white">
-          <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6">
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-4 sm:p-6 text-white">
+          <div className="relative z-10 flex flex-col items-center gap-5 sm:gap-6 sm:flex-row">
             {/* QR Visual Mockup */}
             <div className="flex-shrink-0">
-              <div className="relative w-48 h-56 rounded-lg bg-gradient-to-b from-gray-800 to-black border border-gray-700 p-4 shadow-2xl">
+              <div className="relative w-36 h-44 sm:w-48 sm:h-56 rounded-lg bg-gradient-to-b from-gray-800 to-black border border-gray-700 p-3 sm:p-4 shadow-2xl">
                 <div className="text-center space-y-2">
                   <p className="text-[10px] text-gray-400 uppercase tracking-wider">✦ {salonName || 'Your Salon'} ✦</p>
                   <p className="text-xs font-bold text-white leading-tight">
                     BOOK APPOINTMENTS<br />
                     ON <span className="text-green-400">WHATSAPP</span>
                   </p>
-                  <div className="mx-auto w-24 h-24 bg-white rounded-lg flex items-center justify-center">
+                  <div className="mx-auto w-20 h-20 sm:w-24 sm:h-24 bg-white rounded-lg flex items-center justify-center">
                     <div className="relative">
-                      <QrCode className="size-16 text-gray-900" />
+                      <QrCode className="size-12 sm:size-16 text-gray-900" />
                       <div className="absolute inset-0 flex items-center justify-center">
                         <div className="size-5 rounded-full bg-green-500 flex items-center justify-center">
                           <Phone className="size-3 text-white" />
@@ -584,7 +584,7 @@ export function QrCodeGeneratorCard({ salonName, salonPhone }: QrCodeGeneratorPr
             <Star className="size-4 text-amber-500" />
             Why Every Salon Needs a Booking QR Code
           </h4>
-          <div className="grid gap-3 sm:grid-cols-2">
+          <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
             {benefits.map((benefit, idx) => (
               <div
                 key={idx}
@@ -603,16 +603,13 @@ export function QrCodeGeneratorCard({ salonName, salonPhone }: QrCodeGeneratorPr
         </div>
 
         {/* How it works */}
-        <div className="rounded-xl bg-gradient-to-r from-fuchsia-50 via-purple-50 to-pink-50 dark:from-fuchsia-900/10 dark:via-purple-900/10 dark:to-pink-900/10 border border-fuchsia-200/50 dark:border-fuchsia-800/30 p-5">
+        <div className="rounded-xl bg-gradient-to-r from-fuchsia-50 via-purple-50 to-pink-50 dark:from-fuchsia-900/10 dark:via-purple-900/10 dark:to-pink-900/10 border border-fuchsia-200/50 dark:border-fuchsia-800/30 p-4 sm:p-5">
           <h4 className="text-sm font-semibold text-foreground mb-3">How It Works</h4>
-          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
-            <Step number={1} text="Generate your custom QR code" />
-            <StepArrow />
-            <Step number={2} text="Download & print the poster" />
-            <StepArrow />
-            <Step number={3} text="Display at your salon" />
-            <StepArrow />
-            <Step number={4} text="Customers scan & book!" />
+          <div className="grid grid-cols-2 sm:grid-cols-4 gap-3 sm:gap-4">
+            <Step number={1} text="Generate QR code" />
+            <Step number={2} text="Download & print" />
+            <Step number={3} text="Display at salon" />
+            <Step number={4} text="Customers scan!" />
           </div>
         </div>
 
@@ -639,17 +636,11 @@ export function QrCodeGeneratorCard({ salonName, salonPhone }: QrCodeGeneratorPr
 
 function Step({ number, text }: { number: number; text: string }) {
   return (
-    <div className="flex items-center gap-2">
-      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-fuchsia-600 text-[10px] font-bold text-white">
+    <div className="flex flex-col items-center gap-1.5 text-center">
+      <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-fuchsia-600 text-[11px] font-bold text-white">
         {number}
       </span>
-      <span className="text-xs text-foreground font-medium whitespace-nowrap">{text}</span>
+      <span className="text-xs text-foreground font-medium leading-tight">{text}</span>
     </div>
-  );
-}
-
-function StepArrow() {
-  return (
-    <span className="hidden sm:block text-muted-foreground text-xs">→</span>
   );
 }

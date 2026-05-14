@@ -239,28 +239,28 @@ function EditCustomerModal({
   const selectedMembership = memberships.find((m) => m.id === selectedMembershipId);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       {/* Backdrop */}
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
 
       {/* Modal */}
-      <div className="relative w-full max-w-lg rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in zoom-in-95 duration-200">
+      <div className="relative w-full sm:max-w-lg rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl overflow-hidden animate-in fade-in slide-in-from-bottom-4 sm:zoom-in-95 duration-200 max-h-[90vh] sm:max-h-[85vh] flex flex-col">
         {/* Header */}
-        <div className="flex items-center justify-between border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center justify-between border-b border-border px-4 sm:px-6 py-4 bg-muted/30 shrink-0">
           <div className="flex items-center gap-2">
             <Pencil className="size-4 text-muted-foreground" />
             <h2 className="text-base font-semibold text-foreground">Edit Customer</h2>
           </div>
           <button
             onClick={onClose}
-            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
           >
-            <X className="size-4" />
+            <X className="size-5" />
           </button>
         </div>
 
         {/* Body */}
-        <div className="p-6 space-y-5 max-h-[70vh] overflow-y-auto">
+        <div className="p-4 sm:p-6 space-y-5 overflow-y-auto flex-1">
           {error && (
             <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
               <AlertTriangle className="size-4 text-red-600 shrink-0" />
@@ -348,12 +348,12 @@ function EditCustomerModal({
                 No membership plans available. Create plans in the Memberships section first.
               </p>
             ) : (
-              <div className="grid gap-2 sm:grid-cols-2">
+              <div className="grid gap-2 grid-cols-1 sm:grid-cols-2">
                 {/* No membership option */}
                 <button
                   type="button"
                   onClick={() => setSelectedMembershipId('')}
-                  className={`relative rounded-xl border p-3 text-left transition-all hover:shadow-sm ${
+                  className={`relative rounded-xl border p-3 text-left transition-all hover:shadow-sm min-h-[48px] ${
                     selectedMembershipId === ''
                       ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                       : 'border-border hover:border-border/80'
@@ -428,11 +428,11 @@ function EditCustomerModal({
         </div>
 
         {/* Footer */}
-        <div className="flex items-center justify-end gap-2 border-t border-border px-6 py-4 bg-muted/20">
-          <Button variant="outline" className="rounded-xl" onClick={onClose} disabled={isPending}>
+        <div className="flex items-center justify-end gap-2 border-t border-border px-4 sm:px-6 py-4 bg-muted/20 shrink-0">
+          <Button variant="outline" className="rounded-xl flex-1 sm:flex-none" onClick={onClose} disabled={isPending}>
             Cancel
           </Button>
-          <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+          <Button className="rounded-xl flex-1 sm:flex-none" onClick={handleSave} disabled={isPending}>
             {isPending ? 'Saving...' : 'Save Changes'}
           </Button>
         </div>

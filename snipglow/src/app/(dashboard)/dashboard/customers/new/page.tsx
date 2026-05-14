@@ -56,7 +56,7 @@ export default function NewCustomerPage() {
   }
 
   return (
-    <div className="mx-auto w-full max-w-lg space-y-6 px-0 sm:px-0">
+    <div className="mx-auto w-full max-w-lg space-y-6 px-2 sm:px-0">
       {/* Header */}
       <div className="flex items-center gap-3">
         <Link
@@ -78,7 +78,7 @@ export default function NewCustomerPage() {
           </div>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-5">
+        <form onSubmit={handleSubmit} className="p-4 sm:p-6 space-y-5">
           {error && (
             <div className="rounded-xl border border-destructive/50 bg-destructive/10 px-4 py-3 text-sm text-destructive">
               {error}
@@ -168,12 +168,12 @@ export default function NewCustomerPage() {
                   Assign Membership <span className="text-xs text-muted-foreground">(optional)</span>
                 </label>
               </div>
-              <div className="grid gap-3 sm:grid-cols-2">
+              <div className="grid gap-3 grid-cols-1 sm:grid-cols-2">
                 {/* No membership option */}
                 <button
                   type="button"
                   onClick={() => setSelectedMembership('')}
-                  className={`relative rounded-xl border p-4 text-left transition-all hover:shadow-sm ${
+                  className={`relative rounded-xl border p-4 text-left transition-all hover:shadow-sm min-h-[56px] ${
                     selectedMembership === ''
                       ? 'border-primary bg-primary/5 ring-2 ring-primary/20'
                       : 'border-border hover:border-border/80'
@@ -230,13 +230,13 @@ export default function NewCustomerPage() {
           )}
 
           {/* Actions */}
-          <div className="flex items-center gap-3 pt-2">
-            <Button type="submit" className="rounded-xl" disabled={!isFormValid || isPending}>
+          <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center gap-3 pt-2">
+            <Link href="/dashboard/customers" className="sm:order-first">
+              <Button type="button" variant="outline" className="rounded-xl w-full sm:w-auto min-h-[48px]">Cancel</Button>
+            </Link>
+            <Button type="submit" className="rounded-xl min-h-[48px] flex-1 sm:flex-none" disabled={!isFormValid || isPending}>
               {isPending ? 'Adding...' : 'Add Customer'}
             </Button>
-            <Link href="/dashboard/customers">
-              <Button type="button" variant="outline" className="rounded-xl">Cancel</Button>
-            </Link>
           </div>
         </form>
       </div>

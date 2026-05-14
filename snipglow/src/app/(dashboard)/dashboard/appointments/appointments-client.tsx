@@ -680,13 +680,13 @@ function CompleteAndBillModal({
               <p className="text-xs text-muted-foreground">
                 {membershipInfo ? 'Additional discount (adds on top of membership)' : 'Apply discount'}
               </p>
-              <div className="flex items-center gap-3 flex-wrap">
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
                 {[0, 5, 10, 15, 20].map((pct) => (
                   <button
                     key={pct}
                     type="button"
                     onClick={() => setAdditionalDiscountPct(pct)}
-                    className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
+                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] min-w-[48px] ${
                       additionalDiscountPct === pct
                         ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:border-pink-700'
                         : 'border-border text-muted-foreground hover:border-pink-300'
@@ -702,7 +702,7 @@ function CompleteAndBillModal({
                   value={additionalDiscountPct || ''}
                   onChange={(e) => setAdditionalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
                   placeholder="Custom"
-                  className="w-20 rounded-xl border border-border px-3 py-2 text-sm text-center"
+                  className="w-20 rounded-xl border border-border px-3 py-2.5 text-sm text-center min-h-[44px]"
                 />
               </div>
             </div>
