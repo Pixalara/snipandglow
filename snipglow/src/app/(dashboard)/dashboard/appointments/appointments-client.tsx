@@ -255,37 +255,37 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
             {canReschedule && (
               <button
                 onClick={() => setRescheduleTarget(row)}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 min-h-[44px] text-xs font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-colors"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-900/40 transition-all active:scale-95"
                 title="Reschedule"
               >
                 <CalendarClock className="size-5" />
-                <span className="hidden sm:inline">Reschedule</span>
+                <span>Reschedule</span>
               </button>
             )}
             {canReschedule && (
               <button
                 onClick={() => setCompleteTarget(row)}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 min-h-[44px] text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/40 transition-all active:scale-95 disabled:opacity-50"
                 title="Complete & Bill"
               >
                 <CircleCheck className="size-5" />
-                <span className="hidden sm:inline">Complete</span>
+                <span>Complete</span>
               </button>
             )}
             {canReschedule && (
               <button
                 onClick={() => handleStatusChange(row.id, 'cancelled')}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 min-h-[44px] text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/40 transition-all active:scale-95 disabled:opacity-50"
                 title="Cancel"
               >
                 <XCircle className="size-5" />
-                <span className="hidden sm:inline">Cancel</span>
+                <span>Cancel</span>
               </button>
             )}
             {(row.status === 'completed' || row.status === 'cancelled') && (
-              <span className="text-xs text-muted-foreground italic">—</span>
+              <span className="text-sm text-muted-foreground italic px-2">—</span>
             )}
           </div>
         );
