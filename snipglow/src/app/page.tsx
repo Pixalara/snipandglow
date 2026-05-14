@@ -862,6 +862,68 @@ export default function HomePage() {
       {/* Demo Booking Modal */}
       {showDemoModal && <DemoBookingModal onClose={() => setShowDemoModal(false)} />}
 
+      {/* ===== FAQ SECTION ===== */}
+      <section className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <div className="text-center mb-12 reveal">
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">FAQ</p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+            <p className="text-slate-500 text-sm sm:text-base">Everything you need to know before getting started.</p>
+          </div>
+
+          <div className="space-y-4 reveal">
+            <FaqItem
+              question="What is SnipandGlow?"
+              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more — all from one dashboard."
+            />
+            <FaqItem
+              question="How long is the free trial?"
+              answer="You get a full 15-day free trial with access to all features. No credit card required to start. If it doesn't work for you, you pay nothing."
+            />
+            <FaqItem
+              question="Do I need any technical knowledge to use it?"
+              answer="Not at all. SnipandGlow is designed for salon owners, not tech experts. We handle the complete setup for you, and the dashboard is as simple as using WhatsApp. Plus, we provide free training and onboarding support."
+            />
+            <FaqItem
+              question="Can my staff use it too?"
+              answer="Yes! You can add unlimited staff members with role-based access. Stylists can view their appointments, managers can access reports, and you as the owner have full control over everything."
+            />
+            <FaqItem
+              question="How does WhatsApp integration work?"
+              answer="By default, appointment reminders and invoices are sent from the SnipandGlow WhatsApp number. If you want messages to come from your own salon's WhatsApp Business number (your branding), you can opt for our one-time ₹2,500 WhatsApp API setup."
+            />
+            <FaqItem
+              question="Is my data safe and secure?"
+              answer="Absolutely. We use enterprise-grade encryption, your data is hosted on secure cloud servers, and each salon's data is completely isolated. We never share or sell your customer data."
+            />
+            <FaqItem
+              question="Can I manage multiple branches?"
+              answer="Yes, multi-branch support is included in the ₹999/mo plan. You can manage all your salon locations from a single dashboard with branch-level reporting and staff management."
+            />
+            <FaqItem
+              question="What payment methods do my customers need?"
+              answer="SnipandGlow tracks payments — it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
+            />
+            <FaqItem
+              question="Can I cancel anytime?"
+              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund — no questions asked."
+            />
+            <FaqItem
+              question="How is SnipandGlow different from other salon software?"
+              answer="Most salon software is built for Western markets and costs ₹3,000-5,000/mo. SnipandGlow is built specifically for Indian salons — with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ₹999/mo with all features included."
+            />
+            <FaqItem
+              question="Do you offer customer support?"
+              answer="Yes! We provide priority WhatsApp support for all users. You can reach our team directly on WhatsApp for any questions, issues, or feature requests. We typically respond within minutes during business hours."
+            />
+            <FaqItem
+              question="Can I import my existing customer data?"
+              answer="Yes, we help you import your existing customer database during onboarding — whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
+            />
+          </div>
+        </div>
+      </section>
+
       {/* ===== FOOTER ===== */}
       <footer className="pt-12 pb-8" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #0f172a 6%, #020617 20%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -942,6 +1004,34 @@ const TIME_SLOTS = [
   '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM',
   '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
 ];
+
+function FaqItem({ question, answer }: { question: string; answer: string }) {
+  const [isOpen, setIsOpen] = useState(false);
+
+  return (
+    <div className="rounded-xl border border-slate-200 bg-white overflow-hidden transition-all hover:border-slate-300">
+      <button
+        onClick={() => setIsOpen(!isOpen)}
+        className="flex items-center justify-between w-full px-5 sm:px-6 py-4 sm:py-5 text-left gap-4"
+        aria-expanded={isOpen}
+      >
+        <span className="text-sm sm:text-base font-medium text-slate-900">{question}</span>
+        <span className={`flex size-7 shrink-0 items-center justify-center rounded-full border border-slate-200 transition-transform duration-300 ${isOpen ? 'rotate-180 bg-fuchsia-50 border-fuchsia-200' : ''}`}>
+          <svg className={`size-4 transition-colors ${isOpen ? 'text-fuchsia-600' : 'text-slate-400'}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
+          </svg>
+        </span>
+      </button>
+      <div
+        className={`overflow-hidden transition-all duration-300 ease-in-out ${isOpen ? 'max-h-96 opacity-100' : 'max-h-0 opacity-0'}`}
+      >
+        <div className="px-5 sm:px-6 pb-5 text-sm text-slate-600 leading-relaxed">
+          {answer}
+        </div>
+      </div>
+    </div>
+  );
+}
 
 function DemoBookingModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('');
