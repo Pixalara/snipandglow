@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { formatINR } from '@/lib/utils';
 import { AnalyticsCharts } from './analytics-charts';
 import {
@@ -10,14 +11,13 @@ import {
   BarChart3,
   ShieldAlert,
 } from 'lucide-react';
-import type { UserRole, AnalyticsSnapshot, TopServiceEntry } from '@/types';
+import type { UserRole } from '@/types';
 import type { DailyDataPoint, TopServiceDataPoint } from './analytics-charts';
 
 // =============================================================================
 // Analytics Dashboard Page — Server Component
+// Calculates stats in real-time from invoices & appointments tables.
 // Owner/Manager only (deny staff)
-//
-// Requirements: 10.1, 10.2, 10.3, 10.4, 10.6, 10.7
 // =============================================================================
 
 export default async function AnalyticsPage() {
@@ -30,7 +30,7 @@ export default async function AnalyticsPage() {
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
 
-  // Deny access to staff (Requirement 10.7)
+  // Deny access to staff
   if (role === 'staff') {
     return (
       <div className="space-y-6">
@@ -58,26 +58,72 @@ export default async function AnalyticsPage() {
     );
   }
 
+  const tenantId = user.user_metadata?.tenant_id as string | undefined;
   const branchId = user.user_metadata?.branch_id as string | undefined;
 
-  // Fetch analytics snapshots for the last 30 days for the current branch
-  const thirtyDaysAgo = new Date();
-  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
-  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString().split('T')[0];
-
-  let query = supabase
-    .from('analytics_snapshots')
-    .select('*')
-    .gte('snapshot_date', thirtyDaysAgoStr)
-    .order('snapshot_date', { ascending: true });
-
-  if (branchId) {
-    query = query.eq('branch_id', branchId);
+  if (!tenantId || !branchId) {
+    return (
+      <div className="space-y-6">
+        <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/50 dark:border-amber-800/30 p-6">
+          <div className="flex items-center gap-3">
+            <div className="flex size-11 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30">
+              <BarChart3 className="size-5 text-amber-600 dark:text-amber-400" />
+            </div>
+            <div>
+              <h1 className="text-xl font-bold text-foreground">Analytics</h1>
+              <p className="text-sm text-destructive">Missing tenant context</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
   }
 
-  const { data: snapshots, error } = await query;
+  // Use admin client to bypass RLS
+  const admin = createAdminClient();
 
-  if (error) {
+  // Date range: last 30 days
+  const thirtyDaysAgo = new Date();
+  thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+  const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
+
+  // Fetch invoices for last 30 days
+  const { data: invoices, error: invoicesError } = await admin
+    .from('invoices')
+    .select('id, total, payment_status, created_at')
+    .eq('tenant_id', tenantId)
+    .eq('branch_id', branchId)
+    .gte('created_at', thirtyDaysAgoStr)
+    .order('created_at', { ascending: true });
+
+  // Fetch appointments for last 30 days
+  const { data: appointments, error: appointmentsError } = await admin
+    .from('appointments')
+    .select('id, appointment_date, status, customer_id, created_at')
+    .eq('tenant_id', tenantId)
+    .eq('branch_id', branchId)
+    .gte('created_at', thirtyDaysAgoStr)
+    .order('created_at', { ascending: true });
+
+  // Fetch invoice items for top services
+  const invoiceIds = (invoices ?? []).map((inv: any) => inv.id);
+  let invoiceItems: any[] = [];
+  if (invoiceIds.length > 0) {
+    const { data: items } = await admin
+      .from('invoice_items')
+      .select('service_name, line_total')
+      .in('invoice_id', invoiceIds);
+    invoiceItems = items ?? [];
+  }
+
+  // Fetch unique customers who visited in last 30 days vs total customers
+  const { count: totalCustomers } = await admin
+    .from('customers')
+    .select('id', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId)
+    .eq('branch_id', branchId);
+
+  if (invoicesError || appointmentsError) {
     return (
       <div className="space-y-6">
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-amber-500/10 via-amber-500/5 to-transparent border border-amber-200/50 dark:border-amber-800/30 p-6">
@@ -98,39 +144,71 @@ export default async function AnalyticsPage() {
     );
   }
 
-  const data = (snapshots ?? []) as unknown as AnalyticsSnapshot[];
+  const invoiceData = (invoices ?? []) as any[];
+  const appointmentData = (appointments ?? []) as any[];
 
-  // Compute KPI values
-  const totalRevenue = data.reduce((sum, s) => sum + (s.revenue || 0), 0);
-  const totalAppointments = data.reduce((sum, s) => sum + (s.appointment_count || 0), 0);
+  // ─── KPI Calculations ───────────────────────────────────────────────────────
+
+  // Total Revenue (sum of all invoice totals with payment_status = 'paid')
+  const totalRevenue = invoiceData
+    .filter((inv) => inv.payment_status === 'paid')
+    .reduce((sum, inv) => sum + (inv.total || 0), 0);
+
+  // Total Appointments
+  const totalAppointments = appointmentData.length;
+
+  // Avg Revenue per Appointment
   const avgRevenuePerAppointment = totalAppointments > 0
     ? Math.round(totalRevenue / totalAppointments)
     : 0;
-  // Latest retention rate (most recent snapshot)
-  const latestRetentionRate = data.length > 0
-    ? data[data.length - 1].retention_rate
+
+  // Customer Retention: unique customers with appointments / total customers
+  const uniqueCustomerIds = new Set(appointmentData.map((a) => a.customer_id));
+  const retentionRate = totalCustomers && totalCustomers > 0
+    ? Math.round((uniqueCustomerIds.size / totalCustomers) * 100 * 10) / 10
     : 0;
 
-  // Prepare daily chart data
-  const dailyData: DailyDataPoint[] = data.map((s) => ({
-    date: formatShortDate(s.snapshot_date),
-    revenue: s.revenue || 0,
-    appointment_count: s.appointment_count || 0,
-  }));
+  // ─── Daily Chart Data ───────────────────────────────────────────────────────
 
-  // Aggregate top services across the period
-  const serviceAggregation: Record<string, { name: string; total_revenue: number }> = {};
-  for (const snapshot of data) {
-    const services = (snapshot.top_services ?? []) as TopServiceEntry[];
-    for (const svc of services) {
-      if (!serviceAggregation[svc.name]) {
-        serviceAggregation[svc.name] = { name: svc.name, total_revenue: 0 };
-      }
-      serviceAggregation[svc.name].total_revenue += svc.total_revenue || 0;
+  // Group invoices by date
+  const dailyMap: Record<string, { revenue: number; appointment_count: number }> = {};
+
+  for (const inv of invoiceData) {
+    if (inv.payment_status !== 'paid') continue;
+    const dateKey = new Date(inv.created_at).toISOString().split('T')[0];
+    if (!dailyMap[dateKey]) {
+      dailyMap[dateKey] = { revenue: 0, appointment_count: 0 };
     }
+    dailyMap[dateKey].revenue += inv.total || 0;
   }
 
-  const topServices: TopServiceDataPoint[] = Object.values(serviceAggregation)
+  for (const appt of appointmentData) {
+    const dateKey = appt.appointment_date; // already in YYYY-MM-DD format
+    if (!dailyMap[dateKey]) {
+      dailyMap[dateKey] = { revenue: 0, appointment_count: 0 };
+    }
+    dailyMap[dateKey].appointment_count += 1;
+  }
+
+  // Sort by date and format
+  const dailyData: DailyDataPoint[] = Object.entries(dailyMap)
+    .sort(([a], [b]) => a.localeCompare(b))
+    .map(([dateStr, values]) => ({
+      date: formatShortDate(dateStr),
+      revenue: values.revenue,
+      appointment_count: values.appointment_count,
+    }));
+
+  // ─── Top Services ───────────────────────────────────────────────────────────
+
+  const serviceAgg: Record<string, number> = {};
+  for (const item of invoiceItems) {
+    const name = item.service_name || 'Unknown';
+    serviceAgg[name] = (serviceAgg[name] || 0) + (item.line_total || 0);
+  }
+
+  const topServices: TopServiceDataPoint[] = Object.entries(serviceAgg)
+    .map(([name, total_revenue]) => ({ name, total_revenue }))
     .sort((a, b) => b.total_revenue - a.total_revenue)
     .slice(0, 5);
 
@@ -183,8 +261,8 @@ export default async function AnalyticsPage() {
         <KPICard
           icon={<Users className="size-5" />}
           title="Customer Retention"
-          value={`${latestRetentionRate.toFixed(1)}%`}
-          subtitle="Current rate"
+          value={`${retentionRate}%`}
+          subtitle="Active customers"
           gradient="from-amber-500/10 to-amber-600/5"
           iconColor="text-amber-600 dark:text-amber-400"
           iconBg="bg-amber-100 dark:bg-amber-900/30"
