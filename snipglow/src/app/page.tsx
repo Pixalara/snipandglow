@@ -485,7 +485,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
-      <section id="how-it-works" className="py-16 sm:py-24 bg-slate-50">
+      <section id="how-it-works" className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 sm:mb-16 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">How It Works</p>
@@ -576,7 +576,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ROI SECTION ===== */}
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Real Results</p>
@@ -604,7 +604,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== FEATURES GRID ===== */}
-      <section id="features" className="py-16 sm:py-24 bg-slate-50">
+      <section id="features" className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Features</p>
@@ -633,7 +633,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== PRICING ===== */}
-      <section id="pricing" className="py-16 sm:py-24 bg-white">
+      <section id="pricing" className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fefcff 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Pricing</p>
@@ -787,7 +787,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== CTA BANNER ===== */}
-      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: 'linear-gradient(180deg, #0f172a 0%, #1e1b4b 50%, #0f172a 100%)' }}>
+      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 8%, #1e1b4b 50%, #0f172a 92%, #ffffff 100%)' }}>
         {/* Subtle radial glow */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-[600px] h-[400px] rounded-full bg-gradient-to-r from-violet-600/20 via-pink-500/10 to-orange-500/20 blur-3xl" />
@@ -840,7 +840,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BOOK A DEMO SECTION ===== */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6" style={{ background: 'linear-gradient(135deg, #c4b5fd 0%, #e9d5ff 25%, #fce7f3 50%, #e9d5ff 75%, #93c5fd 100%)' }}>
+      <section className="py-12 sm:py-16 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #e9d5ff 20%, #fce7f3 50%, #e9d5ff 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-4xl rounded-3xl px-5 py-10 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to run your salon like this?
@@ -863,7 +863,7 @@ export default function HomePage() {
       {showDemoModal && <DemoBookingModal onClose={() => setShowDemoModal(false)} />}
 
       {/* ===== FOOTER ===== */}
-      <footer className="bg-slate-950 pt-12 pb-8">
+      <footer className="pt-12 pb-8" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #0f172a 6%, #020617 20%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           {/* Top row: Logo + Nav + CTA */}
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pb-8 border-b border-slate-800/60">
