@@ -9,10 +9,13 @@ const securityHeaders = [
 
 const nextConfig: NextConfig = {
   compress: true,
+  poweredByHeader: false,
+  reactStrictMode: true,
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'snipandglow.com', 'www.snipandglow.com', 'snipandglow.pixalara.io'],
     },
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
   },
   images: {
     formats: ['image/avif', 'image/webp'],

@@ -1,8 +1,8 @@
 import { redirect } from 'next/navigation';
+import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { formatINR } from '@/lib/utils';
-import { AnalyticsCharts } from './analytics-charts';
 import {
   TrendingUp,
   Calendar,
@@ -13,6 +13,11 @@ import {
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import type { DailyDataPoint, TopServiceDataPoint } from './analytics-charts';
+
+// Lazy load the heavy recharts component
+const AnalyticsCharts = dynamic(() => import('./analytics-charts').then(mod => ({ default: mod.AnalyticsCharts })), {
+  loading: () => <div className="h-[300px] flex items-center justify-center text-sm text-muted-foreground">Loading charts...</div>,
+});
 
 // =============================================================================
 // Analytics Dashboard Page — Server Component
@@ -87,25 +92,34 @@ export default async function AnalyticsPage() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
-  // Fetch invoices for last 30 days
-  const { data: invoices, error: invoicesError } = await admin
-    .from('invoices')
-    .select('id, total, payment_status, created_at')
-    .eq('tenant_id', tenantId)
-    .eq('branch_id', branchId)
-    .gte('created_at', thirtyDaysAgoStr)
-    .order('created_at', { ascending: true });
+  // Fetch invoices, appointments, and customer count in parallel
+  const [invoicesRes, appointmentsRes, customersRes] = await Promise.all([
+    admin
+      .from('invoices')
+      .select('id, total, payment_status, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('branch_id', branchId)
+      .gte('created_at', thirtyDaysAgoStr)
+      .order('created_at', { ascending: true }),
+    admin
+      .from('appointments')
+      .select('id, appointment_date, status, customer_id, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('branch_id', branchId)
+      .gte('created_at', thirtyDaysAgoStr)
+      .order('created_at', { ascending: true }),
+    admin
+      .from('customers')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('branch_id', branchId),
+  ]);
 
-  // Fetch appointments for last 30 days
-  const { data: appointments, error: appointmentsError } = await admin
-    .from('appointments')
-    .select('id, appointment_date, status, customer_id, created_at')
-    .eq('tenant_id', tenantId)
-    .eq('branch_id', branchId)
-    .gte('created_at', thirtyDaysAgoStr)
-    .order('created_at', { ascending: true });
+  const { data: invoices, error: invoicesError } = invoicesRes;
+  const { data: appointments, error: appointmentsError } = appointmentsRes;
+  const { count: totalCustomers } = customersRes;
 
-  // Fetch invoice items for top services
+  // Fetch invoice items for top services (depends on invoices result)
   const invoiceIds = (invoices ?? []).map((inv: any) => inv.id);
   let invoiceItems: any[] = [];
   if (invoiceIds.length > 0) {
@@ -115,13 +129,6 @@ export default async function AnalyticsPage() {
       .in('invoice_id', invoiceIds);
     invoiceItems = items ?? [];
   }
-
-  // Fetch unique customers who visited in last 30 days vs total customers
-  const { count: totalCustomers } = await admin
-    .from('customers')
-    .select('id', { count: 'exact', head: true })
-    .eq('tenant_id', tenantId)
-    .eq('branch_id', branchId);
 
   if (invoicesError || appointmentsError) {
     return (

@@ -24,31 +24,25 @@ export default async function DashboardLayout({
 
   // Fetch branches for the tenant (used by branch switcher for owners)
   let branches: Branch[] = [];
-  try {
-    if (tenantId && role === 'owner') {
-      const { data } = await supabase
-        .from('branches')
-        .select('*')
-        .eq('tenant_id', tenantId)
-        .eq('is_active', true)
-        .order('name');
+  if (tenantId && role === 'owner') {
+    const { data } = await supabase
+      .from('branches')
+      .select('id, name, address, phone, is_default, is_active, tenant_id, operating_hours, invoice_counter, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('is_active', true)
+      .order('name');
 
-      branches = (data ?? []) as Branch[];
-    } else if (tenantId && branchId) {
-      // Non-owners only see their assigned branch
-      const { data } = await supabase
-        .from('branches')
-        .select('*')
-        .eq('id', branchId)
-        .single();
+    branches = (data ?? []) as Branch[];
+  } else if (tenantId && branchId) {
+    const { data } = await supabase
+      .from('branches')
+      .select('id, name, address, phone, is_default, is_active, tenant_id, operating_hours, invoice_counter, created_at')
+      .eq('id', branchId)
+      .single();
 
-      if (data) {
-        branches = [data as Branch];
-      }
+    if (data) {
+      branches = [data as Branch];
     }
-  } catch {
-    // If branch fetch fails, continue with empty branches
-    branches = [];
   }
 
   const activeBranchId = branchId ?? branches[0]?.id ?? '';
