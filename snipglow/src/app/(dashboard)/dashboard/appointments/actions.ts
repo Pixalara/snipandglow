@@ -159,7 +159,8 @@ export async function updateAppointmentStatus(
 export async function completeAndGenerateBill(
   appointmentId: string,
   paymentMethod: 'cash' | 'upi' | 'card',
-  serviceIds?: string[]
+  serviceIds?: string[],
+  customDiscountPct?: number
 ): Promise<ActionResult<{ invoiceId: string; invoiceNumber: string }>> {
   const supabase = await createClient();
 
@@ -210,21 +211,23 @@ export async function completeAndGenerateBill(
     return { success: false, error: 'Services not found.' };
   }
 
-  // 3. Check for active membership discount
-  let discountPct = 0;
-  const today = new Date().toISOString().split('T')[0];
-  const { data: activeMembership } = await supabase
-    .from('customer_memberships')
-    .select('membership_id, memberships(discount_pct)')
-    .eq('customer_id', appointment.customer_id)
-    .eq('status', 'active')
-    .gte('end_date', today)
-    .limit(1)
-    .maybeSingle();
+  // 3. Check for active membership discount or use custom discount
+  let discountPct = customDiscountPct ?? 0;
+  if (!customDiscountPct || customDiscountPct === 0) {
+    const today = new Date().toISOString().split('T')[0];
+    const { data: activeMembership } = await supabase
+      .from('customer_memberships')
+      .select('membership_id, memberships(discount_pct)')
+      .eq('customer_id', appointment.customer_id)
+      .eq('status', 'active')
+      .gte('end_date', today)
+      .limit(1)
+      .maybeSingle();
 
-  if (activeMembership) {
-    const membership = activeMembership.memberships as unknown as { discount_pct: number } | null;
-    discountPct = membership?.discount_pct ?? 0;
+    if (activeMembership) {
+      const membership = activeMembership.memberships as unknown as { discount_pct: number } | null;
+      discountPct = membership?.discount_pct ?? 0;
+    }
   }
 
   // 4. Calculate totals from all services

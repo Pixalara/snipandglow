@@ -533,13 +533,18 @@ function CompleteAndBillModal({
 }) {
   const [isPending, startTransition] = useTransition();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
+  const [discountPct, setDiscountPct] = useState(0);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<{ invoiceNumber: string } | null>(null);
+
+  const discountedTotal = appointment.total_amount > 0
+    ? Math.round(appointment.total_amount - (appointment.total_amount * discountPct / 100))
+    : 0;
 
   function handleConfirm() {
     setError('');
     startTransition(async () => {
-      const result = await completeAndGenerateBill(appointment.id, paymentMethod);
+      const result = await completeAndGenerateBill(appointment.id, paymentMethod, undefined, discountPct);
       if (result.success) {
         setSuccess({ invoiceNumber: result.data.invoiceNumber });
       } else {
@@ -622,6 +627,42 @@ function CompleteAndBillModal({
               <div className="flex items-center justify-between text-sm pt-2 border-t border-border mt-2">
                 <span className="font-medium text-foreground">Total Amount</span>
                 <span className="text-lg font-bold text-foreground">₹{appointment.total_amount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+          </div>
+
+          {/* Discount */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Discount (optional)</p>
+            <div className="flex items-center gap-3">
+              {[0, 5, 10, 15, 20].map((pct) => (
+                <button
+                  key={pct}
+                  type="button"
+                  onClick={() => setDiscountPct(pct)}
+                  className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
+                    discountPct === pct
+                      ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:border-pink-700'
+                      : 'border-border text-muted-foreground hover:border-pink-300'
+                  }`}
+                >
+                  {pct === 0 ? 'None' : `${pct}%`}
+                </button>
+              ))}
+              <input
+                type="number"
+                min={0}
+                max={100}
+                value={discountPct || ''}
+                onChange={(e) => setDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                placeholder="Custom %"
+                className="w-20 rounded-xl border border-border px-3 py-2 text-sm text-center"
+              />
+            </div>
+            {discountPct > 0 && appointment.total_amount > 0 && (
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2 flex items-center justify-between">
+                <span className="text-sm text-emerald-700 dark:text-emerald-400">{discountPct}% discount applied</span>
+                <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">₹{discountedTotal.toLocaleString('en-IN')}</span>
               </div>
             )}
           </div>
