@@ -619,6 +619,12 @@ function CompleteAndBillModal({
                 {formatDateIN(appointment.appointment_date)}, {formatTimeIST(`1970-01-01T${appointment.start_time}`)}
               </span>
             </div>
+            {appointment.total_amount > 0 && (
+              <div className="flex items-center justify-between text-sm pt-2 border-t border-border mt-2">
+                <span className="font-medium text-foreground">Total Amount</span>
+                <span className="text-lg font-bold text-foreground">₹{appointment.total_amount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
           </div>
 
           {error && (

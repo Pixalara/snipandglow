@@ -20,6 +20,7 @@ export interface AppointmentRow {
   customer_name: string;
   service_name: string;
   employee_name: string;
+  total_amount: number;
 }
 
 export default async function AppointmentsPage() {
@@ -76,15 +77,15 @@ export default async function AppointmentsPage() {
 
   const [custRes, svcRes, empRes] = await Promise.all([
     custIds.length > 0 ? supabase.from('customers').select('id, name').in('id', custIds) : { data: [] },
-    svcIds.length > 0 ? supabase.from('services').select('id, name').in('id', svcIds) : { data: [] },
+    svcIds.length > 0 ? supabase.from('services').select('id, name, price').in('id', svcIds) : { data: [] },
     empIds.length > 0 ? supabase.from('employees').select('id, name').in('id', empIds) : { data: [] },
   ]);
 
   const custMap: Record<string, string> = {};
-  const svcMap: Record<string, string> = {};
+  const svcMap: Record<string, { name: string; price: number }> = {};
   const empMap: Record<string, string> = {};
   for (const c of custRes.data ?? []) custMap[c.id] = c.name;
-  for (const s of svcRes.data ?? []) svcMap[s.id] = s.name;
+  for (const s of svcRes.data ?? []) svcMap[s.id] = { name: s.name, price: s.price ?? 0 };
   for (const e of empRes.data ?? []) empMap[e.id] = e.name;
 
   // Transform joined data into flat rows
@@ -98,21 +99,30 @@ export default async function AppointmentsPage() {
     customer_name: custMap[apt.customer_id ?? ''] ?? '—',
     service_name: getServiceNames(apt, svcMap),
     employee_name: empMap[apt.employee_id ?? ''] ?? '—',
+    total_amount: getServiceTotal(apt, svcMap),
   }));
 
   return <AppointmentsClient appointments={rows} role={role} />;
 }
 
 /** Get all service names for an appointment (handles multi-service) */
-function getServiceNames(apt: { service_id: string | null; whatsapp_flow_ref?: string | null }, svcMap: Record<string, string>): string {
-  // Try to parse extra service IDs from whatsapp_flow_ref
+function getServiceNames(apt: { service_id: string | null; whatsapp_flow_ref?: string | null }, svcMap: Record<string, { name: string; price: number }>): string {
   try {
     const extraIds = apt.whatsapp_flow_ref ? JSON.parse(apt.whatsapp_flow_ref) : null;
     if (Array.isArray(extraIds) && extraIds.length > 0) {
-      return extraIds.map((id: string) => svcMap[id] ?? '').filter(Boolean).join(', ') || '—';
+      return extraIds.map((id: string) => svcMap[id]?.name ?? '').filter(Boolean).join(', ') || '—';
     }
-  } catch {
-    // Not JSON
-  }
-  return svcMap[apt.service_id ?? ''] ?? '—';
+  } catch { /* not JSON */ }
+  return svcMap[apt.service_id ?? '']?.name ?? '—';
+}
+
+/** Get total amount for all services in an appointment */
+function getServiceTotal(apt: { service_id: string | null; whatsapp_flow_ref?: string | null }, svcMap: Record<string, { name: string; price: number }>): number {
+  try {
+    const extraIds = apt.whatsapp_flow_ref ? JSON.parse(apt.whatsapp_flow_ref) : null;
+    if (Array.isArray(extraIds) && extraIds.length > 0) {
+      return extraIds.reduce((sum: number, id: string) => sum + (svcMap[id]?.price ?? 0), 0);
+    }
+  } catch { /* not JSON */ }
+  return svcMap[apt.service_id ?? '']?.price ?? 0;
 }
