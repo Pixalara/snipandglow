@@ -551,3 +551,32 @@ export async function searchCustomers(query: string): Promise<{ id: string; name
 
   return (data ?? []) as { id: string; name: string; phone: string }[];
 }
+
+/**
+ * Get the membership discount for a customer (used by Complete & Bill modal).
+ * Returns the discount percentage if customer has an active membership, 0 otherwise.
+ */
+export async function getCustomerMembershipDiscount(customerId: string): Promise<{ discountPct: number; membershipName: string } | null> {
+  const supabase = await createClient();
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data } = await supabase
+    .from('customer_memberships')
+    .select('membership_id, memberships(name, discount_pct)')
+    .eq('customer_id', customerId)
+    .eq('status', 'active')
+    .gte('end_date', today)
+    .limit(1)
+    .maybeSingle() as any;
+
+  if (!data) return null;
+
+  const membership = data.memberships as { name: string; discount_pct: number } | null;
+  if (!membership) return null;
+
+  return {
+    discountPct: membership.discount_pct,
+    membershipName: membership.name,
+  };
+}

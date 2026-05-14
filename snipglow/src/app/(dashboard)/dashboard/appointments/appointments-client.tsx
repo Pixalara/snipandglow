@@ -8,7 +8,7 @@ import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
-import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices } from './actions';
+import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices, getCustomerMembershipDiscount } from './actions';
 import {
   Calendar,
   List,
@@ -534,8 +534,24 @@ function CompleteAndBillModal({
   const [isPending, startTransition] = useTransition();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
   const [discountPct, setDiscountPct] = useState(0);
+  const [membershipInfo, setMembershipInfo] = useState<{ discountPct: number; membershipName: string } | null>(null);
+  const [loadingMembership, setLoadingMembership] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<{ invoiceNumber: string } | null>(null);
+
+  // Auto-fetch membership discount for this customer
+  useEffect(() => {
+    async function fetchMembership() {
+      setLoadingMembership(true);
+      const info = await getCustomerMembershipDiscount(appointment.customer_id);
+      if (info && info.discountPct > 0) {
+        setMembershipInfo(info);
+        setDiscountPct(info.discountPct);
+      }
+      setLoadingMembership(false);
+    }
+    fetchMembership();
+  }, [appointment.customer_id]);
 
   const discountedTotal = appointment.total_amount > 0
     ? Math.round(appointment.total_amount - (appointment.total_amount * discountPct / 100))
@@ -633,8 +649,28 @@ function CompleteAndBillModal({
 
           {/* Discount */}
           <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">Discount (optional)</p>
-            <div className="flex items-center gap-3">
+            <p className="text-sm font-medium text-foreground">Discount</p>
+
+            {/* Membership discount indicator */}
+            {loadingMembership ? (
+              <div className="flex items-center gap-2 text-xs text-muted-foreground">
+                <div className="h-3 w-3 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                Checking membership...
+              </div>
+            ) : membershipInfo ? (
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5 mb-2">
+                <div className="flex items-center gap-2">
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    👑 {membershipInfo.membershipName}
+                  </span>
+                  <span className="text-xs text-amber-700 dark:text-amber-300">
+                    {membershipInfo.discountPct}% membership discount auto-applied
+                  </span>
+                </div>
+              </div>
+            ) : null}
+
+            <div className="flex items-center gap-3 flex-wrap">
               {[0, 5, 10, 15, 20].map((pct) => (
                 <button
                   key={pct}

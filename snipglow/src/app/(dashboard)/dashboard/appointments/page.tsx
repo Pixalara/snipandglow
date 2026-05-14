@@ -12,6 +12,7 @@ import type { AppointmentStatus, UserRole } from '@/types';
 /** Appointment row with joined relation names */
 export interface AppointmentRow {
   id: string;
+  customer_id: string;
   appointment_date: string;
   start_time: string;
   end_time: string;
@@ -91,6 +92,7 @@ export default async function AppointmentsPage() {
   // Transform joined data into flat rows
   const rows: AppointmentRow[] = appts.map((apt) => ({
     id: apt.id,
+    customer_id: apt.customer_id ?? '',
     appointment_date: apt.appointment_date,
     start_time: apt.start_time,
     end_time: apt.end_time,

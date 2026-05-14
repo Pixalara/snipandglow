@@ -135,6 +135,106 @@ export async function getAvailableMemberships(): Promise<Membership[]> {
 }
 
 /**
+ * Get the current active membership for a customer.
+ * Returns membership_id if active, null otherwise.
+ */
+export async function getCustomerMembership(customerId: string): Promise<{ membershipId: string; membershipName: string; discountPct: number } | null> {
+  const admin = createAdminClient();
+
+  const today = new Date().toISOString().split('T')[0];
+
+  const { data } = await admin
+    .from('customer_memberships')
+    .select('membership_id, memberships(name, discount_pct)')
+    .eq('customer_id', customerId)
+    .eq('status', 'active')
+    .gte('end_date', today)
+    .limit(1)
+    .maybeSingle() as any;
+
+  if (!data) return null;
+
+  const membership = data.memberships as { name: string; discount_pct: number } | null;
+  return {
+    membershipId: data.membership_id,
+    membershipName: membership?.name ?? 'Unknown',
+    discountPct: membership?.discount_pct ?? 0,
+  };
+}
+
+/**
+ * Assign or change a customer's membership.
+ * If membershipId is empty/null, removes the active membership.
+ */
+export async function assignCustomerMembership(
+  customerId: string,
+  membershipId: string | null
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  const branchId = user.user_metadata?.branch_id;
+  if (!tenantId || !branchId) {
+    return { success: false, error: 'No tenant or branch context found.' };
+  }
+
+  const admin = createAdminClient();
+
+  // First, expire any existing active membership for this customer
+  const today = new Date().toISOString().split('T')[0];
+  await admin
+    .from('customer_memberships')
+    .update({ status: 'expired' } as any)
+    .eq('customer_id', customerId)
+    .eq('status', 'active');
+
+  // If no new membership selected, just return
+  if (!membershipId) {
+    revalidatePath('/dashboard/customers');
+    return { success: true, data: undefined };
+  }
+
+  // Fetch the membership plan to get validity_days
+  const { data: membership } = await admin
+    .from('memberships')
+    .select('validity_days')
+    .eq('id', membershipId)
+    .eq('is_active', true)
+    .single();
+
+  if (!membership) {
+    return { success: false, error: 'Membership plan not found or inactive.' };
+  }
+
+  // Create new customer_membership
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + membership.validity_days);
+
+  const { error } = await admin
+    .from('customer_memberships')
+    .insert({
+      customer_id: customerId,
+      membership_id: membershipId,
+      tenant_id: tenantId,
+      branch_id: branchId,
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      status: 'active',
+    } as any);
+
+  if (error) {
+    return { success: false, error: 'Failed to assign membership. Please try again.' };
+  }
+
+  revalidatePath('/dashboard/customers');
+  return { success: true, data: undefined };
+}
+
+/**
  * Create a customer and optionally assign a membership.
  */
 export async function createCustomerWithMembership(
