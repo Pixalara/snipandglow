@@ -192,103 +192,150 @@
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(32px);
+    transform: translateY(40px);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
     transform: translateY(0);
+    filter: blur(0);
   }
 }
 
 @keyframes fadeInLeft {
   from {
     opacity: 0;
-    transform: translateX(-24px);
+    transform: translateX(-32px);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
     transform: translateX(0);
+    filter: blur(0);
   }
 }
 
 @keyframes fadeInRight {
   from {
     opacity: 0;
-    transform: translateX(24px);
+    transform: translateX(32px);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
     transform: translateX(0);
+    filter: blur(0);
   }
 }
 
 @keyframes scaleIn {
   from {
     opacity: 0;
-    transform: scale(0.94);
+    transform: scale(0.92);
+    filter: blur(4px);
   }
   to {
     opacity: 1;
     transform: scale(1);
+    filter: blur(0);
   }
+}
+
+/* Smooth scroll for the entire page */
+html {
+  scroll-behavior: smooth;
 }
 
 /* Intersection Observer classes — add .reveal to any element */
 .reveal {
   opacity: 0;
-  transform: translateY(32px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateY(40px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reveal.visible {
   opacity: 1;
   transform: translateY(0);
+  filter: blur(0);
 }
 
 .reveal-left {
   opacity: 0;
-  transform: translateX(-24px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(-32px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reveal-left.visible {
   opacity: 1;
   transform: translateX(0);
+  filter: blur(0);
 }
 
 .reveal-right {
   opacity: 0;
-  transform: translateX(24px);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: translateX(32px);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reveal-right.visible {
   opacity: 1;
   transform: translateX(0);
+  filter: blur(0);
 }
 
 .reveal-scale {
   opacity: 0;
-  transform: scale(0.94);
-  transition: opacity 0.7s cubic-bezier(0.16, 1, 0.3, 1),
-              transform 0.7s cubic-bezier(0.16, 1, 0.3, 1);
+  transform: scale(0.92);
+  filter: blur(4px);
+  transition: opacity 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.8s cubic-bezier(0.22, 1, 0.36, 1),
+              filter 0.8s cubic-bezier(0.22, 1, 0.36, 1);
 }
 
 .reveal-scale.visible {
   opacity: 1;
   transform: scale(1);
+  filter: blur(0);
 }
 
 /* Stagger delays for children */
 .stagger > *:nth-child(1) { transition-delay: 0ms; }
-.stagger > *:nth-child(2) { transition-delay: 80ms; }
-.stagger > *:nth-child(3) { transition-delay: 160ms; }
-.stagger > *:nth-child(4) { transition-delay: 240ms; }
-.stagger > *:nth-child(5) { transition-delay: 320ms; }
-.stagger > *:nth-child(6) { transition-delay: 400ms; }
+.stagger > *:nth-child(2) { transition-delay: 100ms; }
+.stagger > *:nth-child(3) { transition-delay: 200ms; }
+.stagger > *:nth-child(4) { transition-delay: 300ms; }
+.stagger > *:nth-child(5) { transition-delay: 400ms; }
+.stagger > *:nth-child(6) { transition-delay: 500ms; }
+.stagger > *:nth-child(7) { transition-delay: 600ms; }
+.stagger > *:nth-child(8) { transition-delay: 700ms; }
+
+/* Smooth hover lift for cards */
+.hover-lift {
+  transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+.hover-lift:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
+}
+
+/* Smooth page section transitions */
+section {
+  transition: background-color 0.5s ease;
+}
+
+/* Smooth link/button transitions */
+a, button {
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
 
 /* ─── Premium Scrollbar ─────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
@@ -316,6 +363,7 @@
   .reveal, .reveal-left, .reveal-right, .reveal-scale {
     opacity: 1 !important;
     transform: none !important;
+    filter: none !important;
     transition: none !important;
   }
   html {
