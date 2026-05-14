@@ -44,7 +44,8 @@ export default async function AppointmentsPage() {
       source,
       customer_id,
       service_id,
-      employee_id
+      employee_id,
+      whatsapp_flow_ref
     `)
     .order('appointment_date', { ascending: false })
     .order('start_time', { ascending: true });
@@ -60,7 +61,17 @@ export default async function AppointmentsPage() {
   // Fetch related names separately to avoid join issues
   const appts = appointments ?? [];
   const custIds = [...new Set(appts.map((a) => a.customer_id).filter(Boolean))];
-  const svcIds = [...new Set(appts.map((a) => a.service_id).filter(Boolean))];
+  
+  // Collect ALL service IDs including extras stored in whatsapp_flow_ref
+  const allSvcIds = new Set<string>();
+  appts.forEach((a) => {
+    if (a.service_id) allSvcIds.add(a.service_id);
+    try {
+      const extra = a.whatsapp_flow_ref ? JSON.parse(a.whatsapp_flow_ref) : null;
+      if (Array.isArray(extra)) extra.forEach((id: string) => allSvcIds.add(id));
+    } catch { /* not JSON */ }
+  });
+  const svcIds = [...allSvcIds];
   const empIds = [...new Set(appts.map((a) => a.employee_id).filter(Boolean))];
 
   const [custRes, svcRes, empRes] = await Promise.all([
@@ -85,9 +96,23 @@ export default async function AppointmentsPage() {
     status: apt.status as AppointmentStatus,
     source: apt.source ?? 'dashboard',
     customer_name: custMap[apt.customer_id ?? ''] ?? '—',
-    service_name: svcMap[apt.service_id ?? ''] ?? '—',
+    service_name: getServiceNames(apt, svcMap),
     employee_name: empMap[apt.employee_id ?? ''] ?? '—',
   }));
 
   return <AppointmentsClient appointments={rows} role={role} />;
+}
+
+/** Get all service names for an appointment (handles multi-service) */
+function getServiceNames(apt: { service_id: string | null; whatsapp_flow_ref?: string | null }, svcMap: Record<string, string>): string {
+  // Try to parse extra service IDs from whatsapp_flow_ref
+  try {
+    const extraIds = apt.whatsapp_flow_ref ? JSON.parse(apt.whatsapp_flow_ref) : null;
+    if (Array.isArray(extraIds) && extraIds.length > 0) {
+      return extraIds.map((id: string) => svcMap[id] ?? '').filter(Boolean).join(', ') || '—';
+    }
+  } catch {
+    // Not JSON
+  }
+  return svcMap[apt.service_id ?? ''] ?? '—';
 }

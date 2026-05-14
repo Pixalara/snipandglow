@@ -415,6 +415,7 @@ export type ActionResult<T = void> =
 export interface CreateAppointmentInput {
   customer_id: string;
   service_id: string;
+  extra_service_ids?: string[];
   employee_id: string;
   appointment_date: string;
   start_time: string;

@@ -69,7 +69,7 @@ export async function createAppointment(
       end_time: input.end_time,
       status: 'booked',
       source: input.source ?? 'dashboard',
-      whatsapp_flow_ref: input.whatsapp_flow_ref ?? null,
+      whatsapp_flow_ref: input.extra_service_ids ? JSON.stringify(input.extra_service_ids) : (input.whatsapp_flow_ref ?? null),
     })
     .select()
     .single();
@@ -175,7 +175,7 @@ export async function completeAndGenerateBill(
   // 1. Fetch the appointment
   const { data: appointment, error: fetchError } = await supabase
     .from('appointments')
-    .select('id, status, customer_id, service_id, employee_id')
+    .select('id, status, customer_id, service_id, employee_id, whatsapp_flow_ref')
     .eq('id', appointmentId)
     .single();
 
@@ -187,8 +187,20 @@ export async function completeAndGenerateBill(
     return { success: false, error: 'Only booked or confirmed appointments can be completed.' };
   }
 
-  // 2. Fetch all services for the bill (use provided IDs or fall back to appointment's service)
-  const idsToFetch = serviceIds && serviceIds.length > 0 ? serviceIds : [appointment.service_id];
+  // 2. Fetch all services for the bill
+  // Try to get all service IDs from whatsapp_flow_ref (stores extra_service_ids as JSON)
+  let allServiceIds: string[] = [appointment.service_id];
+  try {
+    const extraIds = appointment.whatsapp_flow_ref ? JSON.parse(appointment.whatsapp_flow_ref) : null;
+    if (Array.isArray(extraIds) && extraIds.length > 0) {
+      allServiceIds = extraIds;
+    }
+  } catch {
+    // Not JSON, use just the primary service_id
+  }
+
+  // Use provided serviceIds override, or the stored ones
+  const idsToFetch = serviceIds && serviceIds.length > 0 ? serviceIds : allServiceIds;
   const { data: services } = await supabase
     .from('services')
     .select('id, name, price')

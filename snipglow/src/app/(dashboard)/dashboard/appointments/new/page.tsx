@@ -162,6 +162,7 @@ export default function NewAppointmentPage() {
       const result = await createAppointment({
         customer_id: customerId,
         service_id: selectedServiceIds[0], // Primary service
+        extra_service_ids: selectedServiceIds, // All services
         employee_id: employeeId,
         appointment_date: appointmentDate,
         start_time: startTime,
