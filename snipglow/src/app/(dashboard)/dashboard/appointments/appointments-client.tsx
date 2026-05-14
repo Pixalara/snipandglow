@@ -251,46 +251,25 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
         const loading = isPending && actionId === row.id;
         const canReschedule = row.status === 'booked' || row.status === 'confirmed';
         return (
-          <div className="flex items-center gap-1 flex-wrap">
+          <div className="flex items-center gap-2 flex-wrap">
             {canReschedule && (
               <button
                 onClick={() => setRescheduleTarget(row)}
-                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-colors"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 min-h-[44px] text-xs font-medium text-amber-700 hover:bg-amber-50 dark:text-amber-400 dark:hover:bg-amber-900/20 transition-colors"
                 title="Reschedule"
               >
-                <CalendarClock className="size-4 sm:size-3.5" />
+                <CalendarClock className="size-5" />
                 <span className="hidden sm:inline">Reschedule</span>
               </button>
             )}
-            {row.status === 'booked' && (
+            {canReschedule && (
               <button
-                onClick={() => handleStatusChange(row.id, 'confirmed')}
+                onClick={() => setCompleteTarget(row)}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-emerald-700 hover:bg-emerald-50 dark:text-emerald-400 dark:hover:bg-emerald-900/20 transition-colors disabled:opacity-50"
-                title="Confirm"
-              >
-                <CheckCircle2 className="size-4 sm:size-3.5" />
-                <span className="hidden sm:inline">Confirm</span>
-              </button>
-            )}
-            {row.status === 'confirmed' && (
-              <button
-                onClick={() => setCompleteTarget(row)}
-                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 min-h-[44px] text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
                 title="Complete & Bill"
               >
-                <CircleCheck className="size-4 sm:size-3.5" />
-                <span className="hidden sm:inline">Complete</span>
-              </button>
-            )}
-            {row.status === 'booked' && (
-              <button
-                onClick={() => setCompleteTarget(row)}
-                disabled={isPending && actionId === row.id}
-                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20 transition-colors disabled:opacity-50"
-                title="Complete & Bill"
-              >
-                <CircleCheck className="size-4 sm:size-3.5" />
+                <CircleCheck className="size-5" />
                 <span className="hidden sm:inline">Complete</span>
               </button>
             )}
@@ -298,10 +277,10 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
               <button
                 onClick={() => handleStatusChange(row.id, 'cancelled')}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-1 rounded-lg px-2 py-1.5 min-h-[44px] sm:min-h-0 sm:py-1 text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-2 min-h-[44px] text-xs font-medium text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors disabled:opacity-50"
                 title="Cancel"
               >
-                <XCircle className="size-4 sm:size-3.5" />
+                <XCircle className="size-5" />
                 <span className="hidden sm:inline">Cancel</span>
               </button>
             )}
