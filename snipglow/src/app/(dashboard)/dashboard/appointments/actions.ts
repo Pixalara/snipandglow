@@ -467,6 +467,39 @@ function timeToMinutes(time: string): number {
 }
 
 /**
+ * Update the services on an existing appointment.
+ * Stores all service IDs in whatsapp_flow_ref as JSON array.
+ */
+export async function updateAppointmentServices(
+  appointmentId: string,
+  serviceIds: string[]
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  if (!serviceIds || serviceIds.length === 0) {
+    return { success: false, error: 'At least one service is required.' };
+  }
+
+  const { error } = await supabase
+    .from('appointments')
+    .update({
+      service_id: serviceIds[0],
+      whatsapp_flow_ref: JSON.stringify(serviceIds),
+    })
+    .eq('id', appointmentId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update services.' };
+  }
+
+  revalidatePath('/dashboard/appointments');
+  return { success: true, data: undefined };
+}
+
+/**
  * Fetch active services for the current tenant/branch.
  */
 export async function getActiveServices(): Promise<Service[]> {

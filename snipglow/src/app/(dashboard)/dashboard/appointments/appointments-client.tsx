@@ -8,7 +8,7 @@ import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
-import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill } from './actions';
+import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices } from './actions';
 import {
   Calendar,
   List,
@@ -23,6 +23,7 @@ import {
   XCircle,
   CircleCheck,
   CalendarClock,
+  Pencil,
 } from 'lucide-react';
 import type { AppointmentRow } from './page';
 import type { AppointmentStatus, UserRole, TimeSlot } from '@/types';
@@ -180,6 +181,7 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
   const [actionId, setActionId] = useState<string | null>(null);
   const [rescheduleTarget, setRescheduleTarget] = useState<AppointmentRow | null>(null);
   const [completeTarget, setCompleteTarget] = useState<AppointmentRow | null>(null);
+  const [editTarget, setEditTarget] = useState<AppointmentRow | null>(null);
 
   function handleStatusChange(id: string, newStatus: AppointmentStatus) {
     setActionId(id);
@@ -252,6 +254,16 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
         const canReschedule = row.status === 'booked' || row.status === 'confirmed';
         return (
           <div className="flex items-center gap-2 flex-wrap">
+            {canReschedule && (
+              <button
+                onClick={() => setEditTarget(row)}
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 hover:border-violet-300 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-900/40 transition-all active:scale-95"
+                title="Edit Services"
+              >
+                <Pencil className="size-5" />
+                <span>Edit</span>
+              </button>
+            )}
             {canReschedule && (
               <button
                 onClick={() => setRescheduleTarget(row)}
@@ -337,6 +349,14 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
         <CompleteAndBillModal
           appointment={completeTarget}
           onClose={() => setCompleteTarget(null)}
+        />
+      )}
+
+      {/* Edit Services Modal */}
+      {editTarget && (
+        <EditServicesModal
+          appointment={editTarget}
+          onClose={() => setEditTarget(null)}
         />
       )}
     </>
@@ -661,6 +681,131 @@ function CompleteAndBillModal({
                   Complete & Bill
                 </>
               )}
+            </Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =============================================================================
+// Edit Services Modal
+// =============================================================================
+
+function EditServicesModal({
+  appointment,
+  onClose,
+}: {
+  appointment: AppointmentRow;
+  onClose: () => void;
+}) {
+  const [isPending, startTransition] = useTransition();
+  const [services, setServices] = useState<{ id: string; name: string; price: number }[]>([]);
+  const [selectedIds, setSelectedIds] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  useEffect(() => {
+    async function load() {
+      const svcData = await getActiveServices();
+      setServices(svcData.map((s) => ({ id: s.id, name: s.name, price: s.price })));
+    }
+    load();
+  }, []);
+
+  const selectedServices = services.filter((s) => selectedIds.includes(s.id));
+  const totalAmount = selectedServices.reduce((sum, s) => sum + s.price, 0);
+
+  function handleSave() {
+    if (selectedIds.length === 0) {
+      setError('Select at least one service.');
+      return;
+    }
+    setError('');
+    startTransition(async () => {
+      const result = await updateAppointmentServices(appointment.id, selectedIds);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(onClose, 1000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+      <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
+        <div className="space-y-5">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/20">
+              <Pencil className="size-5 text-violet-600 dark:text-violet-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Edit Services</h2>
+              <p className="text-xs text-muted-foreground">{appointment.customer_name}</p>
+            </div>
+          </div>
+
+          {success && (
+            <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+              <CheckCircle2 className="size-4 text-emerald-600" />
+              <p className="text-sm text-emerald-800 dark:text-emerald-200">Services updated!</p>
+            </div>
+          )}
+
+          {error && (
+            <div className="rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          {/* Selected services chips */}
+          {selectedServices.length > 0 && (
+            <div className="flex flex-wrap gap-2">
+              {selectedServices.map((svc) => (
+                <span key={svc.id} className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 px-3 py-1.5 text-xs font-medium text-pink-700 dark:text-pink-300">
+                  {svc.name} (₹{svc.price})
+                  <button type="button" onClick={() => setSelectedIds((prev) => prev.filter((id) => id !== svc.id))} className="text-pink-500 hover:text-pink-700 text-base leading-none">×</button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Service selector */}
+          {services.length > 0 && (
+            <select
+              value=""
+              onChange={(e) => {
+                if (e.target.value && !selectedIds.includes(e.target.value)) {
+                  setSelectedIds((prev) => [...prev, e.target.value]);
+                }
+              }}
+              className="w-full"
+            >
+              <option value="">{selectedIds.length === 0 ? 'Select services...' : '+ Add another service'}</option>
+              {services.filter((s) => !selectedIds.includes(s.id)).map((svc) => (
+                <option key={svc.id} value={svc.id}>{svc.name} — ₹{svc.price}</option>
+              ))}
+            </select>
+          )}
+
+          {totalAmount > 0 && (
+            <div className="rounded-lg bg-muted/50 px-4 py-3 flex items-center justify-between">
+              <span className="text-sm text-muted-foreground">Total</span>
+              <span className="text-lg font-bold text-foreground">₹{totalAmount.toLocaleString('en-IN')}</span>
+            </div>
+          )}
+
+          <div className="flex items-center justify-end gap-2 pt-2">
+            <Button variant="outline" className="rounded-xl" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button className="rounded-xl" onClick={handleSave} disabled={isPending || selectedIds.length === 0 || success}>
+              {isPending ? 'Saving...' : 'Save Changes'}
             </Button>
           </div>
         </div>
