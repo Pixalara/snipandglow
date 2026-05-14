@@ -2,7 +2,7 @@ export function StructuredData() {
   const jsonLd = {
     '@context': 'https://schema.org',
     '@type': 'SoftwareApplication',
-    name: 'snipandglow',
+    name: 'SnipandGlow',
     applicationCategory: 'BusinessApplication',
     operatingSystem: 'Web',
     description:

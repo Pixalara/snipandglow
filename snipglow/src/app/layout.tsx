@@ -20,11 +20,11 @@ const syne = Syne({
 export const metadata: Metadata = {
   metadataBase: new URL('https://snipandglow.com'),
   title: {
-    default: '#1 India\'s Salon & Spa Software | snipandglow',
-    template: '%s | snipandglow',
+    default: '#1 India\'s Salon & Spa Software | SnipandGlow',
+    template: '%s | SnipandGlow',
   },
   description:
-    'snipandglow: India\'s #1 salon and spa management software. WhatsApp automation, appointment booking, billing, CRM & staff management. All-in-one platform to streamline operations & grow your business. Start free 15-day trial.',
+    'SnipandGlow: India\'s #1 salon and spa management software. WhatsApp automation, appointment booking, billing, CRM & staff management. All-in-one platform to streamline operations & grow your business. Start free 15-day trial.',
   keywords: [
     'salon management software',
     'salon software India',
@@ -39,7 +39,7 @@ export const metadata: Metadata = {
   ],
   authors: [{ name: 'Pixalara', url: 'https://pixalara.io' }],
   creator: 'Pixalara',
-  publisher: 'snipandglow',
+  publisher: 'SnipandGlow',
   icons: {
     icon: [
       { url: '/favicon-32x32.png', sizes: '32x32', type: 'image/png' },
@@ -53,8 +53,8 @@ export const metadata: Metadata = {
     type: 'website',
     locale: 'en_IN',
     url: 'https://snipandglow.com',
-    siteName: 'snipandglow',
-    title: '#1 India\'s Salon & Spa Software | snipandglow',
+    siteName: 'SnipandGlow',
+    title: '#1 India\'s Salon & Spa Software | SnipandGlow',
     description:
       'India\'s #1 salon and spa management software. WhatsApp automation, appointment booking, billing, CRM & staff management. Start free 15-day trial.',
     images: [
@@ -62,13 +62,13 @@ export const metadata: Metadata = {
         url: '/og-image.png',
         width: 1200,
         height: 630,
-        alt: 'snipandglow — #1 India\'s Salon & Spa Software',
+        alt: 'SnipandGlow — #1 India\'s Salon & Spa Software',
       },
     ],
   },
   twitter: {
     card: 'summary_large_image',
-    title: '#1 India\'s Salon & Spa Software | snipandglow',
+    title: '#1 India\'s Salon & Spa Software | SnipandGlow',
     description:
       'India\'s #1 salon and spa management software. WhatsApp automation, appointment booking, billing & CRM.',
     images: ['/og-image.png'],
