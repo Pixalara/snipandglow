@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateGstSettings, updateSalonProfile, updateDiscountSettings } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent } from 'lucide-react';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star } from 'lucide-react';
 
 // =============================================================================
 // Salon Profile Card
@@ -473,5 +473,183 @@ export function DiscountSettingsCard({ discountEnabled: initialEnabled, discount
         </div>
       </div>
     </div>
+  );
+}
+
+
+// =============================================================================
+// QR Code Generator Card
+// =============================================================================
+
+interface QrCodeGeneratorProps {
+  salonName: string;
+  salonPhone: string;
+}
+
+export function QrCodeGeneratorCard({ salonName, salonPhone }: QrCodeGeneratorProps) {
+  const qrCodeUrl = 'https://qrcode.pixalara.io';
+
+  const benefits = [
+    {
+      icon: <Smartphone className="size-4" />,
+      title: 'Instant Bookings',
+      description: 'Customers scan & book appointments directly on WhatsApp',
+    },
+    {
+      icon: <Users className="size-4" />,
+      title: 'Walk-in Conversion',
+      description: 'Convert walk-in visitors into repeat customers effortlessly',
+    },
+    {
+      icon: <TrendingUp className="size-4" />,
+      title: '3x More Bookings',
+      description: 'Salons using QR codes see up to 3x increase in online bookings',
+    },
+    {
+      icon: <Star className="size-4" />,
+      title: 'Professional Branding',
+      description: 'Premium QR poster makes your salon look modern & tech-savvy',
+    },
+  ];
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-gradient-to-r from-fuchsia-500/5 via-purple-500/5 to-pink-500/5">
+        <div className="flex items-center gap-2">
+          <QrCode className="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
+          <h2 className="text-sm font-semibold text-foreground">QR Code Generator</h2>
+          <span className="inline-flex items-center gap-1 rounded-full bg-fuchsia-100 dark:bg-fuchsia-900/30 px-2 py-0.5 text-xs font-medium text-fuchsia-700 dark:text-fuchsia-400">
+            Recommended
+          </span>
+        </div>
+      </div>
+      <div className="p-6 space-y-6">
+        {/* Hero Section with Visual */}
+        <div className="relative overflow-hidden rounded-xl bg-gradient-to-br from-gray-900 via-gray-800 to-gray-900 p-6 text-white">
+          <div className="relative z-10 flex flex-col sm:flex-row items-center gap-6">
+            {/* QR Visual Mockup */}
+            <div className="flex-shrink-0">
+              <div className="relative w-48 h-56 rounded-lg bg-gradient-to-b from-gray-800 to-black border border-gray-700 p-4 shadow-2xl">
+                <div className="text-center space-y-2">
+                  <p className="text-[10px] text-gray-400 uppercase tracking-wider">✦ {salonName || 'Your Salon'} ✦</p>
+                  <p className="text-xs font-bold text-white leading-tight">
+                    BOOK APPOINTMENTS<br />
+                    ON <span className="text-green-400">WHATSAPP</span>
+                  </p>
+                  <div className="mx-auto w-24 h-24 bg-white rounded-lg flex items-center justify-center">
+                    <div className="relative">
+                      <QrCode className="size-16 text-gray-900" />
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <div className="size-5 rounded-full bg-green-500 flex items-center justify-center">
+                          <Phone className="size-3 text-white" />
+                        </div>
+                      </div>
+                    </div>
+                  </div>
+                  <p className="text-[9px] text-gray-400 uppercase tracking-widest">✦ Scan to Book ✦</p>
+                </div>
+              </div>
+            </div>
+
+            {/* Description */}
+            <div className="flex-1 text-center sm:text-left space-y-3">
+              <h3 className="text-lg font-bold">
+                Get Your Salon&apos;s WhatsApp Booking QR Code
+              </h3>
+              <p className="text-sm text-gray-300 leading-relaxed">
+                Print and display a beautiful QR code poster at your salon reception, mirrors, or entrance. 
+                Customers simply scan it to book appointments instantly on WhatsApp — no app downloads needed.
+              </p>
+              <a
+                href={qrCodeUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 px-5 py-2.5 text-sm font-semibold text-white shadow-lg hover:from-fuchsia-500 hover:to-purple-500 transition-all hover:shadow-xl hover:-translate-y-0.5"
+              >
+                <QrCode className="size-4" />
+                Generate Your QR Code
+                <ExternalLink className="size-3.5" />
+              </a>
+            </div>
+          </div>
+
+          {/* Background decorations */}
+          <div className="absolute -right-8 -top-8 h-40 w-40 rounded-full bg-fuchsia-500/10 blur-2xl" />
+          <div className="absolute -left-8 -bottom-8 h-32 w-32 rounded-full bg-purple-500/10 blur-2xl" />
+        </div>
+
+        {/* Why QR Codes Matter */}
+        <div className="space-y-3">
+          <h4 className="text-sm font-semibold text-foreground flex items-center gap-2">
+            <Star className="size-4 text-amber-500" />
+            Why Every Salon Needs a Booking QR Code
+          </h4>
+          <div className="grid gap-3 sm:grid-cols-2">
+            {benefits.map((benefit, idx) => (
+              <div
+                key={idx}
+                className="group flex items-start gap-3 rounded-xl border border-border bg-muted/30 p-4 transition-all hover:bg-muted/50 hover:border-fuchsia-200 dark:hover:border-fuchsia-800/30"
+              >
+                <div className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-fuchsia-100 dark:bg-fuchsia-900/30 text-fuchsia-600 dark:text-fuchsia-400 group-hover:scale-110 transition-transform">
+                  {benefit.icon}
+                </div>
+                <div>
+                  <p className="text-sm font-medium text-foreground">{benefit.title}</p>
+                  <p className="text-xs text-muted-foreground mt-0.5">{benefit.description}</p>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+
+        {/* How it works */}
+        <div className="rounded-xl bg-gradient-to-r from-fuchsia-50 via-purple-50 to-pink-50 dark:from-fuchsia-900/10 dark:via-purple-900/10 dark:to-pink-900/10 border border-fuchsia-200/50 dark:border-fuchsia-800/30 p-5">
+          <h4 className="text-sm font-semibold text-foreground mb-3">How It Works</h4>
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-4">
+            <Step number={1} text="Generate your custom QR code" />
+            <StepArrow />
+            <Step number={2} text="Download & print the poster" />
+            <StepArrow />
+            <Step number={3} text="Display at your salon" />
+            <StepArrow />
+            <Step number={4} text="Customers scan & book!" />
+          </div>
+        </div>
+
+        {/* CTA */}
+        <div className="flex flex-col sm:flex-row items-center gap-4 pt-2">
+          <a
+            href={qrCodeUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="inline-flex items-center gap-2 rounded-xl bg-gradient-to-r from-fuchsia-600 to-purple-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-fuchsia-500 hover:to-purple-500 transition-all hover:shadow-xl hover:-translate-y-0.5 w-full sm:w-auto justify-center"
+          >
+            <QrCode className="size-4" />
+            Generate Free QR Code
+            <ExternalLink className="size-3.5" />
+          </a>
+          <p className="text-xs text-muted-foreground text-center sm:text-left">
+            Free to generate • Powered by Pixalara
+          </p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Step({ number, text }: { number: number; text: string }) {
+  return (
+    <div className="flex items-center gap-2">
+      <span className="flex size-6 shrink-0 items-center justify-center rounded-full bg-fuchsia-600 text-[10px] font-bold text-white">
+        {number}
+      </span>
+      <span className="text-xs text-foreground font-medium whitespace-nowrap">{text}</span>
+    </div>
+  );
+}
+
+function StepArrow() {
+  return (
+    <span className="hidden sm:block text-muted-foreground text-xs">→</span>
   );
 }

@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { Button } from '@/components/ui/button';
-import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -155,6 +155,12 @@ export default async function SettingsPage() {
       <DiscountSettingsCard
         discountEnabled={discountEnabled}
         discountValue={discountValue}
+      />
+
+      {/* QR Code Generator */}
+      <QrCodeGeneratorCard
+        salonName={tenant.name ?? ''}
+        salonPhone={tenant.phone ?? ''}
       />
 
       {/* Current Subscription Card */}
