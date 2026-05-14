@@ -533,7 +533,7 @@ function CompleteAndBillModal({
 }) {
   const [isPending, startTransition] = useTransition();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
-  const [discountPct, setDiscountPct] = useState(0);
+  const [additionalDiscountPct, setAdditionalDiscountPct] = useState(0);
   const [membershipInfo, setMembershipInfo] = useState<{ discountPct: number; membershipName: string } | null>(null);
   const [loadingMembership, setLoadingMembership] = useState(true);
   const [error, setError] = useState('');
@@ -546,21 +546,24 @@ function CompleteAndBillModal({
       const info = await getCustomerMembershipDiscount(appointment.customer_id);
       if (info && info.discountPct > 0) {
         setMembershipInfo(info);
-        setDiscountPct(info.discountPct);
       }
       setLoadingMembership(false);
     }
     fetchMembership();
   }, [appointment.customer_id]);
 
+  // Total discount = membership + additional (capped at 100%)
+  const membershipDiscountPct = membershipInfo?.discountPct ?? 0;
+  const totalDiscountPct = Math.min(100, membershipDiscountPct + additionalDiscountPct);
+
   const discountedTotal = appointment.total_amount > 0
-    ? Math.round(appointment.total_amount - (appointment.total_amount * discountPct / 100))
+    ? Math.round(appointment.total_amount - (appointment.total_amount * totalDiscountPct / 100))
     : 0;
 
   function handleConfirm() {
     setError('');
     startTransition(async () => {
-      const result = await completeAndGenerateBill(appointment.id, paymentMethod, undefined, discountPct);
+      const result = await completeAndGenerateBill(appointment.id, paymentMethod, undefined, totalDiscountPct);
       if (result.success) {
         setSuccess({ invoiceNumber: result.data.invoiceNumber });
       } else {
@@ -659,46 +662,68 @@ function CompleteAndBillModal({
               </div>
             ) : membershipInfo ? (
               <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5 mb-2">
-                <div className="flex items-center gap-2">
-                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-                    👑 {membershipInfo.membershipName}
-                  </span>
-                  <span className="text-xs text-amber-700 dark:text-amber-300">
-                    {membershipInfo.discountPct}% membership discount auto-applied
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center gap-2">
+                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                      👑 {membershipInfo.membershipName}
+                    </span>
+                  </div>
+                  <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                    {membershipInfo.discountPct}% off
                   </span>
                 </div>
               </div>
             ) : null}
 
-            <div className="flex items-center gap-3 flex-wrap">
-              {[0, 5, 10, 15, 20].map((pct) => (
-                <button
-                  key={pct}
-                  type="button"
-                  onClick={() => setDiscountPct(pct)}
-                  className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
-                    discountPct === pct
-                      ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:border-pink-700'
-                      : 'border-border text-muted-foreground hover:border-pink-300'
-                  }`}
-                >
-                  {pct === 0 ? 'None' : `${pct}%`}
-                </button>
-              ))}
-              <input
-                type="number"
-                min={0}
-                max={100}
-                value={discountPct || ''}
-                onChange={(e) => setDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                placeholder="Custom %"
-                className="w-20 rounded-xl border border-border px-3 py-2 text-sm text-center"
-              />
+            {/* Additional discount */}
+            <div className="space-y-1.5">
+              <p className="text-xs text-muted-foreground">
+                {membershipInfo ? 'Additional discount (adds on top of membership)' : 'Apply discount'}
+              </p>
+              <div className="flex items-center gap-3 flex-wrap">
+                {[0, 5, 10, 15, 20].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setAdditionalDiscountPct(pct)}
+                    className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${
+                      additionalDiscountPct === pct
+                        ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:border-pink-700'
+                        : 'border-border text-muted-foreground hover:border-pink-300'
+                    }`}
+                  >
+                    {pct === 0 ? 'None' : `+${pct}%`}
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={additionalDiscountPct || ''}
+                  onChange={(e) => setAdditionalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  placeholder="Custom"
+                  className="w-20 rounded-xl border border-border px-3 py-2 text-sm text-center"
+                />
+              </div>
             </div>
-            {discountPct > 0 && appointment.total_amount > 0 && (
-              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2 flex items-center justify-between">
-                <span className="text-sm text-emerald-700 dark:text-emerald-400">{discountPct}% discount applied</span>
-                <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">₹{discountedTotal.toLocaleString('en-IN')}</span>
+
+            {/* Total discount summary */}
+            {totalDiscountPct > 0 && appointment.total_amount > 0 && (
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 space-y-1.5">
+                {membershipInfo && additionalDiscountPct > 0 && (
+                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                    <span>Membership ({membershipInfo.discountPct}%) + Additional ({additionalDiscountPct}%)</span>
+                    <span className="font-medium">= {totalDiscountPct}% total</span>
+                  </div>
+                )}
+                <div className="flex items-center justify-between">
+                  <span className="text-sm text-emerald-700 dark:text-emerald-400">
+                    {totalDiscountPct}% total discount
+                  </span>
+                  <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
+                    ₹{discountedTotal.toLocaleString('en-IN')}
+                  </span>
+                </div>
               </div>
             )}
           </div>
