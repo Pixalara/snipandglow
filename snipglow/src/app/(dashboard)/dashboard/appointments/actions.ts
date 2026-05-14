@@ -154,11 +154,12 @@ export async function updateAppointmentStatus(
 
 /**
  * Complete an appointment AND generate an invoice for it.
- * Marks appointment as completed, creates invoice with the service as a line item.
+ * Marks appointment as completed, creates invoice with all service line items.
  */
 export async function completeAndGenerateBill(
   appointmentId: string,
-  paymentMethod: 'cash' | 'upi' | 'card'
+  paymentMethod: 'cash' | 'upi' | 'card',
+  serviceIds?: string[]
 ): Promise<ActionResult<{ invoiceId: string; invoiceNumber: string }>> {
   const supabase = await createClient();
 
@@ -171,7 +172,7 @@ export async function completeAndGenerateBill(
     return { success: false, error: 'No tenant or branch context found.' };
   }
 
-  // 1. Fetch the appointment with service details
+  // 1. Fetch the appointment
   const { data: appointment, error: fetchError } = await supabase
     .from('appointments')
     .select('id, status, customer_id, service_id, employee_id')
@@ -186,15 +187,15 @@ export async function completeAndGenerateBill(
     return { success: false, error: 'Only booked or confirmed appointments can be completed.' };
   }
 
-  // 2. Fetch service details for the invoice line item
-  const { data: service } = await supabase
+  // 2. Fetch all services for the bill (use provided IDs or fall back to appointment's service)
+  const idsToFetch = serviceIds && serviceIds.length > 0 ? serviceIds : [appointment.service_id];
+  const { data: services } = await supabase
     .from('services')
     .select('id, name, price')
-    .eq('id', appointment.service_id)
-    .single();
+    .in('id', idsToFetch);
 
-  if (!service) {
-    return { success: false, error: 'Service not found.' };
+  if (!services || services.length === 0) {
+    return { success: false, error: 'Services not found.' };
   }
 
   // 3. Check for active membership discount
@@ -214,11 +215,11 @@ export async function completeAndGenerateBill(
     discountPct = membership?.discount_pct ?? 0;
   }
 
-  // 4. Calculate totals
-  const subtotal = service.price;
+  // 4. Calculate totals from all services
+  const subtotal = services.reduce((sum, svc) => sum + svc.price, 0);
   const discountAmount = Math.round((subtotal * discountPct) / 100);
   const taxableAmount = subtotal - discountAmount;
-  const total = taxableAmount; // No GST by default for quick bill
+  const total = taxableAmount;
 
   // 5. Mark appointment as completed
   const { error: updateError } = await supabase
@@ -238,7 +239,7 @@ export async function completeAndGenerateBill(
       branch_id: branchId,
       customer_id: appointment.customer_id,
       appointment_id: appointmentId,
-      invoice_number: '', // trigger will generate
+      invoice_number: '',
       subtotal,
       discount_amount: discountAmount,
       discount_pct: discountPct,
@@ -254,19 +255,20 @@ export async function completeAndGenerateBill(
 
   if (invoiceError) {
     console.error('Invoice creation error:', invoiceError);
-    // Appointment is already completed, just report the invoice failure
     return { success: false, error: 'Appointment completed but failed to generate bill.' };
   }
 
-  // 7. Create invoice line item
-  await supabase.from('invoice_items').insert({
+  // 7. Create invoice line items for ALL services
+  const lineItems = services.map((svc) => ({
     invoice_id: invoice.id,
-    service_id: service.id,
-    service_name: service.name,
-    unit_price: service.price,
+    service_id: svc.id,
+    service_name: svc.name,
+    unit_price: svc.price,
     quantity: 1,
-    line_total: service.price,
-  });
+    line_total: svc.price,
+  }));
+
+  await supabase.from('invoice_items').insert(lineItems);
 
   revalidatePath('/dashboard/appointments');
   revalidatePath('/dashboard/billing');

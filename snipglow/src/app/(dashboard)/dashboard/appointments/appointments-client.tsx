@@ -534,13 +534,32 @@ function CompleteAndBillModal({
 }) {
   const [isPending, startTransition] = useTransition();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
+  const [services, setServices] = useState<{ id: string; name: string; price: number }[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<{ invoiceNumber: string } | null>(null);
+
+  // Load services on mount
+  useEffect(() => {
+    async function loadServices() {
+      const { getActiveServices } = await import('./actions');
+      const svcData = await getActiveServices();
+      setServices(svcData.map((s) => ({ id: s.id, name: s.name, price: s.price })));
+    }
+    loadServices();
+  }, []);
+
+  const selectedServices = services.filter((s) => selectedServiceIds.includes(s.id));
+  const totalAmount = selectedServices.reduce((sum, s) => sum + s.price, 0);
 
   function handleConfirm() {
     setError('');
     startTransition(async () => {
-      const result = await completeAndGenerateBill(appointment.id, paymentMethod);
+      const result = await completeAndGenerateBill(
+        appointment.id,
+        paymentMethod,
+        selectedServiceIds.length > 0 ? selectedServiceIds : undefined
+      );
       if (result.success) {
         setSuccess({ invoiceNumber: result.data.invoiceNumber });
       } else {
@@ -626,6 +645,44 @@ function CompleteAndBillModal({
               <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
             </div>
           )}
+
+          {/* Services Selection */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Services Provided</p>
+            {services.length === 0 ? (
+              <p className="text-xs text-muted-foreground">Loading services...</p>
+            ) : (
+              <>
+                {selectedServices.length > 0 && (
+                  <div className="flex flex-wrap gap-2 mb-2">
+                    {selectedServices.map((svc) => (
+                      <span key={svc.id} className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 px-3 py-1 text-xs font-medium text-pink-700 dark:text-pink-300">
+                        {svc.name} (₹{svc.price})
+                        <button type="button" onClick={() => setSelectedServiceIds((prev) => prev.filter((id) => id !== svc.id))} className="text-pink-500 hover:text-pink-700">×</button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+                <select
+                  value=""
+                  onChange={(e) => {
+                    if (e.target.value && !selectedServiceIds.includes(e.target.value)) {
+                      setSelectedServiceIds((prev) => [...prev, e.target.value]);
+                    }
+                  }}
+                  className="w-full text-sm"
+                >
+                  <option value="">{selectedServiceIds.length === 0 ? 'Select services...' : '+ Add another service'}</option>
+                  {services.filter((s) => !selectedServiceIds.includes(s.id)).map((svc) => (
+                    <option key={svc.id} value={svc.id}>{svc.name} — ₹{svc.price}</option>
+                  ))}
+                </select>
+                {totalAmount > 0 && (
+                  <p className="text-xs text-muted-foreground mt-1">Total: ₹{totalAmount.toLocaleString('en-IN')}</p>
+                )}
+              </>
+            )}
+          </div>
 
           {/* Payment Method */}
           <div className="space-y-2">
