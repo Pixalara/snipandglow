@@ -75,7 +75,7 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
       {/* Sidebar */}
       <aside
         className={cn(
-          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-200 ease-in-out md:static md:translate-x-0',
+          'fixed inset-y-0 left-0 z-50 flex w-64 flex-col border-r border-sidebar-border bg-sidebar transition-transform duration-300 ease-[cubic-bezier(0.22,1,0.36,1)] md:static md:translate-x-0',
           isOpen ? 'translate-x-0' : '-translate-x-full'
         )}
       >
@@ -113,15 +113,22 @@ export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
                   <Link
                     href={item.href}
                     onClick={onClose}
+                    prefetch={true}
                     className={cn(
-                      'flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors',
+                      'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-primary'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent hover:text-sidebar-accent-foreground'
+                        ? 'bg-sidebar-accent text-sidebar-primary shadow-sm'
+                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:translate-x-0.5'
                     )}
                   >
-                    <Icon className="size-4 shrink-0" />
+                    <Icon className={cn(
+                      'size-4 shrink-0 transition-transform duration-200',
+                      isActive ? 'scale-110' : 'group-hover:scale-105'
+                    )} />
                     {item.label}
+                    {isActive && (
+                      <span className="ml-auto size-1.5 rounded-full bg-sidebar-primary" />
+                    )}
                   </Link>
                 </li>
               );

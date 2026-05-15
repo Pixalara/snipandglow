@@ -327,6 +327,57 @@ html {
   box-shadow: 0 20px 40px -12px rgba(0, 0, 0, 0.1);
 }
 
+/* Dashboard smooth interactions */
+.dashboard-card {
+  transition: transform 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.2s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.2s ease;
+}
+.dashboard-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 8px 25px -5px rgba(0, 0, 0, 0.08);
+}
+.dashboard-card:active {
+  transform: translateY(0);
+}
+
+/* Smooth modal/overlay backdrop */
+.backdrop-smooth {
+  animation: backdropIn 0.2s ease-out;
+}
+@keyframes backdropIn {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+/* Smooth toast/notification entry */
+.toast-enter {
+  animation: toastSlideIn 0.3s cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes toastSlideIn {
+  from {
+    opacity: 0;
+    transform: translateY(-8px) scale(0.96);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+/* Smooth button press feedback */
+button, a[role="button"], [role="button"] {
+  transition: transform 0.1s ease, opacity 0.15s ease;
+}
+button:active, a[role="button"]:active, [role="button"]:active {
+  transform: scale(0.97);
+}
+
+/* Smooth scrolling for dashboard content */
+main {
+  scroll-behavior: smooth;
+}
+
 /* Smooth page section transitions */
 section {
   transition: background-color 0.5s ease;
@@ -335,6 +386,20 @@ section {
 /* Smooth link/button transitions */
 a, button {
   transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+/* Enhanced skeleton shimmer */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.animate-pulse {
+  animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
+.skeleton-shimmer {
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,0.08) 50%, transparent 100%);
+  background-size: 200% 100%;
+  animation: shimmer 1.5s ease-in-out infinite;
 }
 
 /* ─── Premium Scrollbar ─────────────────────────────────────────────────── */

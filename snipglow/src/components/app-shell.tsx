@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { usePathname } from 'next/navigation';
 import type { UserRole, Branch } from '@/types';
 import { Sidebar } from '@/components/sidebar';
 import { Topbar } from '@/components/topbar';
@@ -15,6 +16,7 @@ interface AppShellProps {
 
 export function AppShell({ role, userName, branches, activeBranchId, children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const pathname = usePathname();
 
   return (
     <div className="flex min-h-screen">
@@ -26,7 +28,7 @@ export function AppShell({ role, userName, branches, activeBranchId, children }:
       />
 
       {/* Main area */}
-      <div className="flex flex-1 flex-col">
+      <div className="flex flex-1 flex-col min-w-0">
         {/* Topbar */}
         <Topbar
           role={role}
@@ -36,9 +38,14 @@ export function AppShell({ role, userName, branches, activeBranchId, children }:
           onMenuToggle={() => setSidebarOpen((prev) => !prev)}
         />
 
-        {/* Content */}
+        {/* Content with smooth page transition */}
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
-          {children}
+          <div
+            key={pathname}
+            className="animate-in fade-in slide-in-from-bottom-2 duration-300 ease-out"
+          >
+            {children}
+          </div>
         </main>
       </div>
     </div>
