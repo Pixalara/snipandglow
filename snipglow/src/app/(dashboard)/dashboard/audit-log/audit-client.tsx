@@ -28,6 +28,46 @@ interface AuditLogClientProps {
   logs: AuditLog[];
 }
 
+// =============================================================================
+// Simplify description for salon owners
+// =============================================================================
+
+function simplifyDescription(actionType: string, resourceType: string, rawDescription: string): string {
+  const resource = resourceType?.toLowerCase() ?? '';
+  const action = actionType?.toLowerCase() ?? '';
+
+  // Map technical descriptions to simple salon language
+  const actionVerbs: Record<string, string> = {
+    insert: 'Created',
+    update: 'Updated',
+    delete: 'Deleted',
+  };
+
+  const resourceLabels: Record<string, string> = {
+    invoices: 'a bill',
+    appointments: 'an appointment',
+    customers: 'customer info',
+    services: 'a service',
+    employees: 'staff member',
+    memberships: 'a membership',
+    branches: 'branch details',
+    expenses: 'an expense',
+    payroll: 'payroll record',
+    leads: 'a lead',
+    customer_memberships: 'customer membership',
+  };
+
+  const verb = actionVerbs[action] ?? action;
+  const label = resourceLabels[resource] ?? resource;
+
+  // If raw description has useful info beyond "INSERT on X", use it
+  if (rawDescription && !rawDescription.match(/^(INSERT|UPDATE|DELETE) on \w+$/i)) {
+    return rawDescription;
+  }
+
+  return `${verb} ${label}`;
+}
+
 /** Action type badge with icons */
 function ActionBadge({ actionType }: { actionType: string }) {
   const normalized = actionType.toUpperCase();
@@ -90,7 +130,7 @@ export function AuditLogClient({ logs }: AuditLogClientProps) {
       log.actor_name,
       log.action_type,
       log.resource_type,
-      log.description,
+      simplifyDescription(log.action_type, log.resource_type, log.description),
     ]);
 
     const csvContent = [
@@ -155,7 +195,7 @@ export function AuditLogClient({ logs }: AuditLogClientProps) {
       key: 'description',
       header: 'Description',
       render: (row) => (
-        <span className="text-sm text-muted-foreground line-clamp-1">{row.description}</span>
+        <span className="text-sm text-muted-foreground line-clamp-1">{simplifyDescription(row.action_type, row.resource_type, row.description)}</span>
       ),
     },
   ];
