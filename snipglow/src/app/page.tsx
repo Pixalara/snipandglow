@@ -683,7 +683,7 @@ export default function HomePage() {
               {/* CTA */}
               <Link
                 href="/signup"
-                className="flex items-center justify-center w-full py-3.5 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors mb-5"
+                className="flex items-center justify-center w-full py-3.5 min-h-[48px] rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors mb-5"
               >
                 Start 15-Day Free Trial
               </Link>
@@ -695,7 +695,7 @@ export default function HomePage() {
               </div>
 
               {/* Features */}
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+              <div className="grid grid-cols-1 gap-2.5 sm:gap-3">
                 {[
                   'Unlimited appointments & calendar',
                   'GST billing & digital invoices',
@@ -742,7 +742,7 @@ export default function HomePage() {
               {/* CTA */}
               <button
                 onClick={() => setShowDemoModal(true)}
-                className="flex items-center justify-center w-full py-3.5 rounded-xl border-2 border-slate-900 text-slate-900 font-semibold text-sm hover:bg-slate-900 hover:text-white transition-colors mb-5"
+                className="flex items-center justify-center w-full py-3.5 min-h-[48px] rounded-xl border-2 border-slate-900 text-slate-900 font-semibold text-sm hover:bg-slate-900 hover:text-white transition-colors mb-5"
               >
                 Contact Sales
               </button>
