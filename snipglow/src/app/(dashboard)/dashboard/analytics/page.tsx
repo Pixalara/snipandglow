@@ -10,6 +10,7 @@ import {
   Users,
   BarChart3,
   ShieldAlert,
+  Wallet,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import type { DailyDataPoint, TopServiceDataPoint } from './analytics-charts';
@@ -92,8 +93,8 @@ export default async function AnalyticsPage() {
   thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
   const thirtyDaysAgoStr = thirtyDaysAgo.toISOString();
 
-  // Fetch invoices, appointments, and customer count in parallel
-  const [invoicesRes, appointmentsRes, customersRes] = await Promise.all([
+  // Fetch invoices, appointments, expenses, and customer count in parallel
+  const [invoicesRes, appointmentsRes, customersRes, expensesRes] = await Promise.all([
     admin
       .from('invoices')
       .select('id, total, payment_status, created_at')
@@ -113,11 +114,19 @@ export default async function AnalyticsPage() {
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
       .eq('branch_id', branchId),
+    admin
+      .from('expenses' as any)
+      .select('amount, expense_date, created_at')
+      .eq('tenant_id', tenantId)
+      .eq('branch_id', branchId)
+      .gte('expense_date', thirtyDaysAgo.toISOString().split('T')[0])
+      .order('expense_date', { ascending: true }),
   ]);
 
   const { data: invoices, error: invoicesError } = invoicesRes;
   const { data: appointments, error: appointmentsError } = appointmentsRes;
   const { count: totalCustomers } = customersRes;
+  const { data: expenses } = expensesRes;
 
   // Fetch invoice items for top services (depends on invoices result)
   const invoiceIds = (invoices ?? []).map((inv: any) => inv.id);
@@ -153,6 +162,7 @@ export default async function AnalyticsPage() {
 
   const invoiceData = (invoices ?? []) as any[];
   const appointmentData = (appointments ?? []) as any[];
+  const expenseData = (expenses ?? []) as any[];
 
   // ─── KPI Calculations ───────────────────────────────────────────────────────
 
@@ -160,6 +170,12 @@ export default async function AnalyticsPage() {
   const totalRevenue = invoiceData
     .filter((inv) => inv.payment_status === 'paid')
     .reduce((sum, inv) => sum + (inv.total || 0), 0);
+
+  // Total Expenses
+  const totalExpenses = expenseData.reduce((sum, exp) => sum + (exp.amount || 0), 0);
+
+  // Net Profit
+  const netProfit = totalRevenue - totalExpenses;
 
   // Total Appointments
   const totalAppointments = appointmentData.length;
@@ -237,7 +253,7 @@ export default async function AnalyticsPage() {
       </div>
 
       {/* KPI Cards */}
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
         <KPICard
           icon={<IndianRupee className="size-5" />}
           title="Total Revenue"
@@ -246,6 +262,24 @@ export default async function AnalyticsPage() {
           gradient="from-emerald-500/10 to-emerald-600/5"
           iconColor="text-emerald-600 dark:text-emerald-400"
           iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+        />
+        <KPICard
+          icon={<Wallet className="size-5" />}
+          title="Total Expenses"
+          value={formatINR(totalExpenses)}
+          subtitle="Last 30 days"
+          gradient="from-red-500/10 to-red-600/5"
+          iconColor="text-red-600 dark:text-red-400"
+          iconBg="bg-red-100 dark:bg-red-900/30"
+        />
+        <KPICard
+          icon={<TrendingUp className="size-5" />}
+          title="Net Profit"
+          value={formatINR(netProfit)}
+          subtitle={netProfit >= 0 ? 'Profit' : 'Loss'}
+          gradient={netProfit >= 0 ? "from-emerald-500/10 to-emerald-600/5" : "from-red-500/10 to-red-600/5"}
+          iconColor={netProfit >= 0 ? "text-emerald-600 dark:text-emerald-400" : "text-red-600 dark:text-red-400"}
+          iconBg={netProfit >= 0 ? "bg-emerald-100 dark:bg-emerald-900/30" : "bg-red-100 dark:bg-red-900/30"}
         />
         <KPICard
           icon={<Calendar className="size-5" />}
@@ -257,7 +291,7 @@ export default async function AnalyticsPage() {
           iconBg="bg-blue-100 dark:bg-blue-900/30"
         />
         <KPICard
-          icon={<TrendingUp className="size-5" />}
+          icon={<IndianRupee className="size-5" />}
           title="Avg Revenue / Appt"
           value={formatINR(avgRevenuePerAppointment)}
           subtitle="Last 30 days"
