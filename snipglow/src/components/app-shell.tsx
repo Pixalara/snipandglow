@@ -11,10 +11,11 @@ interface AppShellProps {
   userName: string;
   branches: Branch[];
   activeBranchId: string;
+  planTier?: string;
   children: React.ReactNode;
 }
 
-export function AppShell({ role, userName, branches, activeBranchId, children }: AppShellProps) {
+export function AppShell({ role, userName, branches, activeBranchId, planTier, children }: AppShellProps) {
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const pathname = usePathname();
 
@@ -23,6 +24,7 @@ export function AppShell({ role, userName, branches, activeBranchId, children }:
       {/* Sidebar */}
       <Sidebar
         role={role}
+        planTier={planTier}
         isOpen={sidebarOpen}
         onClose={() => setSidebarOpen(false)}
       />

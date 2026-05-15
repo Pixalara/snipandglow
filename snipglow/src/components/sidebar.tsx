@@ -56,14 +56,21 @@ const navItems: NavItem[] = [
 
 interface SidebarProps {
   role: UserRole;
+  planTier?: string;
   isOpen: boolean;
   onClose: () => void;
 }
 
-export function Sidebar({ role, isOpen, onClose }: SidebarProps) {
+export function Sidebar({ role, planTier, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
 
-  const filteredNavItems = navItems.filter((item) => can(role, 'read', item.resource));
+  const filteredNavItems = navItems.filter((item) => {
+    // Hide Branches for non-enterprise users
+    if (item.href === '/dashboard/branches' && planTier !== 'enterprise') {
+      return false;
+    }
+    return can(role, 'read', item.resource);
+  });
 
   return (
     <>

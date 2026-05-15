@@ -623,7 +623,7 @@ export default function HomePage() {
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
-              { icon: Zap, title: 'Multi-Branch Support', desc: 'Manage multiple salon locations from a single dashboard with branch-level reporting.', color: 'bg-pink-100 text-pink-600' },
+              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns — all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
               { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
               { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
@@ -651,27 +651,29 @@ export default function HomePage() {
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">One plan. All features. No hidden charges. No upsells. Start free for 15 days.</p>
           </div>
 
-          {/* Single Plan Card */}
-          <div className="max-w-lg mx-auto reveal">
+          {/* Two Plan Cards */}
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto reveal">
+
+            {/* ESSENTIALS PLAN */}
             <div className="relative rounded-2xl border-2 border-pink-500 bg-white p-6 sm:p-8 shadow-lg shadow-pink-100/50">
               {/* Badge */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                 <span className="inline-flex items-center rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white shadow-md">
-                  Everything Included
+                  Most Popular
                 </span>
               </div>
 
-              <div className="text-center mt-2 mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">All-in-One Salon Software</h3>
+              <div className="mt-2 mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Essentials</h3>
                 <p className="text-slate-500 text-sm">
-                  Every feature you need to run, manage, and grow your salon — in one simple plan.
+                  Everything you need to run, manage, and grow your single-location salon.
                 </p>
               </div>
 
               {/* Pricing */}
-              <div className="text-center mb-6">
+              <div className="mb-6">
                 <p className="text-slate-400 text-sm line-through">₹1,999 /mo</p>
-                <div className="flex items-end justify-center gap-1">
+                <div className="flex items-end gap-1">
                   <span className="text-5xl font-bold text-slate-900">₹999</span>
                   <span className="text-slate-500 mb-1.5">/mo</span>
                 </div>
@@ -686,35 +688,85 @@ export default function HomePage() {
                 Start 15-Day Free Trial
               </Link>
 
-              <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 text-xs text-slate-500 mb-6">
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />No credit card needed</span>
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-6">
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />No credit card</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />15-day money-back</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />Go live in 2 days</span>
               </div>
 
-              {/* Features Grid */}
+              {/* Features */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {[
                   'Unlimited appointments & calendar',
                   'GST billing & digital invoices',
                   'WhatsApp notifications & reminders',
                   'Staff scheduling & management',
-                  'Client history, notes & preferences',
+                  'Client history & preferences',
                   'Membership & loyalty packages',
                   'Expense & payroll tracking',
                   'Lead management & conversion',
                   'Business reports & analytics',
                   'WhatsApp marketing campaigns',
                   'Online booking via QR code',
-                  'Multi-branch support',
-                  'Referral program tracking',
                   'Feedback collection via WhatsApp',
                   'In-app Help & Support tickets',
                   'Free setup & onboarding',
-                  '24hr WhatsApp priority support',
+                  'Referral program tracking',
+                  '24hr WhatsApp support',
                 ].map((feature) => (
                   <div key={feature} className="flex items-start gap-2.5">
                     <CheckCircle2 className="h-4 w-4 text-pink-500 shrink-0 mt-0.5" />
+                    <span className="text-sm text-slate-700">{feature}</span>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* ENTERPRISE PLAN */}
+            <div className="relative rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm hover:shadow-lg transition-shadow">
+              <div className="mb-6">
+                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Enterprise</h3>
+                <p className="text-slate-500 text-sm">
+                  For salon chains and multi-location businesses that need centralized control.
+                </p>
+              </div>
+
+              {/* Pricing */}
+              <div className="mb-6">
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-bold text-slate-900">Custom</span>
+                </div>
+                <p className="text-slate-400 text-xs mt-2">Tailored pricing based on number of branches</p>
+              </div>
+
+              {/* CTA */}
+              <button
+                onClick={() => setShowDemoModal(true)}
+                className="flex items-center justify-center w-full py-3.5 rounded-xl border-2 border-slate-900 text-slate-900 font-semibold text-sm hover:bg-slate-900 hover:text-white transition-colors mb-5"
+              >
+                Contact Sales
+              </button>
+
+              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-6">
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-violet-500" />Custom onboarding</span>
+                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-violet-500" />Volume discounts</span>
+              </div>
+
+              {/* Features */}
+              <div className="space-y-3">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Everything in Essentials, plus:</p>
+                {[
+                  'Multi-branch management',
+                  'Centralized dashboard for all locations',
+                  'Branch-level reporting & analytics',
+                  'Inter-branch customer transfers',
+                  'Priority support (< 4hr response)',
+                  'Dedicated Relationship Manager',
+                  'Custom integrations on request',
+                  'Staff performance comparison across branches',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-4 w-4 text-violet-500 shrink-0 mt-0.5" />
                     <span className="text-sm text-slate-700">{feature}</span>
                   </div>
                 ))}

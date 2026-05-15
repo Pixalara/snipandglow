@@ -26,6 +26,7 @@ export default async function DashboardLayout({
   // Fetch branches and subscription status in parallel
   let branches: Branch[] = [];
   let subscriptionStatus = 'active';
+  let planTier = 'starter';
 
   if (tenantId) {
     const [branchRes, tenantRes] = await Promise.all([
@@ -45,7 +46,7 @@ export default async function DashboardLayout({
           : Promise.resolve({ data: [] }),
       supabase
         .from('tenants')
-        .select('subscription_status')
+        .select('subscription_status, plan_tier')
         .eq('id', tenantId)
         .single(),
     ]);
@@ -55,6 +56,7 @@ export default async function DashboardLayout({
     }
     if (tenantRes.data) {
       subscriptionStatus = tenantRes.data.subscription_status ?? 'active';
+      planTier = (tenantRes.data as any).plan_tier ?? 'starter';
     }
   }
 
@@ -66,6 +68,7 @@ export default async function DashboardLayout({
       userName={userName}
       branches={branches}
       activeBranchId={activeBranchId}
+      planTier={planTier}
     >
       <SubscriptionGuard subscriptionStatus={subscriptionStatus}>
         {children}
