@@ -762,7 +762,6 @@ export default function HomePage() {
                   'Inter-branch customer transfers',
                   'Priority support (< 4hr response)',
                   'Dedicated Relationship Manager',
-                  'Custom integrations on request',
                   'Staff performance comparison across branches',
                 ].map((feature) => (
                   <div key={feature} className="flex items-start gap-2.5">
