@@ -235,7 +235,7 @@ export default function HomePage() {
               <div className="absolute inset-0 rounded-[48px] bg-pink-300/20 blur-3xl scale-125" />
 
               {/* Phone shell */}
-              <div className="relative w-[240px] h-[500px] sm:w-[270px] sm:h-[560px] lg:w-[300px] lg:h-[620px] rounded-[40px] sm:rounded-[44px] lg:rounded-[48px] bg-white border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden">
+              <div className="relative w-[280px] h-[580px] sm:w-[290px] sm:h-[600px] lg:w-[300px] lg:h-[620px] rounded-[44px] sm:rounded-[46px] lg:rounded-[48px] bg-white border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden">
                 {/* Notch */}
                 <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 sm:w-24 h-5 sm:h-6 bg-slate-900 rounded-b-2xl z-20" />
 
