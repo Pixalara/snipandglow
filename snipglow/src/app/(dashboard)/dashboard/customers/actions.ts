@@ -125,9 +125,17 @@ export async function getAvailableMemberships(): Promise<Membership[]> {
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return [];
 
-  const { data } = await supabase
+  const tenantId = user.user_metadata?.tenant_id;
+  const branchId = user.user_metadata?.branch_id;
+  if (!tenantId || !branchId) return [];
+
+  const admin = createAdminClient();
+
+  const { data } = await admin
     .from('memberships')
     .select('*')
+    .eq('tenant_id', tenantId)
+    .eq('branch_id', branchId)
     .eq('is_active', true)
     .order('name', { ascending: true });
 
