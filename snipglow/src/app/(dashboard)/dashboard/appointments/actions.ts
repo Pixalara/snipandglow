@@ -348,23 +348,16 @@ export async function getSlotsForReschedule(
 ): Promise<TimeSlot[]> {
   const supabase = await createClient();
 
-  // Get the appointment's employee and service
+  // Get the appointment's employee and service in one query
   const { data: appointment } = await supabase
     .from('appointments')
-    .select('employee_id, service_id')
+    .select('employee_id, service_id, services(duration_minutes)')
     .eq('id', appointmentId)
     .single();
 
   if (!appointment) return [];
 
-  // Get service duration
-  const { data: service } = await supabase
-    .from('services')
-    .select('duration_minutes')
-    .eq('id', appointment.service_id)
-    .single();
-
-  const duration = service?.duration_minutes ?? 30;
+  const duration = (appointment.services as any)?.duration_minutes ?? 30;
 
   return getAvailableSlots(appointment.employee_id, date, duration);
 }
@@ -380,7 +373,7 @@ export async function getAvailableSlots(
 ): Promise<TimeSlot[]> {
   const supabase = await createClient();
 
-  // 1. Get employee's branch
+  // 1. Get employee's branch_id
   const { data: employee } = await supabase
     .from('employees')
     .select('branch_id')
@@ -389,13 +382,22 @@ export async function getAvailableSlots(
 
   if (!employee) return [];
 
-  // 2. Get branch operating hours
-  const { data: branch } = await supabase
-    .from('branches')
-    .select('operating_hours')
-    .eq('id', employee.branch_id)
-    .single();
+  // 2. Fetch branch hours AND existing appointments in parallel
+  const [branchRes, apptsRes] = await Promise.all([
+    supabase
+      .from('branches')
+      .select('operating_hours')
+      .eq('id', employee.branch_id)
+      .single(),
+    supabase
+      .from('appointments')
+      .select('start_time, end_time')
+      .eq('employee_id', employeeId)
+      .eq('appointment_date', date)
+      .neq('status', 'cancelled'),
+  ]);
 
+  const branch = branchRes.data;
   if (!branch || !branch.operating_hours) return [];
 
   // 3. Determine the day name from the date
@@ -409,8 +411,8 @@ export async function getAvailableSlots(
 
   if (!dayHours || !dayHours.open || !dayHours.close) return [];
 
-  const openTime = dayHours.open; // e.g. "09:00"
-  const closeTime = dayHours.close; // e.g. "21:00"
+  const openTime = dayHours.open;
+  const closeTime = dayHours.close;
 
   // 4. Generate all possible slots at 30-minute intervals
   const slots: TimeSlot[] = [];
@@ -421,14 +423,13 @@ export async function getAvailableSlots(
 
   // If booking for today, skip past time slots (use IST timezone)
   const now = new Date();
-  const istOffset = 5.5 * 60; // IST is UTC+5:30
+  const istOffset = 5.5 * 60;
   const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
   const currentISTMinutes = utcMinutes + istOffset;
   const todayIST = new Date(now.getTime() + istOffset * 60000).toISOString().split('T')[0];
   const isToday = date === todayIST;
 
   for (let start = openMinutes; start + serviceDuration <= closeMinutes; start += 30) {
-    // Skip slots that have already passed today
     if (isToday && start <= currentISTMinutes) continue;
 
     const end = start + serviceDuration;
@@ -437,17 +438,10 @@ export async function getAvailableSlots(
     slots.push({ slot_start: startStr, slot_end: endStr });
   }
 
-  // 5. Fetch existing appointments for this employee on this date (non-cancelled)
-  const { data: existingAppts } = await supabase
-    .from('appointments')
-    .select('start_time, end_time')
-    .eq('employee_id', employeeId)
-    .eq('appointment_date', date)
-    .neq('status', 'cancelled');
-
+  // 5. Filter out slots that overlap with existing appointments
+  const existingAppts = apptsRes.data;
   if (!existingAppts || existingAppts.length === 0) return slots;
 
-  // 6. Filter out slots that overlap with existing appointments
   const available = slots.filter((slot) => {
     const slotStart = timeToMinutes(slot.slot_start);
     const slotEnd = timeToMinutes(slot.slot_end);
@@ -455,7 +449,6 @@ export async function getAvailableSlots(
     return !existingAppts.some((appt) => {
       const apptStart = timeToMinutes(appt.start_time);
       const apptEnd = timeToMinutes(appt.end_time);
-      // Overlap check: slot overlaps if it starts before appt ends AND ends after appt starts
       return slotStart < apptEnd && slotEnd > apptStart;
     });
   });
