@@ -1048,6 +1048,7 @@ export default function HomePage() {
               <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
               <a href="#features" className="hover:text-white transition-colors">Features</a>
               <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
+              <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
             </div>
 
             {/* CTA */}
