@@ -669,6 +669,7 @@ export default function HomePage() {
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
               { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5★ reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
               { icon: Headphones, title: '24hr Support', desc: 'Report any issue from the dashboard. Our team responds within 24 hours on WhatsApp. No chatbots, real humans.', color: 'bg-indigo-100 text-indigo-600' },
+              { icon: FileText, title: 'Audit Trails', desc: 'Track every action — who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
             ].map(({ icon: Icon, title, desc, color }) => (
               <div key={title} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow reveal-scale">
                 <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-4 ${color}`}>
@@ -752,6 +753,7 @@ export default function HomePage() {
                   'In-app Help & Support tickets',
                   'Free setup & onboarding',
                   'Referral program tracking',
+                  'Audit trails & activity log',
                   '24hr WhatsApp support',
                 ].map((feature) => (
                   <div key={feature} className="flex items-start gap-2.5">
