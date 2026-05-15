@@ -24,6 +24,8 @@ import {
   Wallet,
   Target,
   Shield,
+  Star,
+  Headphones,
 } from 'lucide-react';
 
 // Animated counter that counts up when scrolled into view
@@ -625,6 +627,8 @@ export default function HomePage() {
               { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
               { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
+              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5★ reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
+              { icon: Headphones, title: '24hr Support', desc: 'Report any issue from the dashboard. Our team responds within 24 hours on WhatsApp. No chatbots, real humans.', color: 'bg-indigo-100 text-indigo-600' },
             ].map(({ icon: Icon, title, desc, color }) => (
               <div key={title} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow reveal-scale">
                 <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-4 ${color}`}>
@@ -705,8 +709,9 @@ export default function HomePage() {
                   'Multi-branch support',
                   'Referral program tracking',
                   'Feedback collection via WhatsApp',
+                  'In-app Help & Support tickets',
                   'Free setup & onboarding',
-                  'Priority WhatsApp support',
+                  '24hr WhatsApp priority support',
                 ].map((feature) => (
                   <div key={feature} className="flex items-start gap-2.5">
                     <CheckCircle2 className="h-4 w-4 text-pink-500 shrink-0 mt-0.5" />
