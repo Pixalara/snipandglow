@@ -8,6 +8,7 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { calculateInvoiceTotal, formatINR } from '@/lib/utils';
 import { searchCustomers, getActiveServices } from '../../appointments/actions';
 import { createInvoice, getCustomerActiveMembership, getTenantGstSettings } from '../actions';
+import { getAvailableMemberships } from '../../customers/actions';
 import type { Service, PaymentMethod, Membership, CreateInvoiceItemInput } from '@/types';
 
 // =============================================================================
@@ -45,6 +46,7 @@ export default function NewBillingPage() {
 
   // Services state
   const [services, setServices] = useState<Service[]>([]);
+  const [membershipPlans, setMembershipPlans] = useState<Membership[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
   // Billing options
@@ -62,14 +64,16 @@ export default function NewBillingPage() {
     id: string;
   } | null>(null);
 
-  // Load services and GST settings on mount
+  // Load services, membership plans, and GST settings on mount
   useEffect(() => {
     async function loadData() {
-      const [svcData, gstSettings] = await Promise.all([
+      const [svcData, membData, gstSettings] = await Promise.all([
         getActiveServices(),
+        getAvailableMemberships(),
         getTenantGstSettings(),
       ]);
       setServices(svcData);
+      setMembershipPlans(membData);
       setGstEnabled(gstSettings.gst_enabled);
       setGstRate(gstSettings.gst_rate);
       setDefaultDiscount(gstSettings.discount_enabled ? gstSettings.discount_value : 0);
@@ -160,6 +164,27 @@ export default function NewBillingPage() {
   }
 
   function handleServiceChange(itemId: string, serviceId: string) {
+    // Check if it's a membership plan (prefixed with "plan-")
+    if (serviceId.startsWith('plan-')) {
+      const planId = serviceId.replace('plan-', '');
+      const plan = membershipPlans.find((p) => p.id === planId);
+      if (!plan) return;
+
+      setLineItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                service_id: serviceId,
+                service_name: `👑 ${plan.name} (Membership)`,
+                unit_price: plan.price,
+              }
+            : item
+        )
+      );
+      return;
+    }
+
     const service = services.find((s) => s.id === serviceId);
     if (!service) return;
 
@@ -200,7 +225,7 @@ export default function NewBillingPage() {
     setSubmitting(true);
 
     const items: CreateInvoiceItemInput[] = lineItems.map((item) => ({
-      service_id: item.service_id,
+      service_id: item.service_id.startsWith('plan-') ? item.service_id.replace('plan-', '') : item.service_id,
       service_name: item.service_name,
       unit_price: item.unit_price,
       quantity: item.quantity,
@@ -448,12 +473,23 @@ export default function NewBillingPage() {
                         className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
                         aria-label={`Select service for item ${index + 1}`}
                       >
-                        <option value="">Select a service...</option>
-                        {services.map((svc) => (
-                          <option key={svc.id} value={svc.id}>
-                            {svc.name} — {formatINR(svc.price)}
-                          </option>
-                        ))}
+                        <option value="">Select a service or plan...</option>
+                        <optgroup label="Services">
+                          {services.map((svc) => (
+                            <option key={svc.id} value={svc.id}>
+                              {svc.name} — {formatINR(svc.price)}
+                            </option>
+                          ))}
+                        </optgroup>
+                        {membershipPlans.length > 0 && (
+                          <optgroup label="Membership Plans">
+                            {membershipPlans.map((plan) => (
+                              <option key={`plan-${plan.id}`} value={`plan-${plan.id}`}>
+                                👑 {plan.name} — {formatINR(plan.price)} ({plan.validity_days} days)
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
                       </select>
                     </div>
 
