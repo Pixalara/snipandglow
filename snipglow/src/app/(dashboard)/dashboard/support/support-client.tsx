@@ -154,29 +154,29 @@ export function SupportClient({ tickets, userName, userPhone, tenantId, branchId
 
       {/* Trust Badges */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
             <Clock className="size-4 text-emerald-600 dark:text-emerald-400" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">24hr Response</p>
             <p className="text-xs text-muted-foreground">We reply within 24 hours</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-green-100 dark:bg-green-900/30">
             <MessageCircle className="size-4 text-green-600 dark:text-green-400" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">WhatsApp Support</p>
             <p className="text-xs text-muted-foreground">Direct team communication</p>
           </div>
         </div>
-        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-4">
-          <div className="flex size-9 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+        <div className="flex items-center gap-3 rounded-xl border border-border bg-card p-3 sm:p-4">
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
             <Shield className="size-4 text-violet-600 dark:text-violet-400" />
           </div>
-          <div>
+          <div className="min-w-0">
             <p className="text-sm font-medium text-foreground">Priority Handling</p>
             <p className="text-xs text-muted-foreground">Critical issues resolved first</p>
           </div>

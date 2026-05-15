@@ -18,10 +18,10 @@ export default async function FeedbackPage() {
 
   const admin = createAdminClient();
 
-  // Fetch feedback records
+  // Fetch feedback records (only needed columns)
   const { data: feedbackRecords } = await admin
     .from('feedback' as any)
-    .select('*')
+    .select('id, customer_name, customer_phone, rating, comment, source, created_at')
     .eq('tenant_id', tenantId)
     .eq('branch_id', branchId)
     .order('created_at', { ascending: false })

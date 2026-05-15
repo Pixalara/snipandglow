@@ -21,7 +21,7 @@ export default async function SupportPage() {
   // Fetch existing support tickets for this tenant
   const { data: tickets } = await admin
     .from('support_tickets' as any)
-    .select('*')
+    .select('id, subject, description, category, status, priority, created_at')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
     .limit(50);
