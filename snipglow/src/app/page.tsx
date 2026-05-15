@@ -1102,7 +1102,7 @@ export default function HomePage() {
         href="https://wa.me/919988688654?text=Hi%2C%20I%27m%20interested%20in%20SnipandGlow%20for%20my%20salon"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 flex items-center justify-center gap-2 bg-[#25D366] text-white shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 hover:scale-105 transition-all duration-300 size-14 rounded-full sm:rounded-full sm:size-auto sm:px-4 sm:py-3 lg:rounded-full lg:px-4 lg:py-3"
+        className="fixed bottom-6 right-6 z-50 flex items-center justify-center gap-2 bg-[#25D366] text-white shadow-lg shadow-green-500/30 hover:shadow-xl hover:shadow-green-500/40 hover:scale-105 active:scale-95 transition-all duration-300 size-14 rounded-full lg:size-auto lg:px-4 lg:py-3 animate-bounce-slow"
         aria-label="Chat with us on WhatsApp"
       >
         <svg className="size-6 shrink-0" fill="currentColor" viewBox="0 0 24 24">
@@ -1110,6 +1110,19 @@ export default function HomePage() {
         </svg>
         <span className="text-sm font-semibold hidden lg:inline">Chat with Sales</span>
       </a>
+
+      <style dangerouslySetInnerHTML={{ __html: `
+        @keyframes bounce-slow {
+          0%, 100% { transform: translateY(0); }
+          50% { transform: translateY(-6px); }
+        }
+        .animate-bounce-slow {
+          animation: bounce-slow 3s ease-in-out infinite;
+        }
+        .animate-bounce-slow:hover {
+          animation: none;
+        }
+      `}} />
 
     </div>
   );
