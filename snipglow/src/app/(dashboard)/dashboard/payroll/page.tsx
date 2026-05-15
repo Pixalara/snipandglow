@@ -28,10 +28,16 @@ export default async function PayrollPage() {
     );
   }
 
-  // Fetch all employees
-  const { data: employees, error: employeesError } = await supabase
+  // Fetch all employees using admin client to bypass RLS
+  const admin = createAdminClient();
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) redirect('/onboarding');
+
+  const { data: employees, error: employeesError } = await admin
     .from('employees')
     .select('*')
+    .eq('tenant_id', tenantId)
     .order('name', { ascending: true });
 
   if (employeesError) {
@@ -52,11 +58,11 @@ export default async function PayrollPage() {
     );
   }
 
-  // Fetch all payroll records using admin client
-  const admin = createAdminClient();
+  // Fetch all payroll records
   const { data: payrollRecords, error: payrollError } = await admin
     .from('payroll' as any)
     .select('*')
+    .eq('tenant_id', tenantId)
     .order('month', { ascending: false });
 
   if (payrollError) {
@@ -76,6 +82,12 @@ export default async function PayrollPage() {
   const employeeMap: Record<string, string> = {};
   for (const emp of (employees ?? [])) {
     employeeMap[emp.id] = emp.name;
+  }
+  // Also map auth_user_id to name for cases where employee_id is actually the auth user id
+  for (const emp of (employees ?? [])) {
+    if (emp.auth_user_id) {
+      employeeMap[emp.auth_user_id] = emp.name;
+    }
   }
 
   const currentMonth = new Date().toISOString().slice(0, 7);
