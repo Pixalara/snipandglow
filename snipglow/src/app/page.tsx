@@ -279,17 +279,15 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* -- 2. Welcome menu -- */}
+                      {/* -- 2. Welcome menu with buttons -- */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-emerald-100">
-                          <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
-                            <p className="text-[11px] font-bold text-emerald-700">👋 Welcome to Glamour Salon!</p>
-                          </div>
-                          <div className="px-3 py-2">
-                            <p className="text-[11px] text-slate-600">How can we help you today?</p>
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-emerald-100">
+                          <div className="px-3 py-2.5">
+                            <p className="text-[11px] text-slate-800 font-medium">👋 Welcome to Glamour Salon!</p>
+                            <p className="text-[11px] text-slate-600 mt-1">How can we help you today?</p>
                           </div>
                           <div className="border-t border-slate-100">
-                            {['💇 Book Appointment', '📋 My Appointments', '💰 Services & Prices'].map((b) => (
+                            {['💇 Book Appointment', '📋 My Appointments', '💰 Services & Prices', '📞 Contact Us'].map((b) => (
                               <div key={b} className="px-3 py-1.5 border-b border-slate-50 last:border-0 text-center">
                                 <p className="text-[10px] text-blue-500 font-medium">{b}</p>
                               </div>
@@ -298,7 +296,7 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* -- 3. Customer books -- */}
+                      {/* -- 3. Customer taps Book Appointment -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
                           <p className="text-[12px] text-slate-800">💇 Book Appointment</p>
@@ -306,99 +304,137 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* -- 4. Booking confirmed -- */}
+                      {/* -- 4. WhatsApp Flow form (native screen look) -- */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-emerald-200">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-blue-100">
+                          <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
+                            <p className="text-[11px] font-bold text-blue-700">📝 Book Your Appointment</p>
+                          </div>
+                          <div className="px-3 py-2.5 space-y-2 text-[10px]">
+                            <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
+                              <p className="text-slate-400 text-[9px]">Service</p>
+                              <p className="text-slate-800 font-medium">Haircut + Facial</p>
+                            </div>
+                            <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
+                              <p className="text-slate-400 text-[9px]">Stylist</p>
+                              <p className="text-slate-800 font-medium">Roysree</p>
+                            </div>
+                            <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
+                              <p className="text-slate-400 text-[9px]">Date & Time</p>
+                              <p className="text-slate-800 font-medium">10 May, 2:30 PM</p>
+                            </div>
+                            <div className="bg-emerald-500 rounded-lg py-1.5 text-center mt-1">
+                              <p className="text-white font-bold text-[10px]">✓ Confirm Booking</p>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* -- 5. Booking Confirmed -- */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-emerald-200">
                           <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
-                            <p className="text-[12px] font-bold text-emerald-700">? Booking Confirmed!</p>
+                            <p className="text-[12px] font-bold text-emerald-700">✅ Booking Confirmed!</p>
                           </div>
                           <div className="px-3 py-2.5 space-y-1 text-[11px] text-slate-600">
                             <p>👤 Priya</p>
-                            <p>✂️ Haircut</p>
-                            <p>📅 10 May, 2:30 PM</p>
-                            <p>📍 Glamour Salon</p>
-                            <p className="text-slate-800 mt-1">See you soon! 😊</p>
+                            <p>✂️ Haircut + Facial</p>
+                            <p>📅 10 May 2026, 2:30 PM</p>
+                            <p>📍 Glamour Salon, Koramangala</p>
+                            <p className="text-slate-800 mt-1.5">See you soon! 😊</p>
                           </div>
                           <div className="border-t border-slate-100 flex">
                             <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-blue-500 font-medium">Reschedule</p>
+                              <p className="text-[10px] text-blue-500 font-medium">🔄 Reschedule</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">Cancel</p>
+                              <p className="text-[10px] text-red-500 font-medium">❌ Cancel</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* -- 5. 24h Reminder -- */}
-                      <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-blue-100">
-                          <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
-                            <p className="text-[11px] font-bold text-blue-600">📅 Reminder — Tomorrow</p>
-                          </div>
-                          <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hi <span className="font-medium text-slate-800">Priya</span>! Your Haircut is <span className="font-medium">tomorrow at 2:30 PM</span>. Need to change plans?</p>
-                          </div>
-                          <div className="border-t border-slate-100 flex">
-                            {['✅ Confirm', '🔄 Reschedule'].map((b) => (
-                              <div key={b} className="flex-1 py-1.5 text-center border-r border-slate-100 last:border-0">
-                                <p className="text-[10px] text-blue-500 font-medium">{b}</p>
-                              </div>
-                            ))}
-                          </div>
+                      {/* -- 6. Customer taps Reschedule -- */}
+                      <div className="flex justify-end">
+                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
+                          <p className="text-[12px] text-slate-800">🔄 Reschedule</p>
+                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:03 AM</p>
                         </div>
                       </div>
 
-                      {/* -- 6. 2h Before Nudge -- */}
+                      {/* -- 7. Reschedule confirmed -- */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-amber-100">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-amber-100">
                           <div className="bg-amber-50 px-3 py-2 border-b border-amber-100">
-                            <p className="text-[11px] font-bold text-amber-700">? Starting in 2 Hours!</p>
+                            <p className="text-[11px] font-bold text-amber-700">🔄 Rescheduled!</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! Your appointment is in 2 hours. We&apos;re getting ready for you! 🌟</p>
+                            <p className="text-[11px] text-slate-600">Your appointment has been moved to:</p>
+                            <p className="text-[11px] text-slate-800 font-medium mt-1">📅 12 May 2026, 4:00 PM</p>
+                            <p className="text-[11px] text-slate-600 mt-1">See you then! 🙌</p>
                           </div>
                         </div>
                       </div>
 
-                      {/* -- 7. Invoice / Receipt -- */}
+                      {/* -- 8. Bill auto-generated after appointment -- */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-purple-100">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-purple-100">
                           <div className="bg-purple-50 px-3 py-2 border-b border-purple-100">
                             <p className="text-[11px] font-bold text-purple-700">🧾 Invoice #INV-0142</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600 mb-2">Hi <span className="font-medium text-slate-800">Priya</span>, your bill is ready! 🙏</p>
+                            <p className="text-[11px] text-slate-600 mb-2">Hi Priya, your bill is ready! 🙏</p>
                             <div className="bg-slate-50 rounded-lg p-2 space-y-1 text-[10px]">
                               <div className="flex justify-between"><span>Haircut</span><span className="font-medium">₹300</span></div>
-                              <div className="flex justify-between"><span>Hair Color</span><span className="font-medium">₹800</span></div>
+                              <div className="flex justify-between"><span>Facial</span><span className="font-medium">₹800</span></div>
                               <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>₹990</span></div>
-                              <p className="text-slate-400">💳 UPI — Paid</p>
-                            </div>
-                          </div>
-                          <div className="border-t border-slate-100 flex">
-                            <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-red-500 font-medium">—— PDF Receipt</p>
-                            </div>
-                            <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">📅 Book Again</p>
+                              <p className="text-slate-400">💳 UPI — Paid ✓</p>
                             </div>
                           </div>
                         </div>
                       </div>
 
-                      {/* -- 8. Day 30 Service Reminder -- */}
+                      {/* -- 9. Feedback request -- */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-violet-100">
-                          <div className="bg-violet-50 px-3 py-2 border-b border-violet-100">
-                            <p className="text-[11px] font-bold text-violet-700">💜 Time for a Touch-Up!</p>
-                            <p className="text-[9px] text-violet-500">Day 30</p>
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-amber-100">
+                          <div className="bg-amber-50 px-3 py-2 border-b border-amber-100">
+                            <p className="text-[11px] font-bold text-amber-700">⭐ Rate Your Experience</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hi <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 30 days. Your hair color is due for a refresh! ✨</p>
-                            <div className="bg-violet-50 rounded-lg p-2 mt-2 text-center">
-                              <p className="text-[11px] text-violet-700 font-bold">🎁 10% off this week</p>
+                            <p className="text-[11px] text-slate-600">How was your visit today? Tap to rate:</p>
+                            <div className="flex gap-1 mt-2 justify-center">
+                              {['⭐', '⭐', '⭐', '⭐', '⭐'].map((s, i) => (
+                                <span key={i} className="text-base">{s}</span>
+                              ))}
                             </div>
+                          </div>
+                        </div>
+                      </div>
+
+                      {/* -- 10. Customer gives 5 stars -- */}
+                      <div className="flex justify-end">
+                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
+                          <p className="text-[12px] text-slate-800">⭐⭐⭐⭐⭐</p>
+                          <p className="text-[9px] text-slate-500 text-right mt-0.5">5:45 PM</p>
+                        </div>
+                      </div>
+
+                      {/* -- 11. Thank you + Google review -- */}
+                      <div className="flex justify-start">
+                        <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
+                          <p className="text-[11px] text-slate-700">Thank you Priya! 🎉 We&apos;re glad you loved it. Would you mind leaving a Google review? It helps us a lot! 🙏</p>
+                        </div>
+                      </div>
+
+                      {/* -- 12. Day 30 Reminder -- */}
+                      <div className="flex justify-start">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-violet-100">
+                          <div className="bg-violet-50 px-3 py-2 border-b border-violet-100">
+                            <p className="text-[11px] font-bold text-violet-700">💜 Time for a Touch-Up!</p>
+                            <p className="text-[9px] text-violet-500">30 days since last visit</p>
+                          </div>
+                          <div className="px-3 py-2.5">
+                            <p className="text-[11px] text-slate-600">Hi Priya! Your hair is due for a refresh ✨</p>
                           </div>
                           <div className="border-t border-slate-100">
                             <div className="px-3 py-1.5 text-center">
@@ -408,23 +444,23 @@ export default function HomePage() {
                         </div>
                       </div>
 
-                      {/* -- 9. Day 60 Win-Back -- */}
+                      {/* -- 13. Day 60 Win-Back with discount -- */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[230px] shadow-sm border border-pink-200">
+                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-pink-200">
                           <div className="bg-pink-50 px-3 py-2 border-b border-pink-100">
-                            <p className="text-[11px] font-bold text-pink-700">💕 We Miss You!</p>
-                            <p className="text-[9px] text-pink-500">Day 60</p>
+                            <p className="text-[11px] font-bold text-pink-700">💕 We Miss You, Priya!</p>
+                            <p className="text-[9px] text-pink-500">60 days since last visit</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hey <span className="font-medium text-slate-800">Priya</span>! It&apos;s been 2 months — we miss you! 💖</p>
-                            <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-2.5 mt-2 text-center">
+                            <p className="text-[11px] text-slate-600">It&apos;s been 2 months — come back for some self-care! 💖</p>
+                            <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-2 mt-2 text-center">
                               <p className="text-[13px] text-pink-600 font-bold">🎉 15% OFF</p>
-                              <p className="text-[9px] text-slate-500">your next visit — Code: MISSYOU15</p>
+                              <p className="text-[9px] text-slate-500">Code: MISSYOU15</p>
                             </div>
                           </div>
                           <div className="border-t border-slate-100 flex">
                             <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-pink-500 font-medium">💅 Claim 15% Off</p>
+                              <p className="text-[10px] text-pink-500 font-medium">💅 Claim Offer</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
                               <p className="text-[10px] text-blue-500 font-medium">📋 Services</p>
@@ -432,15 +468,19 @@ export default function HomePage() {
                           </div>
                         </div>
                       </div>
+
+                      {/* -- 14. Customer claims offer -- */}
                       <div className="flex justify-end">
-                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[180px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">💅 Claim 15% Off</p>
-                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:04 AM</p>
+                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
+                          <p className="text-[12px] text-slate-800">💅 Claim Offer</p>
+                          <p className="text-[9px] text-slate-500 text-right mt-0.5">11:20 AM</p>
                         </div>
                       </div>
+
+                      {/* -- 15. Discount applied -- */}
                       <div className="flex justify-start">
                         <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
-                          <p className="text-[11px] text-emerald-700 font-medium">Welcome back! 🎉 Your 15% discount is applied. Book now!</p>
+                          <p className="text-[11px] text-emerald-700 font-medium">🎉 Welcome back Priya! Your 15% discount is applied. Tap below to book!</p>
                         </div>
                       </div>
 
