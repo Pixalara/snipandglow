@@ -20,6 +20,7 @@ import {
   BadgeDollarSign,
   MessageCircle,
   Star,
+  Headphones,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { can, type Resource } from '@/lib/permissions';
@@ -49,6 +50,7 @@ const navItems: NavItem[] = [
   { label: 'Feedback', href: '/dashboard/feedback', icon: Star, resource: 'analytics' },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
   { label: 'Audit Log', href: '/dashboard/audit-log', icon: FileText, resource: 'audit' },
+  { label: 'Help & Support', href: '/dashboard/support', icon: Headphones, resource: 'dashboard' },
   { label: 'Settings', href: '/dashboard/settings', icon: Settings, resource: 'settings' },
 ];
 
