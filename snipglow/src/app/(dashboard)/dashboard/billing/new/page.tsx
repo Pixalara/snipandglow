@@ -321,12 +321,12 @@ export default function NewBillingPage() {
         )}
 
         {/* Customer Selection */}
-        <Card>
+        <Card className="overflow-visible">
           <CardHeader className="pb-3">
             <CardTitle className="text-base">Customer</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="relative">
+          <CardContent className="overflow-visible">
+            <div className="relative z-20">
               <Input
                 id="customer-search"
                 type="text"
@@ -358,7 +358,7 @@ export default function NewBillingPage() {
               )}
               {showDropdown && customerResults.length > 0 && (
                 <ul
-                  className="absolute z-10 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-border bg-card shadow-lg"
+                  className="absolute z-50 mt-1 max-h-48 w-full overflow-auto rounded-lg border border-border bg-card shadow-lg"
                   role="listbox"
                   aria-label="Customer search results"
                 >
@@ -379,7 +379,7 @@ export default function NewBillingPage() {
                 </ul>
               )}
               {showDropdown && customerResults.length === 0 && customerSearch.trim() && !isSearching && (
-                <div className="absolute z-10 mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-lg">
+                <div className="absolute z-50 mt-1 w-full rounded-lg border border-border bg-card px-3 py-2 text-sm text-muted-foreground shadow-lg">
                   No customers found
                 </div>
               )}
