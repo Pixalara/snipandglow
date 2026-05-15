@@ -1,13 +1,10 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
-import { Button } from '@/components/ui/button';
 import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard } from './settings-client';
 import {
   Settings,
   CreditCard,
   Crown,
-  Zap,
-  Building2,
   CheckCircle2,
   AlertTriangle,
 } from 'lucide-react';
@@ -17,18 +14,6 @@ const planLabels: Record<PlanTier, string> = {
   starter: 'Starter',
   pro: 'Pro',
   enterprise: 'Enterprise',
-};
-
-const planDescriptions: Record<PlanTier, string> = {
-  starter: 'Single branch, core features',
-  pro: 'Multi-branch, analytics, WhatsApp',
-  enterprise: 'Unlimited branches, priority support',
-};
-
-const planIcons: Record<PlanTier, typeof Zap> = {
-  starter: Zap,
-  pro: Crown,
-  enterprise: Building2,
 };
 
 const statusConfig: Record<SubscriptionStatus, { label: string; color: string; dotColor: string }> = {
@@ -196,54 +181,6 @@ export default async function SettingsPage() {
               </p>
             </div>
           )}
-        </div>
-      </div>
-
-      {/* Available Plans */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="border-b border-border px-6 py-4 bg-muted/30">
-          <div className="flex items-center gap-2">
-            <Crown className="size-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">Available Plans</h2>
-          </div>
-        </div>
-        <div className="p-6">
-          <div className="grid gap-4 sm:grid-cols-3">
-            {(['starter', 'pro', 'enterprise'] as PlanTier[]).map((tier) => {
-              const Icon = planIcons[tier];
-              const isCurrent = tier === planTier;
-              return (
-                <div
-                  key={tier}
-                  className={`group relative overflow-hidden rounded-xl border p-5 transition-all hover:shadow-md hover:-translate-y-0.5 ${
-                    isCurrent
-                      ? 'border-salon-rose/50 bg-gradient-to-br from-salon-rose/5 to-salon-gold/5'
-                      : 'border-border hover:border-border/80'
-                  }`}
-                >
-                  <div className="space-y-3">
-                    <div className={`flex size-10 items-center justify-center rounded-xl ${isCurrent ? 'bg-salon-rose/10' : 'bg-muted'}`}>
-                      <Icon className={`size-5 ${isCurrent ? 'text-salon-rose' : 'text-muted-foreground'}`} />
-                    </div>
-                    <div>
-                      <h3 className="font-bold text-foreground">{planLabels[tier]}</h3>
-                      <p className="mt-1 text-xs text-muted-foreground">{planDescriptions[tier]}</p>
-                    </div>
-                    {isCurrent ? (
-                      <span className="inline-flex items-center gap-1.5 rounded-full bg-salon-rose/10 px-3 py-1 text-xs font-medium text-salon-rose">
-                        <CheckCircle2 className="size-3" />
-                        Current Plan
-                      </span>
-                    ) : (
-                      <Button size="sm" className="rounded-xl" variant="outline">
-                        Upgrade
-                      </Button>
-                    )}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
         </div>
       </div>
     </div>
