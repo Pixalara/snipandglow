@@ -51,6 +51,7 @@ export default function NewBillingPage() {
   const [gstEnabled, setGstEnabled] = useState(false);
   const [gstRate, setGstRate] = useState(0);
   const [defaultDiscount, setDefaultDiscount] = useState(0);
+  const [additionalDiscountPct, setAdditionalDiscountPct] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
 
   // UI state
@@ -113,15 +114,16 @@ export default function NewBillingPage() {
     }
   }, [selectedCustomer, fetchMembership]);
 
-  // Calculate totals — use the higher of membership discount or default discount
+  // Calculate totals — membership discount + additional discount (additive, capped at 100%)
   const membershipDiscount = activeMembership?.discount_pct ?? 0;
-  const discountPct = Math.max(membershipDiscount, defaultDiscount);
+  const baseDiscount = Math.max(membershipDiscount, defaultDiscount);
+  const totalDiscountPct = Math.min(100, baseDiscount + additionalDiscountPct);
   const totals = calculateInvoiceTotal({
     lineItems: lineItems.map((item) => ({
       price: item.unit_price,
       quantity: item.quantity,
     })),
-    membershipDiscountPct: discountPct,
+    membershipDiscountPct: totalDiscountPct,
     gstRate: gstEnabled ? gstRate : 0,
   });
 
@@ -209,7 +211,7 @@ export default function NewBillingPage() {
         customer_id: selectedCustomer.id,
         items,
         payment_method: paymentMethod,
-        discount_pct: discountPct,
+        discount_pct: totalDiscountPct,
         gst_rate: gstEnabled ? gstRate : 0,
       });
 
@@ -542,6 +544,68 @@ export default function NewBillingPage() {
                 ))}
               </div>
             </div>
+
+            {/* Additional Discount */}
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">
+                {baseDiscount > 0 ? 'Additional Discount' : 'Discount'}
+              </p>
+
+              {/* Show membership/default discount info */}
+              {baseDiscount > 0 && (
+                <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5 mb-2">
+                  <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-2">
+                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                        👑 {membershipDiscount > defaultDiscount ? activeMembership?.name : 'Default'}
+                      </span>
+                    </div>
+                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
+                      {baseDiscount}% off
+                    </span>
+                  </div>
+                </div>
+              )}
+
+              <p className="text-xs text-muted-foreground">
+                {baseDiscount > 0 ? 'Add extra discount on top of membership discount' : 'Apply a discount to this bill'}
+              </p>
+              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
+                {[0, 5, 10, 15, 20].map((pct) => (
+                  <button
+                    key={pct}
+                    type="button"
+                    onClick={() => setAdditionalDiscountPct(pct)}
+                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] min-w-[48px] ${
+                      additionalDiscountPct === pct
+                        ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:border-pink-700'
+                        : 'border-border text-muted-foreground hover:border-pink-300'
+                    }`}
+                  >
+                    {pct === 0 ? 'None' : `+${pct}%`}
+                  </button>
+                ))}
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  value={additionalDiscountPct || ''}
+                  onChange={(e) => setAdditionalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
+                  placeholder="Custom"
+                  className="w-20 rounded-xl border border-border px-3 py-2.5 text-sm text-center min-h-[44px]"
+                />
+              </div>
+
+              {/* Total discount summary */}
+              {totalDiscountPct > 0 && baseDiscount > 0 && additionalDiscountPct > 0 && (
+                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2 mt-2">
+                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                    <span>{membershipDiscount > defaultDiscount ? 'Membership' : 'Default'} ({baseDiscount}%) + Additional ({additionalDiscountPct}%)</span>
+                    <span className="font-medium">= {totalDiscountPct}% total</span>
+                  </div>
+                </div>
+              )}
+            </div>
           </CardContent>
         </Card>
 
@@ -557,10 +621,15 @@ export default function NewBillingPage() {
                 <span className="text-foreground">{formatINR(totals.subtotal)}</span>
               </div>
 
-              {discountPct > 0 && (
+              {totalDiscountPct > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-green-600 dark:text-green-400">
-                    {membershipDiscount > defaultDiscount ? 'Membership' : 'Default'} Discount ({discountPct}%)
+                    {baseDiscount > 0 && additionalDiscountPct > 0
+                      ? `Discount (${baseDiscount}% + ${additionalDiscountPct}% = ${totalDiscountPct}%)`
+                      : baseDiscount > 0
+                        ? `${membershipDiscount > defaultDiscount ? 'Membership' : 'Default'} Discount (${totalDiscountPct}%)`
+                        : `Discount (${totalDiscountPct}%)`
+                    }
                   </span>
                   <span className="text-green-600 dark:text-green-400">
                     −{formatINR(totals.discountAmount)}
