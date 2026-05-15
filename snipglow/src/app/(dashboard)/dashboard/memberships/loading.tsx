@@ -1,16 +1,11 @@
-import { LoadingSkeleton } from '@/components/loading-skeleton';
-
 export default function MembershipsLoading() {
   return (
-    <div className="space-y-4">
-      <div className="flex items-center justify-between">
-        <LoadingSkeleton className="h-8 w-40" />
-        <LoadingSkeleton className="h-8 w-28" />
-      </div>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
-        <LoadingSkeleton variant="card" />
-        <LoadingSkeleton variant="card" />
-        <LoadingSkeleton variant="card" />
+    <div className="space-y-6 animate-pulse">
+      <div className="rounded-2xl bg-muted/50 h-24" />
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        {[1, 2, 3].map((i) => (
+          <div key={i} className="rounded-xl bg-muted/50 h-40" />
+        ))}
       </div>
     </div>
   );

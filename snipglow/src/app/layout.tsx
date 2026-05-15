@@ -115,10 +115,12 @@ export default function RootLayout({
         {/* Preconnect to Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />
         <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        {/* Preconnect to Supabase for faster API calls */}
+        <link rel="preconnect" href="https://ndnigqeucfdeimlwevsr.supabase.co" />
         {/* DNS Prefetch for third-party services */}
-        <link rel="dns-prefetch" href="https://ndnigqeucfdeimlwevsr.supabase.co" />
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
         <link rel="dns-prefetch" href="https://api.web3forms.com" />
+        <link rel="dns-prefetch" href="https://images.unsplash.com" />
         {/* Hreflang */}
         <link rel="alternate" hrefLang="en-in" href="https://snipandglow.com" />
       </head>

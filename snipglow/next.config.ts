@@ -15,13 +15,14 @@ const nextConfig: NextConfig = {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'snipandglow.com', 'www.snipandglow.com', 'snipandglow.pixalara.io'],
     },
-    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns'],
+    optimizePackageImports: ['lucide-react', 'recharts', 'date-fns', 'date-fns-tz', '@supabase/supabase-js'],
   },
   images: {
     formats: ['image/avif', 'image/webp'],
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
+      { protocol: 'https', hostname: 'images.unsplash.com' },
     ],
   },
   async headers() {
@@ -29,6 +30,13 @@ const nextConfig: NextConfig = {
       {
         source: '/(.*)',
         headers: securityHeaders,
+      },
+      {
+        // Cache static assets aggressively
+        source: '/(.*)\\.(ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf)',
+        headers: [
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
       },
     ]
   },
