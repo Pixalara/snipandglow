@@ -387,7 +387,8 @@ export default function HomePage() {
                             <div className="bg-slate-50 rounded-lg p-2 space-y-1 text-[10px]">
                               <div className="flex justify-between"><span>Haircut</span><span className="font-medium">₹300</span></div>
                               <div className="flex justify-between"><span>Facial</span><span className="font-medium">₹800</span></div>
-                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>₹990</span></div>
+                              <div className="flex justify-between text-amber-600"><span>👑 Gold Membership (20%)</span><span>−₹220</span></div>
+                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>₹880</span></div>
                               <p className="text-slate-400">💳 UPI — Paid ✓</p>
                             </div>
                           </div>
