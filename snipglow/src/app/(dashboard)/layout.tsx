@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
+import { SubscriptionGuard } from '@/components/subscription-guard';
 import type { UserRole, Branch } from '@/types';
 
 export default async function DashboardLayout({
@@ -22,26 +23,38 @@ export default async function DashboardLayout({
   const branchId = user.user_metadata?.branch_id as string | undefined;
   const userName = user.user_metadata?.name ?? user.email ?? 'User';
 
-  // Fetch branches for the tenant (used by branch switcher for owners)
+  // Fetch branches and subscription status in parallel
   let branches: Branch[] = [];
-  if (tenantId && role === 'owner') {
-    const { data } = await supabase
-      .from('branches')
-      .select('id, name, address, phone, is_default, is_active, tenant_id, operating_hours, invoice_counter, created_at')
-      .eq('tenant_id', tenantId)
-      .eq('is_active', true)
-      .order('name');
+  let subscriptionStatus = 'active';
 
-    branches = (data ?? []) as Branch[];
-  } else if (tenantId && branchId) {
-    const { data } = await supabase
-      .from('branches')
-      .select('id, name, address, phone, is_default, is_active, tenant_id, operating_hours, invoice_counter, created_at')
-      .eq('id', branchId)
-      .single();
+  if (tenantId) {
+    const [branchRes, tenantRes] = await Promise.all([
+      role === 'owner'
+        ? supabase
+            .from('branches')
+            .select('id, name, address, phone, is_default, is_active, tenant_id, operating_hours, invoice_counter, created_at')
+            .eq('tenant_id', tenantId)
+            .eq('is_active', true)
+            .order('name')
+        : branchId
+          ? supabase
+              .from('branches')
+              .select('id, name, address, phone, is_default, is_active, tenant_id, operating_hours, invoice_counter, created_at')
+              .eq('id', branchId)
+              .limit(1)
+          : Promise.resolve({ data: [] }),
+      supabase
+        .from('tenants')
+        .select('subscription_status')
+        .eq('id', tenantId)
+        .single(),
+    ]);
 
-    if (data) {
-      branches = [data as Branch];
+    if (branchRes.data) {
+      branches = branchRes.data as Branch[];
+    }
+    if (tenantRes.data) {
+      subscriptionStatus = tenantRes.data.subscription_status ?? 'active';
     }
   }
 
@@ -54,7 +67,9 @@ export default async function DashboardLayout({
       branches={branches}
       activeBranchId={activeBranchId}
     >
-      {children}
+      <SubscriptionGuard subscriptionStatus={subscriptionStatus}>
+        {children}
+      </SubscriptionGuard>
     </AppShell>
   );
 }

@@ -1,4 +1,5 @@
 import { redirect } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard } from './settings-client';
 import {
@@ -7,22 +8,11 @@ import {
   Crown,
   CheckCircle2,
   AlertTriangle,
+  Clock,
+  CalendarDays,
+  ShieldCheck,
 } from 'lucide-react';
-import type { PlanTier, SubscriptionStatus } from '@/types';
-
-const planLabels: Record<PlanTier, string> = {
-  starter: 'Starter',
-  pro: 'Pro',
-  enterprise: 'Enterprise',
-};
-
-const statusConfig: Record<SubscriptionStatus, { label: string; color: string; dotColor: string }> = {
-  trial: { label: 'Trial', color: 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300', dotColor: 'bg-blue-500' },
-  active: { label: 'Active', color: 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300', dotColor: 'bg-emerald-500' },
-  past_due: { label: 'Past Due', color: 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300', dotColor: 'bg-yellow-500' },
-  expired: { label: 'Expired', color: 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300', dotColor: 'bg-red-500' },
-  cancelled: { label: 'Cancelled', color: 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300', dotColor: 'bg-gray-500' },
-};
+import type { SubscriptionStatus } from '@/types';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -62,16 +52,19 @@ export default async function SettingsPage() {
   }
 
   const subscriptionStatus = tenant.subscription_status as SubscriptionStatus;
-  const planTier = tenant.plan_tier as PlanTier;
   const subscriptionEnd = tenant.subscription_end ? new Date(tenant.subscription_end) : null;
+  const subscriptionStart = tenant.subscription_start ? new Date(tenant.subscription_start) : null;
 
   const now = new Date();
-  const isExpiredOver7Days =
-    subscriptionEnd &&
-    subscriptionStatus === 'expired' &&
-    now.getTime() - subscriptionEnd.getTime() > 7 * 24 * 60 * 60 * 1000;
+  const isExpired = subscriptionStatus === 'expired' || subscriptionStatus === 'cancelled';
+  const isTrial = subscriptionStatus === 'trial';
+  const isActive = subscriptionStatus === 'active';
 
-  const statusCfg = statusConfig[subscriptionStatus];
+  // Calculate days remaining
+  let daysRemaining = 0;
+  if (subscriptionEnd) {
+    daysRemaining = Math.max(0, Math.ceil((subscriptionEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+  }
 
   // GST settings
   const settings = (tenant.settings as Record<string, unknown>) ?? {};
@@ -111,20 +104,158 @@ export default async function SettingsPage() {
         <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-gray-400/5" />
       </div>
 
-      {/* Expired Warning */}
-      {isExpiredOver7Days && (
-        <div className="flex items-start gap-3 rounded-xl border border-red-200 bg-red-50 p-4 dark:border-red-800/50 dark:bg-red-900/20">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30">
-            <AlertTriangle className="size-4 text-red-600 dark:text-red-400" />
-          </div>
-          <div>
-            <p className="text-sm font-semibold text-red-800 dark:text-red-200">Subscription Expired</p>
-            <p className="text-sm text-red-700 dark:text-red-300 mt-0.5">
-              Your account is in read-only mode. Please renew to continue managing your salon.
-            </p>
+      {/* Subscription Status Card */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="border-b border-border px-6 py-4 bg-muted/30">
+          <div className="flex items-center gap-2">
+            <CreditCard className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">Subscription</h2>
           </div>
         </div>
-      )}
+        <div className="p-6 space-y-5">
+          {/* Status + Plan */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
+            <div className="flex items-center gap-3">
+              <div className={`flex size-12 items-center justify-center rounded-xl ${
+                isExpired ? 'bg-red-100 dark:bg-red-900/30' :
+                isTrial ? 'bg-blue-100 dark:bg-blue-900/30' :
+                'bg-emerald-100 dark:bg-emerald-900/30'
+              }`}>
+                {isExpired ? (
+                  <AlertTriangle className="size-6 text-red-600 dark:text-red-400" />
+                ) : isTrial ? (
+                  <Clock className="size-6 text-blue-600 dark:text-blue-400" />
+                ) : (
+                  <ShieldCheck className="size-6 text-emerald-600 dark:text-emerald-400" />
+                )}
+              </div>
+              <div>
+                <p className="text-lg font-bold text-foreground">
+                  {isExpired ? 'Subscription Expired' : isTrial ? 'Free Trial' : 'Active Subscription'}
+                </p>
+                <p className="text-sm text-muted-foreground">
+                  SnipandGlow — All Features Plan (₹999/mo)
+                </p>
+              </div>
+            </div>
+
+            {/* Status Badge */}
+            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
+              isExpired ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+              isTrial ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
+              'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+            }`}>
+              <span className={`size-2 rounded-full ${
+                isExpired ? 'bg-red-500' : isTrial ? 'bg-blue-500' : 'bg-emerald-500'
+              }`} />
+              {isExpired ? 'Expired' : isTrial ? 'Trial Period' : 'Active'}
+            </span>
+          </div>
+
+          {/* Dates */}
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            {subscriptionStart && (
+              <div className="rounded-lg bg-muted/50 px-4 py-3">
+                <div className="flex items-center gap-2 mb-1">
+                  <CalendarDays className="size-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    {isTrial ? 'Trial Started' : 'Subscription Started'}
+                  </p>
+                </div>
+                <p className="text-sm font-semibold text-foreground">
+                  {subscriptionStart.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                </p>
+              </div>
+            )}
+            {subscriptionEnd && (
+              <div className={`rounded-lg px-4 py-3 ${
+                isExpired ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30' :
+                daysRemaining <= 7 ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30' :
+                'bg-muted/50'
+              }`}>
+                <div className="flex items-center gap-2 mb-1">
+                  <Clock className="size-3.5 text-muted-foreground" />
+                  <p className="text-xs text-muted-foreground">
+                    {isExpired ? 'Expired On' : isTrial ? 'Trial Ends' : 'Renews On'}
+                  </p>
+                </div>
+                <p className={`text-sm font-semibold ${
+                  isExpired ? 'text-red-700 dark:text-red-400' :
+                  daysRemaining <= 7 ? 'text-amber-700 dark:text-amber-400' :
+                  'text-foreground'
+                }`}>
+                  {subscriptionEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
+                  {!isExpired && daysRemaining > 0 && (
+                    <span className="text-xs font-normal text-muted-foreground ml-2">
+                      ({daysRemaining} day{daysRemaining !== 1 ? 's' : ''} remaining)
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
+          </div>
+
+          {/* Expired State — Upgrade CTA */}
+          {isExpired && (
+            <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-800/30 dark:bg-red-900/10 p-5 space-y-4">
+              <div className="flex items-start gap-3">
+                <AlertTriangle className="size-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-red-800 dark:text-red-200">Your subscription has expired</p>
+                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
+                    All features are locked except Dashboard and Settings. Renew your subscription to continue managing appointments, billing, customers, and more.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="https://snipandglow.com/#pricing"
+                target="_blank"
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-pink-500 hover:to-fuchsia-500 transition-all"
+              >
+                <Crown className="size-4" />
+                Renew Subscription — ₹999/mo
+              </Link>
+            </div>
+          )}
+
+          {/* Trial State — Upgrade CTA */}
+          {isTrial && (
+            <div className="rounded-xl border border-blue-200 bg-blue-50 dark:border-blue-800/30 dark:bg-blue-900/10 p-5 space-y-3">
+              <div className="flex items-start gap-3">
+                <Clock className="size-5 text-blue-600 dark:text-blue-400 shrink-0 mt-0.5" />
+                <div>
+                  <p className="text-sm font-semibold text-blue-800 dark:text-blue-200">
+                    {daysRemaining > 0 ? `${daysRemaining} days left in your free trial` : 'Your trial has ended'}
+                  </p>
+                  <p className="text-sm text-blue-700 dark:text-blue-300 mt-1">
+                    Upgrade to keep all your data and continue using SnipandGlow without interruption.
+                  </p>
+                </div>
+              </div>
+              <Link
+                href="https://snipandglow.com/#pricing"
+                target="_blank"
+                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-blue-500 hover:to-indigo-500 transition-all"
+              >
+                <Crown className="size-4" />
+                Subscribe Now — ₹999/mo
+              </Link>
+            </div>
+          )}
+
+          {/* Active State */}
+          {isActive && (
+            <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800/30 dark:bg-emerald-900/10 px-4 py-3">
+              <div className="flex items-center gap-2">
+                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                  Your subscription is active. All features are unlocked.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
 
       {/* Salon Profile */}
       <SalonProfileCard profile={salonProfile} />
@@ -147,42 +278,6 @@ export default async function SettingsPage() {
         salonName={tenant.name ?? ''}
         salonPhone={tenant.phone ?? ''}
       />
-
-      {/* Current Subscription Card */}
-      <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="border-b border-border px-6 py-4 bg-muted/30">
-          <div className="flex items-center gap-2">
-            <CreditCard className="size-4 text-muted-foreground" />
-            <h2 className="text-sm font-semibold text-foreground">Subscription</h2>
-          </div>
-        </div>
-        <div className="p-6 space-y-5">
-          <div className="flex flex-wrap items-center gap-4">
-            <div className="flex items-center gap-3">
-              <div className="flex size-10 items-center justify-center rounded-xl bg-gradient-to-br from-salon-rose/20 to-salon-gold/20">
-                <Crown className="size-5 text-salon-rose" />
-              </div>
-              <div>
-                <p className="text-xs text-muted-foreground">Current Plan</p>
-                <p className="text-lg font-bold text-foreground">{planLabels[planTier]}</p>
-              </div>
-            </div>
-            <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1 text-xs font-medium ${statusCfg.color}`}>
-              <span className={`size-1.5 rounded-full ${statusCfg.dotColor}`} />
-              {statusCfg.label}
-            </span>
-          </div>
-
-          {subscriptionEnd && (
-            <div className="rounded-lg bg-muted/50 px-4 py-3">
-              <p className="text-xs text-muted-foreground">Next Payment Date</p>
-              <p className="text-sm font-semibold text-foreground mt-0.5">
-                {subscriptionEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}
-              </p>
-            </div>
-          )}
-        </div>
-      </div>
     </div>
   );
 }
