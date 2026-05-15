@@ -499,8 +499,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge — bottom left */}
-              <div className="absolute -bottom-4 -left-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
+              {/* Floating badge — bottom left (hidden on mobile) */}
+              <div className="hidden sm:block absolute -bottom-4 -left-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
                     <Bell className="h-4 w-4 text-pink-600" />
@@ -512,8 +512,8 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge — top right */}
-              <div className="absolute -top-4 -right-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
+              {/* Floating badge — top right (hidden on mobile) */}
+              <div className="hidden sm:block absolute -top-4 -right-6 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
                     <TrendingUp className="h-4 w-4 text-violet-600" />
