@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const publicRoutes = new Set(["/", "/login", "/verify-otp", "/signup", "/blog", "/privacy", "/terms", "/refund"]);
 
 // Prefixes that are always public
-const publicPrefixes = ["/api/auth", "/blog/"];
+const publicPrefixes = ["/api/auth", "/api/whatsapp", "/blog/"];
 
 // Routes that require authentication (dashboard section)
 const protectedPrefixes = ["/dashboard", "/onboarding"];
