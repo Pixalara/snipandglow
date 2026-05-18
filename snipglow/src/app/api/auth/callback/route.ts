@@ -17,6 +17,12 @@ export async function GET(request: Request) {
       } = await supabase.auth.getUser();
 
       if (user) {
+        // Check if phone is verified — if not, redirect to phone verification
+        const hasPhone = user.user_metadata?.phone || user.phone;
+        if (!hasPhone) {
+          return NextResponse.redirect(`${origin}/verify-phone`);
+        }
+
         // Check if user has an employee record
         const { data: employee } = await supabase
           .from("employees")
