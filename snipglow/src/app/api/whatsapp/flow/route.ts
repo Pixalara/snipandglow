@@ -52,21 +52,43 @@ export async function POST(request: NextRequest) {
 async function handleFlowInit(data: any) {
   const admin = createAdminClient();
 
-  // Fetch active services
-  const { data: services } = await admin
+  // Use tenant_id from flow payload if available, otherwise fetch all
+  const tenantId = data?.tenant_id;
+  const branchId = data?.branch_id;
+
+  // Fetch active services for this tenant
+  let serviceQuery = admin
     .from('services')
     .select('id, name, price, duration_minutes')
     .eq('is_active', true)
     .order('name')
     .limit(20);
 
-  // Fetch active employees/stylists
-  const { data: employees } = await admin
+  if (tenantId) {
+    serviceQuery = serviceQuery.eq('tenant_id', tenantId);
+  }
+  if (branchId) {
+    serviceQuery = serviceQuery.eq('branch_id', branchId);
+  }
+
+  const { data: services } = await serviceQuery;
+
+  // Fetch active employees/stylists for this tenant
+  let empQuery = admin
     .from('employees')
     .select('id, name')
     .eq('is_active', true)
     .order('name')
     .limit(20);
+
+  if (tenantId) {
+    empQuery = empQuery.eq('tenant_id', tenantId);
+  }
+  if (branchId) {
+    empQuery = empQuery.eq('branch_id', branchId);
+  }
+
+  const { data: employees } = await empQuery;
 
   // Generate next 14 days as available dates
   const dates: Array<{ id: string; title: string }> = [];

@@ -1,7 +1,6 @@
 // =============================================================================
 // WhatsApp Cloud API Configuration
-// Multi-tenant ready: uses platform credentials by default,
-// tenant-specific credentials when available.
+// Multi-tenant: Shared mode (Snip and Glow number) + Dedicated mode (salon's own)
 // =============================================================================
 
 export interface WhatsAppCredentials {
@@ -10,20 +9,32 @@ export interface WhatsAppCredentials {
   businessAccountId: string;
 }
 
+// Snip and Glow's shared platform number
+export const PLATFORM_PHONE_NUMBER_ID = '1165461446644735';
+export const PLATFORM_WABA_ID = '1245944267357075';
+
 /**
- * Get platform-level WhatsApp credentials (SnipandGlow's own number).
- * Used for sending messages on behalf of tenants who haven't connected their own number.
+ * Get platform-level WhatsApp credentials (Snip and Glow's shared number).
+ * Used for shared mode — salons that don't have their own WhatsApp API.
  */
 export function getPlatformCredentials(): WhatsAppCredentials | null {
   const accessToken = process.env.META_WHATSAPP_ACCESS_TOKEN;
-  const phoneNumberId = process.env.META_WHATSAPP_PHONE_NUMBER_ID;
-  const businessAccountId = process.env.META_WHATSAPP_BUSINESS_ACCOUNT_ID;
+  const phoneNumberId = process.env.META_WHATSAPP_PHONE_NUMBER_ID || PLATFORM_PHONE_NUMBER_ID;
+  const businessAccountId = process.env.META_WHATSAPP_BUSINESS_ACCOUNT_ID || PLATFORM_WABA_ID;
 
-  if (!accessToken || !phoneNumberId || !businessAccountId) {
+  if (!accessToken) {
     return null;
   }
 
   return { accessToken, phoneNumberId, businessAccountId };
+}
+
+/**
+ * Check if a phone_number_id belongs to the shared Snip and Glow number.
+ */
+export function isSharedNumber(phoneNumberId: string): boolean {
+  return phoneNumberId === PLATFORM_PHONE_NUMBER_ID ||
+    phoneNumberId === (process.env.META_WHATSAPP_PHONE_NUMBER_ID || PLATFORM_PHONE_NUMBER_ID);
 }
 
 /**
@@ -45,3 +56,15 @@ export function getAppSecret(): string {
  */
 export const WA_API_VERSION = 'v21.0';
 export const WA_BASE_URL = `https://graph.facebook.com/${WA_API_VERSION}`;
+
+/**
+ * Parse booking slug from prefilled message.
+ * Example: "BOOK_GLAMOUR_STUDIO" → "glamour_studio"
+ */
+export function parseBookingSlug(message: string): string | null {
+  const trimmed = message.trim().toUpperCase();
+  if (trimmed.startsWith('BOOK_')) {
+    return trimmed.replace('BOOK_', '').toLowerCase();
+  }
+  return null;
+}
