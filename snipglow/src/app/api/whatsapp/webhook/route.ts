@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getWebhookVerifyToken, getAppSecret } from '@/lib/whatsapp/config';
+import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
 import crypto from 'crypto';
 
 // =============================================================================
@@ -219,25 +219,302 @@ async function handleIncomingMessages(
  * Routes to appropriate handler based on button ID.
  */
 async function handleButtonReply(buttonId: string, phone: string, name: string) {
-  // TODO: Implement button reply routing
-  // Examples:
-  // - "confirm_appointment" → mark appointment as confirmed
-  // - "reschedule_appointment" → send reschedule flow
-  // - "cancel_appointment" → cancel and free slot
-  // - "rating_5" → log 5-star feedback, ask for Google review
-  // - "rating_1" to "rating_4" → log feedback, alert owner
-  console.log(`[WhatsApp] Button reply from ${name} (${phone}): ${buttonId}`);
+  const credentials = getPlatformCredentials();
+  if (!credentials) return;
+
+  const { sendMessage } = await import('@/lib/whatsapp/templates');
+
+  switch (buttonId) {
+    case 'book_appointment': {
+      // Send WhatsApp Flow for booking
+      const flowId = process.env.WHATSAPP_FLOW_ID;
+      if (flowId) {
+        await sendMessage(credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'flow',
+            body: {
+              text: '📅 Let\'s book your appointment! Fill in the details below:',
+            },
+            action: {
+              name: 'flow',
+              parameters: {
+                flow_message_version: '3',
+                flow_id: flowId,
+                flow_cta: '💇 Book Now',
+                mode: 'published',
+                flow_action: 'navigate',
+                flow_action_payload: {
+                  screen: 'BOOKING_SCREEN',
+                  data: { customer_name: name, customer_phone: phone },
+                },
+              },
+            },
+          },
+        });
+      } else {
+        // Fallback if flow not configured — send text with instructions
+        await sendMessage(credentials, phone, {
+          type: 'text',
+          text: {
+            body: `Hi ${name}! 💇 To book an appointment, please share:\n\n1️⃣ Service you want\n2️⃣ Preferred date\n3️⃣ Preferred time\n\nOur team will confirm your slot shortly! 😊`,
+          },
+        });
+      }
+      break;
+    }
+
+    case 'my_appointments': {
+      // Look up customer's upcoming appointments
+      const admin = createAdminClient();
+      const { data: customer } = await (admin
+        .from('customers')
+        .select('id')
+        .eq('phone', `+${phone}`)
+        .single() as any);
+
+      if (customer) {
+        const today = new Date().toISOString().split('T')[0];
+        const { data: appointments } = await admin
+          .from('appointments')
+          .select('appointment_date, start_time, status')
+          .eq('customer_id', customer.id)
+          .gte('appointment_date', today)
+          .in('status', ['booked', 'confirmed'])
+          .order('appointment_date', { ascending: true })
+          .limit(3);
+
+        if (appointments && appointments.length > 0) {
+          const apptList = appointments.map((a: any) => {
+            const date = new Date(a.appointment_date + 'T00:00:00+05:30');
+            const dateStr = date.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+            const time = a.start_time?.slice(0, 5) || '';
+            return `📅 ${dateStr} at ${time}`;
+          }).join('\n');
+
+          await sendMessage(credentials, phone, {
+            type: 'text',
+            text: { body: `📋 Your upcoming appointments:\n\n${apptList}\n\nNeed to reschedule? Just reply "Reschedule"` },
+          });
+        } else {
+          await sendMessage(credentials, phone, {
+            type: 'text',
+            text: { body: `📋 You don't have any upcoming appointments.\n\nWould you like to book one? Reply "Book" 💇` },
+          });
+        }
+      } else {
+        await sendMessage(credentials, phone, {
+          type: 'text',
+          text: { body: `We couldn't find your profile. Please book your first appointment and we'll save your details! Reply "Book" 💇` },
+        });
+      }
+      break;
+    }
+
+    case 'services_prices': {
+      // Fetch services for the tenant
+      const admin = createAdminClient();
+      const { data: services } = await admin
+        .from('services')
+        .select('name, price, duration_minutes')
+        .eq('is_active', true)
+        .order('category')
+        .order('name')
+        .limit(10);
+
+      if (services && services.length > 0) {
+        const serviceList = services.map((s: any) =>
+          `✂️ ${s.name} — ₹${s.price} (${s.duration_minutes} min)`
+        ).join('\n');
+
+        await sendMessage(credentials, phone, {
+          type: 'text',
+          text: { body: `💰 Our Services & Prices:\n\n${serviceList}\n\nReply "Book" to book an appointment! 📅` },
+        });
+      } else {
+        await sendMessage(credentials, phone, {
+          type: 'text',
+          text: { body: `Please contact us directly for our service menu. We'll be happy to help! 😊` },
+        });
+      }
+      break;
+    }
+
+    case 'contact_us': {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: {
+          body: `📞 Contact Us:\n\nYou can reach us right here on WhatsApp! Just type your question and our team will respond shortly.\n\nOr call us directly at the salon. We're happy to help! 😊`,
+        },
+      });
+      break;
+    }
+
+    case 'confirm_appointment': {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: { body: `✅ Great! Your appointment is confirmed. See you soon, ${name}! 😊` },
+      });
+      break;
+    }
+
+    case 'reschedule_appointment': {
+      const flowId = process.env.WHATSAPP_FLOW_ID;
+      if (flowId) {
+        await sendMessage(credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'flow',
+            body: { text: '🔄 Let\'s reschedule your appointment. Pick a new date and time:' },
+            action: {
+              name: 'flow',
+              parameters: {
+                flow_message_version: '3',
+                flow_id: flowId,
+                flow_cta: '🔄 Reschedule',
+                mode: 'published',
+                flow_action: 'navigate',
+                flow_action_payload: {
+                  screen: 'RESCHEDULE_SCREEN',
+                  data: { customer_name: name, customer_phone: phone },
+                },
+              },
+            },
+          },
+        });
+      } else {
+        await sendMessage(credentials, phone, {
+          type: 'text',
+          text: { body: `🔄 To reschedule, please share your preferred new date and time. Our team will confirm the change shortly!` },
+        });
+      }
+      break;
+    }
+
+    case 'cancel_appointment': {
+      await sendMessage(credentials, phone, {
+        type: 'interactive',
+        interactive: {
+          type: 'button',
+          body: { text: `⚠️ Are you sure you want to cancel your appointment, ${name}?` },
+          action: {
+            buttons: [
+              { type: 'reply', reply: { id: 'confirm_cancel', title: '❌ Yes, Cancel' } },
+              { type: 'reply', reply: { id: 'keep_appointment', title: '✅ Keep It' } },
+            ],
+          },
+        },
+      });
+      break;
+    }
+
+    case 'confirm_cancel': {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: { body: `❌ Your appointment has been cancelled. We hope to see you again soon, ${name}! 💜\n\nReply "Book" anytime to schedule a new appointment.` },
+      });
+      break;
+    }
+
+    case 'keep_appointment': {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: { body: `✅ Great! Your appointment is still on. See you soon! 😊` },
+      });
+      break;
+    }
+
+    case 'rating_5': {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: { body: `🎉 Thank you so much, ${name}! We're thrilled you loved your experience! ⭐⭐⭐⭐⭐\n\nWould you mind leaving us a Google review? It helps other customers find us! 🙏\n\nhttps://g.page/r/YOUR_GOOGLE_REVIEW_LINK` },
+      });
+      break;
+    }
+
+    case 'rating_3': {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: { body: `Thank you for your feedback, ${name}! We appreciate your honesty. ⭐⭐⭐\n\nIs there anything specific we can improve? Your suggestions help us serve you better! 💜` },
+      });
+      break;
+    }
+
+    case 'rating_1': {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: { body: `We're sorry to hear that, ${name}. 😔 Your satisfaction is our priority.\n\nCould you tell us what went wrong? Our manager will personally look into this and make it right. 🙏` },
+      });
+      break;
+    }
+
+    default:
+      console.log(`[WhatsApp] Unhandled button reply from ${name} (${phone}): ${buttonId}`);
+  }
 }
 
 /**
  * Handle text messages.
- * Can trigger welcome menu, booking flow, etc.
+ * Triggers welcome menu for greetings, booking flow for "book", etc.
  */
 async function handleTextMessage(text: string, phone: string, name: string) {
-  // TODO: Implement text message routing
-  // Examples:
-  // - "Hi" / "Hello" → send welcome menu with buttons
-  // - "Book" → trigger booking flow
-  // - Star rating (1-5) → log as feedback
-  console.log(`[WhatsApp] Text from ${name} (${phone}): ${text}`);
+  const credentials = getPlatformCredentials();
+  if (!credentials) return;
+
+  const { sendMessage } = await import('@/lib/whatsapp/templates');
+  const lowerText = text.toLowerCase().trim();
+
+  // Greeting patterns
+  const greetings = ['hi', 'hello', 'hey', 'hii', 'hiii', 'helo', 'hai', 'good morning', 'good afternoon', 'good evening', 'namaste'];
+  const bookingKeywords = ['book', 'appointment', 'booking', 'schedule', 'slot'];
+  const rescheduleKeywords = ['reschedule', 'change date', 'change time', 'postpone'];
+  const cancelKeywords = ['cancel', 'cancel appointment'];
+  const priceKeywords = ['price', 'prices', 'rate', 'rates', 'cost', 'menu', 'services', 'service'];
+
+  if (greetings.some((g) => lowerText === g || lowerText.startsWith(g + ' '))) {
+    // Send welcome menu with interactive buttons
+    await sendMessage(credentials, phone, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: {
+          text: `👋 Welcome to *Snip and Glow*!\n\nHi ${name}, how can we help you today?`,
+        },
+        action: {
+          buttons: [
+            { type: 'reply', reply: { id: 'book_appointment', title: '💇 Book Appointment' } },
+            { type: 'reply', reply: { id: 'my_appointments', title: '📋 My Appointments' } },
+            { type: 'reply', reply: { id: 'services_prices', title: '💰 Services & Prices' } },
+          ],
+        },
+      },
+    });
+  } else if (bookingKeywords.some((k) => lowerText.includes(k))) {
+    // Trigger booking flow
+    await handleButtonReply('book_appointment', phone, name);
+  } else if (rescheduleKeywords.some((k) => lowerText.includes(k))) {
+    await handleButtonReply('reschedule_appointment', phone, name);
+  } else if (cancelKeywords.some((k) => lowerText.includes(k))) {
+    await handleButtonReply('cancel_appointment', phone, name);
+  } else if (priceKeywords.some((k) => lowerText.includes(k))) {
+    await handleButtonReply('services_prices', phone, name);
+  } else {
+    // Unknown message — acknowledge and offer help
+    await sendMessage(credentials, phone, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: {
+          text: `Thanks for your message, ${name}! 😊\n\nHow can we help you?`,
+        },
+        action: {
+          buttons: [
+            { type: 'reply', reply: { id: 'book_appointment', title: '💇 Book Appointment' } },
+            { type: 'reply', reply: { id: 'services_prices', title: '💰 Services & Prices' } },
+            { type: 'reply', reply: { id: 'contact_us', title: '📞 Contact Us' } },
+          ],
+        },
+      },
+    });
+  }
 }
