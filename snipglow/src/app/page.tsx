@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -229,7 +229,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right — WhatsApp Phone Mockup with auto-scrolling conversation */}
+          {/* Right � WhatsApp Phone Mockup with auto-scrolling conversation */}
           <div className="flex justify-center items-center reveal-right mt-8 lg:mt-0">
             <div className="relative">
               {/* Ambient glow */}
@@ -246,7 +246,7 @@ export default function HomePage() {
                   <div className="bg-[#075e54] px-4 pt-6 pb-3 flex items-center gap-3 shrink-0">
                     <div className="h-9 w-9 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white shrink-0">SG</div>
                     <div>
-                      <p className="text-sm font-semibold text-white">Snip and Glow by Pixalara</p>
+                      <p className="text-sm font-semibold text-white">SnipAndGlow by Pixalara</p>
                       <div className="flex items-center gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                         <p className="text-[10px] text-emerald-200">online</p>
@@ -254,7 +254,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Scrolling chat — CSS keyframe animation */}
+                  {/* Scrolling chat � CSS keyframe animation */}
                   <style dangerouslySetInnerHTML={{ __html: `
                     @keyframes chatFlow {
                       0%,6%    { transform: translateY(0); }
@@ -275,7 +275,7 @@ export default function HomePage() {
                       {/* -- 1. Customer says Hi -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">Hi 👋</p>
+                          <p className="text-[12px] text-slate-800">Hi ??</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">10:01 AM</p>
                         </div>
                       </div>
@@ -284,11 +284,11 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-emerald-100">
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-800 font-medium">👋 Welcome to Snip and Glow!</p>
+                            <p className="text-[11px] text-slate-800 font-medium">?? Welcome to Snip and Glow!</p>
                             <p className="text-[11px] text-slate-600 mt-1">How can we help you today?</p>
                           </div>
                           <div className="border-t border-slate-100">
-                            {['💇 Book Appointment', '📋 My Appointments', '💰 Services & Prices', '📞 Contact Us'].map((b) => (
+                            {['?? Book Appointment', '?? My Appointments', '?? Services & Prices', '?? Contact Us'].map((b) => (
                               <div key={b} className="px-3 py-1.5 border-b border-slate-50 last:border-0 text-center">
                                 <p className="text-[10px] text-blue-500 font-medium">{b}</p>
                               </div>
@@ -300,7 +300,7 @@ export default function HomePage() {
                       {/* -- 3. Customer taps Book Appointment -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">💇 Book Appointment</p>
+                          <p className="text-[12px] text-slate-800">?? Book Appointment</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">10:02 AM</p>
                         </div>
                       </div>
@@ -309,7 +309,7 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-blue-100">
                           <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
-                            <p className="text-[11px] font-bold text-blue-700">📝 Book Your Appointment</p>
+                            <p className="text-[11px] font-bold text-blue-700">?? Book Your Appointment</p>
                           </div>
                           <div className="px-3 py-2.5 space-y-2 text-[10px]">
                             <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
@@ -325,7 +325,7 @@ export default function HomePage() {
                               <p className="text-slate-800 font-medium">10 May, 2:30 PM</p>
                             </div>
                             <div className="bg-emerald-500 rounded-lg py-1.5 text-center mt-1">
-                              <p className="text-white font-bold text-[10px]">✓ Confirm Booking</p>
+                              <p className="text-white font-bold text-[10px]">? Confirm Booking</p>
                             </div>
                           </div>
                         </div>
@@ -335,21 +335,21 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-emerald-200">
                           <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
-                            <p className="text-[12px] font-bold text-emerald-700">✅ Booking Confirmed!</p>
+                            <p className="text-[12px] font-bold text-emerald-700">? Booking Confirmed!</p>
                           </div>
                           <div className="px-3 py-2.5 space-y-1 text-[11px] text-slate-600">
-                            <p>👤 Priya</p>
-                            <p>✂️ Haircut + Facial</p>
-                            <p>📅 10 May 2026, 2:30 PM</p>
-                            <p>📍 Snip and Glow by Pixalara</p>
-                            <p className="text-slate-800 mt-1.5">See you soon! 😊</p>
+                            <p>?? Priya</p>
+                            <p>?? Haircut + Facial</p>
+                            <p>?? 10 May 2026, 2:30 PM</p>
+                            <p>?? SnipAndGlow by Pixalara</p>
+                            <p className="text-slate-800 mt-1.5">See you soon! ??</p>
                           </div>
                           <div className="border-t border-slate-100 flex">
                             <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-blue-500 font-medium">🔄 Reschedule</p>
+                              <p className="text-[10px] text-blue-500 font-medium">?? Reschedule</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-red-500 font-medium">❌ Cancel</p>
+                              <p className="text-[10px] text-red-500 font-medium">? Cancel</p>
                             </div>
                           </div>
                         </div>
@@ -358,7 +358,7 @@ export default function HomePage() {
                       {/* -- 6. Customer taps Reschedule -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">🔄 Reschedule</p>
+                          <p className="text-[12px] text-slate-800">?? Reschedule</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">10:03 AM</p>
                         </div>
                       </div>
@@ -367,12 +367,12 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-amber-100">
                           <div className="bg-amber-50 px-3 py-2 border-b border-amber-100">
-                            <p className="text-[11px] font-bold text-amber-700">🔄 Rescheduled!</p>
+                            <p className="text-[11px] font-bold text-amber-700">?? Rescheduled!</p>
                           </div>
                           <div className="px-3 py-2.5">
                             <p className="text-[11px] text-slate-600">Your appointment has been moved to:</p>
-                            <p className="text-[11px] text-slate-800 font-medium mt-1">📅 12 May 2026, 4:00 PM</p>
-                            <p className="text-[11px] text-slate-600 mt-1">See you then! 🙌</p>
+                            <p className="text-[11px] text-slate-800 font-medium mt-1">?? 12 May 2026, 4:00 PM</p>
+                            <p className="text-[11px] text-slate-600 mt-1">See you then! ??</p>
                           </div>
                         </div>
                       </div>
@@ -381,16 +381,16 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-purple-100">
                           <div className="bg-purple-50 px-3 py-2 border-b border-purple-100">
-                            <p className="text-[11px] font-bold text-purple-700">🧾 Invoice #INV-0142</p>
+                            <p className="text-[11px] font-bold text-purple-700">?? Invoice #INV-0142</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600 mb-2">Hi Priya, your bill is ready! 🙏</p>
+                            <p className="text-[11px] text-slate-600 mb-2">Hi Priya, your bill is ready! ??</p>
                             <div className="bg-slate-50 rounded-lg p-2 space-y-1 text-[10px]">
-                              <div className="flex justify-between"><span>Haircut</span><span className="font-medium">₹300</span></div>
-                              <div className="flex justify-between"><span>Facial</span><span className="font-medium">₹800</span></div>
-                              <div className="flex justify-between text-amber-600"><span>👑 Gold Membership (20%)</span><span>−₹220</span></div>
-                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>₹880</span></div>
-                              <p className="text-slate-400">💳 UPI — Paid ✓</p>
+                              <div className="flex justify-between"><span>Haircut</span><span className="font-medium">?300</span></div>
+                              <div className="flex justify-between"><span>Facial</span><span className="font-medium">?800</span></div>
+                              <div className="flex justify-between text-amber-600"><span>?? Gold Membership (20%)</span><span>-?220</span></div>
+                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>?880</span></div>
+                              <p className="text-slate-400">?? UPI � Paid ?</p>
                             </div>
                           </div>
                         </div>
@@ -400,12 +400,12 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-amber-100">
                           <div className="bg-amber-50 px-3 py-2 border-b border-amber-100">
-                            <p className="text-[11px] font-bold text-amber-700">⭐ Rate Your Experience</p>
+                            <p className="text-[11px] font-bold text-amber-700">? Rate Your Experience</p>
                           </div>
                           <div className="px-3 py-2.5">
                             <p className="text-[11px] text-slate-600">How was your visit today? Tap to rate:</p>
                             <div className="flex gap-1 mt-2 justify-center">
-                              {['⭐', '⭐', '⭐', '⭐', '⭐'].map((s, i) => (
+                              {['?', '?', '?', '?', '?'].map((s, i) => (
                                 <span key={i} className="text-base">{s}</span>
                               ))}
                             </div>
@@ -416,7 +416,7 @@ export default function HomePage() {
                       {/* -- 10. Customer gives 5 stars -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">⭐⭐⭐⭐⭐</p>
+                          <p className="text-[12px] text-slate-800">?????</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">5:45 PM</p>
                         </div>
                       </div>
@@ -424,7 +424,7 @@ export default function HomePage() {
                       {/* -- 11. Thank you + Google review -- */}
                       <div className="flex justify-start">
                         <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
-                          <p className="text-[11px] text-slate-700">Thank you Priya! 🎉 We&apos;re glad you loved it. Would you mind leaving a Google review? It helps us a lot! 🙏</p>
+                          <p className="text-[11px] text-slate-700">Thank you Priya! ?? We&apos;re glad you loved it. Would you mind leaving a Google review? It helps us a lot! ??</p>
                         </div>
                       </div>
 
@@ -432,15 +432,15 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-violet-100">
                           <div className="bg-violet-50 px-3 py-2 border-b border-violet-100">
-                            <p className="text-[11px] font-bold text-violet-700">💜 Time for a Touch-Up!</p>
+                            <p className="text-[11px] font-bold text-violet-700">?? Time for a Touch-Up!</p>
                             <p className="text-[9px] text-violet-500">30 days since last visit</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hi Priya! Your hair is due for a refresh ✨</p>
+                            <p className="text-[11px] text-slate-600">Hi Priya! Your hair is due for a refresh ?</p>
                           </div>
                           <div className="border-t border-slate-100">
                             <div className="px-3 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">📅 Book Now</p>
+                              <p className="text-[10px] text-blue-500 font-medium">?? Book Now</p>
                             </div>
                           </div>
                         </div>
@@ -450,22 +450,22 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-pink-200">
                           <div className="bg-pink-50 px-3 py-2 border-b border-pink-100">
-                            <p className="text-[11px] font-bold text-pink-700">💕 We Miss You, Priya!</p>
+                            <p className="text-[11px] font-bold text-pink-700">?? We Miss You, Priya!</p>
                             <p className="text-[9px] text-pink-500">60 days since last visit</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">It&apos;s been 2 months — come back for some self-care! 💖</p>
+                            <p className="text-[11px] text-slate-600">It&apos;s been 2 months � come back for some self-care! ??</p>
                             <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-2 mt-2 text-center">
-                              <p className="text-[13px] text-pink-600 font-bold">🎉 15% OFF</p>
+                              <p className="text-[13px] text-pink-600 font-bold">?? 15% OFF</p>
                               <p className="text-[9px] text-slate-500">Code: MISSYOU15</p>
                             </div>
                           </div>
                           <div className="border-t border-slate-100 flex">
                             <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-pink-500 font-medium">💅 Claim Offer</p>
+                              <p className="text-[10px] text-pink-500 font-medium">?? Claim Offer</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">📋 Services</p>
+                              <p className="text-[10px] text-blue-500 font-medium">?? Services</p>
                             </div>
                           </div>
                         </div>
@@ -474,7 +474,7 @@ export default function HomePage() {
                       {/* -- 14. Customer claims offer -- */}
                       <div className="flex justify-end">
                         <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">💅 Claim Offer</p>
+                          <p className="text-[12px] text-slate-800">?? Claim Offer</p>
                           <p className="text-[9px] text-slate-500 text-right mt-0.5">11:20 AM</p>
                         </div>
                       </div>
@@ -482,7 +482,7 @@ export default function HomePage() {
                       {/* -- 15. Discount applied -- */}
                       <div className="flex justify-start">
                         <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
-                          <p className="text-[11px] text-emerald-700 font-medium">🎉 Welcome back Priya! Your 15% discount is applied. Tap below to book!</p>
+                          <p className="text-[11px] text-emerald-700 font-medium">?? Welcome back Priya! Your 15% discount is applied. Tap below to book!</p>
                         </div>
                       </div>
 
@@ -501,7 +501,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge — bottom left (hidden on mobile) */}
+              {/* Floating badge � bottom left (hidden on mobile) */}
               <div className="hidden lg:block absolute -bottom-6 -left-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
@@ -514,7 +514,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge — top right (hidden on mobile) */}
+              {/* Floating badge � top right (hidden on mobile) */}
               <div className="hidden lg:block absolute -top-6 -right-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
@@ -554,8 +554,8 @@ export default function HomePage() {
                     <Scissors className="h-5 w-5 text-pink-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">Snip and Glow by Pixalara</p>
-                    <p className="text-xs text-slate-500">3 staff — 12 services</p>
+                    <p className="text-sm font-semibold text-slate-900">SnipAndGlow by Pixalara</p>
+                    <p className="text-xs text-slate-500">3 staff � 12 services</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -578,7 +578,7 @@ export default function HomePage() {
                     <div key={appt.name} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-slate-900">{appt.name}</p>
-                        <p className="text-xs text-slate-500">{appt.service} — {appt.time}</p>
+                        <p className="text-xs text-slate-500">{appt.service} � {appt.time}</p>
                       </div>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-pink-100 text-pink-700' : appt.status === 'Reminded' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                     </div>
@@ -603,7 +603,7 @@ export default function HomePage() {
                 <div className="space-y-3">
                   {[
                     { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-pink-100 text-pink-600' },
-                    { icon: FileText, label: 'Invoice ₹450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
+                    { icon: FileText, label: 'Invoice ?450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
                     { icon: Gift, label: 'Loyalty points added', color: 'bg-violet-100 text-violet-600' },
                     { icon: Repeat2, label: 'Re-booking nudge scheduled', color: 'bg-purple-100 text-purple-600' },
                   ].map(({ icon: Icon, label, color }) => (
@@ -661,17 +661,17 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
               { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
-              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges — all sent automatically.', color: 'bg-green-100 text-green-600' },
+              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges � all sent automatically.', color: 'bg-green-100 text-green-600' },
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
-              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns — all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
+              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns � all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
               { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
               { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
-              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5★ reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
+              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5? reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
               { icon: Headphones, title: '24hr Support', desc: 'Report any issue from the dashboard. Our team responds within 24 hours on WhatsApp. No chatbots, real humans.', color: 'bg-indigo-100 text-indigo-600' },
-              { icon: FileText, title: 'Audit Trails', desc: 'Track every action — who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
+              { icon: FileText, title: 'Audit Trails', desc: 'Track every action � who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
               { icon: Megaphone, title: 'WhatsApp Broadcast', desc: 'Send birthday wishes, festival offers, flash sales & win-back campaigns to all customers with one click.', color: 'bg-green-100 text-green-600' },
             ].map(({ icon: Icon, title, desc, color }) => (
               <div key={title} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow reveal-scale">
@@ -716,12 +716,12 @@ export default function HomePage() {
 
               {/* Pricing */}
               <div className="mb-6">
-                <p className="text-slate-400 text-sm line-through">₹1,999 /mo</p>
+                <p className="text-slate-400 text-sm line-through">?1,999 /mo</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-5xl font-bold text-slate-900">₹999</span>
+                  <span className="text-5xl font-bold text-slate-900">?999</span>
                   <span className="text-slate-500 mb-1.5">/mo</span>
                 </div>
-                <p className="text-slate-400 text-xs mt-2">Billed ₹11,988/year · Cancel anytime within 15 days for full refund</p>
+                <p className="text-slate-400 text-xs mt-2">Billed ?11,988/year � Cancel anytime within 15 days for full refund</p>
               </div>
 
               {/* CTA */}
@@ -822,12 +822,12 @@ export default function HomePage() {
           {/* Trust badges */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-12 reveal">
             <div className="text-center rounded-xl border border-slate-200 p-4">
-              <p className="font-bold text-slate-900 text-sm">₹0 setup fee</p>
+              <p className="font-bold text-slate-900 text-sm">?0 setup fee</p>
               <p className="text-xs text-slate-500 mt-1">We set up everything for free. No hidden onboarding charges.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">No hidden charges</p>
-              <p className="text-xs text-slate-500 mt-1">₹999 is exactly what you pay. No GST surprises, no add-ons.</p>
+              <p className="text-xs text-slate-500 mt-1">?999 is exactly what you pay. No GST surprises, no add-ons.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">15-day full refund</p>
@@ -835,7 +835,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* WhatsApp API — Own Branding Add-on */}
+          {/* WhatsApp API � Own Branding Add-on */}
           <div className="max-w-2xl mx-auto mt-12 reveal">
             <div className="relative rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 via-emerald-50/50 to-white p-6 sm:p-8 shadow-sm">
               {/* Accent bar */}
@@ -863,7 +863,7 @@ export default function HomePage() {
                   <div className="rounded-xl bg-white border border-green-100 p-4 mb-4">
                     <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
                       <div>
-                        <p className="text-2xl font-bold text-slate-900">₹2,500</p>
+                        <p className="text-2xl font-bold text-slate-900">?2,500</p>
                         <p className="text-xs text-slate-500">One-time setup fee</p>
                       </div>
                       <div className="h-px sm:h-10 sm:w-px bg-slate-200" />
@@ -878,14 +878,14 @@ export default function HomePage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                          <span className="text-xs text-slate-600">No platform fees — ever</span>
+                          <span className="text-xs text-slate-600">No platform fees � ever</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <p className="text-xs text-slate-400">
-                    We handle the complete WhatsApp Business API setup — Meta verification, number registration, template approvals. You just start messaging.
+                    We handle the complete WhatsApp Business API setup � Meta verification, number registration, template approvals. You just start messaging.
                   </p>
                 </div>
               </div>
@@ -920,7 +920,7 @@ export default function HomePage() {
 
           {/* Subtext */}
           <p className="text-slate-400 mb-10 text-sm sm:text-base max-w-lg mx-auto">
-            From smart bookings to WhatsApp automation — get everything you need in one powerful dashboard.
+            From smart bookings to WhatsApp automation � get everything you need in one powerful dashboard.
           </p>
 
           {/* CTA Button with gradient */}
@@ -954,7 +954,7 @@ export default function HomePage() {
             Ready to run your salon like this?
           </h2>
           <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
-            Get your own snipandglow dashboard and start automating bookings, billing, and growth — all in one place.
+            Get your own snipandglow dashboard and start automating bookings, billing, and growth � all in one place.
           </p>
           <button
             onClick={() => setShowDemoModal(true)}
@@ -982,7 +982,7 @@ export default function HomePage() {
           <div className="space-y-4 reveal">
             <FaqItem
               question="What is SnipandGlow?"
-              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more — all from one dashboard."
+              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more � all from one dashboard."
             />
             <FaqItem
               question="How long is the free trial?"
@@ -998,7 +998,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How does WhatsApp integration work?"
-              answer="By default, appointment reminders and invoices are sent from the SnipandGlow WhatsApp number. If you want messages to come from your own salon's WhatsApp Business number (your branding), you can opt for our one-time ₹2,500 WhatsApp API setup."
+              answer="By default, appointment reminders and invoices are sent from the SnipandGlow WhatsApp number. If you want messages to come from your own salon's WhatsApp Business number (your branding), you can opt for our one-time ?2,500 WhatsApp API setup."
             />
             <FaqItem
               question="Is my data safe and secure?"
@@ -1006,19 +1006,19 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can I manage multiple branches?"
-              answer="Yes, multi-branch support is included in the ₹999/mo plan. You can manage all your salon locations from a single dashboard with branch-level reporting and staff management."
+              answer="Yes, multi-branch support is included in the ?999/mo plan. You can manage all your salon locations from a single dashboard with branch-level reporting and staff management."
             />
             <FaqItem
               question="What payment methods do my customers need?"
-              answer="SnipandGlow tracks payments — it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
+              answer="SnipandGlow tracks payments � it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
             />
             <FaqItem
               question="Can I cancel anytime?"
-              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund — no questions asked."
+              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund � no questions asked."
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ₹3,000-5,000/mo. SnipandGlow is built specifically for Indian salons — with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ₹999/mo with all features included."
+              answer="Most salon software is built for Western markets and costs ?3,000-5,000/mo. SnipandGlow is built specifically for Indian salons � with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ?999/mo with all features included."
             />
             <FaqItem
               question="Do you offer customer support?"
@@ -1026,7 +1026,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can I import my existing customer data?"
-              answer="Yes, we help you import your existing customer database during onboarding — whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
+              answer="Yes, we help you import your existing customer database during onboarding � whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
             />
           </div>
         </div>
@@ -1066,12 +1066,12 @@ export default function HomePage() {
           {/* Middle row: Copyright + Crafted by */}
           <div className="py-6 text-center">
             <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} SnipandGlow — <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
-              <span className="text-pink-500">♥</span> by{' '}
+              &copy; {new Date().getFullYear()} SnipandGlow � <span className="text-slate-400">SnipAndGlow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
+              <span className="text-pink-500">?</span> by{' '}
               <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
                 Pixalara LLP
               </a>
-              {' '}· A DPIIT Recognized Technology Company by Govt. of India
+              {' '}� A DPIIT Recognized Technology Company by Govt. of India
             </p>
           </div>
 
@@ -1199,7 +1199,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_key: '75debe40-e347-41ce-a203-93266c993232',
-          subject: `New Demo Booking — ${name}`,
+          subject: `New Demo Booking � ${name}`,
           name,
           phone,
           salon_name: salonName || 'Not provided',
