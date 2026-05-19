@@ -246,7 +246,7 @@ export default function HomePage() {
                   <div className="bg-[#075e54] px-4 pt-6 pb-3 flex items-center gap-3 shrink-0">
                     <div className="h-9 w-9 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white shrink-0">SG</div>
                     <div>
-                      <p className="text-sm font-semibold text-white">SnipAndGlow by Pixalara</p>
+                      <p className="text-sm font-semibold text-white">Snip and Glow by Pixalara</p>
                       <div className="flex items-center gap-1">
                         <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
                         <p className="text-[10px] text-emerald-200">online</p>
@@ -341,7 +341,7 @@ export default function HomePage() {
                             <p>?? Priya</p>
                             <p>?? Haircut + Facial</p>
                             <p>?? 10 May 2026, 2:30 PM</p>
-                            <p>?? SnipAndGlow by Pixalara</p>
+                            <p>?? Snip and Glow by Pixalara</p>
                             <p className="text-slate-800 mt-1.5">See you soon! ??</p>
                           </div>
                           <div className="border-t border-slate-100 flex">
@@ -554,7 +554,7 @@ export default function HomePage() {
                     <Scissors className="h-5 w-5 text-pink-600" />
                   </div>
                   <div>
-                    <p className="text-sm font-semibold text-slate-900">SnipAndGlow by Pixalara</p>
+                    <p className="text-sm font-semibold text-slate-900">Snip and Glow by Pixalara</p>
                     <p className="text-xs text-slate-500">3 staff — 12 services</p>
                   </div>
                 </div>
@@ -1066,7 +1066,7 @@ export default function HomePage() {
           {/* Middle row: Copyright + Crafted by */}
           <div className="py-6 text-center">
             <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} SnipandGlow — <span className="text-slate-400">SnipAndGlow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
+              &copy; {new Date().getFullYear()} SnipandGlow — <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
               <span className="text-pink-500">?</span> by{' '}
               <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
                 Pixalara LLP
