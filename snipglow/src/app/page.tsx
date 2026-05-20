@@ -229,7 +229,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right — WhatsApp Phone Mockup with auto-scrolling conversation */}
+          {/* Right ï¿½ WhatsApp Phone Mockup with auto-scrolling conversation */}
           <div className="flex justify-center items-center reveal-right mt-8 lg:mt-0">
             <div className="relative">
               {/* Ambient glow */}
@@ -254,7 +254,7 @@ export default function HomePage() {
                     </div>
                   </div>
 
-                  {/* Scrolling chat — CSS keyframe animation */}
+                  {/* Scrolling chat ï¿½ CSS keyframe animation */}
                   <style dangerouslySetInnerHTML={{ __html: `
                     @keyframes chatFlow {
                       0%,6%    { transform: translateY(0); }
@@ -390,7 +390,7 @@ export default function HomePage() {
                               <div className="flex justify-between"><span>Facial</span><span className="font-medium">?800</span></div>
                               <div className="flex justify-between text-amber-600"><span>?? Gold Membership (20%)</span><span>-?220</span></div>
                               <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>?880</span></div>
-                              <p className="text-slate-400">?? UPI — Paid ?</p>
+                              <p className="text-slate-400">?? UPI ï¿½ Paid ?</p>
                             </div>
                           </div>
                         </div>
@@ -454,7 +454,7 @@ export default function HomePage() {
                             <p className="text-[9px] text-pink-500">60 days since last visit</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">It&apos;s been 2 months — come back for some self-care! ??</p>
+                            <p className="text-[11px] text-slate-600">It&apos;s been 2 months ï¿½ come back for some self-care! ??</p>
                             <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-2 mt-2 text-center">
                               <p className="text-[13px] text-pink-600 font-bold">?? 15% OFF</p>
                               <p className="text-[9px] text-slate-500">Code: MISSYOU15</p>
@@ -501,7 +501,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge — bottom left (hidden on mobile) */}
+              {/* Floating badge ï¿½ bottom left (hidden on mobile) */}
               <div className="hidden lg:block absolute -bottom-6 -left-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
@@ -514,7 +514,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge — top right (hidden on mobile) */}
+              {/* Floating badge ï¿½ top right (hidden on mobile) */}
               <div className="hidden lg:block absolute -top-6 -right-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
@@ -555,7 +555,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Snip and Glow by Pixalara</p>
-                    <p className="text-xs text-slate-500">3 staff — 12 services</p>
+                    <p className="text-xs text-slate-500">3 staff ï¿½ 12 services</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -578,7 +578,7 @@ export default function HomePage() {
                     <div key={appt.name} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-slate-900">{appt.name}</p>
-                        <p className="text-xs text-slate-500">{appt.service} — {appt.time}</p>
+                        <p className="text-xs text-slate-500">{appt.service} ï¿½ {appt.time}</p>
                       </div>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-pink-100 text-pink-700' : appt.status === 'Reminded' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                     </div>
@@ -661,17 +661,17 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
               { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
-              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges — all sent automatically.', color: 'bg-green-100 text-green-600' },
+              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges ï¿½ all sent automatically.', color: 'bg-green-100 text-green-600' },
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
-              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns — all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
+              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns ï¿½ all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
               { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
               { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
               { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5? reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
               { icon: Headphones, title: '24hr Support', desc: 'Report any issue from the dashboard. Our team responds within 24 hours on WhatsApp. No chatbots, real humans.', color: 'bg-indigo-100 text-indigo-600' },
-              { icon: FileText, title: 'Audit Trails', desc: 'Track every action — who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
+              { icon: FileText, title: 'Audit Trails', desc: 'Track every action ï¿½ who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
               { icon: Megaphone, title: 'WhatsApp Broadcast', desc: 'Send birthday wishes, festival offers, flash sales & win-back campaigns to all customers with one click.', color: 'bg-green-100 text-green-600' },
             ].map(({ icon: Icon, title, desc, color }) => (
               <div key={title} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow reveal-scale">
@@ -721,7 +721,7 @@ export default function HomePage() {
                   <span className="text-5xl font-bold text-slate-900">?999</span>
                   <span className="text-slate-500 mb-1.5">/mo</span>
                 </div>
-                <p className="text-slate-400 text-xs mt-2">Billed ?11,988/year · Cancel anytime within 15 days for full refund</p>
+                <p className="text-slate-400 text-xs mt-2">Billed ?11,988/year ï¿½ Cancel anytime within 15 days for full refund</p>
               </div>
 
               {/* CTA */}
@@ -835,7 +835,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* WhatsApp API — Own Branding Add-on */}
+          {/* WhatsApp API ï¿½ Own Branding Add-on */}
           <div className="max-w-2xl mx-auto mt-12 reveal">
             <div className="relative rounded-2xl border border-green-200 bg-gradient-to-br from-green-50 via-emerald-50/50 to-white p-6 sm:p-8 shadow-sm">
               {/* Accent bar */}
@@ -878,14 +878,14 @@ export default function HomePage() {
                         </div>
                         <div className="flex items-center gap-2">
                           <CheckCircle2 className="h-3.5 w-3.5 text-green-500 shrink-0" />
-                          <span className="text-xs text-slate-600">No platform fees — ever</span>
+                          <span className="text-xs text-slate-600">No platform fees ï¿½ ever</span>
                         </div>
                       </div>
                     </div>
                   </div>
 
                   <p className="text-xs text-slate-400">
-                    We handle the complete WhatsApp Business API setup — Meta verification, number registration, template approvals. You just start messaging.
+                    We handle the complete WhatsApp Business API setup ï¿½ Meta verification, number registration, template approvals. You just start messaging.
                   </p>
                 </div>
               </div>
@@ -920,7 +920,7 @@ export default function HomePage() {
 
           {/* Subtext */}
           <p className="text-slate-400 mb-10 text-sm sm:text-base max-w-lg mx-auto">
-            From smart bookings to WhatsApp automation — get everything you need in one powerful dashboard.
+            From smart bookings to WhatsApp automation ï¿½ get everything you need in one powerful dashboard.
           </p>
 
           {/* CTA Button with gradient */}
@@ -954,7 +954,7 @@ export default function HomePage() {
             Ready to run your salon like this?
           </h2>
           <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
-            Get your own snipandglow dashboard and start automating bookings, billing, and growth — all in one place.
+            Get your own snipandglow dashboard and start automating bookings, billing, and growth ï¿½ all in one place.
           </p>
           <button
             onClick={() => setShowDemoModal(true)}
@@ -982,7 +982,7 @@ export default function HomePage() {
           <div className="space-y-4 reveal">
             <FaqItem
               question="What is SnipandGlow?"
-              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more — all from one dashboard."
+              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more ï¿½ all from one dashboard."
             />
             <FaqItem
               question="How long is the free trial?"
@@ -1010,15 +1010,15 @@ export default function HomePage() {
             />
             <FaqItem
               question="What payment methods do my customers need?"
-              answer="SnipandGlow tracks payments — it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
+              answer="SnipandGlow tracks payments ï¿½ it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
             />
             <FaqItem
               question="Can I cancel anytime?"
-              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund — no questions asked."
+              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund ï¿½ no questions asked."
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ?3,000-5,000/mo. SnipandGlow is built specifically for Indian salons — with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ?999/mo with all features included."
+              answer="Most salon software is built for Western markets and costs ?3,000-5,000/mo. SnipandGlow is built specifically for Indian salons ï¿½ with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ?999/mo with all features included."
             />
             <FaqItem
               question="Do you offer customer support?"
@@ -1026,7 +1026,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can I import my existing customer data?"
-              answer="Yes, we help you import your existing customer database during onboarding — whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
+              answer="Yes, we help you import your existing customer database during onboarding ï¿½ whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
             />
           </div>
         </div>
@@ -1066,12 +1066,12 @@ export default function HomePage() {
           {/* Middle row: Copyright + Crafted by */}
           <div className="py-6 text-center">
             <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} SnipandGlow — <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
+              &copy; {new Date().getFullYear()} SnipandGlow ï¿½ <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
               <span className="text-pink-500">?</span> by{' '}
               <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
                 Pixalara LLP
               </a>
-              {' '}· A DPIIT Recognized Technology Company by Govt. of India
+              {' '}ï¿½ A DPIIT Recognized Technology Company by Govt. of India
             </p>
           </div>
 
@@ -1199,7 +1199,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_key: '75debe40-e347-41ce-a203-93266c993232',
-          subject: `New Demo Booking — ${name}`,
+          subject: `New Demo Booking ï¿½ ${name}`,
           name,
           phone,
           salon_name: salonName || 'Not provided',
