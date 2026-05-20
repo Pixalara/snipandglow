@@ -385,7 +385,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           d.setDate(d.getDate() + i);
           const dateStr = d.toISOString().split('T')[0];
           const label = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-          dates.push({ id: `date|${serviceId}|${dateStr}`, title: label, description: dateStr });
+          dates.push({ id: `dt.${serviceId}.${dateStr}`, title: label, description: dateStr });
         }
 
         await sendMessage(tenant.credentials, phone, {
@@ -407,9 +407,10 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         break;
       }
 
-      // Handle date selection (id starts with "date|")
-      if (buttonId.startsWith('date|')) {
-        const parts = buttonId.split('|');
+      // Handle date selection (id starts with "dt.")
+      if (buttonId.startsWith('dt.')) {
+        const parts = buttonId.split('.');
+        // parts = ["dt", serviceId, dateStr]
         const serviceId = parts[1];
         const dateStr = parts[2];
 
@@ -420,7 +421,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           const period = hour >= 12 ? 'PM' : 'AM';
           const timeStr = `${String(hour).padStart(2, '0')}:00:00`;
           timeSlots.push({
-            id: `time|${serviceId}|${dateStr}|${timeStr}`,
+            id: `tm.${serviceId}.${dateStr}.${timeStr}`,
             title: `${h}:00 ${period}`,
             description: `Available`,
           });
@@ -445,9 +446,10 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         break;
       }
 
-      // Handle time selection and create booking (id starts with "time|")
-      if (buttonId.startsWith('time|')) {
-        const parts = buttonId.split('|');
+      // Handle time selection and create booking (id starts with "tm.")
+      if (buttonId.startsWith('tm.')) {
+        const parts = buttonId.split('.');
+        // parts = ["tm", serviceId, dateStr, timeSlot]
         const serviceId = parts[1];
         const dateStr = parts[2];
         const timeSlot = parts[3];
