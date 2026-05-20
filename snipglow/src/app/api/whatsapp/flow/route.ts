@@ -203,6 +203,8 @@ async function processBooking(data: any, flowToken: string) {
   const tokenBranchId = tokenData.branch_id || '';
   const salonName = tokenData.salon_name || '';
   const isReschedule = tokenData.is_reschedule === true;
+  const existingCustomerId = tokenData.customer_id || '';
+  const existingCustomerName = tokenData.customer_name || '';
 
   // Handle both single service_id and multiple service_ids
   const selectedServiceIds: string[] = service_ids 
@@ -238,11 +240,12 @@ async function processBooking(data: any, flowToken: string) {
   const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
 
   // Create customer with gender
-  const customerName = customer_name || 'WhatsApp Customer';
-  let customerId: string | null = null;
+  const customerName = existingCustomerName || customer_name || 'WhatsApp Customer';
+  let customerId: string | null = existingCustomerId || null;
   const phoneE164 = customerPhone ? (customerPhone.startsWith('+') ? customerPhone : `+${customerPhone}`) : '';
 
-  if (phoneE164) {
+  // If we already have customer_id from flow_token (returning customer), skip lookup
+  if (!customerId && phoneE164) {
     const { data: existing } = await (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', primaryService.tenant_id).single() as any);
     if (existing) {
       customerId = existing.id;
