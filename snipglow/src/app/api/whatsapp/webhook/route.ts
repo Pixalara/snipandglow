@@ -249,6 +249,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
   switch (buttonId) {
     case 'book_appointment': {
       const flowId = process.env.WHATSAPP_FLOW_ID;
+      const flowIdReturning = process.env.WHATSAPP_FLOW_ID_RETURNING;
 
       // Fetch services for this tenant
       const { data: svcList } = await admin
@@ -264,11 +265,14 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
       }));
 
-      if (flowId) {
-        // Check if customer already exists (returning customer)
-        const phoneE164Book = `+${phone}`;
-        const { data: existingCustomer } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Book).eq('tenant_id', tenant.tenantId).single() as any);
+      // Check if customer already exists (returning customer)
+      const phoneE164Book = `+${phone}`;
+      const { data: existingCustomer } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Book).eq('tenant_id', tenant.tenantId).single() as any);
 
+      // Pick the right flow: returning customer flow if available, else regular
+      const useFlowId = (existingCustomer && flowIdReturning) ? flowIdReturning : flowId;
+
+      if (useFlowId) {
         // Generate next 14 days
         const dates: Array<{ id: string; title: string }> = [];
         for (let i = 0; i < 14; i++) {
@@ -299,7 +303,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           ? `Welcome back, *${existingCustomer.name}*! 👋\nBook your next appointment at *${tenant.salonName}*`
           : `Book your appointment at *${tenant.salonName}*`;
 
-        console.log('[Webhook] Sending flow with', services.length, 'services, returning:', !!existingCustomer);
+        console.log('[Webhook] Sending flow:', useFlowId, 'returning:', !!existingCustomer);
 
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
@@ -310,8 +314,8 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
               name: 'flow',
               parameters: {
                 flow_message_version: '3',
-                flow_id: flowId,
-                flow_cta: 'Book Now',
+                flow_id: useFlowId,
+                flow_cta: existingCustomer ? 'Quick Book' : 'Book Now',
                 mode: 'published',
                 flow_action: 'navigate',
                 flow_action_payload: {

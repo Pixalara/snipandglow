@@ -1,0 +1,100 @@
+{
+  "version": "6.0",
+  "data_api_version": "3.0",
+  "routing_model": {
+    "BOOKING_SCREEN": []
+  },
+  "screens": [
+    {
+      "id": "BOOKING_SCREEN",
+      "title": "Book Appointment",
+      "terminal": true,
+      "success": true,
+      "data": {
+        "services": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "svc1", "title": "Haircut - Rs.200 (30 min)" }
+          ]
+        },
+        "dates": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "2026-05-22", "title": "Thu, 22 May" }
+          ]
+        },
+        "time_slots": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "properties": {
+              "id": { "type": "string" },
+              "title": { "type": "string" }
+            }
+          },
+          "__example__": [
+            { "id": "10:00:00", "title": "10:00 AM" }
+          ]
+        }
+      },
+      "layout": {
+        "type": "SingleColumnLayout",
+        "children": [
+          {
+            "type": "Form",
+            "name": "booking_form",
+            "children": [
+              {
+                "type": "CheckboxGroup",
+                "name": "service_ids",
+                "label": "Select Services",
+                "data-source": "${data.services}",
+                "required": true
+              },
+              {
+                "type": "Dropdown",
+                "name": "date",
+                "label": "Select Date",
+                "data-source": "${data.dates}",
+                "required": true
+              },
+              {
+                "type": "Dropdown",
+                "name": "time_slot",
+                "label": "Select Time",
+                "data-source": "${data.time_slots}",
+                "required": true
+              },
+              {
+                "type": "Footer",
+                "label": "Confirm Booking",
+                "on-click-action": {
+                  "name": "data_exchange",
+                  "payload": {
+                    "service_ids": "${form.service_ids}",
+                    "date": "${form.date}",
+                    "time_slot": "${form.time_slot}"
+                  }
+                }
+              }
+            ]
+          }
+        ]
+      }
+    }
+  ]
+}
