@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const { encrypted_aes_key, encrypted_flow_data, initial_vector } = body;
 
     if (!encrypted_aes_key || !encrypted_flow_data || !initial_vector) {
-      return NextResponse.json({ version: '4.0', screen: 'BOOKING_SCREEN', data: {} });
+      return NextResponse.json({ version: '3.0', screen: 'BOOKING_SCREEN', data: {} });
     }
 
     // Decrypt AES key using our RSA private key
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     console.log('[Flow] Action:', action, 'Screen:', flowData.screen);
 
     if (action === 'ping' || action === 'PING') {
-      responsePayload = { version: '4.0', data: { status: 'active' } };
+      responsePayload = { version: '3.0', data: { status: 'active' } };
     } else if (action === 'INIT' || action === 'init' || !action) {
       responsePayload = await handleFlowInit(flowData.data || flowData.flow_action_payload?.data || {});
     } else if (action === 'data_exchange' || action === 'DATA_EXCHANGE') {
@@ -168,7 +168,7 @@ async function handleFlowInit(data: any) {
   }
 
   return {
-    version: '4.0',
+    version: '3.0',
     screen: 'BOOKING_SCREEN',
     data: {
       services: (services && services.length > 0) ? services.map((s: any) => ({
@@ -185,7 +185,7 @@ async function handleDataExchange(screen: string, data: any, flowToken: string) 
   if (screen === 'BOOKING_SCREEN') {
     return await processBooking(data, flowToken);
   }
-  return { version: '4.0', screen: 'BOOKING_SCREEN', data: {} };
+  return { version: '3.0', screen: 'BOOKING_SCREEN', data: {} };
 }
 
 async function processBooking(data: any, flowToken: string) {
@@ -193,7 +193,7 @@ async function processBooking(data: any, flowToken: string) {
 
   if (!service_id || !date || !time_slot) {
     return {
-      version: '4.0',
+      version: '3.0',
       screen: 'BOOKING_SCREEN',
       data: { error_message: 'Please fill all fields.' },
     };
@@ -208,7 +208,7 @@ async function processBooking(data: any, flowToken: string) {
     .single();
 
   if (!service) {
-    return { version: '4.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Service not found.' } };
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Service not found.' } };
   }
 
   // Calculate end time
@@ -231,7 +231,7 @@ async function processBooking(data: any, flowToken: string) {
   }
 
   if (!customerId) {
-    return { version: '4.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not identify customer.' } };
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not identify customer.' } };
   }
 
   // Get first available employee
@@ -253,7 +253,7 @@ async function processBooking(data: any, flowToken: string) {
   } as any).select('id').single() as any);
 
   if (apptError) {
-    return { version: '4.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Slot may be taken. Try another time.' } };
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Slot may be taken. Try another time.' } };
   }
 
   // Send confirmation
@@ -270,7 +270,7 @@ async function processBooking(data: any, flowToken: string) {
   }
 
   return {
-    version: '4.0',
+    version: '3.0',
     screen: 'SUCCESS',
     data: {
       extension_message_response: {

@@ -229,6 +229,43 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     case 'book_appointment': {
       const flowId = process.env.WHATSAPP_FLOW_ID;
       if (flowId) {
+        // Fetch services for this tenant to populate the flow form
+        const { data: svcList } = await admin
+          .from('services')
+          .select('id, name, price, duration_minutes')
+          .eq('tenant_id', tenant.tenantId)
+          .eq('branch_id', tenant.branchId)
+          .eq('is_active', true)
+          .order('name')
+          .limit(20);
+
+        const services = (svcList ?? []).map((s: any) => ({
+          id: s.id,
+          title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+        }));
+
+        // Generate next 14 days
+        const dates: Array<{ id: string; title: string }> = [];
+        for (let i = 0; i < 14; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() + i);
+          const dateStr = d.toISOString().split('T')[0];
+          const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+          dates.push({ id: dateStr, title: label });
+        }
+
+        // Generate time slots (9 AM to 8 PM)
+        const timeSlots: Array<{ id: string; title: string }> = [];
+        for (let hour = 9; hour < 20; hour++) {
+          for (const min of [0, 30]) {
+            const h = hour % 12 || 12;
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
+            const label = `${h}:${String(min).padStart(2, '0')} ${period}`;
+            timeSlots.push({ id: timeStr, title: label });
+          }
+        }
+
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
           interactive: {
@@ -244,7 +281,15 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
                 flow_action: 'navigate',
                 flow_action_payload: {
                   screen: 'BOOKING_SCREEN',
-                  data: { customer_name: name, customer_phone: phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId },
+                  data: {
+                    customer_name: name,
+                    customer_phone: phone,
+                    tenant_id: tenant.tenantId,
+                    branch_id: tenant.branchId,
+                    services: services.length > 0 ? services : [{ id: 'none', title: 'No services available' }],
+                    dates,
+                    time_slots: timeSlots,
+                  },
                 },
               },
             },
