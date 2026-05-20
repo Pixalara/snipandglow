@@ -168,12 +168,12 @@ async function handleFlowInit(data: any) {
     version: '3.0',
     screen: 'BOOKING_SCREEN',
     data: {
-      services: (services ?? []).map((s: any) => ({
+      services: (services && services.length > 0) ? services.map((s: any) => ({
         id: s.id,
-        title: `${s.name} — ₹${s.price} (${s.duration_minutes} min)`,
-      })),
-      dates,
-      time_slots: timeSlots,
+        title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+      })) : [{ id: 'none', title: 'No services available' }],
+      dates: dates.length > 0 ? dates : [{ id: 'none', title: 'No dates available' }],
+      time_slots: timeSlots.length > 0 ? timeSlots : [{ id: 'none', title: 'No slots available' }],
     },
   };
 }
