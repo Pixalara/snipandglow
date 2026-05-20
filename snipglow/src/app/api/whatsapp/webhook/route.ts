@@ -227,84 +227,40 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
   switch (buttonId) {
     case 'book_appointment': {
-      const flowId = process.env.WHATSAPP_FLOW_ID;
-      if (flowId) {
-        // Fetch services for this tenant to populate the flow form
-        let svcQuery = admin
-          .from('services')
-          .select('id, name, price, duration_minutes')
-          .eq('tenant_id', tenant.tenantId)
-          .eq('is_active', true)
-          .order('name')
-          .limit(20);
+      // Use interactive list message for service selection (dynamic, no Flow needed)
+      const { data: svcList } = await admin
+        .from('services')
+        .select('id, name, price, duration_minutes')
+        .eq('tenant_id', tenant.tenantId)
+        .eq('is_active', true)
+        .order('name')
+        .limit(10);
 
-        if (tenant.branchId) {
-          svcQuery = svcQuery.eq('branch_id', tenant.branchId);
-        }
-
-        const { data: svcList, error: svcErr } = await svcQuery;
-        console.log('[Webhook] Services fetched:', svcList?.length, 'error:', svcErr?.message);
-
-        const services = (svcList ?? []).map((s: any) => ({
-          id: s.id,
-          title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
-        }));
-
-        // Generate next 14 days
-        const dates: Array<{ id: string; title: string }> = [];
-        for (let i = 0; i < 14; i++) {
-          const d = new Date();
-          d.setDate(d.getDate() + i);
-          const dateStr = d.toISOString().split('T')[0];
-          const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-          dates.push({ id: dateStr, title: label });
-        }
-
-        // Generate time slots (9 AM to 8 PM)
-        const timeSlots: Array<{ id: string; title: string }> = [];
-        for (let hour = 9; hour < 20; hour++) {
-          for (const min of [0, 30]) {
-            const h = hour % 12 || 12;
-            const period = hour >= 12 ? 'PM' : 'AM';
-            const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
-            const label = `${h}:${String(min).padStart(2, '0')} ${period}`;
-            timeSlots.push({ id: timeStr, title: label });
-          }
-        }
-
+      if (svcList && svcList.length > 0) {
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
           interactive: {
-            type: 'flow',
-            body: { text: `Let's book your appointment at *${tenant.salonName}*! Fill in the details below:` },
+            type: 'list',
+            body: { text: `Select a service to book at *${tenant.salonName}*:` },
             action: {
-              name: 'flow',
-              parameters: {
-                flow_message_version: '3',
-                flow_id: flowId,
-                flow_cta: 'Book Now',
-                mode: 'published',
-                flow_action: 'navigate',
-                flow_action_payload: {
-                  screen: 'BOOKING_SCREEN',
-                  data: {
-                    customer_name: name,
-                    customer_phone: phone,
-                    tenant_id: tenant.tenantId,
-                    branch_id: tenant.branchId,
-                    services: services.length > 0 ? services : [{ id: 'none', title: 'No services available' }],
-                    dates,
-                    time_slots: timeSlots,
-                  },
+              button: 'View Services',
+              sections: [
+                {
+                  title: 'Available Services',
+                  rows: svcList.map((s: any) => ({
+                    id: `svc_${s.id}`,
+                    title: s.name,
+                    description: `Rs.${s.price} | ${s.duration_minutes} min`,
+                  })),
                 },
-              },
+              ],
             },
           },
         });
       } else {
         await sendMessage(tenant.credentials, phone, {
           type: 'text',
-          text: { body: `To book at ${tenant.salonName}, please share:\n\n1. Service you want\n2. Preferred date\n3. Preferred time\n\nOur team will confirm shortly!` },
+          text: { body: `No services available at ${tenant.salonName} right now. Please contact the salon directly.` },
         });
       }
       break;
@@ -417,7 +373,159 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       break;
     }
 
-    default:
+    default: {
+      // Handle service selection from list (id starts with "svc_")
+      if (buttonId.startsWith('svc_')) {
+        const serviceId = buttonId.replace('svc_', '');
+        
+        // Store selected service in session and ask for date
+        const dates: Array<{ id: string; title: string; description: string }> = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() + i);
+          const dateStr = d.toISOString().split('T')[0];
+          const label = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+          dates.push({ id: `date_${serviceId}_${dateStr}`, title: label, description: dateStr });
+        }
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'list',
+            body: { text: `Great choice! Now select a date for your appointment:` },
+            action: {
+              button: 'Select Date',
+              sections: [
+                {
+                  title: 'Available Dates',
+                  rows: dates,
+                },
+              ],
+            },
+          },
+        });
+        break;
+      }
+
+      // Handle date selection (id starts with "date_")
+      if (buttonId.startsWith('date_')) {
+        const parts = buttonId.replace('date_', '').split('_');
+        const serviceId = parts[0];
+        const dateStr = parts.slice(1).join('-');
+
+        // Generate time slots
+        const timeSlots: Array<{ id: string; title: string; description: string }> = [];
+        for (let hour = 9; hour < 20; hour++) {
+          const h = hour % 12 || 12;
+          const period = hour >= 12 ? 'PM' : 'AM';
+          const timeStr = `${String(hour).padStart(2, '0')}:00:00`;
+          timeSlots.push({
+            id: `time_${serviceId}_${dateStr}_${timeStr}`,
+            title: `${h}:00 ${period}`,
+            description: `Available`,
+          });
+        }
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'list',
+            body: { text: `Select a time slot:` },
+            action: {
+              button: 'Select Time',
+              sections: [
+                {
+                  title: 'Available Times',
+                  rows: timeSlots,
+                },
+              ],
+            },
+          },
+        });
+        break;
+      }
+
+      // Handle time selection and create booking (id starts with "time_")
+      if (buttonId.startsWith('time_')) {
+        const parts = buttonId.replace('time_', '').split('_');
+        const serviceId = parts[0];
+        const dateStr = parts[1] + '-' + parts[2] + '-' + parts[3];
+        const timeSlot = parts[4];
+
+        // Get service details
+        const { data: service } = await admin
+          .from('services')
+          .select('id, name, price, duration_minutes, tenant_id, branch_id')
+          .eq('id', serviceId)
+          .single();
+
+        if (!service) {
+          await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: 'Service not found. Please try again.' } });
+          break;
+        }
+
+        // Calculate end time
+        const [startH, startM] = timeSlot.split(':').map(Number);
+        const totalMin = startH * 60 + startM + service.duration_minutes;
+        const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
+
+        // Find or create customer
+        const phoneE164 = `+${phone}`;
+        let customerId: string | null = null;
+        const { data: existing } = await (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', tenant.tenantId).single() as any);
+        if (existing) {
+          customerId = existing.id;
+        } else {
+          const { data: newCust } = await (admin.from('customers').insert({ tenant_id: tenant.tenantId, branch_id: service.branch_id, name: name, phone: phoneE164 } as any).select('id').single() as any);
+          customerId = newCust?.id ?? null;
+        }
+
+        if (!customerId) {
+          await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: 'Could not create booking. Please try again.' } });
+          break;
+        }
+
+        // Get first employee
+        const { data: emp } = await admin.from('employees').select('id').eq('tenant_id', tenant.tenantId).eq('is_active', true).limit(1).single();
+
+        // Create appointment
+        await (admin.from('appointments').insert({
+          tenant_id: tenant.tenantId,
+          branch_id: service.branch_id,
+          customer_id: customerId,
+          service_id: serviceId,
+          employee_id: emp?.id ?? customerId,
+          appointment_date: dateStr,
+          start_time: timeSlot,
+          end_time: endTime,
+          status: 'booked',
+          source: 'whatsapp_flow',
+          whatsapp_flow_ref: JSON.stringify([serviceId]),
+        } as any) as any);
+
+        // Send confirmation
+        const dateLabel = new Date(dateStr + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const h = startH % 12 || 12;
+        const period = startH >= 12 ? 'PM' : 'AM';
+        const timeLabel = `${h}:00 ${period}`;
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'button',
+            body: { text: `✅ *Booking Confirmed!*\n\n👤 ${name}\n✂️ ${service.name}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}\n\nSee you soon! 😊` },
+            action: {
+              buttons: [
+                { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
+                { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
+              ],
+            },
+          },
+        });
+        break;
+      }
+
       console.log(`[Webhook] Unhandled button: ${buttonId} from ${phone}`);
+    }
   }
 }
