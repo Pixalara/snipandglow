@@ -26,17 +26,18 @@ export async function GET(request: NextRequest) {
 
   const admin = createAdminClient();
 
-  // Find invoices created between 1 hour and 1.5 hours ago with delivery_status = 'pending'
+  // Find invoices created between 1 hour and 25 hours ago with delivery_status = 'pending'
+  // Runs once daily, so we check a 24-hour window (1h to 25h ago)
   const now = new Date();
   const oneHourAgo = new Date(now.getTime() - 60 * 60 * 1000).toISOString();
-  const oneAndHalfHoursAgo = new Date(now.getTime() - 90 * 60 * 1000).toISOString();
+  const twentyFiveHoursAgo = new Date(now.getTime() - 25 * 60 * 60 * 1000).toISOString();
 
   const { data: invoices, error } = await (admin
     .from('invoices')
     .select('id, customer_id, tenant_id')
     .eq('payment_status', 'paid')
     .eq('delivery_status', 'pending')
-    .gte('created_at', oneAndHalfHoursAgo)
+    .gte('created_at', twentyFiveHoursAgo)
     .lte('created_at', oneHourAgo)
     .limit(20) as any);
 
