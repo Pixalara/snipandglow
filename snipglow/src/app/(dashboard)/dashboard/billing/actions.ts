@@ -301,6 +301,17 @@ async function sendBillReceiptWhatsApp(
       text: { body: billText },
     });
 
+    // Log bill receipt to whatsapp_sessions
+    await (admin.from('whatsapp_sessions').insert({
+      tenant_id: tenantId,
+      message_id: `bill_${Date.now()}`,
+      phone,
+      direction: 'outbound',
+      template_name: 'bill_receipt',
+      status: 'sent',
+      metadata: { customer_name: customer.name },
+    } as any) as any);
+
     // Send feedback request immediately after bill
     await sendMessage(credentials, phone, {
       type: 'interactive',
@@ -318,6 +329,17 @@ async function sendBillReceiptWhatsApp(
         },
       },
     });
+
+    // Log feedback request to whatsapp_sessions
+    await (admin.from('whatsapp_sessions').insert({
+      tenant_id: tenantId,
+      message_id: `feedback_req_${Date.now()}`,
+      phone,
+      direction: 'outbound',
+      template_name: 'feedback_request',
+      status: 'sent',
+      metadata: { customer_name: customer.name },
+    } as any) as any);
   } catch (err) {
     console.error('[Billing] Failed to send bill receipt via WhatsApp:', err);
   }

@@ -87,13 +87,19 @@ function getDescription(log: any): string {
         return `Sent renewal reminder to ${customerName || 'customer'}`;
       case 'feedback_request':
         return `Sent feedback request to ${customerName || 'customer'}`;
+      case 'bill_receipt':
+        return `Sent bill receipt to ${customerName || 'customer'}`;
+      case 'appointment_cancelled':
+        return `Sent cancellation notice to ${customerName || 'customer'}`;
+      case 'appointment_rescheduled':
+        return `Sent reschedule notice to ${customerName || 'customer'}`;
       case 'welcome_menu':
         return `Sent welcome menu to ${customerName || 'customer'}`;
       case 'otp_verification':
         return `Sent OTP verification code`;
       default:
-        if (template) return `Sent "${template}" message`;
-        return `Sent WhatsApp message`;
+        if (template) return `Sent "${template}" message to ${customerName || 'customer'}`;
+        return `Sent WhatsApp message to ${customerName || 'customer'}`;
     }
   }
 

@@ -656,6 +656,17 @@ async function notifyCustomerCancellation(appointment: any) {
         },
       },
     });
+
+    // Log to whatsapp_sessions
+    await (admin.from('whatsapp_sessions').insert({
+      tenant_id: appointment.tenant_id,
+      message_id: `cancel_${Date.now()}`,
+      phone,
+      direction: 'outbound',
+      template_name: 'appointment_cancelled',
+      status: 'sent',
+      metadata: { customer_name: customer.name },
+    } as any) as any);
   } catch (err) {
     console.error('[Actions] Failed to notify customer cancellation:', err);
   }
@@ -724,6 +735,17 @@ async function notifyCustomerReschedule(
         },
       },
     });
+
+    // Log to whatsapp_sessions
+    await (admin.from('whatsapp_sessions').insert({
+      tenant_id: appointment.tenant_id,
+      message_id: `resched_${Date.now()}`,
+      phone,
+      direction: 'outbound',
+      template_name: 'appointment_rescheduled',
+      status: 'sent',
+      metadata: { customer_name: customer.name },
+    } as any) as any);
   } catch (err) {
     console.error('[Actions] Failed to notify customer reschedule:', err);
   }
@@ -785,6 +807,17 @@ async function notifyCustomerBillReceipt(
       text: { body: billText },
     });
 
+    // Log bill receipt to whatsapp_sessions
+    await (admin.from('whatsapp_sessions').insert({
+      tenant_id: tenantId,
+      message_id: `bill_${Date.now()}`,
+      phone,
+      direction: 'outbound',
+      template_name: 'bill_receipt',
+      status: 'sent',
+      metadata: { customer_name: customer.name },
+    } as any) as any);
+
     // Send feedback request immediately after bill
     await sendMessage(credentials, phone, {
       type: 'interactive',
@@ -802,6 +835,17 @@ async function notifyCustomerBillReceipt(
         },
       },
     });
+
+    // Log feedback request to whatsapp_sessions
+    await (admin.from('whatsapp_sessions').insert({
+      tenant_id: tenantId,
+      message_id: `feedback_req_${Date.now()}`,
+      phone,
+      direction: 'outbound',
+      template_name: 'feedback_request',
+      status: 'sent',
+      metadata: { customer_name: customer.name },
+    } as any) as any);
   } catch (err) {
     console.error('[Actions] Failed to send bill receipt:', err);
   }
