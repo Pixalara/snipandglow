@@ -2,7 +2,6 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { createClient } from '@/lib/supabase/client';
 import { MessageCircle } from 'lucide-react';
 
 const OTP_EXPIRY_SECONDS = 5 * 60; // 5 minutes
@@ -106,32 +105,12 @@ function VerifyOtpContent() {
         return;
       }
 
-      // Sign in using the token from verify-otp
-      if (data.token && data.email) {
-        const supabase = createClient();
-        const { error: authError } = await supabase.auth.verifyOtp({
-          email: data.email,
-          token: data.token,
-          type: 'email',
-        });
-
-        if (authError) {
-          // Try magic link approach
-          const { error: magicError } = await supabase.auth.verifyOtp({
-            email: data.email,
-            token: data.token,
-            type: 'magiclink',
-          });
-          if (magicError) {
-            setError('Sign-in failed. Please try again.');
-            setLoading(false);
-            return;
-          }
-        }
+      // Redirect to the magic link which will sign the user in
+      if (data.action_link) {
+        window.location.href = data.action_link;
+      } else {
+        router.push(data.redirect || '/dashboard');
       }
-
-      // Redirect based on response
-      router.push(data.redirect || '/dashboard');
     } catch {
       setError('Network error. Please try again.');
       setLoading(false);
