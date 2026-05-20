@@ -189,24 +189,26 @@ async function handleDataExchange(screen: string, data: any, flowToken: string) 
 }
 
 async function processBooking(data: any, flowToken: string) {
-  const { service_id, date, time_slot, customer_name, customer_phone } = data;
+  const { service_ids, service_id, date, time_slot, customer_name, customer_phone, gender } = data;
 
   console.log('[Flow Booking] Full data:', JSON.stringify(data));
-  console.log('[Flow Booking] Flow token:', flowToken);
 
   // Parse flow_token to get customer phone and tenant info
   let tokenData: any = {};
   try {
     tokenData = JSON.parse(flowToken);
-  } catch {
-    // flow_token might not be JSON
-  }
+  } catch {}
   const customerPhone = tokenData.phone || customer_phone || '';
   const tokenTenantId = tokenData.tenant_id || '';
   const tokenBranchId = tokenData.branch_id || '';
   const salonName = tokenData.salon_name || '';
 
-  if (!service_id || !date || !time_slot) {
+  // Handle both single service_id and multiple service_ids
+  const selectedServiceIds: string[] = service_ids 
+    ? (Array.isArray(service_ids) ? service_ids : [service_ids])
+    : (service_id ? [service_id] : []);
+
+  if (selectedServiceIds.length === 0 || !date || !time_slot) {
     return {
       version: '3.0',
       screen: 'BOOKING_SCREEN',
@@ -216,49 +218,57 @@ async function processBooking(data: any, flowToken: string) {
 
   const admin = createAdminClient();
 
-  const { data: service } = await admin
+  // Fetch all selected services
+  const { data: services } = await admin
     .from('services')
     .select('id, name, price, duration_minutes, tenant_id, branch_id')
-    .eq('id', service_id)
-    .single();
+    .in('id', selectedServiceIds);
 
-  if (!service) {
+  if (!services || services.length === 0) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Service not found.' } };
   }
 
-  // Calculate end time
+  const primaryService = services[0];
+  const totalDuration = services.reduce((sum: number, s: any) => sum + s.duration_minutes, 0);
+
+  // Calculate end time based on total duration
   const [startH, startM] = time_slot.split(':').map(Number);
-  const totalMin = startH * 60 + startM + service.duration_minutes;
+  const totalMin = startH * 60 + startM + totalDuration;
   const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
 
-  // Create customer using phone from flow_token
+  // Create customer with gender
   const customerName = customer_name || 'WhatsApp Customer';
   let customerId: string | null = null;
   const phoneE164 = customerPhone ? (customerPhone.startsWith('+') ? customerPhone : `+${customerPhone}`) : '';
 
-  // Try to find by phone first
   if (phoneE164) {
-    const { data: existing } = await (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', service.tenant_id).single() as any);
+    const { data: existing } = await (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', primaryService.tenant_id).single() as any);
     if (existing) {
       customerId = existing.id;
+      // Update gender if provided
+      if (gender) {
+        await (admin.from('customers').update({ gender } as any).eq('id', existing.id) as any);
+      }
     }
   }
 
-  // If not found, try by name
   if (!customerId && customerName !== 'WhatsApp Customer') {
-    const { data: byName } = await (admin.from('customers').select('id').eq('name', customerName).eq('tenant_id', service.tenant_id).limit(1).single() as any);
+    const { data: byName } = await (admin.from('customers').select('id').eq('name', customerName).eq('tenant_id', primaryService.tenant_id).limit(1).single() as any);
     if (byName) {
       customerId = byName.id;
+      if (gender) {
+        await (admin.from('customers').update({ gender } as any).eq('id', byName.id) as any);
+      }
     }
   }
 
-  // Create new customer if not found
   if (!customerId) {
     const { data: newCust } = await (admin.from('customers').insert({
-      tenant_id: service.tenant_id,
-      branch_id: service.branch_id,
+      tenant_id: primaryService.tenant_id,
+      branch_id: primaryService.branch_id,
       name: customerName,
       phone: phoneE164 || '+910000000000',
+      gender: gender || null,
     } as any).select('id').single() as any);
     customerId = newCust?.id ?? null;
   }
@@ -268,28 +278,29 @@ async function processBooking(data: any, flowToken: string) {
   }
 
   // Get first available employee
-  const { data: employee } = await admin.from('employees').select('id').eq('tenant_id', service.tenant_id).eq('is_active', true).limit(1).single();
+  const { data: employee } = await admin.from('employees').select('id').eq('tenant_id', primaryService.tenant_id).eq('is_active', true).limit(1).single();
 
-  // Create appointment
+  // Create appointment with all selected services
   const { error: apptError } = await (admin.from('appointments').insert({
-    tenant_id: service.tenant_id,
-    branch_id: service.branch_id,
+    tenant_id: primaryService.tenant_id,
+    branch_id: primaryService.branch_id,
     customer_id: customerId,
-    service_id,
+    service_id: selectedServiceIds[0],
     employee_id: employee?.id ?? customerId,
     appointment_date: date,
     start_time: time_slot,
     end_time: endTime,
     status: 'booked',
     source: 'whatsapp_flow',
-    whatsapp_flow_ref: JSON.stringify([service_id]),
+    whatsapp_flow_ref: JSON.stringify(selectedServiceIds),
   } as any).select('id').single() as any);
 
   if (apptError) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Slot may be taken. Try another time.' } };
   }
 
-  // Send confirmation
+  // Send confirmation with all service names
+  const serviceNames = services.map((s: any) => s.name).join(', ');
   const credentials = getPlatformCredentials();
   if (credentials && (customerPhone || customer_phone)) {
     const { sendMessage } = await import('@/lib/whatsapp/templates');
@@ -300,7 +311,7 @@ async function processBooking(data: any, flowToken: string) {
       type: 'interactive',
       interactive: {
         type: 'button',
-        body: { text: 'Booking Confirmed!\n\nName: ' + customerName + '\nService: ' + service.name + '\nDate: ' + dateLabel + ', ' + timeLabel + '\n\nSee you soon!' },
+        body: { text: 'Booking Confirmed!\n\nName: ' + customerName + '\nServices: ' + serviceNames + '\nDate: ' + dateLabel + ', ' + timeLabel + '\nSalon: ' + (salonName || 'Your Salon') + '\n\nSee you soon!' },
         action: {
           buttons: [
             { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
