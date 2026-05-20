@@ -230,14 +230,20 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       const flowId = process.env.WHATSAPP_FLOW_ID;
       if (flowId) {
         // Fetch services for this tenant to populate the flow form
-        const { data: svcList } = await admin
+        let svcQuery = admin
           .from('services')
           .select('id, name, price, duration_minutes')
           .eq('tenant_id', tenant.tenantId)
-          .eq('branch_id', tenant.branchId)
           .eq('is_active', true)
           .order('name')
           .limit(20);
+
+        if (tenant.branchId) {
+          svcQuery = svcQuery.eq('branch_id', tenant.branchId);
+        }
+
+        const { data: svcList, error: svcErr } = await svcQuery;
+        console.log('[Webhook] Services fetched:', svcList?.length, 'error:', svcErr?.message);
 
         const services = (svcList ?? []).map((s: any) => ({
           id: s.id,
