@@ -294,6 +294,9 @@ export async function completeAndGenerateBill(
 
   await supabase.from('invoice_items').insert(lineItems);
 
+  // 8. Send bill receipt to customer via WhatsApp
+  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, discountPct, discountAmount, total, paymentMethod);
+
   revalidatePath('/dashboard/appointments');
   revalidatePath('/dashboard/billing');
   return { success: true, data: { invoiceId: invoice.id, invoiceNumber: invoice.invoice_number } };
@@ -723,5 +726,65 @@ async function notifyCustomerReschedule(
     });
   } catch (err) {
     console.error('[Actions] Failed to notify customer reschedule:', err);
+  }
+}
+
+/**
+ * Send bill/receipt to customer via WhatsApp after completing appointment.
+ */
+async function notifyCustomerBillReceipt(
+  tenantId: string,
+  customerId: string,
+  services: { id: string; name: string; price: number }[],
+  invoiceNumber: string,
+  subtotal: number,
+  discountPct: number,
+  discountAmount: number,
+  total: number,
+  paymentMethod: string
+) {
+  try {
+    const admin = createAdminClient();
+    const credentials = getPlatformCredentials();
+    if (!credentials) return;
+
+    // Get customer phone and name
+    const { data: customer } = await admin
+      .from('customers')
+      .select('name, phone')
+      .eq('id', customerId)
+      .single();
+
+    if (!customer?.phone) return;
+
+    // Get salon name
+    const { data: tenant } = await admin.from('tenants').select('name').eq('id', tenantId).single();
+    const salonName = tenant?.name || 'the salon';
+
+    // Build service list
+    const serviceLines = services.map((s) => `  • ${s.name} — ₹${s.price.toLocaleString('en-IN')}`).join('\n');
+
+    // Build bill message
+    let billText = `🧾 *Bill Receipt*\n\n`;
+    billText += `Hi ${customer.name}, thank you for visiting *${salonName}*! Here's your bill:\n\n`;
+    billText += `📋 *Invoice:* ${invoiceNumber}\n\n`;
+    billText += `*Services:*\n${serviceLines}\n\n`;
+    billText += `━━━━━━━━━━━━━━━\n`;
+    if (discountPct > 0) {
+      billText += `Subtotal: ₹${subtotal.toLocaleString('en-IN')}\n`;
+      billText += `Discount (${discountPct}%): -₹${discountAmount.toLocaleString('en-IN')}\n`;
+    }
+    billText += `*Total: ₹${total.toLocaleString('en-IN')}*\n`;
+    billText += `Payment: ${paymentMethod.toUpperCase()}\n`;
+    billText += `━━━━━━━━━━━━━━━\n\n`;
+    billText += `Thank you for choosing us! We look forward to seeing you again. 😊`;
+
+    const phone = customer.phone.replace(/\D/g, '');
+    await sendMessage(credentials, phone, {
+      type: 'text',
+      text: { body: billText },
+    });
+  } catch (err) {
+    console.error('[Actions] Failed to send bill receipt:', err);
   }
 }
