@@ -227,40 +227,74 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
   switch (buttonId) {
     case 'book_appointment': {
-      // Use interactive list message for service selection (dynamic, no Flow needed)
-      const { data: svcList } = await admin
-        .from('services')
-        .select('id, name, price, duration_minutes')
-        .eq('tenant_id', tenant.tenantId)
-        .eq('is_active', true)
-        .order('name')
-        .limit(10);
+      const flowId = process.env.WHATSAPP_FLOW_ID;
+      if (flowId) {
+        // Fetch services for this tenant
+        const { data: svcList } = await admin
+          .from('services')
+          .select('id, name, price, duration_minutes')
+          .eq('tenant_id', tenant.tenantId)
+          .eq('is_active', true)
+          .order('name')
+          .limit(10);
 
-      if (svcList && svcList.length > 0) {
+        const services = (svcList ?? []).map((s: any) => ({
+          id: s.id,
+          title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+        }));
+
+        // Generate next 14 days
+        const dates: Array<{ id: string; title: string }> = [];
+        for (let i = 0; i < 14; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() + i);
+          const dateStr = d.toISOString().split('T')[0];
+          const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+          dates.push({ id: dateStr, title: label });
+        }
+
+        // Generate time slots
+        const timeSlots: Array<{ id: string; title: string }> = [];
+        for (let hour = 9; hour < 20; hour++) {
+          for (const min of [0, 30]) {
+            const h = hour % 12 || 12;
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
+            timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
+          }
+        }
+
+        console.log('[Webhook] Sending flow with', services.length, 'services');
+
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
           interactive: {
-            type: 'list',
-            body: { text: `Select a service to book at *${tenant.salonName}*:` },
+            type: 'flow',
+            body: { text: `Book your appointment at *${tenant.salonName}*` },
             action: {
-              button: 'View Services',
-              sections: [
-                {
-                  title: 'Available Services',
-                  rows: svcList.map((s: any) => ({
-                    id: `svc_${s.id}`,
-                    title: s.name,
-                    description: `Rs.${s.price} | ${s.duration_minutes} min`,
-                  })),
+              name: 'flow',
+              parameters: {
+                flow_message_version: '3',
+                flow_id: flowId,
+                flow_cta: 'Book Now',
+                mode: 'published',
+                flow_action: 'navigate',
+                flow_action_payload: {
+                  screen: 'BOOKING_SCREEN',
+                  data: {
+                    services: services.length > 0 ? services : [{ id: 'none', title: 'No services' }],
+                    dates,
+                    time_slots: timeSlots,
+                  },
                 },
-              ],
+              },
             },
           },
         });
       } else {
         await sendMessage(tenant.credentials, phone, {
           type: 'text',
-          text: { body: `No services available at ${tenant.salonName} right now. Please contact the salon directly.` },
+          text: { body: `To book at ${tenant.salonName}, please share:\n1. Service\n2. Date\n3. Time\n\nOur team will confirm shortly!` },
         });
       }
       break;
