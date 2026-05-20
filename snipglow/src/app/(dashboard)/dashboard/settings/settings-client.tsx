@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateGstSettings, updateSalonProfile, updateDiscountSettings } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star } from 'lucide-react';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle } from 'lucide-react';
 
 // =============================================================================
 // Salon Profile Card
@@ -495,6 +495,84 @@ export function DiscountSettingsCard({ discountEnabled: initialEnabled, discount
 interface QrCodeGeneratorProps {
   salonName: string;
   salonPhone: string;
+}
+
+// =============================================================================
+// WhatsApp Booking Link Card
+// =============================================================================
+
+interface WhatsAppBookingLinkProps {
+  tenantCode: string;
+  salonName: string;
+}
+
+export function WhatsAppBookingLinkCard({ tenantCode, salonName }: WhatsAppBookingLinkProps) {
+  const [copied, setCopied] = useState(false);
+
+  const slug = tenantCode.replace('-', '').toLowerCase() + '_' + salonName.toLowerCase().replace(/\s+/g, '_');
+  const qrText = 'BOOK_' + tenantCode.replace('-', '').toUpperCase() + '_' + salonName.toUpperCase().replace(/\s+/g, '_');
+  const bookingUrl = `https://wa.me/919448895147?text=${qrText}`;
+
+  function handleCopy() {
+    navigator.clipboard.writeText(bookingUrl);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-gradient-to-r from-green-500/5 via-emerald-500/3 to-transparent">
+        <div className="flex items-center gap-2">
+          <MessageCircle className="size-4 text-green-600 dark:text-green-400" />
+          <h2 className="text-sm font-semibold text-foreground">WhatsApp Booking Link</h2>
+        </div>
+      </div>
+      <div className="p-6 space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Share this link with your customers or print it as a QR code. When they tap it, they can book appointments directly on WhatsApp.
+        </p>
+
+        {/* Booking URL */}
+        <div className="rounded-xl bg-muted/50 border border-border p-4 space-y-3">
+          <div className="flex items-center justify-between gap-2">
+            <p className="text-xs text-muted-foreground">Your Booking Link</p>
+            <button
+              onClick={handleCopy}
+              className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-foreground bg-background border border-border hover:bg-muted transition-colors"
+            >
+              {copied ? (
+                <><CheckCircle2 className="size-3 text-green-500" /> Copied!</>
+              ) : (
+                <><span className="size-3">📋</span> Copy</>
+              )}
+            </button>
+          </div>
+          <p className="text-sm font-mono text-foreground break-all select-all">{bookingUrl}</p>
+        </div>
+
+        {/* QR Text */}
+        <div className="rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/30 px-4 py-3">
+          <div className="flex items-center gap-2 mb-1">
+            <span className="text-xs font-medium text-green-800 dark:text-green-200">Booking Code:</span>
+            <span className="text-xs font-mono font-bold text-green-700 dark:text-green-300">{qrText}</span>
+          </div>
+          <p className="text-xs text-green-600 dark:text-green-400">
+            Customers send this code to start booking. Unique to your salon ({tenantCode}).
+          </p>
+        </div>
+
+        {/* Instructions */}
+        <div className="space-y-2 text-xs text-muted-foreground">
+          <p className="font-medium text-foreground">How to use:</p>
+          <ul className="space-y-1 list-disc list-inside">
+            <li>Share the link directly with customers via WhatsApp, SMS, or social media</li>
+            <li>Print as QR code and display at your salon reception, mirrors, or entrance</li>
+            <li>Add to your Instagram bio, Google Business profile, or visiting cards</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 export function QrCodeGeneratorCard({ salonName, salonPhone }: QrCodeGeneratorProps) {

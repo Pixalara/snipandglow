@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -272,6 +272,12 @@ export default async function SettingsPage() {
       <DiscountSettingsCard
         discountEnabled={discountEnabled}
         discountValue={discountValue}
+      />
+
+      {/* WhatsApp Booking Link */}
+      <WhatsAppBookingLinkCard
+        tenantCode={(tenant as any).tenant_code ?? 'SNG-000'}
+        salonName={tenant.name ?? ''}
       />
 
       {/* QR Code Generator */}
