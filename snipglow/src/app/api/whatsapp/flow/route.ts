@@ -202,6 +202,7 @@ async function processBooking(data: any, flowToken: string) {
   const tokenTenantId = tokenData.tenant_id || '';
   const tokenBranchId = tokenData.branch_id || '';
   const salonName = tokenData.salon_name || '';
+  const isReschedule = tokenData.is_reschedule === true;
 
   // Handle both single service_id and multiple service_ids
   const selectedServiceIds: string[] = service_ids 
@@ -277,6 +278,18 @@ async function processBooking(data: any, flowToken: string) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not create booking. Please try again.' } };
   }
 
+  // If reschedule: cancel the customer's existing active appointment
+  if (isReschedule && customerId) {
+    await (admin
+      .from('appointments')
+      .update({ status: 'cancelled' } as any)
+      .eq('customer_id', customerId)
+      .eq('tenant_id', primaryService.tenant_id)
+      .in('status', ['booked', 'confirmed'])
+      .order('appointment_date', { ascending: true })
+      .limit(1) as any);
+  }
+
   // Get first available employee
   const { data: employee } = await admin.from('employees').select('id').eq('tenant_id', primaryService.tenant_id).eq('is_active', true).limit(1).single();
 
@@ -307,11 +320,15 @@ async function processBooking(data: any, flowToken: string) {
     const dateLabel = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(time_slot);
 
+    const confirmText = isReschedule
+      ? `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\nYour appointment has been rescheduled successfully. See you soon! 😊`
+      : `✅ *Booking Confirmed!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\nSee you soon! 😊`;
+
     await sendMessage(credentials, customerPhone || customer_phone, {
       type: 'interactive',
       interactive: {
         type: 'button',
-        body: { text: 'Booking Confirmed!\n\nName: ' + customerName + '\nServices: ' + serviceNames + '\nDate: ' + dateLabel + ', ' + timeLabel + '\nSalon: ' + (salonName || 'Your Salon') + '\n\nSee you soon!' },
+        body: { text: confirmText },
         action: {
           buttons: [
             { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
@@ -322,20 +339,24 @@ async function processBooking(data: any, flowToken: string) {
     });
 
     // Send notification to salon owner
-    const { data: tenant } = await admin
+    const { data: tenantOwner } = await admin
       .from('tenants')
       .select('phone')
       .eq('id', primaryService.tenant_id)
       .single();
 
-    if (tenant?.phone && credentials) {
-      const ownerPhone = tenant.phone.replace(/\D/g, '');
+    if (tenantOwner?.phone && credentials) {
+      const ownerPhone = tenantOwner.phone.replace(/\D/g, '');
       const dateLabel2 = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
       const timeLabel2 = formatTime12h(time_slot);
 
+      const ownerText = isReschedule
+        ? `📅 Appointment Rescheduled\n\nCustomer: ${customerName}\nPhone: +${customerPhone || customer_phone}\nServices: ${serviceNames}\nNew Date: ${dateLabel2}\nNew Time: ${timeLabel2}\n\nThe customer rescheduled via WhatsApp. Check your dashboard.`
+        : `🆕 New Booking Alert!\n\nCustomer: ${customerName}\nPhone: +${customerPhone || customer_phone}\nServices: ${serviceNames}\nDate: ${dateLabel2}\nTime: ${timeLabel2}\n\nCheck your SnipandGlow dashboard for details.`;
+
       await sendMessage(credentials, ownerPhone, {
         type: 'text',
-        text: { body: 'New Booking Alert!\n\nCustomer: ' + customerName + '\nPhone: +' + (customerPhone || customer_phone) + '\nServices: ' + serviceNames + '\nDate: ' + dateLabel2 + '\nTime: ' + timeLabel2 + '\n\nCheck your SnipandGlow dashboard for details.' },
+        text: { body: ownerText },
       });
     }
   }

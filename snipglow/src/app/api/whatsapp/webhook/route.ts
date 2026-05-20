@@ -9,6 +9,13 @@ import crypto from 'crypto';
 // WhatsApp Webhook — Multi-Tenant (Shared + Dedicated mode)
 // =============================================================================
 
+/** Format time to 12-hour display */
+function formatTime12hWebhook(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
 /**
  * GET — Meta webhook verification challenge.
  */
@@ -345,27 +352,78 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     case 'reschedule_appointment': {
       const flowId = process.env.WHATSAPP_FLOW_ID;
       if (flowId) {
-        await sendMessage(tenant.credentials, phone, {
-          type: 'interactive',
-          interactive: {
-            type: 'flow',
-            body: { text: `Let's reschedule your appointment. Pick a new date and time:` },
-            action: {
-              name: 'flow',
-              parameters: {
-                flow_message_version: '3',
-                flow_id: flowId,
-                flow_cta: 'Reschedule',
-                mode: 'published',
-                flow_action: 'navigate',
-                flow_action_payload: {
-                  screen: 'BOOKING_SCREEN',
-                  data: { customer_name: name, customer_phone: phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId },
+        // Find customer's most recent active appointment to reschedule
+        const phoneE164Resched = `+${phone}`;
+        const { data: custResched } = await (admin.from('customers').select('id').eq('phone', phoneE164Resched).eq('tenant_id', tenant.tenantId).single() as any);
+
+        if (custResched) {
+          // Fetch services for this tenant
+          const { data: svcList } = await admin
+            .from('services')
+            .select('id, name, price, duration_minutes')
+            .eq('tenant_id', tenant.tenantId)
+            .eq('is_active', true)
+            .order('name')
+            .limit(10);
+
+          const services = (svcList ?? []).map((s: any) => ({
+            id: s.id,
+            title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+          }));
+
+          // Generate next 14 days
+          const dates: Array<{ id: string; title: string }> = [];
+          for (let i = 0; i < 14; i++) {
+            const d = new Date();
+            d.setDate(d.getDate() + i);
+            const dateStr = d.toISOString().split('T')[0];
+            const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+            dates.push({ id: dateStr, title: label });
+          }
+
+          // Generate time slots
+          const timeSlots: Array<{ id: string; title: string }> = [];
+          for (let hour = 9; hour < 20; hour++) {
+            for (const min of [0, 30]) {
+              const h = hour % 12 || 12;
+              const period = hour >= 12 ? 'PM' : 'AM';
+              const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
+              timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
+            }
+          }
+
+          await sendMessage(tenant.credentials, phone, {
+            type: 'interactive',
+            interactive: {
+              type: 'flow',
+              body: { text: `Reschedule your appointment at *${tenant.salonName}*. Pick a new date and time:` },
+              action: {
+                name: 'flow',
+                parameters: {
+                  flow_message_version: '3',
+                  flow_id: flowId,
+                  flow_cta: 'Reschedule',
+                  mode: 'published',
+                  flow_action: 'navigate',
+                  flow_action_payload: {
+                    screen: 'BOOKING_SCREEN',
+                    data: {
+                      services: services.length > 0 ? services : [{ id: 'none', title: 'No services' }],
+                      dates,
+                      time_slots: timeSlots,
+                    },
+                  },
+                  flow_token: JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName, is_reschedule: true }),
                 },
               },
             },
-          },
-        });
+          });
+        } else {
+          await sendMessage(tenant.credentials, phone, {
+            type: 'text',
+            text: { body: `You don't have any upcoming appointments to reschedule. Reply "Book" to schedule one!` },
+          });
+        }
       } else {
         await sendMessage(tenant.credentials, phone, {
           type: 'text',
@@ -376,19 +434,59 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     }
 
     case 'cancel_appointment': {
-      await sendMessage(tenant.credentials, phone, {
-        type: 'interactive',
-        interactive: {
-          type: 'button',
-          body: { text: `Are you sure you want to cancel your appointment at ${tenant.salonName}?` },
-          action: {
-            buttons: [
-              { type: 'reply', reply: { id: 'confirm_cancel', title: 'Yes, Cancel' } },
-              { type: 'reply', reply: { id: 'keep_appointment', title: 'Keep It' } },
-            ],
-          },
-        },
-      });
+      // Find the customer's most recent active appointment
+      const phoneE164Cancel = `+${phone}`;
+      const { data: custCancel } = await (admin.from('customers').select('id').eq('phone', phoneE164Cancel).eq('tenant_id', tenant.tenantId).single() as any);
+
+      if (custCancel) {
+        const { data: activeAppt } = await (admin
+          .from('appointments')
+          .select('id, service_id, appointment_date, start_time, whatsapp_flow_ref')
+          .eq('customer_id', custCancel.id)
+          .eq('tenant_id', tenant.tenantId)
+          .in('status', ['booked', 'confirmed'])
+          .order('appointment_date', { ascending: true })
+          .limit(1)
+          .single() as any);
+
+        if (activeAppt) {
+          // Get service names for display
+          let svcNames = '';
+          try {
+            const extraIds = activeAppt.whatsapp_flow_ref ? JSON.parse(activeAppt.whatsapp_flow_ref) : null;
+            const svcIds = Array.isArray(extraIds) && extraIds.length > 0 ? extraIds : [activeAppt.service_id];
+            const { data: svcs } = await admin.from('services').select('name').in('id', svcIds);
+            svcNames = svcs?.map((s: any) => s.name).join(', ') || '';
+          } catch { svcNames = ''; }
+
+          const dateLabel = new Date(activeAppt.appointment_date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+          const timeLabel = formatTime12hWebhook(activeAppt.start_time);
+
+          await sendMessage(tenant.credentials, phone, {
+            type: 'interactive',
+            interactive: {
+              type: 'button',
+              body: { text: `Are you sure you want to cancel your appointment?\n\n✂️ ${svcNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}` },
+              action: {
+                buttons: [
+                  { type: 'reply', reply: { id: `confirm_cancel_${activeAppt.id}`, title: 'Yes, Cancel' } },
+                  { type: 'reply', reply: { id: 'keep_appointment', title: 'Keep It' } },
+                ],
+              },
+            },
+          });
+        } else {
+          await sendMessage(tenant.credentials, phone, {
+            type: 'text',
+            text: { body: `You don't have any upcoming appointments to cancel. Reply "Book" to schedule one!` },
+          });
+        }
+      } else {
+        await sendMessage(tenant.credentials, phone, {
+          type: 'text',
+          text: { body: `You don't have any upcoming appointments. Reply "Book" to schedule one!` },
+        });
+      }
       break;
     }
 
@@ -409,6 +507,49 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     }
 
     default: {
+      // Handle confirm_cancel_<appointmentId> — customer confirms cancellation
+      if (buttonId.startsWith('confirm_cancel_')) {
+        const appointmentId = buttonId.replace('confirm_cancel_', '');
+        
+        // Cancel the appointment in DB
+        const { error: cancelError } = await (admin
+          .from('appointments')
+          .update({ status: 'cancelled' })
+          .eq('id', appointmentId)
+          .in('status', ['booked', 'confirmed']) as any);
+
+        if (!cancelError) {
+          // Notify salon owner
+          const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
+          if (tenantData?.phone) {
+            const ownerPhone = tenantData.phone.replace(/\D/g, '');
+            await sendMessage(tenant.credentials, ownerPhone, {
+              type: 'text',
+              text: { body: `⚠️ Appointment Cancelled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\n\nThe customer cancelled their appointment via WhatsApp. Check your dashboard for details.` },
+            });
+          }
+
+          await sendMessage(tenant.credentials, phone, {
+            type: 'interactive',
+            interactive: {
+              type: 'button',
+              body: { text: `✅ Your appointment at *${tenant.salonName}* has been cancelled successfully.\n\nWe hope to see you again soon! 😊` },
+              action: {
+                buttons: [
+                  { type: 'reply', reply: { id: 'book_appointment', title: 'Book Again' } },
+                ],
+              },
+            },
+          });
+        } else {
+          await sendMessage(tenant.credentials, phone, {
+            type: 'text',
+            text: { body: `Sorry, we couldn't cancel the appointment. It may have already been completed or cancelled. Please contact the salon directly.` },
+          });
+        }
+        break;
+      }
+
       // Handle service selection from list (id starts with "svc_")
       if (buttonId.startsWith('svc_')) {
         const serviceId = buttonId.replace('svc_', '');

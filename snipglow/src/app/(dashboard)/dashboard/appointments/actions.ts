@@ -1,7 +1,10 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { getPlatformCredentials } from '@/lib/whatsapp/config';
+import { sendMessage } from '@/lib/whatsapp/templates';
 import type {
   ActionResult,
   Appointment,
@@ -98,6 +101,7 @@ export async function createAppointment(
  * - confirmed → cancelled
  *
  * Any other transition is rejected.
+ * Sends WhatsApp notification to customer on cancel.
  */
 export async function updateAppointmentStatus(
   id: string,
@@ -110,10 +114,10 @@ export async function updateAppointmentStatus(
   } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  // 1. Fetch current appointment status
+  // 1. Fetch current appointment with customer details for notification
   const { data: appointment, error: fetchError } = await supabase
     .from('appointments')
-    .select('id, status')
+    .select('id, status, customer_id, service_id, appointment_date, start_time, tenant_id, whatsapp_flow_ref')
     .eq('id', id)
     .single();
 
@@ -145,6 +149,11 @@ export async function updateAppointmentStatus(
 
   if (updateError) {
     return { success: false, error: 'Failed to update appointment status. Please try again.' };
+  }
+
+  // 4. Send WhatsApp notification to customer on cancellation
+  if (newStatus === 'cancelled') {
+    await notifyCustomerCancellation(appointment);
   }
 
   // 5. Revalidate /appointments path
@@ -293,6 +302,7 @@ export async function completeAndGenerateBill(
 /**
  * Reschedule an existing appointment to a new date and time.
  * Only works for booked or confirmed appointments.
+ * Sends WhatsApp notification to customer with new date/time.
  */
 export async function rescheduleAppointment(
   appointmentId: string,
@@ -303,10 +313,10 @@ export async function rescheduleAppointment(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  // Fetch the appointment to verify it can be rescheduled
+  // Fetch the appointment with customer details for notification
   const { data: appointment, error: fetchError } = await supabase
     .from('appointments')
-    .select('id, status')
+    .select('id, status, customer_id, service_id, tenant_id, appointment_date, start_time, whatsapp_flow_ref')
     .eq('id', appointmentId)
     .single();
 
@@ -334,6 +344,9 @@ export async function rescheduleAppointment(
     }
     return { success: false, error: 'Failed to reschedule. Please try again.' };
   }
+
+  // Send WhatsApp notification to customer
+  await notifyCustomerReschedule(appointment, newSchedule);
 
   revalidatePath('/dashboard/appointments');
   return { success: true, data: undefined };
@@ -572,4 +585,143 @@ export async function getCustomerMembershipDiscount(customerId: string): Promise
     discountPct: membership.discount_pct,
     membershipName: membership.name,
   };
+}
+
+// =============================================================================
+// WhatsApp Notification Helpers (Dashboard → Customer)
+// =============================================================================
+
+/** Format time to 12-hour display */
+function formatTime12h(time: string): string {
+  const [h, m] = time.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+/**
+ * Notify customer via WhatsApp when salon cancels their appointment.
+ */
+async function notifyCustomerCancellation(appointment: any) {
+  try {
+    const admin = createAdminClient();
+    const credentials = getPlatformCredentials();
+    if (!credentials) return;
+
+    // Get customer phone
+    const { data: customer } = await admin
+      .from('customers')
+      .select('name, phone')
+      .eq('id', appointment.customer_id)
+      .single();
+
+    if (!customer?.phone) return;
+
+    // Get service names
+    let serviceNames = '';
+    try {
+      const extraIds = appointment.whatsapp_flow_ref ? JSON.parse(appointment.whatsapp_flow_ref) : null;
+      const svcIds = Array.isArray(extraIds) && extraIds.length > 0 ? extraIds : [appointment.service_id];
+      const { data: services } = await admin.from('services').select('name').in('id', svcIds);
+      serviceNames = services?.map((s: any) => s.name).join(', ') || '';
+    } catch {
+      const { data: svc } = await admin.from('services').select('name').eq('id', appointment.service_id).single();
+      serviceNames = svc?.name || 'your service';
+    }
+
+    // Get salon name
+    const { data: tenant } = await admin.from('tenants').select('name').eq('id', appointment.tenant_id).single();
+    const salonName = tenant?.name || 'the salon';
+
+    // Format date
+    const dateLabel = new Date(appointment.appointment_date + 'T00:00:00+05:30')
+      .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const timeLabel = formatTime12h(appointment.start_time);
+
+    // Send cancellation message
+    const phone = customer.phone.replace(/\D/g, '');
+    await sendMessage(credentials, phone, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: {
+          text: `❌ *Appointment Cancelled*\n\nHi ${customer.name}, your appointment at *${salonName}* has been cancelled by the salon.\n\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n\nWe apologize for the inconvenience. Would you like to rebook?`,
+        },
+        action: {
+          buttons: [
+            { type: 'reply', reply: { id: 'book_appointment', title: 'Book Again' } },
+          ],
+        },
+      },
+    });
+  } catch (err) {
+    console.error('[Actions] Failed to notify customer cancellation:', err);
+  }
+}
+
+/**
+ * Notify customer via WhatsApp when salon reschedules their appointment.
+ */
+async function notifyCustomerReschedule(
+  appointment: any,
+  newSchedule: { appointment_date: string; start_time: string; end_time: string }
+) {
+  try {
+    const admin = createAdminClient();
+    const credentials = getPlatformCredentials();
+    if (!credentials) return;
+
+    // Get customer phone
+    const { data: customer } = await admin
+      .from('customers')
+      .select('name, phone')
+      .eq('id', appointment.customer_id)
+      .single();
+
+    if (!customer?.phone) return;
+
+    // Get service names
+    let serviceNames = '';
+    try {
+      const extraIds = appointment.whatsapp_flow_ref ? JSON.parse(appointment.whatsapp_flow_ref) : null;
+      const svcIds = Array.isArray(extraIds) && extraIds.length > 0 ? extraIds : [appointment.service_id];
+      const { data: services } = await admin.from('services').select('name').in('id', svcIds);
+      serviceNames = services?.map((s: any) => s.name).join(', ') || '';
+    } catch {
+      const { data: svc } = await admin.from('services').select('name').eq('id', appointment.service_id).single();
+      serviceNames = svc?.name || 'your service';
+    }
+
+    // Get salon name
+    const { data: tenant } = await admin.from('tenants').select('name').eq('id', appointment.tenant_id).single();
+    const salonName = tenant?.name || 'the salon';
+
+    // Format old and new dates
+    const oldDateLabel = new Date(appointment.appointment_date + 'T00:00:00+05:30')
+      .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const oldTimeLabel = formatTime12h(appointment.start_time);
+
+    const newDateLabel = new Date(newSchedule.appointment_date + 'T00:00:00+05:30')
+      .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const newTimeLabel = formatTime12h(newSchedule.start_time);
+
+    // Send reschedule message
+    const phone = customer.phone.replace(/\D/g, '');
+    await sendMessage(credentials, phone, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: {
+          text: `📅 *Appointment Rescheduled*\n\nHi ${customer.name}, your appointment at *${salonName}* has been rescheduled.\n\n✂️ ${serviceNames}\n\n❌ Old: ${oldDateLabel}, ${oldTimeLabel}\n✅ New: ${newDateLabel}, ${newTimeLabel}\n\nSee you at the new time! 😊`,
+        },
+        action: {
+          buttons: [
+            { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Change Again' } },
+            { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
+          ],
+        },
+      },
+    });
+  } catch (err) {
+    console.error('[Actions] Failed to notify customer reschedule:', err);
+  }
 }
