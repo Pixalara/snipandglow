@@ -174,15 +174,11 @@ export default function LoginPage() {
           <div className="bg-slate-50 rounded-xl px-4 py-3 space-y-2">
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <ArrowRight className="h-3 w-3 text-emerald-500" />
-              <span>Use Google if you signed up with Google</span>
+              <span>New user? Sign up with Google first, then verify WhatsApp</span>
             </div>
             <div className="flex items-center gap-2 text-xs text-slate-500">
               <ArrowRight className="h-3 w-3 text-emerald-500" />
-              <span>Use WhatsApp OTP with the number you registered</span>
-            </div>
-            <div className="flex items-center gap-2 text-xs text-slate-500">
-              <ArrowRight className="h-3 w-3 text-emerald-500" />
-              <span>New users will be guided through salon setup</span>
+              <span>Already signed up? Use either Google or WhatsApp OTP to login</span>
             </div>
           </div>
         )}
@@ -190,6 +186,12 @@ export default function LoginPage() {
 
       {/* Footer */}
       <div className="text-center space-y-3">
+        <p className="text-sm text-slate-500">
+          Don't have an account?{' '}
+          <a href="/signup" className="text-emerald-600 font-medium hover:underline">
+            Sign up
+          </a>
+        </p>
         <p className="text-xs text-slate-400">
           15-day free trial · No credit card required
         </p>
