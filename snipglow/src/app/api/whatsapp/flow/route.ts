@@ -191,6 +191,8 @@ async function handleDataExchange(screen: string, data: any, flowToken: string) 
 async function processBooking(data: any, flowToken: string) {
   const { service_id, date, time_slot, customer_name, customer_phone } = data;
 
+  console.log('[Flow Booking] Data received:', JSON.stringify(data));
+
   if (!service_id || !date || !time_slot) {
     return {
       version: '3.0',
@@ -216,22 +218,42 @@ async function processBooking(data: any, flowToken: string) {
   const totalMin = startH * 60 + startM + service.duration_minutes;
   const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
 
-  // Find or create customer
-  const phoneE164 = customer_phone ? (customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`) : '';
+  // Create customer using the name from the form
+  // Phone might not be available in flow submission — use name to find or create
+  const customerName = customer_name || 'WhatsApp Customer';
   let customerId: string | null = null;
 
-  if (phoneE164) {
+  // Try to find by phone first (if available)
+  if (customer_phone) {
+    const phoneE164 = customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`;
     const { data: existing } = await (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', service.tenant_id).single() as any);
     if (existing) {
       customerId = existing.id;
-    } else {
-      const { data: newCust } = await (admin.from('customers').insert({ tenant_id: service.tenant_id, branch_id: service.branch_id, name: customer_name || 'WhatsApp Customer', phone: phoneE164 } as any).select('id').single() as any);
-      customerId = newCust?.id ?? null;
     }
   }
 
+  // If not found by phone, try by name
+  if (!customerId && customerName !== 'WhatsApp Customer') {
+    const { data: byName } = await (admin.from('customers').select('id').eq('name', customerName).eq('tenant_id', service.tenant_id).limit(1).single() as any);
+    if (byName) {
+      customerId = byName.id;
+    }
+  }
+
+  // If still not found, create new customer
   if (!customerId) {
-    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not identify customer.' } };
+    const phoneE164 = customer_phone ? (customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`) : `+910000000000`;
+    const { data: newCust } = await (admin.from('customers').insert({
+      tenant_id: service.tenant_id,
+      branch_id: service.branch_id,
+      name: customerName,
+      phone: phoneE164,
+    } as any).select('id').single() as any);
+    customerId = newCust?.id ?? null;
+  }
+
+  if (!customerId) {
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not create booking. Please try again.' } };
   }
 
   // Get first available employee
