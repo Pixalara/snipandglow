@@ -9,7 +9,7 @@ import crypto from 'crypto';
 // Meta sends AES-encrypted payloads; we decrypt, process, and return encrypted response.
 // =============================================================================
 
-const PRIVATE_KEY = process.env.WHATSAPP_FLOW_PRIVATE_KEY || '';
+const PRIVATE_KEY = (process.env.WHATSAPP_FLOW_PRIVATE_KEY || '').replace(/\\n/g, '\n');
 
 /**
  * GET /api/whatsapp/flow — Health check fallback
