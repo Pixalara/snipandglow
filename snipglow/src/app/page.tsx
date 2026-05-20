@@ -113,10 +113,16 @@ export default function HomePage() {
             </button>
             <Link
               href="/login"
+              className="hidden sm:inline-flex px-4 py-2 text-sm text-slate-300 border border-slate-600 rounded-full hover:border-slate-400 hover:text-white transition-all"
+            >
+              Login
+            </Link>
+            <Link
+              href="/signup"
               className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
               style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
             >
-              Login
+              Get Started
             </Link>
             {/* Mobile hamburger */}
             <button
@@ -140,8 +146,11 @@ export default function HomePage() {
               <button onClick={() => { setMobileMenuOpen(false); setShowDemoModal(true); }} className="flex items-center justify-center py-2.5 text-sm text-white border border-slate-600 rounded-full hover:border-pink-400 transition-all">
                 Live Demo
               </button>
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm font-semibold text-white rounded-full" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm text-slate-300 border border-slate-600 rounded-full hover:text-white transition-all">
                 Login
+              </Link>
+              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm font-semibold text-white rounded-full" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
+                Get Started
               </Link>
             </div>
           </div>
