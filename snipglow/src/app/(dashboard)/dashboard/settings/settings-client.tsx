@@ -12,6 +12,7 @@ import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, Us
 
 interface SalonProfileProps {
   profile: {
+    tenantCode: string;
     salonName: string;
     ownerName: string;
     phone: string;
@@ -105,20 +106,23 @@ export function SalonProfileCard({ profile }: SalonProfileProps) {
             <div className="grid gap-4 sm:grid-cols-2">
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Salon Name</label>
-                <Input value={salonName} onChange={(e) => setSalonName(e.target.value)} placeholder="Salon name" />
+                <Input value={profile.salonName} disabled className="opacity-60" />
+                <p className="text-xs text-muted-foreground">Cannot be changed after setup</p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Owner Name</label>
-                <Input value={ownerName} onChange={(e) => setOwnerName(e.target.value)} placeholder="Owner name" />
+                <Input value={profile.ownerName} disabled className="opacity-60" />
+                <p className="text-xs text-muted-foreground">Cannot be changed after setup</p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Phone</label>
-                <Input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="Phone number" />
+                <Input value={profile.phone} disabled className="opacity-60" />
+                <p className="text-xs text-muted-foreground">Verified number — cannot be changed</p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Email</label>
                 <Input value={profile.email} disabled className="opacity-60" />
-                <p className="text-xs text-muted-foreground">Email is linked to your Google account</p>
+                <p className="text-xs text-muted-foreground">Linked to your Google account</p>
               </div>
             </div>
             <div className="space-y-1.5">
@@ -135,13 +139,20 @@ export function SalonProfileCard({ profile }: SalonProfileProps) {
             </div>
           </div>
         ) : (
-          <div className="grid gap-4 sm:grid-cols-2">
-            <ProfileField icon={<Scissors className="size-3.5" />} label="Salon Name" value={profile.salonName} />
-            <ProfileField icon={<User className="size-3.5" />} label="Owner" value={profile.ownerName} />
-            <ProfileField icon={<Phone className="size-3.5" />} label="Phone" value={profile.phone} />
-            <ProfileField icon={<Mail className="size-3.5" />} label="Email" value={profile.email} />
-            <ProfileField icon={<MapPin className="size-3.5" />} label="Address" value={profile.address || 'Not set'} />
-            <ProfileField icon={<Clock className="size-3.5" />} label="Operating Hours" value={hoursDisplay} />
+          <div className="space-y-4">
+            {/* Tenant Code Badge */}
+            <div className="inline-flex items-center gap-2 rounded-full bg-muted px-3 py-1.5">
+              <span className="text-xs text-muted-foreground">Salon ID:</span>
+              <span className="text-xs font-bold font-mono text-foreground">{profile.tenantCode}</span>
+            </div>
+            <div className="grid gap-4 sm:grid-cols-2">
+              <ProfileField icon={<Scissors className="size-3.5" />} label="Salon Name" value={profile.salonName} />
+              <ProfileField icon={<User className="size-3.5" />} label="Owner" value={profile.ownerName} />
+              <ProfileField icon={<Phone className="size-3.5" />} label="Phone" value={profile.phone} />
+              <ProfileField icon={<Mail className="size-3.5" />} label="Email" value={profile.email} />
+              <ProfileField icon={<MapPin className="size-3.5" />} label="Address" value={profile.address || 'Not set'} />
+              <ProfileField icon={<Clock className="size-3.5" />} label="Operating Hours" value={hoursDisplay} />
+            </div>
           </div>
         )}
       </div>

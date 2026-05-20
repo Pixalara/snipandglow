@@ -78,6 +78,7 @@ export default async function SettingsPage() {
 
   // Salon profile data
   const salonProfile = {
+    tenantCode: (tenant as any).tenant_code ?? 'SNG-000',
     salonName: tenant.name ?? '',
     ownerName: tenant.owner_name ?? '',
     phone: tenant.phone ?? '',
