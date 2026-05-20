@@ -162,12 +162,16 @@ async function sendFallbackMessage(phone: string, messageText: string) {
   const credentials = getPlatformCredentials();
   if (!credentials) return;
 
-  // Check if it's a booking slug that doesn't match any tenant
-  const slug = messageText.trim().toUpperCase();
-  if (slug.startsWith('BOOK_')) {
+  // Check if it's a booking trigger that doesn't match any tenant
+  const upper = messageText.trim().toUpperCase();
+  const isBookingAttempt = upper.startsWith('BOOK_') ||
+    /^SNG[-]?\d+$/i.test(messageText.trim()) ||
+    /book\s+an?\s+appointment\s+at/i.test(messageText);
+
+  if (isBookingAttempt) {
     await sendMessage(credentials, phone, {
       type: 'text',
-      text: { body: 'Sorry, we could not find that salon. Please check the QR code and try again, or contact the salon directly.' },
+      text: { body: 'Sorry, we could not find that salon. Please check the link from your salon and try again.' },
     });
     return;
   }
@@ -175,7 +179,7 @@ async function sendFallbackMessage(phone: string, messageText: string) {
   // Generic fallback
   await sendMessage(credentials, phone, {
     type: 'text',
-    text: { body: 'Hi! 👋 To book an appointment, please scan the QR code at your salon or use the booking link provided by them.\n\nPowered by SnipandGlow — snipandglow.com' },
+    text: { body: 'Hi! 👋 To book an appointment, please use the booking link provided by your salon.\n\nPowered by SnipandGlow — snipandglow.com' },
   });
 }
 
@@ -186,8 +190,10 @@ async function sendFallbackMessage(phone: string, messageText: string) {
 async function handleTextMessage(tenant: TenantContext, phone: string, name: string, text: string) {
   const lowerText = text.toLowerCase().trim();
 
-  // Check if it's a booking slug (first message from QR)
-  if (text.trim().toUpperCase().startsWith('BOOK_')) {
+  // Check if it's a booking trigger (slug, short code, or friendly message)
+  if (text.trim().toUpperCase().startsWith('BOOK_') ||
+      /^SNG[-]?\d+$/i.test(text.trim()) ||
+      /book\s+an?\s+appointment\s+at/i.test(text)) {
     await sendWelcomeMenu(tenant, phone, name);
     return;
   }
@@ -204,7 +210,6 @@ async function handleTextMessage(tenant: TenantContext, phone: string, name: str
   } else if (priceKeywords.some((k) => lowerText.includes(k))) {
     await handleButtonReply(tenant, phone, name, 'services_prices');
   } else {
-    // Unknown — show menu
     await sendWelcomeMenu(tenant, phone, name);
   }
 }

@@ -62,17 +62,24 @@ export const WA_BASE_URL = `https://graph.facebook.com/${WA_API_VERSION}`;
  * Handles:
  * - "BOOK_SNG001_ROYAL_SALOON" → "sng001_royal_saloon"
  * - "SNG001" → looks up by tenant_code
+ * - "Hi! I'd like to book an appointment at Royal Saloon ✨" → extracts salon name
  * - "Hi" / "Hello" → no slug (handled by session)
- * Trims trailing underscores/spaces.
  */
 export function parseBookingSlug(message: string): string | null {
-  const trimmed = message.trim().toUpperCase();
-  if (trimmed.startsWith('BOOK_')) {
-    return trimmed.replace('BOOK_', '').toLowerCase().replace(/_+$/, '');
+  const trimmed = message.trim();
+  const upper = trimmed.toUpperCase();
+
+  if (upper.startsWith('BOOK_')) {
+    return upper.replace('BOOK_', '').toLowerCase().replace(/_+$/, '');
   }
   // Short code format: SNG001, SNG-001
   if (/^SNG[-]?\d+$/i.test(trimmed)) {
     return trimmed.toLowerCase().replace('-', '');
+  }
+  // Friendly message: "I'd like to book an appointment at <SALON NAME>"
+  const friendlyMatch = trimmed.match(/book\s+an?\s+appointment\s+at\s+([^✨🙏💇📍\n]+)/i);
+  if (friendlyMatch) {
+    return ('salon_name:' + friendlyMatch[1].trim()).toLowerCase();
   }
   return null;
 }

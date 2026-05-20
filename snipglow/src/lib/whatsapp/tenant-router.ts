@@ -78,6 +78,24 @@ export async function resolveTenant(
   // 1. Try to detect tenant from booking slug in message text
   const slug = parseBookingSlug(messageText);
   if (slug) {
+    // Match by salon name (from friendly message)
+    if (slug.startsWith('salon_name:')) {
+      const salonName = slug.replace('salon_name:', '').trim();
+      const { data: tenantByName } = await (admin
+        .from('tenants' as any)
+        .select('id')
+        .ilike('name', salonName)
+        .single() as any);
+
+      if (tenantByName) {
+        const tenant = await getTenantDetails(admin, tenantByName.id);
+        if (tenant) {
+          await upsertSession(admin, tenantByName.id, customerPhone, 'qr', salonName);
+          return { ...tenant, mode: 'shared', credentials };
+        }
+      }
+    }
+
     // First try exact slug match in tenant_whatsapp_settings
     const { data: settings } = await (admin
       .from('tenant_whatsapp_settings' as any)

@@ -1,6 +1,5 @@
 'use client';
 
-import { useEffect } from 'react';
 import { MessageCircle, Scissors, MapPin } from 'lucide-react';
 
 // =============================================================================
@@ -17,16 +16,9 @@ interface Props {
 }
 
 export function BookingLandingClient({ salonName, tenantCode, bookingSlug }: Props) {
-  // Store the booking slug in localStorage so the webhook can identify the tenant
-  // when the customer sends "Hi" from WhatsApp
-  useEffect(() => {
-    // Set a cookie that expires in 24 hours
-    const expires = new Date(Date.now() + 24 * 60 * 60 * 1000).toUTCString();
-    document.cookie = `sng_booking_slug=${bookingSlug}; expires=${expires}; path=/; SameSite=Lax`;
-  }, [bookingSlug]);
-
-  // WhatsApp link — just "Hi" as the message
-  const whatsappUrl = `https://wa.me/919448895147?text=Hi`;
+  // WhatsApp link with friendly message that includes salon name
+  const friendlyMessage = `Hi! 👋 I'd like to book an appointment at ${salonName} ✨`;
+  const whatsappUrl = `https://wa.me/919448895147?text=${encodeURIComponent(friendlyMessage)}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">

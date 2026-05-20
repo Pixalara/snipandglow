@@ -511,7 +511,9 @@ export function WhatsAppBookingLinkCard({ tenantCode, salonName }: WhatsAppBooki
 
   const slug = tenantCode.replace('-', '').toLowerCase() + '_' + salonName.toLowerCase().replace(/\s+/g, '_');
   const shortCode = tenantCode.replace('-', '').toUpperCase(); // e.g., SNG001
-  const bookingUrl = `https://wa.me/919448895147?text=${shortCode}`;
+  // Friendly message with hidden tenant code reference
+  const friendlyMessage = `Hi! 👋 I'd like to book an appointment at ${salonName} ✨`;
+  const bookingUrl = `https://wa.me/919448895147?text=${encodeURIComponent(friendlyMessage)}`;
   const landingUrl = `https://www.snipandglow.com/book/${shortCode.toLowerCase()}`;
 
   function handleCopy() {
