@@ -115,20 +115,29 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
       messageText = message.button?.text ?? '';
     }
 
-    // Log incoming message
+    // Log incoming message (tenant_id added after resolution below)
+    let inboundLogId: string | null = null;
     try {
-      await (admin.from('whatsapp_sessions').insert({
+      const { data: logRow } = await (admin.from('whatsapp_sessions').insert({
         message_id: message.id,
         phone: customerPhone,
         direction: 'inbound',
         status: 'delivered',
         template_name: null,
         metadata: { customer_name: customerName, message_text: messageText, button_reply_id: buttonReplyId, phone_number_id: phoneNumberId },
-      } as any) as any);
+      } as any).select('id').single() as any);
+      inboundLogId = logRow?.id ?? null;
     } catch {}
 
     // ─── RESOLVE TENANT ─────────────────────────────────────────────────────
     const tenant = await resolveTenant(phoneNumberId, customerPhone, messageText);
+
+    // Update inbound log with tenant_id now that we know it
+    if (tenant && inboundLogId) {
+      try {
+        await (admin.from('whatsapp_sessions').update({ tenant_id: tenant.tenantId } as any).eq('id', inboundLogId) as any);
+      } catch {}
+    }
 
     if (!tenant) {
       // Cannot resolve tenant — send fallback
