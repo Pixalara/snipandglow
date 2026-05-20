@@ -385,7 +385,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           d.setDate(d.getDate() + i);
           const dateStr = d.toISOString().split('T')[0];
           const label = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
-          dates.push({ id: `date_${serviceId}_${dateStr}`, title: label, description: dateStr });
+          dates.push({ id: `date|${serviceId}|${dateStr}`, title: label, description: dateStr });
         }
 
         await sendMessage(tenant.credentials, phone, {
@@ -407,11 +407,11 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         break;
       }
 
-      // Handle date selection (id starts with "date_")
-      if (buttonId.startsWith('date_')) {
-        const parts = buttonId.replace('date_', '').split('_');
-        const serviceId = parts[0];
-        const dateStr = parts.slice(1).join('-');
+      // Handle date selection (id starts with "date|")
+      if (buttonId.startsWith('date|')) {
+        const parts = buttonId.split('|');
+        const serviceId = parts[1];
+        const dateStr = parts[2];
 
         // Generate time slots
         const timeSlots: Array<{ id: string; title: string; description: string }> = [];
@@ -420,7 +420,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           const period = hour >= 12 ? 'PM' : 'AM';
           const timeStr = `${String(hour).padStart(2, '0')}:00:00`;
           timeSlots.push({
-            id: `time_${serviceId}_${dateStr}_${timeStr}`,
+            id: `time|${serviceId}|${dateStr}|${timeStr}`,
             title: `${h}:00 ${period}`,
             description: `Available`,
           });
@@ -445,12 +445,12 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         break;
       }
 
-      // Handle time selection and create booking (id starts with "time_")
-      if (buttonId.startsWith('time_')) {
-        const parts = buttonId.replace('time_', '').split('_');
-        const serviceId = parts[0];
-        const dateStr = parts[1] + '-' + parts[2] + '-' + parts[3];
-        const timeSlot = parts[4];
+      // Handle time selection and create booking (id starts with "time|")
+      if (buttonId.startsWith('time|')) {
+        const parts = buttonId.split('|');
+        const serviceId = parts[1];
+        const dateStr = parts[2];
+        const timeSlot = parts[3];
 
         // Get service details
         const { data: service } = await admin
