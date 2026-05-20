@@ -69,15 +69,49 @@ export async function POST(request: NextRequest) {
     // OTP is valid — delete it
     await (admin.from('otp_codes').delete().eq('id', otpRecord.id) as any);
 
-    // Check if user exists with this phone
+    // Check if user exists — first check employees table (most reliable for existing salon owners)
     const phoneE164 = `+${phoneNormalized}`;
-    const { data: existingUsers } = await admin.auth.admin.listUsers();
-    const existingUser = existingUsers?.users?.find(
-      (u) => u.phone === phoneE164 ||
-        u.user_metadata?.phone === phone ||
-        u.user_metadata?.phone === phoneNormalized ||
-        u.user_metadata?.phone === phoneE164
-    );
+    let existingUser: any = null;
+
+    // 1. Check employees table for this phone (links to auth_user_id)
+    const { data: employee } = await (admin
+      .from('employees')
+      .select('auth_user_id, tenant_id, branch_id, role, name')
+      .eq('phone', phoneE164)
+      .eq('is_active', true)
+      .limit(1)
+      .maybeSingle() as any);
+
+    if (!employee) {
+      // Also try without + prefix
+      const { data: emp2 } = await (admin
+        .from('employees')
+        .select('auth_user_id, tenant_id, branch_id, role, name')
+        .eq('phone', phoneNormalized)
+        .eq('is_active', true)
+        .limit(1)
+        .maybeSingle() as any);
+      if (emp2) Object.assign(employee || {}, emp2);
+    }
+
+    if (employee?.auth_user_id) {
+      // Found employee — get their auth user
+      const { data: { user: authUser } } = await admin.auth.admin.getUserById(employee.auth_user_id);
+      if (authUser) {
+        existingUser = authUser;
+      }
+    }
+
+    // 2. Fallback: check auth.users directly
+    if (!existingUser) {
+      const { data: existingUsers } = await admin.auth.admin.listUsers();
+      existingUser = existingUsers?.users?.find(
+        (u: any) => u.phone === phoneE164 ||
+          u.user_metadata?.phone === phone ||
+          u.user_metadata?.phone === phoneNormalized ||
+          u.user_metadata?.phone === phoneE164
+      ) || null;
+    }
 
     if (existingUser) {
       // User exists — generate a magic link for sign-in
@@ -100,13 +134,16 @@ export async function POST(request: NextRequest) {
       const tokenHash = actionUrl.searchParams.get('token_hash') || signInData.properties?.hashed_token;
       const type = actionUrl.searchParams.get('type') || 'magiclink';
 
+      // Determine redirect: check employee record or user_metadata
+      const hasTenant = employee?.tenant_id || existingUser.user_metadata?.tenant_id;
+
       return NextResponse.json({
         success: true,
         action: 'sign_in',
         token_hash: tokenHash,
         type,
         email: existingUser.email || `${phoneNormalized}@phone.snipandglow.com`,
-        redirect: existingUser.user_metadata?.tenant_id ? '/dashboard' : '/onboarding',
+        redirect: hasTenant ? '/dashboard' : '/onboarding',
       });
     } else {
       // New user — create account with phone
