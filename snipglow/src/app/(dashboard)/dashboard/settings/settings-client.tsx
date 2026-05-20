@@ -510,8 +510,9 @@ export function WhatsAppBookingLinkCard({ tenantCode, salonName }: WhatsAppBooki
   const [copied, setCopied] = useState(false);
 
   const slug = tenantCode.replace('-', '').toLowerCase() + '_' + salonName.toLowerCase().replace(/\s+/g, '_');
-  const qrText = 'BOOK_' + tenantCode.replace('-', '').toUpperCase() + '_' + salonName.toUpperCase().replace(/\s+/g, '_');
-  const bookingUrl = `https://wa.me/919448895147?text=${qrText}`;
+  const shortCode = tenantCode.replace('-', '').toUpperCase(); // e.g., SNG001
+  const bookingUrl = `https://wa.me/919448895147?text=${shortCode}`;
+  const landingUrl = `https://www.snipandglow.com/book/${shortCode.toLowerCase()}`;
 
   function handleCopy() {
     navigator.clipboard.writeText(bookingUrl);
@@ -535,7 +536,7 @@ export function WhatsAppBookingLinkCard({ tenantCode, salonName }: WhatsAppBooki
         {/* Booking URL */}
         <div className="rounded-xl bg-muted/50 border border-border p-4 space-y-3">
           <div className="flex items-center justify-between gap-2">
-            <p className="text-xs text-muted-foreground">Your Booking Link</p>
+            <p className="text-xs text-muted-foreground">Booking Link (share this)</p>
             <button
               onClick={handleCopy}
               className="inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium text-foreground bg-background border border-border hover:bg-muted transition-colors"
@@ -550,14 +551,14 @@ export function WhatsAppBookingLinkCard({ tenantCode, salonName }: WhatsAppBooki
           <p className="text-sm font-mono text-foreground break-all select-all">{bookingUrl}</p>
         </div>
 
-        {/* QR Text */}
+        {/* Short code info */}
         <div className="rounded-lg bg-green-50 dark:bg-green-900/10 border border-green-200 dark:border-green-800/30 px-4 py-3">
           <div className="flex items-center gap-2 mb-1">
-            <span className="text-xs font-medium text-green-800 dark:text-green-200">Booking Code:</span>
-            <span className="text-xs font-mono font-bold text-green-700 dark:text-green-300">{qrText}</span>
+            <span className="text-xs font-medium text-green-800 dark:text-green-200">Your Booking Code:</span>
+            <span className="text-xs font-mono font-bold text-green-700 dark:text-green-300">{shortCode}</span>
           </div>
           <p className="text-xs text-green-600 dark:text-green-400">
-            Customers send this code to start booking. Unique to your salon ({tenantCode}).
+            Customers send this short code to start booking. Clean and easy to remember.
           </p>
         </div>
 

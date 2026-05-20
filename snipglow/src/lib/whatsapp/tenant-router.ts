@@ -78,6 +78,7 @@ export async function resolveTenant(
   // 1. Try to detect tenant from booking slug in message text
   const slug = parseBookingSlug(messageText);
   if (slug) {
+    // First try exact slug match in tenant_whatsapp_settings
     const { data: settings } = await (admin
       .from('tenant_whatsapp_settings' as any)
       .select('tenant_id')
@@ -87,9 +88,34 @@ export async function resolveTenant(
     if (settings) {
       const tenant = await getTenantDetails(admin, settings.tenant_id);
       if (tenant) {
-        // Create/update customer session
         await upsertSession(admin, settings.tenant_id, customerPhone, 'qr', slug);
         return { ...tenant, mode: 'shared', credentials };
+      }
+    }
+
+    // Try matching by tenant_code (short code like "sng001")
+    const tenantCodeFormatted = slug.replace(/^(sng)(\d+).*$/, 'SNG-$2').toUpperCase();
+    if (tenantCodeFormatted.startsWith('SNG-')) {
+      const { data: tenantByCode } = await (admin
+        .from('tenants' as any)
+        .select('id')
+        .eq('tenant_code', tenantCodeFormatted)
+        .single() as any);
+
+      if (tenantByCode) {
+        // Get their booking slug from settings
+        const { data: settingsByCode } = await (admin
+          .from('tenant_whatsapp_settings' as any)
+          .select('booking_slug')
+          .eq('tenant_id', tenantByCode.id)
+          .single() as any);
+
+        const tenant = await getTenantDetails(admin, tenantByCode.id);
+        if (tenant) {
+          const actualSlug = settingsByCode?.booking_slug || slug;
+          await upsertSession(admin, tenantByCode.id, customerPhone, 'qr', actualSlug);
+          return { ...tenant, mode: 'shared', credentials };
+        }
       }
     }
   }
