@@ -144,7 +144,7 @@ export async function createInvoice(
     return { success: true, data: invoice as Invoice };
   }
 
-  // Send bill receipt to customer via WhatsApp
+  // Send bill receipt to customer via WhatsApp + feedback request
   await sendBillReceiptWhatsApp(
     tenantId,
     input.customer_id,
@@ -299,6 +299,24 @@ async function sendBillReceiptWhatsApp(
     await sendMessage(credentials, phone, {
       type: 'text',
       text: { body: billText },
+    });
+
+    // Send feedback request immediately after bill
+    await sendMessage(credentials, phone, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: {
+          text: `⭐ How was your experience at *${salonName}* today?\n\nYour feedback helps us serve you better:`,
+        },
+        action: {
+          buttons: [
+            { type: 'reply', reply: { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Loved it!' } },
+            { type: 'reply', reply: { id: 'feedback_3', title: '⭐⭐⭐ It was okay' } },
+            { type: 'reply', reply: { id: 'feedback_1', title: '😞 Not satisfied' } },
+          ],
+        },
+      },
     });
   } catch (err) {
     console.error('[Billing] Failed to send bill receipt via WhatsApp:', err);

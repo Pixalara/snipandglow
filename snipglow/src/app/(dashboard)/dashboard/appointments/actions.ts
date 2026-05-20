@@ -784,6 +784,24 @@ async function notifyCustomerBillReceipt(
       type: 'text',
       text: { body: billText },
     });
+
+    // Send feedback request immediately after bill
+    await sendMessage(credentials, phone, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: {
+          text: `⭐ How was your experience at *${salonName}* today?\n\nYour feedback helps us serve you better:`,
+        },
+        action: {
+          buttons: [
+            { type: 'reply', reply: { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Loved it!' } },
+            { type: 'reply', reply: { id: 'feedback_3', title: '⭐⭐⭐ It was okay' } },
+            { type: 'reply', reply: { id: 'feedback_1', title: '😞 Not satisfied' } },
+          ],
+        },
+      },
+    });
   } catch (err) {
     console.error('[Actions] Failed to send bill receipt:', err);
   }
