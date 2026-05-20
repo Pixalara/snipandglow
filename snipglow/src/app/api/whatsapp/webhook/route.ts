@@ -235,21 +235,60 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
   switch (buttonId) {
     case 'book_appointment': {
       const flowId = process.env.WHATSAPP_FLOW_ID;
-      if (flowId) {
-        // Fetch services for this tenant
-        const { data: svcList } = await admin
-          .from('services')
-          .select('id, name, price, duration_minutes')
-          .eq('tenant_id', tenant.tenantId)
-          .eq('is_active', true)
-          .order('name')
-          .limit(10);
 
-        const services = (svcList ?? []).map((s: any) => ({
-          id: s.id,
-          title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+      // Check if customer already exists (returning customer)
+      const phoneE164Book = `+${phone}`;
+      const { data: existingCustomer } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Book).eq('tenant_id', tenant.tenantId).single() as any);
+
+      // Fetch services for this tenant
+      const { data: svcList } = await admin
+        .from('services')
+        .select('id, name, price, duration_minutes')
+        .eq('tenant_id', tenant.tenantId)
+        .eq('is_active', true)
+        .order('name')
+        .limit(10);
+
+      const services = (svcList ?? []).map((s: any) => ({
+        id: s.id,
+        title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+      }));
+
+      if (existingCustomer) {
+        // ─── RETURNING CUSTOMER: Skip name/gender, use list-based booking ───
+        if (services.length === 0) {
+          await sendMessage(tenant.credentials, phone, {
+            type: 'text',
+            text: { body: `No services available at ${tenant.salonName} right now. Please contact the salon directly.` },
+          });
+          break;
+        }
+
+        // Show service selection via list (max 10 rows)
+        const serviceRows = services.map((s: any) => ({
+          id: `booksvc.${existingCustomer.id}.${s.id}`,
+          title: s.title.length > 24 ? s.title.substring(0, 24) : s.title,
+          description: '',
         }));
 
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'list',
+            body: { text: `Welcome back, *${existingCustomer.name}*! 👋\n\nSelect a service to book at *${tenant.salonName}*:` },
+            action: {
+              button: 'Select Service',
+              sections: [
+                {
+                  title: 'Services',
+                  rows: serviceRows.slice(0, 10),
+                },
+              ],
+            },
+          },
+        });
+      } else if (flowId) {
+        // ─── NEW CUSTOMER: Use WhatsApp Flow (asks name, gender, services) ──
         // Generate next 14 days
         const dates: Array<{ id: string; title: string }> = [];
         for (let i = 0; i < 14; i++) {
@@ -271,7 +310,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           }
         }
 
-        console.log('[Webhook] Sending flow with', services.length, 'services');
+        console.log('[Webhook] New customer — sending flow with', services.length, 'services');
 
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
@@ -638,6 +677,161 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           await sendMessage(tenant.credentials, phone, {
             type: 'text',
             text: { body: `Sorry, couldn't reschedule. The slot may be taken. Please try a different time.` },
+          });
+        }
+        break;
+      }
+
+      // Handle returning customer service selection: booksvc.<customerId>.<serviceId>
+      if (buttonId.startsWith('booksvc.')) {
+        const parts = buttonId.split('.');
+        const custId = parts[1];
+        const serviceId = parts[2];
+
+        // Show next 7 days for date selection
+        const dates: Array<{ id: string; title: string; description: string }> = [];
+        for (let i = 0; i < 7; i++) {
+          const d = new Date();
+          d.setDate(d.getDate() + i);
+          const dateStr = d.toISOString().split('T')[0];
+          const label = d.toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+          dates.push({ id: `bookdt.${custId}.${serviceId}.${dateStr}`, title: label, description: dateStr });
+        }
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'list',
+            body: { text: `Great choice! Now select a date:` },
+            action: {
+              button: 'Select Date',
+              sections: [
+                {
+                  title: 'Available Dates',
+                  rows: dates,
+                },
+              ],
+            },
+          },
+        });
+        break;
+      }
+
+      // Handle returning customer date selection: bookdt.<customerId>.<serviceId>.<date>
+      if (buttonId.startsWith('bookdt.')) {
+        const parts = buttonId.split('.');
+        const custId = parts[1];
+        const serviceId = parts[2];
+        const selectedDate = parts[3];
+
+        // Generate time slots
+        const timeSlots: Array<{ id: string; title: string; description: string }> = [];
+        for (let hour = 9; hour < 20; hour++) {
+          for (const min of [0, 30]) {
+            const h = hour % 12 || 12;
+            const period = hour >= 12 ? 'PM' : 'AM';
+            const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
+            timeSlots.push({
+              id: `booktm.${custId}.${serviceId}.${selectedDate}.${timeStr}`,
+              title: `${h}:${String(min).padStart(2, '0')} ${period}`,
+              description: 'Available',
+            });
+          }
+        }
+
+        const dateLabel = new Date(selectedDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'list',
+            body: { text: `⏰ Select a time for *${dateLabel}*:` },
+            action: {
+              button: 'Select Time',
+              sections: [
+                {
+                  title: 'Available Times',
+                  rows: timeSlots.slice(0, 10),
+                },
+              ],
+            },
+          },
+        });
+        break;
+      }
+
+      // Handle returning customer time selection & create booking: booktm.<custId>.<serviceId>.<date>.<time>
+      if (buttonId.startsWith('booktm.')) {
+        const parts = buttonId.split('.');
+        const custId = parts[1];
+        const serviceId = parts[2];
+        const bookDate = parts[3];
+        const bookTime = parts[4];
+
+        // Get service details for duration
+        const { data: svc } = await admin
+          .from('services')
+          .select('id, name, price, duration_minutes, tenant_id, branch_id')
+          .eq('id', serviceId)
+          .single();
+
+        if (!svc) {
+          await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: 'Service not found. Please try again.' } });
+          break;
+        }
+
+        // Calculate end time
+        const [sH, sM] = bookTime.split(':').map(Number);
+        const totalMin = sH * 60 + sM + svc.duration_minutes;
+        const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
+
+        // Get first available employee
+        const { data: emp } = await admin.from('employees').select('id').eq('tenant_id', tenant.tenantId).eq('is_active', true).limit(1).single();
+
+        // Create appointment
+        await (admin.from('appointments').insert({
+          tenant_id: tenant.tenantId,
+          branch_id: svc.branch_id,
+          customer_id: custId,
+          service_id: serviceId,
+          employee_id: emp?.id ?? custId,
+          appointment_date: bookDate,
+          start_time: bookTime,
+          end_time: endTime,
+          status: 'booked',
+          source: 'whatsapp_flow',
+          whatsapp_flow_ref: JSON.stringify([serviceId]),
+        } as any) as any);
+
+        // Get customer name
+        const { data: custData } = await (admin.from('customers').select('name').eq('id', custId).single() as any);
+        const custName = custData?.name || name;
+
+        // Send confirmation
+        const dateLabel = new Date(bookDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const timeLabel = formatTime12hWebhook(bookTime);
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'button',
+            body: { text: `✅ *Booking Confirmed!*\n\n👤 ${custName}\n✂️ ${svc.name}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}\n\nSee you soon! 😊` },
+            action: {
+              buttons: [
+                { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
+                { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
+              ],
+            },
+          },
+        });
+
+        // Notify salon owner
+        const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
+        if (tenantData?.phone) {
+          const ownerPhone = tenantData.phone.replace(/\D/g, '');
+          await sendMessage(tenant.credentials, ownerPhone, {
+            type: 'text',
+            text: { body: `🆕 New Booking Alert!\n\nCustomer: ${custName}\nPhone: +${phone}\nService: ${svc.name}\nDate: ${dateLabel}\nTime: ${timeLabel}\n\nCheck your SnipandGlow dashboard for details.` },
           });
         }
         break;
