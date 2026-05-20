@@ -320,12 +320,23 @@ async function processBooking(data: any, flowToken: string) {
   const credentials = getPlatformCredentials();
   if (credentials && (customerPhone || customer_phone)) {
     const { sendMessage } = await import('@/lib/whatsapp/templates');
+    const { buildGoogleCalendarLink } = await import('@/lib/google-calendar');
     const dateLabel = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(time_slot);
 
+    // Build Google Calendar link with full event details
+    const calendarLink = buildGoogleCalendarLink({
+      title: `${serviceNames} at ${salonName || 'Salon'}`,
+      description: `Appointment for ${serviceNames}\nCustomer: ${customerName}\nDuration: ${totalDuration} minutes\n\nBooked via SnipandGlow`,
+      location: salonName || 'Salon',
+      startDate: date,
+      startTime: time_slot,
+      endTime: endTime,
+    });
+
     const confirmText = isReschedule
-      ? `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\nYour appointment has been rescheduled successfully. See you soon! 😊`
-      : `✅ *Booking Confirmed!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\nSee you soon! 😊`;
+      ? `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Add to Google Calendar:*\n${calendarLink}\n\nSee you soon! 😊`
+      : `✅ *Booking Confirmed!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Add to Google Calendar:*\n${calendarLink}\n\nSee you soon! 😊`;
 
     await sendMessage(credentials, customerPhone || customer_phone, {
       type: 'interactive',

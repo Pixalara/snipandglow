@@ -862,11 +862,22 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         const period = startH >= 12 ? 'PM' : 'AM';
         const timeLabel = `${h}:00 ${period}`;
 
+        // Build Google Calendar link
+        const { buildGoogleCalendarLink } = await import('@/lib/google-calendar');
+        const calendarLink = buildGoogleCalendarLink({
+          title: `${service.name} at ${tenant.salonName}`,
+          description: `Appointment for ${service.name}\nCustomer: ${name}\nDuration: ${service.duration_minutes} minutes\n\nBooked via SnipandGlow`,
+          location: tenant.salonName,
+          startDate: dateStr,
+          startTime: timeSlot,
+          endTime: endTime,
+        });
+
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
           interactive: {
             type: 'button',
-            body: { text: `✅ *Booking Confirmed!*\n\n👤 ${name}\n✂️ ${service.name}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}\n\nSee you soon! 😊` },
+            body: { text: `✅ *Booking Confirmed!*\n\n👤 ${name}\n✂️ ${service.name}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}\n\n📲 *Add to Google Calendar:*\n${calendarLink}\n\nSee you soon! 😊` },
             action: {
               buttons: [
                 { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
