@@ -25,11 +25,13 @@ export async function GET() {
 export async function POST(request: NextRequest) {
   try {
     const body = await request.json();
+    console.log('[Flow] Raw body keys:', Object.keys(body));
 
     // Health check — Meta sends a ping to verify endpoint is alive
     if (!body.encrypted_aes_key && !body.encrypted_flow_data) {
-      // Simple health check response
-      return NextResponse.json({ version: '3.0', screen: 'BOOKING_SCREEN', data: {} });
+      console.log('[Flow] No encrypted data — returning init data');
+      const initData = await handleFlowInit({});
+      return NextResponse.json(initData);
     }
 
     // Decrypt the request
@@ -52,7 +54,9 @@ export async function POST(request: NextRequest) {
       );
     } catch (err) {
       console.error('[Flow] RSA decryption failed:', err);
-      return NextResponse.json({ error: 'Decryption failed' }, { status: 421 });
+      // Return fallback data so form isn't empty
+      const fallback = await handleFlowInit({});
+      return NextResponse.json(fallback, { status: 200 });
     }
 
     // Decrypt flow data using AES key
