@@ -59,12 +59,13 @@ export const WA_BASE_URL = `https://graph.facebook.com/${WA_API_VERSION}`;
 
 /**
  * Parse booking slug from prefilled message.
- * Example: "BOOK_GLAMOUR_STUDIO" → "glamour_studio"
+ * Example: "BOOK_SNG004_GLAMOUR_STUDIO" → "sng004_glamour_studio"
+ * Trims trailing underscores/spaces.
  */
 export function parseBookingSlug(message: string): string | null {
   const trimmed = message.trim().toUpperCase();
   if (trimmed.startsWith('BOOK_')) {
-    return trimmed.replace('BOOK_', '').toLowerCase();
+    return trimmed.replace('BOOK_', '').toLowerCase().replace(/_+$/, '');
   }
   return null;
 }
