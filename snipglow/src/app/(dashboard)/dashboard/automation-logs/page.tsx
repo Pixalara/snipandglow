@@ -26,26 +26,32 @@ export default async function AutomationLogsPage() {
   const tenantId = user.user_metadata?.tenant_id;
   if (!tenantId) redirect('/onboarding');
 
-  const admin = createAdminClient();
+  let rows: AutomationLogRow[] = [];
 
-  // Fetch recent WhatsApp sessions for this tenant
-  const { data: logs } = await (admin
-    .from('whatsapp_sessions')
-    .select('id, phone, direction, template_name, status, created_at, metadata')
-    .eq('tenant_id', tenantId)
-    .order('created_at', { ascending: false })
-    .limit(100) as any);
+  try {
+    const admin = createAdminClient();
 
-  // Transform into human-readable descriptions
-  const rows: AutomationLogRow[] = (logs ?? []).map((log: any) => ({
-    id: log.id,
-    phone: formatPhoneDisplay(log.phone),
-    direction: log.direction,
-    template_name: log.template_name,
-    status: log.status,
-    created_at: log.created_at,
-    description: getDescription(log),
-  }));
+    // Fetch recent WhatsApp sessions for this tenant
+    const { data: logs } = await (admin
+      .from('whatsapp_sessions' as any)
+      .select('id, phone, direction, template_name, status, created_at, metadata')
+      .eq('tenant_id', tenantId)
+      .order('created_at', { ascending: false })
+      .limit(100) as any);
+
+    // Transform into human-readable descriptions
+    rows = (logs ?? []).map((log: any) => ({
+      id: log.id,
+      phone: formatPhoneDisplay(log.phone),
+      direction: log.direction,
+      template_name: log.template_name,
+      status: log.status,
+      created_at: log.created_at,
+      description: getDescription(log),
+    }));
+  } catch (err) {
+    console.error('[AutomationLogs] Error fetching logs:', err);
+  }
 
   return <AutomationLogsClient logs={rows} />;
 }
