@@ -68,7 +68,7 @@ export async function POST(request: NextRequest) {
             type: 'template',
             template: {
               name: 'otp_verification',
-              language: { code: 'en' },
+              language: { code: 'en_US' },
               components: [
                 {
                   type: 'body',
