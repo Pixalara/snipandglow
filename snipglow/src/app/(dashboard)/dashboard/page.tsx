@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatINR } from '@/lib/utils';
+import { getDailyQuote } from '@/lib/daily-quote';
 import {
   Calendar,
   Users,
@@ -54,6 +55,9 @@ export default async function DashboardPage() {
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
+  // Get daily motivational quote (changes every day)
+  const dailyQuote = getDailyQuote();
+
   return (
     <div className="space-y-8">
       {/* Hero Welcome Section */}
@@ -71,9 +75,9 @@ export default async function DashboardPage() {
           </div>
           <div className="hidden md:block max-w-xs text-right">
             <p className="text-white/90 text-sm italic leading-relaxed">
-              &ldquo;Your most unhappy customers are your greatest source of learning.&rdquo;
+              &ldquo;{dailyQuote.text}&rdquo;
             </p>
-            <p className="text-white/60 text-xs mt-2">— Bill Gates</p>
+            <p className="text-white/60 text-xs mt-2">— {dailyQuote.author}</p>
           </div>
         </div>
       </div>

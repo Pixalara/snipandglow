@@ -97,6 +97,48 @@ export async function updateCustomer(id: string, input: UpdateCustomerInput): Pr
 }
 
 /**
+ * Delete a customer (soft delete by checking dependencies first).
+ * If the customer has appointments or invoices, deletion is blocked.
+ */
+export async function deleteCustomer(id: string): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  // Check for dependencies
+  const [apptRes, invRes] = await Promise.all([
+    supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('customer_id', id),
+    supabase.from('invoices').select('id', { count: 'exact', head: true }).eq('customer_id', id),
+  ]);
+
+  const apptCount = apptRes.count ?? 0;
+  const invCount = invRes.count ?? 0;
+
+  if (apptCount > 0 || invCount > 0) {
+    return {
+      success: false,
+      error: `Cannot delete customer. They have ${apptCount} appointment(s) and ${invCount} invoice(s). Delete those first or contact support.`,
+    };
+  }
+
+  // Delete customer memberships first (CASCADE may not be set)
+  await supabase.from('customer_memberships').delete().eq('customer_id', id);
+
+  const { error } = await supabase
+    .from('customers')
+    .delete()
+    .eq('id', id);
+
+  if (error) {
+    return { success: false, error: 'Failed to delete customer. Please try again.' };
+  }
+
+  revalidatePath('/dashboard/customers');
+  return { success: true, data: undefined };
+}
+
+/**
  * Search customers by name or phone.
  * Returns up to 10 results for autocomplete/search.
  */

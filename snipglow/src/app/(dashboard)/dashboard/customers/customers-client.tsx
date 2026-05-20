@@ -10,6 +10,7 @@ import {
   Crown,
   UserPlus,
   Pencil,
+  Trash2,
   X,
   CheckCircle2,
   AlertTriangle,
@@ -17,7 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership } from './actions';
+import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership, deleteCustomer } from './actions';
 import type { Customer, Membership } from '@/types';
 
 /** Customer row with optional active membership info (serialized-safe) */
@@ -31,6 +32,7 @@ interface CustomersTableProps {
 
 export function CustomersTable({ customers }: CustomersTableProps) {
   const [editingCustomer, setEditingCustomer] = useState<CustomerRow | null>(null);
+  const [deletingCustomer, setDeletingCustomer] = useState<CustomerRow | null>(null);
 
   const columns: Column<CustomerRow>[] = [
     {
@@ -95,13 +97,22 @@ export function CustomersTable({ customers }: CustomersTableProps) {
       key: 'actions',
       header: 'Actions',
       render: (row) => (
-        <button
-          onClick={() => setEditingCustomer(row)}
-          className="inline-flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title="Edit customer"
-        >
-          <Pencil className="size-4" />
-        </button>
+        <div className="flex items-center gap-1">
+          <button
+            onClick={() => setEditingCustomer(row)}
+            className="inline-flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Edit customer"
+          >
+            <Pencil className="size-4" />
+          </button>
+          <button
+            onClick={() => setDeletingCustomer(row)}
+            className="inline-flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
+            title="Delete customer"
+          >
+            <Trash2 className="size-4" />
+          </button>
+        </div>
       ),
     },
   ];
@@ -142,6 +153,14 @@ export function CustomersTable({ customers }: CustomersTableProps) {
         <EditCustomerModal
           customer={editingCustomer}
           onClose={() => setEditingCustomer(null)}
+        />
+      )}
+
+      {/* Delete Customer Modal */}
+      {deletingCustomer && (
+        <DeleteCustomerModal
+          customer={deletingCustomer}
+          onClose={() => setDeletingCustomer(null)}
         />
       )}
     </>
@@ -435,6 +454,76 @@ function EditCustomerModal({
           <Button className="rounded-xl flex-1 sm:flex-none" onClick={handleSave} disabled={isPending}>
             {isPending ? 'Saving...' : 'Save Changes'}
           </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Delete Customer Modal
+// =============================================================================
+
+function DeleteCustomerModal({
+  customer,
+  onClose,
+}: {
+  customer: CustomerRow;
+  onClose: () => void;
+}) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [error, setError] = useState('');
+
+  function handleDelete() {
+    setError('');
+    startTransition(async () => {
+      const result = await deleteCustomer(customer.id);
+      if (result.success) {
+        onClose();
+        router.refresh();
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+        <div className="p-6 space-y-5">
+          <div className="flex flex-col items-center text-center gap-3">
+            <div className="flex size-12 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/20">
+              <Trash2 className="size-6 text-red-600 dark:text-red-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-foreground">Delete Customer?</h2>
+              <p className="text-sm text-muted-foreground mt-1">
+                Are you sure you want to delete <span className="font-medium text-foreground">{customer.name}</span>? This action cannot be undone.
+              </p>
+            </div>
+          </div>
+
+          {error && (
+            <div className="flex items-start gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+              <AlertTriangle className="size-4 text-red-600 shrink-0 mt-0.5" />
+              <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+            </div>
+          )}
+
+          <div className="flex items-center gap-2">
+            <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose} disabled={isPending}>
+              Cancel
+            </Button>
+            <Button
+              className="flex-1 rounded-xl bg-red-600 hover:bg-red-700 text-white"
+              onClick={handleDelete}
+              disabled={isPending}
+            >
+              {isPending ? 'Deleting...' : 'Delete'}
+            </Button>
+          </div>
         </div>
       </div>
     </div>
