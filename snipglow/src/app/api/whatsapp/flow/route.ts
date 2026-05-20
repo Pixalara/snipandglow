@@ -12,6 +12,13 @@ import crypto from 'crypto';
 const PRIVATE_KEY = process.env.WHATSAPP_FLOW_PRIVATE_KEY || '';
 
 /**
+ * GET /api/whatsapp/flow — Health check fallback
+ */
+export async function GET() {
+  return NextResponse.json({ status: 'ok' }, { status: 200 });
+}
+
+/**
  * POST /api/whatsapp/flow
  * Receives encrypted flow data from Meta, decrypts, processes, returns encrypted response.
  */
