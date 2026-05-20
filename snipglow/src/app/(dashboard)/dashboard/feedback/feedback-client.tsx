@@ -183,9 +183,9 @@ export function FeedbackClient({ feedbackRecords, role }: FeedbackClientProps) {
             <div className="flex size-16 items-center justify-center rounded-2xl bg-gradient-to-br from-amber-100 to-orange-100 dark:from-amber-900/30 dark:to-orange-900/30 mb-5">
               <Sparkles className="size-7 text-amber-600 dark:text-amber-400" />
             </div>
-            <h3 className="text-lg font-bold text-foreground mb-2">Feedback Coming Soon</h3>
+            <h3 className="text-lg font-bold text-foreground mb-2">No Feedback Yet</h3>
             <p className="text-sm text-muted-foreground mb-6 leading-relaxed">
-              Once WhatsApp Business API is connected, your customers will automatically receive a feedback request after every appointment. Their ratings and comments will appear here.
+              When you complete a bill, customers automatically receive a feedback request on WhatsApp. Their ratings will appear here.
             </p>
 
             {/* How it works */}

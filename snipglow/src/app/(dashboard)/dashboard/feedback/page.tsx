@@ -19,13 +19,12 @@ export default async function FeedbackPage() {
   const admin = createAdminClient();
 
   // Fetch feedback records (only needed columns)
-  const { data: feedbackRecords } = await admin
+  const { data: feedbackRecords } = await (admin
     .from('feedback' as any)
     .select('id, customer_name, customer_phone, rating, comment, source, created_at')
     .eq('tenant_id', tenantId)
-    .eq('branch_id', branchId)
     .order('created_at', { ascending: false })
-    .limit(100);
+    .limit(100) as any);
 
   const rows: FeedbackRow[] = (feedbackRecords ?? []).map((rec: any) => ({
     id: rec.id,
