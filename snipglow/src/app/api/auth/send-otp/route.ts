@@ -72,7 +72,10 @@ export async function POST(request: NextRequest) {
               components: [
                 {
                   type: 'body',
-                  parameters: [{ type: 'text', text: otp }],
+                  parameters: [
+                    { type: 'text', text: otp },
+                    { type: 'text', text: 'Login' },
+                  ],
                 },
                 {
                   type: 'button',
