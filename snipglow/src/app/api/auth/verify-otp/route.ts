@@ -81,11 +81,12 @@ export async function POST(request: NextRequest) {
 
     if (existingUser) {
       // User exists — generate a magic link for sign-in
+      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com';
       const { data: signInData, error: signInError } = await admin.auth.admin.generateLink({
         type: 'magiclink',
         email: existingUser.email || `${phoneNormalized}@phone.snipandglow.com`,
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com'}/api/auth/callback`,
+          redirectTo: `${siteUrl}/dashboard`,
         },
       });
 
@@ -94,11 +95,17 @@ export async function POST(request: NextRequest) {
         return NextResponse.json({ error: 'Sign-in failed. Please try again.' }, { status: 500 });
       }
 
-      // Return the action_link for client to navigate to
+      // Extract token_hash and type from the action_link for PKCE flow
+      const actionUrl = new URL(signInData.properties?.action_link || '');
+      const tokenHash = actionUrl.searchParams.get('token_hash') || signInData.properties?.hashed_token;
+      const type = actionUrl.searchParams.get('type') || 'magiclink';
+
       return NextResponse.json({
         success: true,
         action: 'sign_in',
-        action_link: signInData.properties?.action_link,
+        token_hash: tokenHash,
+        type,
+        email: existingUser.email || `${phoneNormalized}@phone.snipandglow.com`,
         redirect: existingUser.user_metadata?.tenant_id ? '/dashboard' : '/onboarding',
       });
     } else {
@@ -122,13 +129,17 @@ export async function POST(request: NextRequest) {
             type: 'magiclink',
             email: tempEmail,
             options: {
-              redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com'}/api/auth/callback`,
+              redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com'}/dashboard`,
             },
           });
+          const actionUrl3 = new URL(signInData?.properties?.action_link || 'https://x.com');
+          const tokenHash3 = actionUrl3.searchParams.get('token_hash') || signInData?.properties?.hashed_token;
           return NextResponse.json({
             success: true,
             action: 'sign_in',
-            action_link: signInData?.properties?.action_link,
+            token_hash: tokenHash3,
+            type: 'magiclink',
+            email: tempEmail,
             redirect: '/dashboard',
           });
         }
@@ -137,18 +148,24 @@ export async function POST(request: NextRequest) {
       }
 
       // Generate sign-in link
+      const siteUrl2 = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com';
       const { data: signInData } = await admin.auth.admin.generateLink({
         type: 'magiclink',
         email: tempEmail,
         options: {
-          redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com'}/api/auth/callback`,
+          redirectTo: `${siteUrl2}/onboarding`,
         },
       });
+
+      const actionUrl2 = new URL(signInData?.properties?.action_link || 'https://x.com');
+      const tokenHash2 = actionUrl2.searchParams.get('token_hash') || signInData?.properties?.hashed_token;
 
       return NextResponse.json({
         success: true,
         action: 'sign_up',
-        action_link: signInData?.properties?.action_link,
+        token_hash: tokenHash2,
+        type: 'magiclink',
+        email: tempEmail,
         redirect: '/onboarding',
       });
     }

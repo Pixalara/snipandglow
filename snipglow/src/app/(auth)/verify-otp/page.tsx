@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import { createClient } from '@/lib/supabase/client';
 import { MessageCircle } from 'lucide-react';
 
 const OTP_EXPIRY_SECONDS = 5 * 60; // 5 minutes
@@ -105,9 +106,23 @@ function VerifyOtpContent() {
         return;
       }
 
-      // Redirect to the magic link which will sign the user in
-      if (data.action_link) {
-        window.location.href = data.action_link;
+      // Use token_hash to verify and create session
+      if (data.token_hash && data.email) {
+        const supabase = createClient();
+        const { error: verifyError } = await supabase.auth.verifyOtp({
+          token_hash: data.token_hash,
+          type: data.type || 'magiclink',
+        });
+
+        if (verifyError) {
+          console.error('Verify error:', verifyError);
+          setError('Sign-in failed. Please try again.');
+          setLoading(false);
+          return;
+        }
+
+        // Session is set — redirect
+        window.location.href = data.redirect || '/dashboard';
       } else {
         router.push(data.redirect || '/dashboard');
       }
