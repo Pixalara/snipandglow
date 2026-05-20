@@ -286,6 +286,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
                     dates,
                     time_slots: timeSlots,
                   },
+                  flow_token: JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName }),
                 },
               },
             },

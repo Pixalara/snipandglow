@@ -38,7 +38,7 @@ export async function POST(request: NextRequest) {
     const { encrypted_aes_key, encrypted_flow_data, initial_vector } = body;
 
     if (!encrypted_aes_key || !encrypted_flow_data || !initial_vector) {
-      return NextResponse.json({ version: '4.0', screen: 'BOOKING_SCREEN', data: {} });
+      return NextResponse.json({ version: '3.0', screen: 'BOOKING_SCREEN', data: {} });
     }
 
     // Decrypt AES key using our RSA private key
@@ -88,7 +88,7 @@ export async function POST(request: NextRequest) {
     console.log('[Flow] Action:', action, 'Screen:', flowData.screen);
 
     if (action === 'ping' || action === 'PING') {
-      responsePayload = { version: '4.0', data: { status: 'active' } };
+      responsePayload = { version: '3.0', data: { status: 'active' } };
     } else if (action === 'INIT' || action === 'init' || !action) {
       responsePayload = await handleFlowInit(flowData.data || flowData.flow_action_payload?.data || {});
     } else if (action === 'data_exchange' || action === 'DATA_EXCHANGE') {
@@ -168,7 +168,7 @@ async function handleFlowInit(data: any) {
   }
 
   return {
-    version: '4.0',
+    version: '3.0',
     screen: 'BOOKING_SCREEN',
     data: {
       services: (services && services.length > 0) ? services.map((s: any) => ({
@@ -185,17 +185,30 @@ async function handleDataExchange(screen: string, data: any, flowToken: string) 
   if (screen === 'BOOKING_SCREEN') {
     return await processBooking(data, flowToken);
   }
-  return { version: '4.0', screen: 'BOOKING_SCREEN', data: {} };
+  return { version: '3.0', screen: 'BOOKING_SCREEN', data: {} };
 }
 
 async function processBooking(data: any, flowToken: string) {
   const { service_id, date, time_slot, customer_name, customer_phone } = data;
 
-  console.log('[Flow Booking] Data received:', JSON.stringify(data));
+  console.log('[Flow Booking] Full data:', JSON.stringify(data));
+  console.log('[Flow Booking] Flow token:', flowToken);
+
+  // Parse flow_token to get customer phone and tenant info
+  let tokenData: any = {};
+  try {
+    tokenData = JSON.parse(flowToken);
+  } catch {
+    // flow_token might not be JSON
+  }
+  const customerPhone = tokenData.phone || customer_phone || '';
+  const tokenTenantId = tokenData.tenant_id || '';
+  const tokenBranchId = tokenData.branch_id || '';
+  const salonName = tokenData.salon_name || '';
 
   if (!service_id || !date || !time_slot) {
     return {
-      version: '4.0',
+      version: '3.0',
       screen: 'BOOKING_SCREEN',
       data: { error_message: 'Please fill all fields.' },
     };
@@ -210,7 +223,7 @@ async function processBooking(data: any, flowToken: string) {
     .single();
 
   if (!service) {
-    return { version: '4.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Service not found.' } };
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Service not found.' } };
   }
 
   // Calculate end time
@@ -218,21 +231,20 @@ async function processBooking(data: any, flowToken: string) {
   const totalMin = startH * 60 + startM + service.duration_minutes;
   const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
 
-  // Create customer using the name from the form
-  // Phone might not be available in flow submission — use name to find or create
+  // Create customer using phone from flow_token
   const customerName = customer_name || 'WhatsApp Customer';
   let customerId: string | null = null;
+  const phoneE164 = customerPhone ? (customerPhone.startsWith('+') ? customerPhone : `+${customerPhone}`) : '';
 
-  // Try to find by phone first (if available)
-  if (customer_phone) {
-    const phoneE164 = customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`;
+  // Try to find by phone first
+  if (phoneE164) {
     const { data: existing } = await (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', service.tenant_id).single() as any);
     if (existing) {
       customerId = existing.id;
     }
   }
 
-  // If not found by phone, try by name
+  // If not found, try by name
   if (!customerId && customerName !== 'WhatsApp Customer') {
     const { data: byName } = await (admin.from('customers').select('id').eq('name', customerName).eq('tenant_id', service.tenant_id).limit(1).single() as any);
     if (byName) {
@@ -240,20 +252,19 @@ async function processBooking(data: any, flowToken: string) {
     }
   }
 
-  // If still not found, create new customer
+  // Create new customer if not found
   if (!customerId) {
-    const phoneE164 = customer_phone ? (customer_phone.startsWith('+') ? customer_phone : `+${customer_phone}`) : `+910000000000`;
     const { data: newCust } = await (admin.from('customers').insert({
       tenant_id: service.tenant_id,
       branch_id: service.branch_id,
       name: customerName,
-      phone: phoneE164,
+      phone: phoneE164 || '+910000000000',
     } as any).select('id').single() as any);
     customerId = newCust?.id ?? null;
   }
 
   if (!customerId) {
-    return { version: '4.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not create booking. Please try again.' } };
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not create booking. Please try again.' } };
   }
 
   // Get first available employee
@@ -275,7 +286,7 @@ async function processBooking(data: any, flowToken: string) {
   } as any).select('id').single() as any);
 
   if (apptError) {
-    return { version: '4.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Slot may be taken. Try another time.' } };
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Slot may be taken. Try another time.' } };
   }
 
   // Send confirmation
@@ -292,7 +303,7 @@ async function processBooking(data: any, flowToken: string) {
   }
 
   return {
-    version: '4.0',
+    version: '3.0',
     screen: 'SUCCESS',
     data: {
       extension_message_response: {
