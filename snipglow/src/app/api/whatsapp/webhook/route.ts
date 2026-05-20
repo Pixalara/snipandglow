@@ -494,6 +494,60 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       break;
     }
 
+    case 'feedback_5': {
+      // Save 5-star feedback
+      await (admin.from('feedback' as any).insert({
+        tenant_id: tenant.tenantId,
+        branch_id: tenant.branchId,
+        customer_phone: phone,
+        customer_name: name,
+        rating: 5,
+        source: 'whatsapp',
+      } as any) as any);
+
+      await sendMessage(tenant.credentials, phone, {
+        type: 'text',
+        text: { body: `🎉 Thank you so much for the 5-star rating! We're thrilled you loved your experience at *${tenant.salonName}*.\n\nWe look forward to seeing you again! 💇` },
+      });
+      break;
+    }
+
+    case 'feedback_3': {
+      // Save 3-star feedback
+      await (admin.from('feedback' as any).insert({
+        tenant_id: tenant.tenantId,
+        branch_id: tenant.branchId,
+        customer_phone: phone,
+        customer_name: name,
+        rating: 3,
+        source: 'whatsapp',
+      } as any) as any);
+
+      await sendMessage(tenant.credentials, phone, {
+        type: 'text',
+        text: { body: `Thank you for your feedback! We appreciate your honesty and will work to improve your experience at *${tenant.salonName}*.\n\nSee you next time! 🙏` },
+      });
+      break;
+    }
+
+    case 'feedback_1': {
+      // Save 1-star feedback
+      await (admin.from('feedback' as any).insert({
+        tenant_id: tenant.tenantId,
+        branch_id: tenant.branchId,
+        customer_phone: phone,
+        customer_name: name,
+        rating: 1,
+        source: 'whatsapp',
+      } as any) as any);
+
+      await sendMessage(tenant.credentials, phone, {
+        type: 'text',
+        text: { body: `We're sorry to hear that, ${name}. Your feedback is important to us and we'll do our best to improve.\n\nIf you'd like to share more details, just type your message here. Our team at *${tenant.salonName}* will look into it. 🙏` },
+      });
+      break;
+    }
+
     default: {
       // Handle confirm_cancel_<appointmentId> — customer confirms cancellation
       if (buttonId.startsWith('confirm_cancel_')) {
