@@ -1,4 +1,4 @@
-﻿import { NextRequest, NextResponse } from 'next/server';
+import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import crypto from 'crypto';
@@ -291,14 +291,23 @@ async function processBooking(data: any, flowToken: string) {
 
   // Send confirmation
   const credentials = getPlatformCredentials();
-  if (credentials && customer_phone) {
+  if (credentials && (customerPhone || customer_phone)) {
     const { sendMessage } = await import('@/lib/whatsapp/templates');
     const dateLabel = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(time_slot);
 
-    await sendMessage(credentials, customer_phone, {
-      type: 'text',
-      text: { body: `âœ… *Booking Confirmed!*\n\nðŸ‘¤ ${customer_name || 'Customer'}\nâœ‚ï¸ ${service.name}\nðŸ“… ${dateLabel}, ${timeLabel}\n\nSee you soon! ðŸ˜Š` },
+    await sendMessage(credentials, customerPhone || customer_phone, {
+      type: 'interactive',
+      interactive: {
+        type: 'button',
+        body: { text: 'Booking Confirmed!\n\nName: ' + customerName + '\nService: ' + service.name + '\nDate: ' + dateLabel + ', ' + timeLabel + '\n\nSee you soon!' },
+        action: {
+          buttons: [
+            { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
+            { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
+          ],
+        },
+      },
     });
   }
 
