@@ -1,8 +1,11 @@
 'use server';
 
 import { createClient } from '@/lib/supabase/server';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { calculateInvoiceTotal } from '@/lib/utils';
+import { getPlatformCredentials } from '@/lib/whatsapp/config';
+import { sendMessage } from '@/lib/whatsapp/templates';
 import type {
   ActionResult,
   Invoice,
@@ -141,6 +144,19 @@ export async function createInvoice(
     return { success: true, data: invoice as Invoice };
   }
 
+  // Send bill receipt to customer via WhatsApp
+  await sendBillReceiptWhatsApp(
+    tenantId,
+    input.customer_id,
+    input.items,
+    invoice.invoice_number,
+    totals.subtotal,
+    discountPct,
+    totals.discountAmount,
+    totals.total,
+    input.payment_method
+  );
+
   revalidatePath('/dashboard/billing');
   return { success: true, data: invoice as Invoice };
 }
@@ -223,4 +239,68 @@ export async function getTenantGstSettings(): Promise<{ gst_enabled: boolean; gs
     discount_enabled: (settings.discount_enabled as boolean) ?? false,
     discount_value: (settings.discount_value as number) ?? 0,
   };
+}
+
+// =============================================================================
+// WhatsApp Bill Receipt Notification
+// =============================================================================
+
+/**
+ * Send bill receipt to customer via WhatsApp after creating an invoice.
+ */
+async function sendBillReceiptWhatsApp(
+  tenantId: string,
+  customerId: string,
+  items: { service_name: string; unit_price: number; quantity: number }[],
+  invoiceNumber: string,
+  subtotal: number,
+  discountPct: number,
+  discountAmount: number,
+  total: number,
+  paymentMethod: string
+) {
+  try {
+    const admin = createAdminClient();
+    const credentials = getPlatformCredentials();
+    if (!credentials) return;
+
+    // Get customer phone and name
+    const { data: customer } = await admin
+      .from('customers')
+      .select('name, phone')
+      .eq('id', customerId)
+      .single();
+
+    if (!customer?.phone) return;
+
+    // Get salon name
+    const { data: tenant } = await admin.from('tenants').select('name').eq('id', tenantId).single();
+    const salonName = tenant?.name || 'the salon';
+
+    // Build service list
+    const serviceLines = items.map((s) => `  • ${s.service_name} — ₹${s.unit_price.toLocaleString('en-IN')}${s.quantity > 1 ? ` x${s.quantity}` : ''}`).join('\n');
+
+    // Build bill message
+    let billText = `🧾 *Bill Receipt*\n\n`;
+    billText += `Hi ${customer.name}, thank you for visiting *${salonName}*! Here's your bill:\n\n`;
+    billText += `📋 *Invoice:* ${invoiceNumber}\n\n`;
+    billText += `*Services:*\n${serviceLines}\n\n`;
+    billText += `━━━━━━━━━━━━━━━\n`;
+    if (discountPct > 0) {
+      billText += `Subtotal: ₹${subtotal.toLocaleString('en-IN')}\n`;
+      billText += `Discount (${discountPct}%): -₹${discountAmount.toLocaleString('en-IN')}\n`;
+    }
+    billText += `*Total: ₹${total.toLocaleString('en-IN')}*\n`;
+    billText += `Payment: ${paymentMethod.toUpperCase()}\n`;
+    billText += `━━━━━━━━━━━━━━━\n\n`;
+    billText += `Thank you for choosing us! We look forward to seeing you again. 😊`;
+
+    const phone = customer.phone.replace(/\D/g, '');
+    await sendMessage(credentials, phone, {
+      type: 'text',
+      text: { body: billText },
+    });
+  } catch (err) {
+    console.error('[Billing] Failed to send bill receipt via WhatsApp:', err);
+  }
 }
