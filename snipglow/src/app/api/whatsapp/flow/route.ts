@@ -320,6 +320,24 @@ async function processBooking(data: any, flowToken: string) {
         },
       },
     });
+
+    // Send notification to salon owner
+    const { data: tenant } = await admin
+      .from('tenants')
+      .select('phone')
+      .eq('id', primaryService.tenant_id)
+      .single();
+
+    if (tenant?.phone && credentials) {
+      const ownerPhone = tenant.phone.replace(/\D/g, '');
+      const dateLabel2 = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const timeLabel2 = formatTime12h(time_slot);
+
+      await sendMessage(credentials, ownerPhone, {
+        type: 'text',
+        text: { body: 'New Booking Alert!\n\nCustomer: ' + customerName + '\nPhone: +' + (customerPhone || customer_phone) + '\nServices: ' + serviceNames + '\nDate: ' + dateLabel2 + '\nTime: ' + timeLabel2 + '\n\nCheck your SnipandGlow dashboard for details.' },
+      });
+    }
   }
 
   return {
