@@ -75,7 +75,7 @@ export async function POST(request: NextRequest) {
     }
 
     const flowData = JSON.parse(decryptedData);
-    console.log('[Flow] Received:', JSON.stringify(flowData));
+    console.log('[Flow] Decrypted payload:', JSON.stringify(flowData).substring(0, 500));
 
     // Process the flow request
     let responsePayload: any;
@@ -84,17 +84,16 @@ export async function POST(request: NextRequest) {
     console.log('[Flow] Action:', action, 'Screen:', flowData.screen);
 
     if (action === 'ping' || action === 'PING') {
-      // Health check
       responsePayload = { version: '3.0', data: { status: 'active' } };
     } else if (action === 'INIT' || action === 'init' || !action) {
-      // Initial load — return services, dates, time slots
       responsePayload = await handleFlowInit(flowData.data || flowData.flow_action_payload?.data || {});
     } else if (action === 'data_exchange' || action === 'DATA_EXCHANGE') {
       responsePayload = await handleDataExchange(flowData.screen, flowData.data, flowData.flow_token);
     } else {
-      // Default: treat as INIT
       responsePayload = await handleFlowInit(flowData.data || {});
     }
+
+    console.log('[Flow] Response:', JSON.stringify(responsePayload).substring(0, 300));
 
     // Encrypt the response
     const responseJson = JSON.stringify(responsePayload);
