@@ -80,14 +80,19 @@ export async function POST(request: NextRequest) {
     // Process the flow request
     let responsePayload: any;
 
-    if (flowData.action === 'ping') {
+    const action = flowData.action || flowData.type || '';
+    console.log('[Flow] Action:', action, 'Screen:', flowData.screen);
+
+    if (action === 'ping' || action === 'PING') {
       // Health check
       responsePayload = { version: '3.0', data: { status: 'active' } };
-    } else if (flowData.action === 'INIT') {
-      responsePayload = await handleFlowInit(flowData.data || {});
-    } else if (flowData.action === 'data_exchange') {
+    } else if (action === 'INIT' || action === 'init' || !action) {
+      // Initial load — return services, dates, time slots
+      responsePayload = await handleFlowInit(flowData.data || flowData.flow_action_payload?.data || {});
+    } else if (action === 'data_exchange' || action === 'DATA_EXCHANGE') {
       responsePayload = await handleDataExchange(flowData.screen, flowData.data, flowData.flow_token);
     } else {
+      // Default: treat as INIT
       responsePayload = await handleFlowInit(flowData.data || {});
     }
 
@@ -122,7 +127,7 @@ async function handleFlowInit(data: any) {
   const tenantId = data?.tenant_id;
   const branchId = data?.branch_id;
 
-  // Fetch active services
+  // Fetch active services — if no tenant specified, get all (for shared mode)
   let serviceQuery = admin
     .from('services')
     .select('id, name, price, duration_minutes')
@@ -133,7 +138,9 @@ async function handleFlowInit(data: any) {
   if (tenantId) serviceQuery = serviceQuery.eq('tenant_id', tenantId);
   if (branchId) serviceQuery = serviceQuery.eq('branch_id', branchId);
 
-  const { data: services } = await serviceQuery;
+  const { data: services, error: svcError } = await serviceQuery;
+  
+  console.log('[Flow INIT] tenant_id:', tenantId, 'services found:', services?.length, 'error:', svcError);
 
   // Generate next 14 days
   const dates: Array<{ id: string; title: string }> = [];
