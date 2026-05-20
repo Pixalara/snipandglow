@@ -116,6 +116,32 @@ export async function completeOnboarding(data: {
       // Non-fatal: tenant is created, user can still proceed
     }
 
+    // Auto-create WhatsApp booking settings (shared mode)
+    // Slug format: sng001_salon_name (generated from tenant_code + name)
+    try {
+      const { data: tenantWithCode } = await (admin
+        .from('tenants')
+        .select('tenant_code')
+        .eq('id', tenant.id)
+        .single() as any);
+
+      if (tenantWithCode?.tenant_code) {
+        const slug = (tenantWithCode.tenant_code.replace('-', '') + '_' + data.salonName)
+          .toLowerCase()
+          .replace(/[^a-z0-9]+/g, '_')
+          .replace(/_+$/, '');
+
+        await (admin.from('tenant_whatsapp_settings' as any).insert({
+          tenant_id: tenant.id,
+          mode: 'shared',
+          booking_slug: slug,
+        } as any) as any);
+      }
+    } catch (err) {
+      console.error('Failed to create WhatsApp settings:', err);
+      // Non-fatal
+    }
+
     return { success: true, data: { tenantId: tenant.id, branchId: branch.id } };
   } catch (err) {
     return { success: false, error: 'An unexpected error occurred during onboarding' };
