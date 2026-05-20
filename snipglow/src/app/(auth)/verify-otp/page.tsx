@@ -2,35 +2,25 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
-import { Button } from '@/components/ui/button';
-import { Input } from '@/components/ui/input';
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card';
+import { createClient } from '@/lib/supabase/client';
+import { MessageCircle } from 'lucide-react';
 
 const OTP_EXPIRY_SECONDS = 5 * 60; // 5 minutes
 
 function maskPhone(phone: string): string {
-  // Mask middle digits: +91 98***43210
   if (phone.length < 10) return phone;
-  const cleaned = phone.replace(/^\+91\s?/, '');
-  if (cleaned.length !== 10) return phone;
-  return `+91 ${cleaned.slice(0, 2)}***${cleaned.slice(5)}`;
+  const cleaned = phone.replace(/^91/, '');
+  if (cleaned.length !== 10) return `+${phone}`;
+  return `+91 ${cleaned.slice(0, 2)}****${cleaned.slice(6)}`;
 }
 
 export default function VerifyOtpPage() {
   return (
     <Suspense
       fallback={
-        <Card>
-          <CardContent className="py-8 text-center">
-            <p className="text-muted-foreground">Loading...</p>
-          </CardContent>
-        </Card>
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8 text-center">
+          <p className="text-slate-500">Loading...</p>
+        </div>
       }
     >
       <VerifyOtpContent />
@@ -70,22 +60,18 @@ function VerifyOtpContent() {
     setError(null);
 
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/send-whatsapp-otp`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone }),
-        }
-      );
+      const res = await fetch('/api/auth/send-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone }),
+      });
 
-      if (!response.ok) {
-        const data = await response.json();
+      if (!res.ok) {
+        const data = await res.json();
         setError(data.error || 'Failed to resend OTP.');
         return;
       }
 
-      // Reset timer
       setSecondsLeft(OTP_EXPIRY_SECONDS);
       setOtp('');
     } catch {
@@ -106,74 +92,86 @@ function VerifyOtpContent() {
 
     setLoading(true);
     try {
-      const response = await fetch(
-        `${process.env.NEXT_PUBLIC_SUPABASE_URL}/functions/v1/verify-whatsapp-otp`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ phone, code: otp }),
-        }
-      );
+      const res = await fetch('/api/auth/verify-otp', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone, code: otp }),
+      });
 
-      const data = await response.json();
+      const data = await res.json();
 
-      if (!response.ok) {
-        setError(data.error || 'Invalid or expired OTP. Please try again.');
+      if (!res.ok) {
+        setError(data.error || 'Invalid or expired OTP.');
+        setLoading(false);
         return;
       }
 
-      // On success, redirect based on whether user has a tenant
-      if (data.tenant_id) {
-        router.push('/');
-      } else {
-        router.push('/onboarding');
+      // Sign in using the token from verify-otp
+      if (data.token && data.email) {
+        const supabase = createClient();
+        const { error: authError } = await supabase.auth.verifyOtp({
+          email: data.email,
+          token: data.token,
+          type: 'email',
+        });
+
+        if (authError) {
+          // Try magic link approach
+          const { error: magicError } = await supabase.auth.verifyOtp({
+            email: data.email,
+            token: data.token,
+            type: 'magiclink',
+          });
+          if (magicError) {
+            setError('Sign-in failed. Please try again.');
+            setLoading(false);
+            return;
+          }
+        }
       }
+
+      // Redirect based on response
+      router.push(data.redirect || '/dashboard');
     } catch {
-      setError('Network error. Please check your connection and try again.');
-    } finally {
+      setError('Network error. Please try again.');
       setLoading(false);
     }
   }
 
-  // Redirect back to login if no phone provided
   if (!phone) {
     return (
-      <Card>
-        <CardContent className="py-8 text-center">
-          <p className="text-muted-foreground">No phone number provided.</p>
-          <Button
-            variant="link"
-            className="mt-2"
-            onClick={() => router.push('/login')}
-          >
-            Go back to login
-          </Button>
-        </CardContent>
-      </Card>
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl p-8 text-center space-y-4">
+        <p className="text-slate-500">No phone number provided.</p>
+        <button
+          onClick={() => router.push('/login')}
+          className="text-sm text-emerald-600 hover:underline font-medium"
+        >
+          Go back to login
+        </button>
+      </div>
     );
   }
 
   return (
-    <Card>
-      <CardHeader className="text-center">
-        <CardTitle className="text-xl">Verify your phone</CardTitle>
-        <CardDescription>
-          Enter the 6-digit code sent to your WhatsApp
-        </CardDescription>
-        <p className="mt-1 text-sm font-medium text-foreground">
-          {maskPhone(phone)}
-        </p>
-      </CardHeader>
-      <CardContent className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
+      <div className="text-center space-y-2">
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-green-100 border border-emerald-200 mx-auto mb-2">
+          <MessageCircle className="h-6 w-6 text-emerald-600" />
+        </div>
+        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Verify your phone</h1>
+        <p className="text-sm text-slate-500">Enter the 6-digit code sent to your WhatsApp</p>
+        <p className="text-sm font-medium text-slate-700">{maskPhone(phone)}</p>
+      </div>
+
+      {/* Card */}
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-100/50 p-6 sm:p-8 space-y-6">
         <form onSubmit={handleVerifyOtp} className="space-y-4">
           <div className="space-y-2">
-            <label
-              htmlFor="otp"
-              className="text-sm font-medium leading-none"
-            >
+            <label htmlFor="otp" className="text-sm font-medium text-slate-700">
               Verification code
             </label>
-            <Input
+            <input
               id="otp"
               type="text"
               inputMode="numeric"
@@ -181,65 +179,56 @@ function VerifyOtpContent() {
               maxLength={6}
               placeholder="000000"
               value={otp}
-              onChange={(e) => {
-                const value = e.target.value.replace(/\D/g, '').slice(0, 6);
-                setOtp(value);
-              }}
+              onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
               disabled={loading}
-              className="text-center text-lg tracking-[0.5em]"
+              className="w-full h-12 rounded-xl border border-slate-200 bg-white px-4 text-center text-xl tracking-[0.5em] font-mono text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
               autoComplete="one-time-code"
-              aria-describedby={error ? 'otp-error' : 'otp-timer'}
+              autoFocus
             />
           </div>
 
-          <Button
+          <button
             type="submit"
-            size="lg"
-            className="w-full"
             disabled={loading || otp.length !== 6}
+            className="w-full flex items-center justify-center gap-2 min-h-[48px] h-12 rounded-xl bg-emerald-600 text-white font-medium text-sm hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
           >
-            {loading ? 'Verifying...' : 'Verify'}
-          </Button>
+            {loading ? 'Verifying...' : 'Verify & Sign In'}
+          </button>
         </form>
 
         {/* Timer and resend */}
-        <div id="otp-timer" className="text-center text-sm text-muted-foreground">
+        <div className="text-center text-sm text-slate-500">
           {secondsLeft > 0 ? (
-            <p>Code expires in {formatTime(secondsLeft)}</p>
+            <p>Code expires in <span className="font-medium text-slate-700">{formatTime(secondsLeft)}</span></p>
           ) : (
             <button
               type="button"
               onClick={handleResendOtp}
               disabled={resending}
-              className="font-medium text-primary hover:underline disabled:opacity-50"
+              className="font-medium text-emerald-600 hover:underline disabled:opacity-50"
             >
               {resending ? 'Resending...' : 'Resend OTP'}
             </button>
           )}
         </div>
 
-        {/* Error message */}
+        {/* Error */}
         {error && (
-          <p
-            id="otp-error"
-            className="text-center text-sm text-destructive"
-            role="alert"
-          >
-            {error}
-          </p>
+          <div className="bg-red-50 border border-red-100 rounded-xl px-4 py-3 text-center">
+            <p className="text-sm text-red-600">{error}</p>
+          </div>
         )}
 
-        {/* Back to login */}
+        {/* Back */}
         <div className="text-center">
-          <Button
-            variant="link"
-            className="text-sm text-muted-foreground"
+          <button
             onClick={() => router.push('/login')}
+            className="text-sm text-slate-500 hover:text-slate-700 transition-colors"
           >
             ← Back to login
-          </Button>
+          </button>
         </div>
-      </CardContent>
-    </Card>
+      </div>
+    </div>
   );
 }
