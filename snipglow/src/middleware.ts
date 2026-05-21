@@ -21,6 +21,7 @@ export async function middleware(request: NextRequest) {
   // If the request comes to admin subdomain and path doesn't start with /admin, rewrite it
   const isAdminSubdomain = host.startsWith('admin.');
   if (isAdminSubdomain && !pathname.startsWith('/admin') && !pathname.startsWith('/api/') && !pathname.startsWith('/_next/')) {
+    // Only rewrite non-admin paths (e.g., "/" → "/admin", "/tenants" → "/admin/tenants")
     const url = request.nextUrl.clone();
     url.pathname = '/admin' + (pathname === '/' ? '' : pathname);
     return NextResponse.rewrite(url);

@@ -7,8 +7,9 @@ import { BookingLandingClient } from './booking-landing-client';
 // Shown when customer scans QR code. Sets session cookie then opens WhatsApp.
 // =============================================================================
 
-export default async function BookingLandingPage({ params }: { params: { slug: string } }) {
-  const slug = params.slug.toLowerCase();
+export default async function BookingLandingPage({ params }: { params: Promise<{ slug: string }> }) {
+  const { slug: rawSlug } = await params;
+  const slug = rawSlug.toLowerCase();
   const admin = createAdminClient();
 
   // Look up tenant by tenant_code (e.g., SNG001 → SNG-001)

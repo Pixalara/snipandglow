@@ -7,10 +7,11 @@ import Link from 'next/link';
 // Admin — Tenant Detail Page
 // =============================================================================
 
-export default async function AdminTenantDetailPage({ params }: { params: { id: string } }) {
+export default async function AdminTenantDetailPage({ params }: { params: Promise<{ id: string }> }) {
   const user = await requireAdmin();
   const admin = createAdminClient();
-  const tenantId = params.id;
+  const { id } = await params;
+  const tenantId = id;
 
   // Fetch tenant
   const { data: tenant } = await (admin.from('tenants' as any).select('*').eq('id', tenantId).single() as any);
