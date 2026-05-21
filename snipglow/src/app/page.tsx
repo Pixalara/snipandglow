@@ -560,7 +560,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-10 sm:py-16 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
 
@@ -639,7 +639,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BUILD UNBREAKABLE LOYALTY ===== */}
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-10 sm:py-16 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
 
@@ -724,7 +724,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ANALYTICS & DASHBOARD ===== */}
-      <section className="py-16 sm:py-24 bg-white">
+      <section className="py-10 sm:py-16 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
 
@@ -788,9 +788,9 @@ export default function HomePage() {
       </section>
 
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
-      <section id="how-it-works" className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
+      <section id="how-it-works" className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center mb-12 sm:mb-16 reveal">
+          <div className="text-center mb-8 sm:mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">How It Works</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Up and running in minutes</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">No tech skills needed. Set it up once and let automation handle the rest.</p>
@@ -879,9 +879,9 @@ export default function HomePage() {
       </section>
 
       {/* ===== ROI SECTION ===== */}
-      <section className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
+      <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center mb-12 reveal">
+          <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Real Results</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">What salon owners see in 30 days</h2>
           </div>
@@ -909,7 +909,7 @@ export default function HomePage() {
       {/* ===== FEATURES GRID ===== */}
       <section id="features" className="pt-16 pb-8 sm:pt-24 sm:pb-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center mb-12 reveal">
+          <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Features</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Everything your salon needs</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">One platform. No juggling apps.</p>
@@ -943,9 +943,9 @@ export default function HomePage() {
       </section>
 
       {/* ===== PRICING ===== */}
-      <section id="pricing" className="pt-8 pb-16 sm:pt-12 sm:pb-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fefcff 50%, #ffffff 100%)' }}>
+      <section id="pricing" className="pt-6 pb-10 sm:pt-8 sm:pb-14 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fefcff 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center mb-12 reveal">
+          <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Pricing</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Simple, honest &amp; transparent pricing</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">Choose the plan that fits your salon. Start free for 15 days. No credit card required.</p>
@@ -1254,9 +1254,9 @@ export default function HomePage() {
       {showDemoModal && <DemoBookingModal onClose={() => setShowDemoModal(false)} />}
 
       {/* ===== FAQ SECTION ===== */}
-      <section className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
+      <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
-          <div className="text-center mb-12 reveal">
+          <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">FAQ</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
             <p className="text-slate-500 text-sm sm:text-base">Everything you need to know before getting started.</p>
