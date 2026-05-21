@@ -736,3 +736,92 @@ function Step({ number, text }: { number: number; text: string }) {
     </div>
   );
 }
+
+
+// =============================================================================
+// Google Review Link Card
+// =============================================================================
+
+interface GoogleReviewLinkProps {
+  currentLink: string;
+}
+
+export function GoogleReviewLinkCard({ currentLink }: GoogleReviewLinkProps) {
+  const [isPending, startTransition] = useTransition();
+  const [link, setLink] = useState(currentLink);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  async function handleSave() {
+    setError('');
+    setSuccess(false);
+
+    const { updateGoogleReviewLink } = await import('./actions');
+
+    startTransition(async () => {
+      const result = await updateGoogleReviewLink(link);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-gradient-to-r from-amber-500/5 via-orange-500/3 to-transparent">
+        <div className="flex items-center gap-2">
+          <Star className="size-4 text-amber-500" />
+          <h2 className="text-sm font-semibold text-foreground">Google Review Link</h2>
+          {currentLink && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="size-3" />
+              Active
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="p-6 space-y-4">
+        <p className="text-sm text-muted-foreground">
+          Add your Google Business review link. When customers rate you 4-5 stars, they&apos;ll be asked to leave a Google review using this link.
+        </p>
+
+        <div className="space-y-2">
+          <label htmlFor="google-review-link" className="text-sm font-medium text-foreground">
+            Google Review URL
+          </label>
+          <Input
+            id="google-review-link"
+            value={link}
+            onChange={(e) => { setLink(e.target.value); setError(''); setSuccess(false); }}
+            placeholder="https://g.page/r/your-salon/review"
+            type="url"
+          />
+          <p className="text-xs text-muted-foreground">
+            Find this in Google Business Profile → Share → &quot;Ask for reviews&quot; link
+          </p>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+            <AlertTriangle className="size-4 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Google Review link saved!</p>
+          </div>
+        )}
+
+        <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Review Link'}
+        </Button>
+      </div>
+    </div>
+  );
+}

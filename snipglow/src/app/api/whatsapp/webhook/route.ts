@@ -545,66 +545,95 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       break;
     }
 
-    case 'feedback_5': {
-      // Save 5-star feedback
-      await (admin.from('feedback' as any).insert({
-        tenant_id: tenant.tenantId,
-        branch_id: tenant.branchId,
-        customer_phone: phone,
-        customer_name: name,
-        rating: 5,
-        source: 'whatsapp',
-      } as any) as any);
-
-      await sendMessage(tenant.credentials, phone, {
-        type: 'text',
-        text: { body: `🎉 Thank you so much for the 5-star rating! We're thrilled you loved your experience at *${tenant.salonName}*.\n\nWe look forward to seeing you again! 💇` },
-      });
-
-      // Notify salon owner
-      await notifyOwnerFeedback(admin, tenant, name, phone, 5);
-      break;
-    }
-
-    case 'feedback_3': {
-      // Save 3-star feedback
-      await (admin.from('feedback' as any).insert({
-        tenant_id: tenant.tenantId,
-        branch_id: tenant.branchId,
-        customer_phone: phone,
-        customer_name: name,
-        rating: 3,
-        source: 'whatsapp',
-      } as any) as any);
-
-      await sendMessage(tenant.credentials, phone, {
-        type: 'text',
-        text: { body: `Thank you for your feedback! We appreciate your honesty and will work to improve your experience at *${tenant.salonName}*.\n\nSee you next time! 🙏` },
-      });
-
-      // Notify salon owner
-      await notifyOwnerFeedback(admin, tenant, name, phone, 3);
-      break;
-    }
-
+    case 'feedback_5':
+    case 'feedback_4':
+    case 'feedback_3':
+    case 'feedback_2':
     case 'feedback_1': {
-      // Save 1-star feedback
+      // Extract rating number from button ID
+      const rating = parseInt(buttonId.replace('feedback_', ''));
+
+      // Save feedback
       await (admin.from('feedback' as any).insert({
         tenant_id: tenant.tenantId,
         branch_id: tenant.branchId,
         customer_phone: phone,
         customer_name: name,
-        rating: 1,
+        rating,
         source: 'whatsapp',
       } as any) as any);
 
+      // Send appropriate response based on rating
+      if (rating >= 4) {
+        // High rating — ask if they'd like to leave a Google review
+        // Get Google review link from tenant settings
+        const { data: tenantSettings } = await (admin.from('tenants' as any).select('settings').eq('id', tenant.tenantId).single() as any);
+        const googleReviewLink = (tenantSettings?.settings as any)?.google_review_link || '';
+
+        if (googleReviewLink) {
+          await sendMessage(tenant.credentials, phone, {
+            type: 'interactive',
+            interactive: {
+              type: 'button',
+              body: {
+                text: `🎉 Thank you for the ${rating}-star rating, ${name}! We're so glad you loved your experience at *${tenant.salonName}*.\n\nWould you mind sharing your experience on Google? It really helps other customers find us! 🙏`,
+              },
+              action: {
+                buttons: [
+                  { type: 'reply', reply: { id: `google_review_yes`, title: '⭐ Yes, Review Now' } },
+                  { type: 'reply', reply: { id: 'google_review_no', title: 'Maybe Later' } },
+                ],
+              },
+            },
+          });
+        } else {
+          await sendMessage(tenant.credentials, phone, {
+            type: 'text',
+            text: { body: `🎉 Thank you for the ${rating}-star rating! We're thrilled you loved your experience at *${tenant.salonName}*.\n\nWe look forward to seeing you again! 💇` },
+          });
+        }
+      } else if (rating === 3) {
+        await sendMessage(tenant.credentials, phone, {
+          type: 'text',
+          text: { body: `Thank you for your feedback, ${name}! We appreciate your honesty and will work to improve your experience at *${tenant.salonName}*.\n\nSee you next time! 🙏` },
+        });
+      } else {
+        // 1-2 stars — apologize and offer to help
+        await sendMessage(tenant.credentials, phone, {
+          type: 'text',
+          text: { body: `We're sorry to hear that, ${name}. Your feedback is important to us and we'll do our best to improve.\n\nIf you'd like to share more details, just type your message here. Our team at *${tenant.salonName}* will look into it. 🙏` },
+        });
+      }
+
+      // Notify salon owner
+      await notifyOwnerFeedback(admin, tenant, name, phone, rating);
+      break;
+    }
+
+    case 'google_review_yes': {
+      // Get Google review link from tenant settings
+      const { data: tenantForReview } = await (admin.from('tenants' as any).select('settings').eq('id', tenant.tenantId).single() as any);
+      const reviewLink = (tenantForReview?.settings as any)?.google_review_link || '';
+
+      if (reviewLink) {
+        await sendMessage(tenant.credentials, phone, {
+          type: 'text',
+          text: { body: `Thank you! 🙏 Here's the link to leave your review:\n\n${reviewLink}\n\nYour support means the world to us! ❤️` },
+        });
+      } else {
+        await sendMessage(tenant.credentials, phone, {
+          type: 'text',
+          text: { body: `Thank you for your willingness! The salon hasn't set up their Google review link yet. We appreciate your support! ❤️` },
+        });
+      }
+      break;
+    }
+
+    case 'google_review_no': {
       await sendMessage(tenant.credentials, phone, {
         type: 'text',
-        text: { body: `We're sorry to hear that, ${name}. Your feedback is important to us and we'll do our best to improve.\n\nIf you'd like to share more details, just type your message here. Our team at *${tenant.salonName}* will look into it. 🙏` },
+        text: { body: `No problem at all! Thank you for your feedback. See you next time! 😊` },
       });
-
-      // Notify salon owner (urgent for low rating)
-      await notifyOwnerFeedback(admin, tenant, name, phone, 1);
       break;
     }
 

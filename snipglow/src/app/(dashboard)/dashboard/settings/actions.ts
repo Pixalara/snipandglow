@@ -137,3 +137,47 @@ export async function updateDiscountSettings(input: {
   revalidatePath('/dashboard/billing');
   return { success: true, data: undefined };
 }
+
+/**
+ * Update Google Review link in tenant settings.
+ */
+export async function updateGoogleReviewLink(link: string): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  // Validate URL if provided
+  if (link.trim() && !link.trim().startsWith('http')) {
+    return { success: false, error: 'Please enter a valid URL starting with https://' };
+  }
+
+  // Get current settings
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .single();
+
+  const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
+
+  const updatedSettings = {
+    ...currentSettings,
+    google_review_link: link.trim() || null,
+  };
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ settings: updatedSettings })
+    .eq('id', tenantId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update Google Review link.' };
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { success: true, data: undefined };
+}

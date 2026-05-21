@@ -822,15 +822,23 @@ async function notifyCustomerBillReceipt(
     await sendMessage(credentials, phone, {
       type: 'interactive',
       interactive: {
-        type: 'button',
+        type: 'list',
         body: {
-          text: `⭐ How was your experience at *${salonName}* today?\n\nYour feedback helps us serve you better:`,
+          text: `⭐ How was your experience at *${salonName}* today?\n\nYour feedback helps us serve you better. Tap below to rate:`,
         },
         action: {
-          buttons: [
-            { type: 'reply', reply: { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Loved it!' } },
-            { type: 'reply', reply: { id: 'feedback_3', title: '⭐⭐⭐ It was okay' } },
-            { type: 'reply', reply: { id: 'feedback_1', title: '😞 Not satisfied' } },
+          button: 'Rate Now',
+          sections: [
+            {
+              title: 'Select Your Rating',
+              rows: [
+                { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Excellent!', description: 'Absolutely loved it' },
+                { id: 'feedback_4', title: '⭐⭐⭐⭐ Very Good', description: 'Great experience' },
+                { id: 'feedback_3', title: '⭐⭐⭐ Good', description: 'It was okay' },
+                { id: 'feedback_2', title: '⭐⭐ Fair', description: 'Could be better' },
+                { id: 'feedback_1', title: '⭐ Poor', description: 'Not satisfied' },
+              ],
+            },
           ],
         },
       },
