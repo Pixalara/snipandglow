@@ -723,6 +723,70 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== ANALYTICS & DASHBOARD ===== */}
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+
+            {/* Left — Image */}
+            <div className="relative">
+              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60">
+                <img
+                  src="https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=800&h=600&fit=crop&q=80"
+                  alt="Modern salon interior with styling stations"
+                  className="w-full h-[350px] sm:h-[420px] object-cover"
+                  loading="lazy"
+                />
+              </div>
+            </div>
+
+            {/* Right — Content */}
+            <div>
+              <div className="space-y-8">
+                {/* Analytics Dashboard */}
+                <div className="pb-8" style={{ borderBottom: '1px solid #f0f0f0' }}>
+                  <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Analytics Dashboard</h3>
+                  <p className="text-slate-500 text-base leading-relaxed mb-4">
+                    Visual reporting on revenue trends, top services, staff performance, and retention metrics.
+                  </p>
+                  <div className="grid grid-cols-2 gap-2">
+                    {[
+                      'Revenue analytics',
+                      'Appointment trends',
+                      'Staff performance',
+                      'Customer retention',
+                      'Service popularity',
+                      'Expense tracking',
+                      'Payroll management',
+                      'Audit trails',
+                    ].map((f) => (
+                      <div key={f} className="flex items-center gap-2">
+                        <CheckCircle2 className="h-3.5 w-3.5 text-violet-500 shrink-0" />
+                        <span className="text-sm text-slate-600">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Free Setup & Onboarding */}
+                <div>
+                  <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
+                    <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
+                  </div>
+                  <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Free Setup &amp; Onboarding</h3>
+                  <p className="text-slate-500 text-base leading-relaxed">
+                    Complimentary training and platform configuration to help salons get started in under 10 minutes. Our team handles everything from data import to WhatsApp API setup.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
       <section id="how-it-works" className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
