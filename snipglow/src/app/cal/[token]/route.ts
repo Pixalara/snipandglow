@@ -11,8 +11,16 @@ export async function GET(
   { params }: { params: Promise<{ token: string }> }
 ) {
   try {
-    const { token } = await params;
-    console.log('[Cal] Token received:', token?.substring(0, 50));
+    let { token } = await params;
+    console.log('[Cal] Raw token:', token?.substring(0, 60));
+
+    // Meta URL buttons prepend "{{1}}" literally to the token — strip it
+    if (token.startsWith('%7B%7B1%7D%7D')) {
+      token = token.replace('%7B%7B1%7D%7D', '');
+    }
+    if (token.startsWith('{{1}}')) {
+      token = token.replace('{{1}}', '');
+    }
 
     const decoded = Buffer.from(token, 'base64url').toString('utf-8');
     console.log('[Cal] Decoded:', decoded);
