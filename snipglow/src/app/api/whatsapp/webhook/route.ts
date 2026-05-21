@@ -111,7 +111,16 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
       buttonReplyId = message.interactive?.button_reply?.id ?? message.interactive?.list_reply?.id ?? '';
       messageText = message.interactive?.button_reply?.title ?? message.interactive?.list_reply?.title ?? '';
     } else if (message.type === 'button') {
-      buttonReplyId = message.button?.payload ?? '';
+      // Template quick reply buttons send text as payload
+      const payload = message.button?.payload ?? message.button?.text ?? '';
+      // Map template button text to our internal IDs
+      const templateButtonMap: Record<string, string> = {
+        'Reschedule': 'reschedule_appointment',
+        'Cancel': 'cancel_appointment',
+        'reschedule_appointment': 'reschedule_appointment',
+        'cancel_appointment': 'cancel_appointment',
+      };
+      buttonReplyId = templateButtonMap[payload] || payload;
       messageText = message.button?.text ?? '';
     }
 
