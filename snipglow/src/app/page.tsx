@@ -768,6 +768,12 @@ export default function HomePage() {
                   'In-app Help & Support tickets',
                   'Free setup & onboarding',
                   'Audit trails & activity log',
+                  'WhatsApp appointment notifications',
+                  'WhatsApp booking confirmations',
+                  'WhatsApp bill receipts & feedback',
+                  'WhatsApp follow-ups & reminders',
+                  'Automated feedback collection',
+                  'Google Calendar integration',
                 ].map((feature) => (
                   <div key={feature} className="flex items-start gap-2">
                     <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
@@ -777,7 +783,7 @@ export default function HomePage() {
                 <div className="pt-2 border-t border-slate-100 mt-3">
                   <p className="text-xs text-slate-400 font-medium">Not included:</p>
                   <div className="mt-1.5 space-y-1.5">
-                    {['WhatsApp notifications & reminders', 'WhatsApp broadcasting', 'WhatsApp support'].map((f) => (
+                    {['Own WhatsApp Business API branding', 'WhatsApp broadcasting', 'Priority WhatsApp & call support'].map((f) => (
                       <div key={f} className="flex items-start gap-2">
                         <span className="text-slate-300 text-xs mt-0.5">&#x2715;</span>
                         <span className="text-[12px] text-slate-400">{f}</span>
