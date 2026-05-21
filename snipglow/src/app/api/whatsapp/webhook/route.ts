@@ -889,7 +889,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           type: 'interactive',
           interactive: {
             type: 'button',
-            body: { text: `✅ *Booking Confirmed!*\n\n👤 ${name}\n✂️ ${service.name}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}\n\n📲 *Add to Google Calendar:*\n${calendarLink}\n\nSee you soon! 😊` },
+            body: { text: `✅ *Booking Confirmed!*\n\n👤 ${name}\n✂️ ${service.name}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}\n\n📲 *Save to Calendar* 👇\n${calendarLink}\n\nSee you soon! 😊` },
             action: {
               buttons: [
                 { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },

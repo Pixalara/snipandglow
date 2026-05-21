@@ -334,8 +334,8 @@ async function processBooking(data: any, flowToken: string) {
     });
 
     const confirmText = isReschedule
-      ? `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Add to Google Calendar:*\n${calendarLink}\n\nSee you soon! 😊`
-      : `✅ *Booking Confirmed!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Add to Google Calendar:*\n${calendarLink}\n\nSee you soon! 😊`;
+      ? `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Save to Calendar* 👇\n${calendarLink}\n\nSee you soon! 😊`
+      : `✅ *Booking Confirmed!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Save to Calendar* 👇\n${calendarLink}\n\nSee you soon! 😊`;
 
     await sendMessage(credentials, customerPhone || customer_phone, {
       type: 'interactive',
