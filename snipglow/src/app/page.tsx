@@ -238,260 +238,233 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Right � WhatsApp Phone Mockup with auto-scrolling conversation */}
+          {/* Right - WhatsApp Phone Mockup with auto-scrolling conversation */}
           <div className="flex justify-center items-center reveal-right mt-8 lg:mt-0">
             <div className="relative">
-              {/* Ambient glow */}
-              <div className="absolute inset-0 rounded-[48px] bg-pink-300/20 blur-3xl scale-125" />
+              {/* Multi-layer ambient glow */}
+              <div className="absolute inset-0 rounded-[48px] bg-gradient-to-b from-emerald-400/30 via-green-300/20 to-teal-400/20 blur-3xl scale-125" />
+              <div className="absolute -top-8 -right-8 w-40 h-40 rounded-full bg-pink-400/20 blur-2xl" />
+              <div className="absolute -bottom-8 -left-8 w-40 h-40 rounded-full bg-violet-400/20 blur-2xl" />
 
-              {/* Phone shell */}
-              <div className="relative w-[280px] h-[580px] sm:w-[290px] sm:h-[600px] lg:w-[300px] lg:h-[620px] rounded-[44px] sm:rounded-[46px] lg:rounded-[48px] bg-white border border-slate-200 shadow-2xl shadow-slate-200/60 overflow-hidden">
-                {/* Notch */}
-                <div className="absolute top-0 left-1/2 -translate-x-1/2 w-20 sm:w-24 h-5 sm:h-6 bg-slate-900 rounded-b-2xl z-20" />
+              {/* Phone shell - dark premium */}
+              <div className="relative w-[280px] h-[580px] sm:w-[290px] sm:h-[600px] lg:w-[300px] lg:h-[620px] rounded-[44px] sm:rounded-[46px] lg:rounded-[48px] overflow-hidden"
+                style={{ background: 'linear-gradient(145deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%)', border: '1.5px solid rgba(255,255,255,0.12)', boxShadow: '0 40px 80px -12px rgba(0,0,0,0.6)' }}>
+
+                {/* Side buttons */}
+                <div className="absolute -right-[3px] top-24 w-[3px] h-10 rounded-l-sm" style={{ background: 'rgba(255,255,255,0.15)' }} />
+                <div className="absolute -left-[3px] top-20 w-[3px] h-7 rounded-r-sm" style={{ background: 'rgba(255,255,255,0.15)' }} />
+                <div className="absolute -left-[3px] top-32 w-[3px] h-7 rounded-r-sm" style={{ background: 'rgba(255,255,255,0.15)' }} />
+
+                {/* Dynamic Island */}
+                <div className="absolute top-3 left-1/2 -translate-x-1/2 w-24 h-6 bg-black rounded-full z-20 flex items-center justify-center gap-2">
+                  <div className="w-2 h-2 rounded-full bg-slate-700" />
+                  <div className="w-3 h-3 rounded-full bg-slate-800 border border-slate-700" />
+                </div>
 
                 {/* Screen */}
-                <div className="absolute inset-0 bg-[#e5ddd5] flex flex-col pt-6">
-                  {/* WA Header */}
-                  <div className="bg-[#075e54] px-4 pt-6 pb-3 flex items-center gap-3 shrink-0">
-                    <div className="h-9 w-9 rounded-full bg-emerald-600 flex items-center justify-center text-xs font-bold text-white shrink-0">SG</div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Snip and Glow by Pixalara</p>
-                      <div className="flex items-center gap-1">
-                        <span className="h-1.5 w-1.5 rounded-full bg-emerald-300" />
-                        <p className="text-[10px] text-emerald-200">online</p>
+                <div className="absolute inset-0 flex flex-col" style={{ background: '#e5ddd5', paddingTop: '28px' }}>
+
+                  {/* WhatsApp Header */}
+                  <div className="shrink-0" style={{ background: 'linear-gradient(135deg, #075e54 0%, #128c7e 100%)', padding: '10px 14px' }}>
+                    <div className="flex items-center gap-2.5">
+                      <div className="relative">
+                        <div className="h-9 w-9 rounded-full flex items-center justify-center text-xs font-bold text-white shrink-0"
+                          style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}>SG</div>
+                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400 border-2 border-[#075e54]" />
+                      </div>
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[12px] font-semibold text-white leading-tight">Snip and Glow</p>
+                        <p className="text-[9px] text-emerald-200">by Pixalara &middot; online</p>
                       </div>
                     </div>
                   </div>
 
-                  {/* Scrolling chat � CSS keyframe animation */}
+                  {/* Date chip */}
+                  <div className="flex justify-center py-2 shrink-0">
+                    <span className="text-[9px] text-slate-500 bg-white/60 px-3 py-0.5 rounded-full">TODAY</span>
+                  </div>
+
+                  {/* Chat animation */}
                   <style dangerouslySetInnerHTML={{ __html: `
-                    @keyframes chatFlow {
-                      0%,6%    { transform: translateY(0); }
-                      12%,18%  { transform: translateY(-220px); }
-                      24%,30%  { transform: translateY(-440px); }
-                      36%,42%  { transform: translateY(-660px); }
-                      48%,54%  { transform: translateY(-880px); }
-                      60%,66%  { transform: translateY(-1100px); }
-                      72%,78%  { transform: translateY(-1320px); }
-                      84%,90%  { transform: translateY(-1540px); }
-                      96%,100% { transform: translateY(0); }
+                    @keyframes chatScroll {
+                      0%,5%   { transform: translateY(0); }
+                      10%,15% { transform: translateY(-180px); }
+                      20%,25% { transform: translateY(-360px); }
+                      30%,35% { transform: translateY(-540px); }
+                      40%,45% { transform: translateY(-720px); }
+                      50%,55% { transform: translateY(-900px); }
+                      60%,65% { transform: translateY(-1080px); }
+                      70%,75% { transform: translateY(-1260px); }
+                      80%,85% { transform: translateY(-1440px); }
+                      90%,95% { transform: translateY(-1620px); }
+                      100%    { transform: translateY(0); }
                     }
                   `}} />
 
                   <div className="flex-1 overflow-hidden">
-                    <div className="px-3 py-3 space-y-3" style={{ animation: 'chatFlow 48s ease-in-out infinite' }}>
+                    <div className="px-2.5 space-y-2.5" style={{ animation: 'chatScroll 60s ease-in-out infinite' }}>
 
-                      {/* -- 1. Customer says Hi -- */}
+                      {/* 1. Customer sends friendly message */}
                       <div className="flex justify-end">
-                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">Hi ??</p>
-                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:01 AM</p>
+                        <div className="shadow-sm" style={{ background: '#dcf8c6', borderRadius: '14px 14px 2px 14px', padding: '7px 10px', maxWidth: '170px' }}>
+                          <p className="text-[11px] text-slate-800 leading-snug">Hi! I&apos;d like to book an appointment at Royal Saloon</p>
+                          <p className="text-[8.5px] text-slate-500 text-right mt-0.5">10:01 AM</p>
                         </div>
                       </div>
 
-                      {/* -- 2. Welcome menu with buttons -- */}
+                      {/* 2. Welcome menu */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-emerald-100">
+                        <div className="bg-white overflow-hidden shadow-sm" style={{ borderRadius: '2px 14px 14px 14px', maxWidth: '215px', border: '1px solid rgba(0,0,0,0.06)' }}>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-800 font-medium">?? Welcome to Snip and Glow!</p>
-                            <p className="text-[11px] text-slate-600 mt-1">How can we help you today?</p>
+                            <p className="text-[11.5px] font-semibold text-slate-800">Welcome to <span className="text-emerald-700">Royal Saloon</span>!</p>
+                            <p className="text-[10.5px] text-slate-600 mt-1">Hi Priya, how can we help you today?</p>
+                            <p className="text-[9px] text-slate-400 italic mt-0.5">Powered by SnipandGlow</p>
                           </div>
-                          <div className="border-t border-slate-100">
-                            {['?? Book Appointment', '?? My Appointments', '?? Services & Prices', '?? Contact Us'].map((b) => (
-                              <div key={b} className="px-3 py-1.5 border-b border-slate-50 last:border-0 text-center">
-                                <p className="text-[10px] text-blue-500 font-medium">{b}</p>
+                          <div style={{ borderTop: '1px solid #f0f0f0' }}>
+                            {[['Book Appointment','#25d366'],['View Services','#128c7e'],['Talk to Salon','#075e54']].map(([label,color]) => (
+                              <div key={label} className="px-3 py-1.5 text-center" style={{ borderBottom: '1px solid #f8f8f8' }}>
+                                <p className="text-[10.5px] font-medium" style={{ color }}>{label}</p>
                               </div>
                             ))}
                           </div>
+                          <p className="text-[8.5px] text-slate-400 text-right px-3 pb-1.5">10:01 AM</p>
                         </div>
                       </div>
 
-                      {/* -- 3. Customer taps Book Appointment -- */}
+                      {/* 3. Customer taps Book */}
                       <div className="flex justify-end">
-                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">?? Book Appointment</p>
-                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:02 AM</p>
+                        <div className="shadow-sm" style={{ background: '#dcf8c6', borderRadius: '14px 14px 2px 14px', padding: '7px 10px', maxWidth: '140px' }}>
+                          <p className="text-[11px] text-slate-800">Book Appointment</p>
+                          <p className="text-[8.5px] text-slate-500 text-right mt-0.5">10:02 AM</p>
                         </div>
                       </div>
 
-                      {/* -- 4. WhatsApp Flow form (native screen look) -- */}
+                      {/* 4. WhatsApp Flow form */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-blue-100">
-                          <div className="bg-blue-50 px-3 py-2 border-b border-blue-100">
-                            <p className="text-[11px] font-bold text-blue-700">?? Book Your Appointment</p>
+                        <div className="bg-white overflow-hidden shadow-md" style={{ borderRadius: '2px 14px 14px 14px', maxWidth: '215px', border: '1px solid rgba(37,211,102,0.2)' }}>
+                          <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #075e54, #128c7e)' }}>
+                            <p className="text-[11px] font-bold text-white">Book Your Appointment</p>
+                            <p className="text-[9px] text-emerald-200">Royal Saloon</p>
                           </div>
-                          <div className="px-3 py-2.5 space-y-2 text-[10px]">
-                            <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
-                              <p className="text-slate-400 text-[9px]">Service</p>
-                              <p className="text-slate-800 font-medium">Haircut + Facial</p>
-                            </div>
-                            <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
-                              <p className="text-slate-400 text-[9px]">Stylist</p>
-                              <p className="text-slate-800 font-medium">Roysree</p>
-                            </div>
-                            <div className="bg-slate-50 rounded-lg px-2.5 py-1.5 border border-slate-200">
-                              <p className="text-slate-400 text-[9px]">Date & Time</p>
-                              <p className="text-slate-800 font-medium">10 May, 2:30 PM</p>
-                            </div>
-                            <div className="bg-emerald-500 rounded-lg py-1.5 text-center mt-1">
-                              <p className="text-white font-bold text-[10px]">? Confirm Booking</p>
+                          <div className="px-3 py-2.5 space-y-1.5">
+                            {[['Services','Haircut + Facial'],['Date','Thu, 22 May 2026'],['Time','2:30 PM']].map(([label,val]) => (
+                              <div key={label} className="rounded-lg px-2.5 py-1.5" style={{ background: '#f7f7f7', border: '1px solid #e8e8e8' }}>
+                                <p className="text-[8.5px] text-slate-400 uppercase tracking-wide">{label}</p>
+                                <p className="text-[10.5px] text-slate-800 font-medium">{val}</p>
+                              </div>
+                            ))}
+                            <div className="rounded-lg py-2 text-center mt-1" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}>
+                              <p className="text-[11px] text-white font-bold">Confirm Booking</p>
                             </div>
                           </div>
+                          <p className="text-[8.5px] text-slate-400 text-right px-3 pb-1.5">10:02 AM</p>
                         </div>
                       </div>
 
-                      {/* -- 5. Booking Confirmed -- */}
+                      {/* 5. Booking Confirmed */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-emerald-200">
-                          <div className="bg-emerald-50 px-3 py-2 border-b border-emerald-100">
-                            <p className="text-[12px] font-bold text-emerald-700">? Booking Confirmed!</p>
+                        <div className="bg-white overflow-hidden shadow-sm" style={{ borderRadius: '2px 14px 14px 14px', maxWidth: '215px', border: '1px solid rgba(37,211,102,0.25)' }}>
+                          <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #e8fdf0, #d4f7e4)' }}>
+                            <p className="text-[12px] font-bold text-emerald-800">Booking Confirmed!</p>
                           </div>
-                          <div className="px-3 py-2.5 space-y-1 text-[11px] text-slate-600">
-                            <p>?? Priya</p>
-                            <p>?? Haircut + Facial</p>
-                            <p>?? 10 May 2026, 2:30 PM</p>
-                            <p>?? Snip and Glow by Pixalara</p>
-                            <p className="text-slate-800 mt-1.5">See you soon! ??</p>
+                          <div className="px-3 py-2.5 space-y-1 text-[10.5px] text-slate-700">
+                            <p>Priya Sharma</p>
+                            <p>Haircut, Facial</p>
+                            <p>22 May 2026, 2:30 PM</p>
+                            <p>Royal Saloon</p>
+                            <div className="rounded-lg px-2 py-1 mt-1" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                              <p className="text-[9.5px] text-emerald-700">Add to Google Calendar</p>
+                            </div>
                           </div>
-                          <div className="border-t border-slate-100 flex">
-                            <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-blue-500 font-medium">?? Reschedule</p>
+                          <div style={{ borderTop: '1px solid #f0f0f0', display: 'flex' }}>
+                            <div className="flex-1 py-1.5 text-center" style={{ borderRight: '1px solid #f0f0f0' }}>
+                              <p className="text-[10px] font-medium text-amber-600">Reschedule</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-red-500 font-medium">? Cancel</p>
+                              <p className="text-[10px] font-medium text-red-500">Cancel</p>
                             </div>
                           </div>
+                          <p className="text-[8.5px] text-slate-400 text-right px-3 pb-1.5">10:03 AM</p>
                         </div>
                       </div>
 
-                      {/* -- 6. Customer taps Reschedule -- */}
-                      <div className="flex justify-end">
-                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">?? Reschedule</p>
-                          <p className="text-[9px] text-slate-500 text-right mt-0.5">10:03 AM</p>
-                        </div>
-                      </div>
-
-                      {/* -- 7. Reschedule confirmed -- */}
+                      {/* 6. Bill Receipt */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-amber-100">
-                          <div className="bg-amber-50 px-3 py-2 border-b border-amber-100">
-                            <p className="text-[11px] font-bold text-amber-700">?? Rescheduled!</p>
+                        <div className="bg-white overflow-hidden shadow-sm" style={{ borderRadius: '2px 14px 14px 14px', maxWidth: '215px', border: '1px solid rgba(139,92,246,0.2)' }}>
+                          <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
+                            <p className="text-[11px] font-bold text-violet-800">Bill Receipt</p>
+                            <p className="text-[9px] text-violet-500">Invoice INV-SEE-0015</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Your appointment has been moved to:</p>
-                            <p className="text-[11px] text-slate-800 font-medium mt-1">?? 12 May 2026, 4:00 PM</p>
-                            <p className="text-[11px] text-slate-600 mt-1">See you then! ??</p>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* -- 8. Bill auto-generated after appointment -- */}
-                      <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-purple-100">
-                          <div className="bg-purple-50 px-3 py-2 border-b border-purple-100">
-                            <p className="text-[11px] font-bold text-purple-700">?? Invoice #INV-0142</p>
-                          </div>
-                          <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600 mb-2">Hi Priya, your bill is ready! ??</p>
-                            <div className="bg-slate-50 rounded-lg p-2 space-y-1 text-[10px]">
-                              <div className="flex justify-between"><span>Haircut</span><span className="font-medium">?300</span></div>
-                              <div className="flex justify-between"><span>Facial</span><span className="font-medium">?800</span></div>
-                              <div className="flex justify-between text-amber-600"><span>?? Gold Membership (20%)</span><span>-?220</span></div>
-                              <div className="border-t border-slate-200 pt-1 flex justify-between font-bold text-emerald-700"><span>Total</span><span>?880</span></div>
-                              <p className="text-slate-400">?? UPI � Paid ?</p>
+                            <p className="text-[10.5px] text-slate-600 mb-2">Hi Priya, thank you for visiting!</p>
+                            <div className="rounded-lg p-2 space-y-1" style={{ background: '#fafafa', border: '1px solid #f0f0f0' }}>
+                              <div className="flex justify-between text-[10px]"><span className="text-slate-600">Haircut</span><span className="font-medium">Rs.300</span></div>
+                              <div className="flex justify-between text-[10px]"><span className="text-slate-600">Facial</span><span className="font-medium">Rs.800</span></div>
+                              <div className="flex justify-between text-[10px] text-amber-600"><span>Membership (20%)</span><span>-Rs.220</span></div>
+                              <div className="flex justify-between text-[10.5px] font-bold text-emerald-700 pt-1" style={{ borderTop: '1px solid #e8e8e8' }}><span>Total</span><span>Rs.880</span></div>
+                              <p className="text-[9px] text-slate-400">UPI - Paid</p>
+                            </div>
+                            <div className="rounded-lg px-2 py-1.5 mt-2" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
+                              <p className="text-[9.5px] text-emerald-700 font-medium">Next time, skip the wait!</p>
+                              <p className="text-[9px] text-emerald-600">Book in advance via WhatsApp</p>
                             </div>
                           </div>
+                          <p className="text-[8.5px] text-slate-400 text-right px-3 pb-1.5">5:30 PM</p>
                         </div>
                       </div>
 
-                      {/* -- 9. Feedback request -- */}
+                      {/* 7. Feedback request */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-amber-100">
-                          <div className="bg-amber-50 px-3 py-2 border-b border-amber-100">
-                            <p className="text-[11px] font-bold text-amber-700">? Rate Your Experience</p>
+                        <div className="bg-white overflow-hidden shadow-sm" style={{ borderRadius: '2px 14px 14px 14px', maxWidth: '215px', border: '1px solid rgba(251,191,36,0.3)' }}>
+                          <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)' }}>
+                            <p className="text-[11px] font-bold text-amber-800">How was your experience?</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">How was your visit today? Tap to rate:</p>
-                            <div className="flex gap-1 mt-2 justify-center">
-                              {['?', '?', '?', '?', '?'].map((s, i) => (
-                                <span key={i} className="text-base">{s}</span>
+                            <p className="text-[10.5px] text-slate-600 mb-2">Your feedback helps us serve you better:</p>
+                            <div style={{ borderTop: '1px solid #f0f0f0' }}>
+                              {[['Loved it!','#f59e0b'],['It was okay','#6b7280'],['Not satisfied','#ef4444']].map(([label,color]) => (
+                                <div key={label} className="px-3 py-1.5 text-center" style={{ borderBottom: '1px solid #f8f8f8' }}>
+                                  <p className="text-[10px] font-medium" style={{ color }}>{label}</p>
+                                </div>
                               ))}
                             </div>
                           </div>
+                          <p className="text-[8.5px] text-slate-400 text-right px-3 pb-1.5">5:31 PM</p>
                         </div>
                       </div>
 
-                      {/* -- 10. Customer gives 5 stars -- */}
+                      {/* 8. Customer gives 5 stars */}
                       <div className="flex justify-end">
-                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">?????</p>
-                          <p className="text-[9px] text-slate-500 text-right mt-0.5">5:45 PM</p>
+                        <div className="shadow-sm" style={{ background: '#dcf8c6', borderRadius: '14px 14px 2px 14px', padding: '7px 10px', maxWidth: '140px' }}>
+                          <p className="text-[13px] text-slate-800">5 Stars - Loved it!</p>
+                          <p className="text-[8.5px] text-slate-500 text-right mt-0.5">5:32 PM</p>
                         </div>
                       </div>
 
-                      {/* -- 11. Thank you + Google review -- */}
+                      {/* 9. Thank you */}
                       <div className="flex justify-start">
-                        <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
-                          <p className="text-[11px] text-slate-700">Thank you Priya! ?? We&apos;re glad you loved it. Would you mind leaving a Google review? It helps us a lot! ??</p>
+                        <div className="bg-white shadow-sm px-3 py-2.5" style={{ borderRadius: '2px 14px 14px 14px', maxWidth: '215px', border: '1px solid rgba(0,0,0,0.06)' }}>
+                          <p className="text-[10.5px] text-slate-700 leading-snug">Thank you for the 5-star rating! We&apos;re thrilled you loved your experience at <span className="font-semibold text-emerald-700">Royal Saloon</span>. See you again!</p>
+                          <p className="text-[8.5px] text-slate-400 text-right mt-1">5:32 PM</p>
                         </div>
                       </div>
 
-                      {/* -- 12. Day 30 Reminder -- */}
+                      {/* 10. 30-day reminder */}
                       <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-violet-100">
-                          <div className="bg-violet-50 px-3 py-2 border-b border-violet-100">
-                            <p className="text-[11px] font-bold text-violet-700">?? Time for a Touch-Up!</p>
+                        <div className="bg-white overflow-hidden shadow-sm" style={{ borderRadius: '2px 14px 14px 14px', maxWidth: '215px', border: '1px solid rgba(139,92,246,0.2)' }}>
+                          <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
+                            <p className="text-[11px] font-bold text-violet-800">Time for a Touch-Up!</p>
                             <p className="text-[9px] text-violet-500">30 days since last visit</p>
                           </div>
                           <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">Hi Priya! Your hair is due for a refresh ?</p>
+                            <p className="text-[10.5px] text-slate-600 leading-snug">Hi Priya! Your hair is due for a refresh. Book your next appointment now!</p>
                           </div>
-                          <div className="border-t border-slate-100">
-                            <div className="px-3 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">?? Book Now</p>
+                          <div className="px-3 pb-2.5">
+                            <div className="rounded-lg py-1.5 text-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)' }}>
+                              <p className="text-[10.5px] text-white font-bold">Book Now</p>
                             </div>
                           </div>
-                        </div>
-                      </div>
-
-                      {/* -- 13. Day 60 Win-Back with discount -- */}
-                      <div className="flex justify-start">
-                        <div className="bg-white rounded-xl rounded-tl-sm overflow-hidden max-w-[220px] shadow-sm border border-pink-200">
-                          <div className="bg-pink-50 px-3 py-2 border-b border-pink-100">
-                            <p className="text-[11px] font-bold text-pink-700">?? We Miss You, Priya!</p>
-                            <p className="text-[9px] text-pink-500">60 days since last visit</p>
-                          </div>
-                          <div className="px-3 py-2.5">
-                            <p className="text-[11px] text-slate-600">It&apos;s been 2 months � come back for some self-care! ??</p>
-                            <div className="bg-gradient-to-r from-pink-50 to-rose-50 border border-pink-200 rounded-lg p-2 mt-2 text-center">
-                              <p className="text-[13px] text-pink-600 font-bold">?? 15% OFF</p>
-                              <p className="text-[9px] text-slate-500">Code: MISSYOU15</p>
-                            </div>
-                          </div>
-                          <div className="border-t border-slate-100 flex">
-                            <div className="flex-1 py-1.5 text-center border-r border-slate-100">
-                              <p className="text-[10px] text-pink-500 font-medium">?? Claim Offer</p>
-                            </div>
-                            <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[10px] text-blue-500 font-medium">?? Services</p>
-                            </div>
-                          </div>
-                        </div>
-                      </div>
-
-                      {/* -- 14. Customer claims offer -- */}
-                      <div className="flex justify-end">
-                        <div className="bg-[#dcf8c6] px-3 py-2 rounded-xl rounded-tr-sm max-w-[160px] shadow-sm">
-                          <p className="text-[12px] text-slate-800">?? Claim Offer</p>
-                          <p className="text-[9px] text-slate-500 text-right mt-0.5">11:20 AM</p>
-                        </div>
-                      </div>
-
-                      {/* -- 15. Discount applied -- */}
-                      <div className="flex justify-start">
-                        <div className="bg-white px-3 py-2.5 rounded-xl rounded-tl-sm max-w-[220px] shadow-sm">
-                          <p className="text-[11px] text-emerald-700 font-medium">?? Welcome back Priya! Your 15% discount is applied. Tap below to book!</p>
+                          <p className="text-[8.5px] text-slate-400 text-right px-3 pb-1.5">Jun 21, 10:00 AM</p>
                         </div>
                       </div>
 
@@ -499,16 +472,17 @@ export default function HomePage() {
                   </div>
 
                   {/* Input bar */}
-                  <div className="bg-[#f0f0f0] px-3 py-2.5 flex items-center gap-2 shrink-0">
-                    <div className="flex-1 bg-white rounded-full h-8 flex items-center px-3 border border-slate-200">
+                  <div className="shrink-0 px-2 py-2 flex items-center gap-2" style={{ background: '#f0f0f0' }}>
+                    <div className="flex-1 bg-white rounded-full h-8 flex items-center px-3.5" style={{ border: '1px solid #e0e0e0' }}>
                       <p className="text-[11px] text-slate-400">Type a message</p>
                     </div>
-                    <div className="h-8 w-8 rounded-full bg-emerald-500 flex items-center justify-center shrink-0">
+                    <div className="flex items-center justify-center w-8 h-8 rounded-full" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}>
                       <ArrowRight className="h-3.5 w-3.5 text-white" />
                     </div>
                   </div>
                 </div>
               </div>
+
 
               {/* Floating badge � bottom left (hidden on mobile) */}
               <div className="hidden lg:block absolute -bottom-6 -left-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
