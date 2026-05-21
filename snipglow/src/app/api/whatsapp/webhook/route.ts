@@ -527,6 +527,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         type: 'text',
         text: { body: `🎉 Thank you so much for the 5-star rating! We're thrilled you loved your experience at *${tenant.salonName}*.\n\nWe look forward to seeing you again! 💇` },
       });
+
+      // Notify salon owner
+      await notifyOwnerFeedback(admin, tenant, name, phone, 5);
       break;
     }
 
@@ -545,6 +548,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         type: 'text',
         text: { body: `Thank you for your feedback! We appreciate your honesty and will work to improve your experience at *${tenant.salonName}*.\n\nSee you next time! 🙏` },
       });
+
+      // Notify salon owner
+      await notifyOwnerFeedback(admin, tenant, name, phone, 3);
       break;
     }
 
@@ -563,6 +569,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         type: 'text',
         text: { body: `We're sorry to hear that, ${name}. Your feedback is important to us and we'll do our best to improve.\n\nIf you'd like to share more details, just type your message here. Our team at *${tenant.salonName}* will look into it. 🙏` },
       });
+
+      // Notify salon owner (urgent for low rating)
+      await notifyOwnerFeedback(admin, tenant, name, phone, 1);
       break;
     }
 
@@ -895,5 +904,30 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
       console.log(`[Webhook] Unhandled button: ${buttonId} from ${phone}`);
     }
+  }
+}
+
+// =============================================================================
+// Notify Salon Owner about Customer Feedback
+// =============================================================================
+
+async function notifyOwnerFeedback(admin: any, tenant: TenantContext, customerName: string, customerPhone: string, rating: number) {
+  try {
+    const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
+    if (!tenantData?.phone) return;
+
+    const ownerPhone = tenantData.phone.replace(/\D/g, '');
+    const stars = '⭐'.repeat(rating);
+    const emoji = rating >= 4 ? '🎉' : rating >= 3 ? '📝' : '⚠️';
+    const urgency = rating <= 2 ? '\n\n🔴 *Needs immediate attention!*' : '';
+
+    await sendMessage(tenant.credentials, ownerPhone, {
+      type: 'text',
+      text: {
+        body: `${emoji} *New Feedback Received*\n\nCustomer: ${customerName}\nPhone: +${customerPhone}\nRating: ${stars} (${rating}/5)${urgency}\n\nView all feedback in your SnipandGlow dashboard → Feedback section.`,
+      },
+    });
+  } catch (err) {
+    console.error('[Webhook] Failed to notify owner about feedback:', err);
   }
 }
