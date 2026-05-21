@@ -78,10 +78,14 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
   const todayIST = ist.date; // Already in IST
 
   while (dates.length < 14 && daysChecked < 30) {
-    // Calculate date from IST today
-    const baseDate = new Date(todayIST + 'T00:00:00+05:30');
+    // Calculate date from IST today — avoid UTC conversion
+    const baseDate = new Date(todayIST + 'T12:00:00+05:30'); // Use noon to avoid timezone edge cases
     baseDate.setDate(baseDate.getDate() + daysChecked);
-    const dateStr = baseDate.toISOString().split('T')[0];
+    // Format as YYYY-MM-DD without UTC conversion
+    const year = baseDate.getFullYear();
+    const month = String(baseDate.getMonth() + 1).padStart(2, '0');
+    const day = String(baseDate.getDate()).padStart(2, '0');
+    const dateStr = `${year}-${month}-${day}`;
     const dayName = getDayName(dateStr);
 
     // Check if blocked
