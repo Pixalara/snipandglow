@@ -825,3 +825,184 @@ export function GoogleReviewLinkCard({ currentLink }: GoogleReviewLinkProps) {
     </div>
   );
 }
+
+
+// =============================================================================
+// Salon Timings Card
+// =============================================================================
+
+interface SalonTimingsProps {
+  operatingHours: Record<string, { open: string; close: string }> | null;
+}
+
+const DAYS = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+const DAY_LABELS: Record<string, string> = { monday: 'Mon', tuesday: 'Tue', wednesday: 'Wed', thursday: 'Thu', friday: 'Fri', saturday: 'Sat', sunday: 'Sun' };
+
+export function SalonTimingsCard({ operatingHours }: SalonTimingsProps) {
+  const [isPending, startTransition] = useTransition();
+  const [hours, setHours] = useState<Record<string, { open: string; close: string; closed: boolean }>>(
+    DAYS.reduce((acc, day) => {
+      const h = operatingHours?.[day];
+      acc[day] = { open: h?.open || '09:00', close: h?.close || '21:00', closed: !h?.open };
+      return acc;
+    }, {} as Record<string, { open: string; close: string; closed: boolean }>)
+  );
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+    const formatted: Record<string, { open: string; close: string } | null> = {};
+    for (const day of DAYS) {
+      if (hours[day].closed) {
+        formatted[day] = null as any;
+      } else {
+        formatted[day] = { open: hours[day].open, close: hours[day].close };
+      }
+    }
+
+    startTransition(async () => {
+      const { updateOperatingHours } = await import('./actions');
+      const result = await updateOperatingHours(formatted as any);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Clock className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">Salon Timings</h2>
+        </div>
+      </div>
+      <div className="p-6 space-y-4">
+        <p className="text-sm text-muted-foreground">Set your salon&apos;s operating hours. Customers can only book within these times.</p>
+
+        <div className="space-y-2">
+          {DAYS.map((day) => (
+            <div key={day} className="flex items-center gap-3">
+              <span className="w-10 text-xs font-medium text-foreground">{DAY_LABELS[day]}</span>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={!hours[day].closed}
+                  onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], closed: !e.target.checked } })}
+                  className="size-3.5 rounded border-border"
+                />
+                <span className="text-xs text-muted-foreground">{hours[day].closed ? 'Closed' : 'Open'}</span>
+              </label>
+              {!hours[day].closed && (
+                <>
+                  <input type="time" value={hours[day].open} onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], open: e.target.value } })} className="h-8 rounded-lg border border-border bg-background px-2 text-xs" />
+                  <span className="text-xs text-muted-foreground">to</span>
+                  <input type="time" value={hours[day].close} onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], close: e.target.value } })} className="h-8 rounded-lg border border-border bg-background px-2 text-xs" />
+                </>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {success && <p className="text-sm text-emerald-600">Timings saved!</p>}
+
+        <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Timings'}
+        </Button>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Block Calendar Card
+// =============================================================================
+
+interface BlockCalendarProps {
+  blockedDates: string[];
+}
+
+export function BlockCalendarCard({ blockedDates: initialDates }: BlockCalendarProps) {
+  const [isPending, startTransition] = useTransition();
+  const [dates, setDates] = useState<string[]>(initialDates);
+  const [newDate, setNewDate] = useState('');
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  function addDate() {
+    if (!newDate) return;
+    if (dates.includes(newDate)) return;
+    setDates([...dates, newDate].sort());
+    setNewDate('');
+  }
+
+  function removeDate(d: string) {
+    setDates(dates.filter((x) => x !== d));
+  }
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const { updateBlockedDates } = await import('./actions');
+      const result = await updateBlockedDates(dates);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  // Filter out past dates
+  const today = new Date().toISOString().split('T')[0];
+  const futureDates = dates.filter((d) => d >= today);
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <AlertTriangle className="size-4 text-amber-500" />
+          <h2 className="text-sm font-semibold text-foreground">Block Calendar</h2>
+        </div>
+      </div>
+      <div className="p-6 space-y-4">
+        <p className="text-sm text-muted-foreground">Block specific dates when your salon is closed (holidays, events, etc.). Customers won&apos;t be able to book on these dates.</p>
+
+        {/* Add date */}
+        <div className="flex items-center gap-2">
+          <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} min={today} className="w-44" />
+          <Button variant="outline" className="rounded-xl" onClick={addDate} disabled={!newDate}>Add</Button>
+        </div>
+
+        {/* Blocked dates list */}
+        {futureDates.length > 0 && (
+          <div className="flex flex-wrap gap-2">
+            {futureDates.map((d) => (
+              <span key={d} className="inline-flex items-center gap-1.5 rounded-full bg-red-50 dark:bg-red-900/20 border border-red-200 dark:border-red-800 px-3 py-1 text-xs font-medium text-red-700 dark:text-red-300">
+                {new Date(d + 'T00:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}
+                <button onClick={() => removeDate(d)} className="text-red-500 hover:text-red-700 text-sm leading-none">&times;</button>
+              </span>
+            ))}
+          </div>
+        )}
+
+        {futureDates.length === 0 && <p className="text-xs text-muted-foreground">No dates blocked. Your salon is open on all scheduled days.</p>}
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {success && <p className="text-sm text-emerald-600">Blocked dates saved!</p>}
+
+        <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Blocked Dates'}
+        </Button>
+      </div>
+    </div>
+  );
+}

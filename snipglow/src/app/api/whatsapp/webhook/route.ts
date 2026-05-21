@@ -284,26 +284,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       const useFlowId = (existingCustomer && flowIdReturning) ? flowIdReturning : flowId;
 
       if (useFlowId) {
-        // Generate next 14 days
-        const dates: Array<{ id: string; title: string }> = [];
-        for (let i = 0; i < 14; i++) {
-          const d = new Date();
-          d.setDate(d.getDate() + i);
-          const dateStr = d.toISOString().split('T')[0];
-          const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-          dates.push({ id: dateStr, title: label });
-        }
-
-        // Generate time slots
-        const timeSlots: Array<{ id: string; title: string }> = [];
-        for (let hour = 9; hour < 20; hour++) {
-          for (const min of [0, 30]) {
-            const h = hour % 12 || 12;
-            const period = hour >= 12 ? 'PM' : 'AM';
-            const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
-            timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
-          }
-        }
+        // Generate smart dates and time slots based on salon operating hours
+        const { generateSmartSlots } = await import('@/lib/time-slots');
+        const { dates, timeSlots } = await generateSmartSlots(tenant.tenantId, tenant.branchId);
 
         // Build flow_token with customer_id if returning customer
         const flowToken = existingCustomer
@@ -413,26 +396,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
         }));
 
-        // Generate next 14 days
-        const dates: Array<{ id: string; title: string }> = [];
-        for (let i = 0; i < 14; i++) {
-          const d = new Date();
-          d.setDate(d.getDate() + i);
-          const dateStr = d.toISOString().split('T')[0];
-          const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-          dates.push({ id: dateStr, title: label });
-        }
-
-        // Generate time slots
-        const timeSlots: Array<{ id: string; title: string }> = [];
-        for (let hour = 9; hour < 20; hour++) {
-          for (const min of [0, 30]) {
-            const h = hour % 12 || 12;
-            const period = hour >= 12 ? 'PM' : 'AM';
-            const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
-            timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
-          }
-        }
+        // Generate smart dates and time slots
+        const { generateSmartSlots } = await import('@/lib/time-slots');
+        const { dates, timeSlots } = await generateSmartSlots(tenant.tenantId, tenant.branchId);
 
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',

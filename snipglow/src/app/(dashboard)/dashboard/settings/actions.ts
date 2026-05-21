@@ -181,3 +181,67 @@ export async function updateGoogleReviewLink(link: string): Promise<ActionResult
   revalidatePath('/dashboard/settings');
   return { success: true, data: undefined };
 }
+
+/**
+ * Update branch operating hours.
+ */
+export async function updateOperatingHours(hours: Record<string, { open: string; close: string } | null>): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const branchId = user.user_metadata?.branch_id;
+  if (!branchId) return { success: false, error: 'No branch context found.' };
+
+  const { error } = await supabase
+    .from('branches')
+    .update({ operating_hours: hours })
+    .eq('id', branchId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update operating hours.' };
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { success: true, data: undefined };
+}
+
+/**
+ * Update blocked dates in tenant settings.
+ */
+export async function updateBlockedDates(dates: string[]): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  // Get current settings
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .single();
+
+  const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
+
+  const updatedSettings = {
+    ...currentSettings,
+    blocked_dates: dates,
+  };
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ settings: updatedSettings })
+    .eq('id', tenantId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update blocked dates.' };
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { success: true, data: undefined };
+}
