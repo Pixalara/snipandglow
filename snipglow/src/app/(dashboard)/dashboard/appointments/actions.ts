@@ -779,9 +779,14 @@ async function notifyCustomerBillReceipt(
 
     if (!customer?.phone) return;
 
-    // Get salon name
-    const { data: tenant } = await admin.from('tenants').select('name').eq('id', tenantId).single();
+    // Get salon name and tenant code for booking link
+    const { data: tenant } = await (admin.from('tenants' as any).select('name, tenant_code').eq('id', tenantId).single() as any);
     const salonName = tenant?.name || 'the salon';
+    const tenantCode = tenant?.tenant_code?.replace('-', '') || '';
+
+    // Build booking link for next time
+    const friendlyMessage = `Hi! 👋 I'd like to book an appointment at ${salonName} ✨`;
+    const bookingLink = tenantCode ? `https://wa.me/919448895147?text=${encodeURIComponent(friendlyMessage)}` : '';
 
     // Build service list
     const serviceLines = services.map((s) => `  • ${s.name} — ₹${s.price.toLocaleString('en-IN')}`).join('\n');
@@ -799,7 +804,10 @@ async function notifyCustomerBillReceipt(
     billText += `*Total: ₹${total.toLocaleString('en-IN')}*\n`;
     billText += `Payment: ${paymentMethod.toUpperCase()}\n`;
     billText += `━━━━━━━━━━━━━━━\n\n`;
-    billText += `Thank you for choosing us! We look forward to seeing you again. 😊`;
+    billText += `Thank you for choosing us! 😊\n\n`;
+    if (bookingLink) {
+      billText += `💡 *Next time, skip the wait!*\nBook your appointment in advance via WhatsApp:\n${bookingLink}`;
+    }
 
     const phone = customer.phone.replace(/\D/g, '');
     await sendMessage(credentials, phone, {
