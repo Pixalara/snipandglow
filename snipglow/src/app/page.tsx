@@ -559,6 +559,85 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+
+            {/* Left — Image */}
+            <div className="relative">
+              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60">
+                <img
+                  src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=600&fit=crop&q=80"
+                  alt="Salon professional helping a client"
+                  className="w-full h-[350px] sm:h-[420px] object-cover"
+                  loading="lazy"
+                />
+              </div>
+              {/* Floating stat card */}
+              <div className="absolute -bottom-4 -right-4 sm:bottom-6 sm:right-6 bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-lg">
+                <div className="flex items-center gap-2">
+                  <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <CheckCircle2 className="h-4 w-4 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="text-xs font-bold text-slate-900">70% fewer no-shows</p>
+                    <p className="text-[10px] text-slate-500">With WhatsApp reminders</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* Right — Content */}
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+                Effortless Bookings via{' '}
+                <span className="text-emerald-600">WhatsApp</span>
+              </h2>
+              <p className="text-slate-500 mt-4 text-base leading-relaxed max-w-lg">
+                Positioned as an affordable, WhatsApp-first utility for Indian salon owners, focusing on ease of use and practical automation over complex technical setups.
+              </p>
+
+              {/* Feature list */}
+              <div className="mt-8 space-y-6">
+                {[
+                  {
+                    icon: '📅',
+                    title: 'Smart Appointments',
+                    desc: 'Online booking system with instant WhatsApp confirmation that allows clients to reschedule or cancel with a tap.',
+                  },
+                  {
+                    icon: '🤖',
+                    title: 'WhatsApp Automation',
+                    desc: 'Automated delivery of booking confirmations, 24-hour reminders, and re-booking nudges to reduce no-shows.',
+                  },
+                  {
+                    icon: '📢',
+                    title: 'WhatsApp Marketing & Broadcasts',
+                    desc: 'One-click messaging for birthday wishes, festival offers, flash sales, and win-back campaigns.',
+                  },
+                  {
+                    icon: '⭐',
+                    title: 'Instant Feedback Collection',
+                    desc: 'Automatically request ratings after every visit. 5-star reviews get redirected to Google. Low ratings alert you instantly.',
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                      <p className="text-sm text-slate-500 mt-1 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
       <section id="how-it-works" className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
