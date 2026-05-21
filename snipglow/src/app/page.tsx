@@ -703,16 +703,16 @@ export default function HomePage() {
               <div className="space-y-3">
                 <div className="rounded-2xl overflow-hidden shadow-lg">
                   <img
-                    src="https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400&h=240&fit=crop&q=80"
-                    alt="Luxury salon towels and products"
+                    src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=240&fit=crop&q=80"
+                    alt="Spa hot stone massage treatment"
                     className="w-full h-[130px] sm:h-[135px] object-cover"
                     loading="lazy"
                   />
                 </div>
                 <div className="rounded-2xl overflow-hidden shadow-lg">
                   <img
-                    src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=240&fit=crop&q=80"
-                    alt="Salon interior with warm lighting"
+                    src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400&h=240&fit=crop&q=80"
+                    alt="Loyal customer at salon reception"
                     className="w-full h-[100px] sm:h-[135px] object-cover"
                     loading="lazy"
                   />
