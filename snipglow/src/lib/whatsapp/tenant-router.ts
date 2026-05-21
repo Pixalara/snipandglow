@@ -200,7 +200,7 @@ async function getTenantDetails(admin: any, tenantId: string): Promise<{ tenantI
   return {
     tenantId: tenant.id,
     branchId: branch?.id ?? '',
-    salonName: tenant.name,
+    salonName: (tenant.name || '').trim(),
   };
 }
 
