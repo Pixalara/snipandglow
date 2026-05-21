@@ -74,10 +74,14 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
   const dates: TimeSlotOption[] = [];
   let daysChecked = 0;
 
+  // Use IST date as starting point (not UTC)
+  const todayIST = ist.date; // Already in IST
+
   while (dates.length < 14 && daysChecked < 30) {
-    const d = new Date();
-    d.setDate(d.getDate() + daysChecked);
-    const dateStr = d.toISOString().split('T')[0];
+    // Calculate date from IST today
+    const baseDate = new Date(todayIST + 'T00:00:00+05:30');
+    baseDate.setDate(baseDate.getDate() + daysChecked);
+    const dateStr = baseDate.toISOString().split('T')[0];
     const dayName = getDayName(dateStr);
 
     // Check if blocked
@@ -93,7 +97,7 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
       continue;
     }
 
-    const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    const label = baseDate.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
     dates.push({ id: dateStr, title: label });
     daysChecked++;
   }
@@ -147,7 +151,7 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
   // Fallback dates if none generated
   if (dates.length === 0) {
     for (let i = 0; i < 14; i++) {
-      const d = new Date();
+      const d = new Date(ist.date + 'T00:00:00+05:30');
       d.setDate(d.getDate() + i);
       const dateStr = d.toISOString().split('T')[0];
       const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
