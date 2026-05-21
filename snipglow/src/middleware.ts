@@ -7,14 +7,32 @@ const publicRoutes = new Set(["/", "/login", "/verify-otp", "/verify-phone", "/s
 // Prefixes that are always public
 const publicPrefixes = ["/api/auth", "/api/whatsapp", "/blog/"];
 
+// Admin-area public paths (login, forbidden)
+const adminPublicPaths = new Set(["/admin/login", "/admin/forbidden"]);
+
 // Routes that require authentication (dashboard section)
-const protectedPrefixes = ["/dashboard", "/onboarding"];
+const protectedPrefixes = ["/dashboard", "/onboarding", "/admin"];
 
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
+  const host = request.headers.get('host') || '';
+
+  // ─── Subdomain routing: admin.snipandglow.com → /admin/* ───
+  // If the request comes to admin subdomain and path doesn't start with /admin, rewrite it
+  const isAdminSubdomain = host.startsWith('admin.');
+  if (isAdminSubdomain && !pathname.startsWith('/admin') && !pathname.startsWith('/api/') && !pathname.startsWith('/_next/')) {
+    const url = request.nextUrl.clone();
+    url.pathname = '/admin' + (pathname === '/' ? '' : pathname);
+    return NextResponse.rewrite(url);
+  }
 
   // FAST PATH: Skip auth entirely for public routes (no Supabase client created)
-  if (publicRoutes.has(pathname) || publicPrefixes.some(p => pathname.startsWith(p))) {
+  if ((publicRoutes.has(pathname) || publicPrefixes.some(p => pathname.startsWith(p))) && !pathname.startsWith('/admin')) {
+    return NextResponse.next({ request });
+  }
+
+  // Admin public pages (login, forbidden) — no auth required to view, but need supabase for login
+  if (adminPublicPaths.has(pathname)) {
     return NextResponse.next({ request });
   }
 
