@@ -68,6 +68,7 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
 
   const operatingHours = (branch?.operating_hours as Record<string, { open?: string; close?: string } | null>) || {};
   const blockedDates: string[] = (tenantData?.settings as any)?.blocked_dates || [];
+  const blockedSlots: Array<{ date: string; slots: string[] }> = (tenantData?.settings as any)?.blocked_slots || [];
   const ist = getISTNow();
 
   // Generate available dates (next 14 open days, max 30 days lookahead)
@@ -132,10 +133,15 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
 
         const hour = Math.floor(mins / 60);
         const min = mins % 60;
+        const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+
+        // Skip blocked slots for this date
+        const blockedForDate = blockedSlots.find((b) => b.date === firstDate);
+        if (blockedForDate?.slots.includes(timeStr)) continue;
+
         const h = hour % 12 || 12;
         const period = hour >= 12 ? 'PM' : 'AM';
-        const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
-        timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
+        timeSlots.push({ id: timeStr + ':00', title: `${h}:${String(min).padStart(2, '0')} ${period}` });
       }
     }
   }

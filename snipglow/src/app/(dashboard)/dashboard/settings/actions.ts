@@ -245,3 +245,46 @@ export async function updateBlockedDates(dates: string[]): Promise<ActionResult<
   revalidatePath('/dashboard/settings');
   return { success: true, data: undefined };
 }
+
+/**
+ * Update blocked time slots in tenant settings.
+ * Format: [{ date: "2026-05-22", slots: ["09:00", "09:30", "10:00"] }]
+ */
+export async function updateBlockedSlots(blockedSlots: Array<{ date: string; slots: string[] }>): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .single();
+
+  const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
+
+  // Filter out past dates
+  const today = new Date().toISOString().split('T')[0];
+  const filtered = blockedSlots.filter((b) => b.date >= today && b.slots.length > 0);
+
+  const updatedSettings = {
+    ...currentSettings,
+    blocked_slots: filtered,
+  };
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ settings: updatedSettings })
+    .eq('id', tenantId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update blocked slots.' };
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { success: true, data: undefined };
+}

@@ -1006,3 +1006,188 @@ export function BlockCalendarCard({ blockedDates: initialDates }: BlockCalendarP
     </div>
   );
 }
+
+
+// =============================================================================
+// Block Time Slots Card
+// =============================================================================
+
+interface BlockSlotsProps {
+  blockedSlots: Array<{ date: string; slots: string[] }>;
+  operatingHours: Record<string, { open: string; close: string }> | null;
+}
+
+function generateSlotsForDay(open: string, close: string): string[] {
+  const [openH, openM] = open.split(':').map(Number);
+  const [closeH, closeM] = close.split(':').map(Number);
+  const openMin = openH * 60 + (openM || 0);
+  const closeMin = closeH * 60 + (closeM || 0);
+  const slots: string[] = [];
+  for (let m = openMin; m < closeMin; m += 30) {
+    slots.push(`${String(Math.floor(m / 60)).padStart(2, '0')}:${String(m % 60).padStart(2, '0')}`);
+  }
+  return slots;
+}
+
+function formatSlot(slot: string): string {
+  const [h, m] = slot.split(':').map(Number);
+  const period = h >= 12 ? 'PM' : 'AM';
+  return `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
+}
+
+export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockSlotsProps) {
+  const [isPending, startTransition] = useTransition();
+  const [entries, setEntries] = useState<Array<{ date: string; slots: string[] }>>(initial);
+  const [selectedDate, setSelectedDate] = useState('');
+  const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  const today = new Date().toISOString().split('T')[0];
+
+  // Get available slots for the selected date based on operating hours
+  const availableSlots: string[] = (() => {
+    if (!selectedDate || !operatingHours) return [];
+    const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
+    const dayName = dayNames[new Date(selectedDate + 'T12:00:00').getDay()];
+    const h = operatingHours[dayName];
+    if (!h?.open || !h?.close) return [];
+    return generateSlotsForDay(h.open, h.close);
+  })();
+
+  // Get already blocked slots for selected date
+  const existingEntry = entries.find((e) => e.date === selectedDate);
+
+  function toggleSlot(slot: string) {
+    setSelectedSlots((prev) =>
+      prev.includes(slot) ? prev.filter((s) => s !== slot) : [...prev, slot]
+    );
+  }
+
+  function addBlockedSlots() {
+    if (!selectedDate || selectedSlots.length === 0) return;
+    const updated = entries.filter((e) => e.date !== selectedDate);
+    const merged = [...(existingEntry?.slots || []), ...selectedSlots];
+    const unique = [...new Set(merged)].sort();
+    updated.push({ date: selectedDate, slots: unique });
+    setEntries(updated.sort((a, b) => a.date.localeCompare(b.date)));
+    setSelectedSlots([]);
+  }
+
+  function removeEntry(date: string) {
+    setEntries(entries.filter((e) => e.date !== date));
+  }
+
+  function removeSlotFromEntry(date: string, slot: string) {
+    setEntries(entries.map((e) => {
+      if (e.date !== date) return e;
+      const newSlots = e.slots.filter((s) => s !== slot);
+      return { ...e, slots: newSlots };
+    }).filter((e) => e.slots.length > 0));
+  }
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const { updateBlockedSlots } = await import('./actions');
+      const result = await updateBlockedSlots(entries);
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  const futureEntries = entries.filter((e) => e.date >= today);
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Clock className="size-4 text-orange-500" />
+          <h2 className="text-sm font-semibold text-foreground">Block Time Slots</h2>
+        </div>
+      </div>
+      <div className="p-6 space-y-4">
+        <p className="text-sm text-muted-foreground">Block specific time slots on specific dates. Useful for lunch breaks, personal appointments, or partial closures.</p>
+
+        {/* Date picker */}
+        <div className="flex items-center gap-2 flex-wrap">
+          <Input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlots([]); }} min={today} className="w-44" />
+        </div>
+
+        {/* Slot selector */}
+        {selectedDate && availableSlots.length > 0 && (
+          <div className="space-y-2">
+            <p className="text-xs font-medium text-muted-foreground">Tap slots to block on {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}:</p>
+            <div className="flex flex-wrap gap-1.5">
+              {availableSlots.map((slot) => {
+                const isSelected = selectedSlots.includes(slot);
+                const isAlreadyBlocked = existingEntry?.slots.includes(slot);
+                return (
+                  <button
+                    key={slot}
+                    type="button"
+                    onClick={() => !isAlreadyBlocked && toggleSlot(slot)}
+                    disabled={isAlreadyBlocked}
+                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                      isAlreadyBlocked ? 'bg-red-100 text-red-500 dark:bg-red-900/30 cursor-not-allowed line-through' :
+                      isSelected ? 'bg-red-500 text-white' :
+                      'bg-muted text-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20'
+                    }`}
+                  >
+                    {formatSlot(slot)}
+                  </button>
+                );
+              })}
+            </div>
+            {selectedSlots.length > 0 && (
+              <Button variant="outline" className="rounded-xl text-xs" onClick={addBlockedSlots}>
+                Block {selectedSlots.length} slot{selectedSlots.length > 1 ? 's' : ''}
+              </Button>
+            )}
+          </div>
+        )}
+
+        {selectedDate && availableSlots.length === 0 && (
+          <p className="text-xs text-muted-foreground">Salon is closed on this day.</p>
+        )}
+
+        {/* Existing blocked slots */}
+        {futureEntries.length > 0 && (
+          <div className="space-y-2 pt-2 border-t border-border">
+            <p className="text-xs font-medium text-muted-foreground">Blocked slots:</p>
+            {futureEntries.map((entry) => (
+              <div key={entry.date} className="rounded-lg bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30 px-3 py-2">
+                <div className="flex items-center justify-between mb-1.5">
+                  <span className="text-xs font-semibold text-red-700 dark:text-red-300">
+                    {new Date(entry.date + 'T12:00:00').toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short', year: 'numeric' })}
+                  </span>
+                  <button onClick={() => removeEntry(entry.date)} className="text-xs text-red-500 hover:text-red-700 font-medium">Remove all</button>
+                </div>
+                <div className="flex flex-wrap gap-1">
+                  {entry.slots.map((slot) => (
+                    <span key={slot} className="inline-flex items-center gap-1 rounded-full bg-red-100 dark:bg-red-900/30 px-2 py-0.5 text-[10px] font-medium text-red-700 dark:text-red-300">
+                      {formatSlot(slot)}
+                      <button onClick={() => removeSlotFromEntry(entry.date, slot)} className="text-red-400 hover:text-red-600">&times;</button>
+                    </span>
+                  ))}
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {error && <p className="text-sm text-red-600">{error}</p>}
+        {success && <p className="text-sm text-emerald-600">Blocked slots saved!</p>}
+
+        <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Blocked Slots'}
+        </Button>
+      </div>
+    </div>
+  );
+}
