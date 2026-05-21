@@ -875,27 +875,34 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         const period = startH >= 12 ? 'PM' : 'AM';
         const timeLabel = `${h}:00 ${period}`;
 
-        // Build short Google Calendar link
-        const { buildShortCalendarLink } = await import('@/lib/google-calendar');
-        const calendarLink = buildShortCalendarLink({
-          title: `${service.name} at ${tenant.salonName}`,
-          startDate: dateStr,
-          startTime: timeSlot,
-          endTime: endTime,
-          location: tenant.salonName,
-        });
+        // Build calendar token for URL button
+        const calendarToken = Buffer.from(
+          [service.name + ' at ' + tenant.salonName, dateStr, timeSlot, endTime, tenant.salonName].join('|')
+        ).toString('base64url');
 
+        // Send booking confirmation using approved template
         await sendMessage(tenant.credentials, phone, {
-          type: 'interactive',
-          interactive: {
-            type: 'button',
-            body: { text: `✅ *Booking Confirmed!*\n\n👤 ${name}\n✂️ ${service.name}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}\n\n📲 *Save to Calendar* 👇\n${calendarLink}\n\nSee you soon! 😊` },
-            action: {
-              buttons: [
-                { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
-                { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
-              ],
-            },
+          type: 'template',
+          template: {
+            name: 'booking_confirmation_v2',
+            language: { code: 'en' },
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: name },
+                  { type: 'text', text: service.name },
+                  { type: 'text', text: `${dateLabel}, ${timeLabel}` },
+                  { type: 'text', text: tenant.salonName },
+                ],
+              },
+              {
+                type: 'button',
+                sub_type: 'url',
+                index: '0',
+                parameters: [{ type: 'text', text: calendarToken }],
+              },
+            ],
           },
         });
         break;

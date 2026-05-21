@@ -320,36 +320,59 @@ async function processBooking(data: any, flowToken: string) {
   const credentials = getPlatformCredentials();
   if (credentials && (customerPhone || customer_phone)) {
     const { sendMessage } = await import('@/lib/whatsapp/templates');
-    const { buildShortCalendarLink } = await import('@/lib/google-calendar');
     const dateLabel = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(time_slot);
 
     // Build short calendar link
-    const calendarLink = buildShortCalendarLink({
-      title: `${serviceNames} at ${salonName || 'Salon'}`,
-      startDate: date,
-      startTime: time_slot,
-      endTime: endTime,
-      location: salonName || 'Salon',
-    });
+    // Build calendar token for URL button
+    const calendarToken = Buffer.from(
+      [serviceNames + ' at ' + (salonName || 'Salon'), date, time_slot, endTime, salonName || ''].join('|')
+    ).toString('base64url');
 
-    const confirmText = isReschedule
-      ? `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Save to Calendar* 👇\n${calendarLink}\n\nSee you soon! 😊`
-      : `✅ *Booking Confirmed!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Save to Calendar* 👇\n${calendarLink}\n\nSee you soon! 😊`;
+    const dateTimeFormatted = `${dateLabel}, ${timeLabel}`;
 
-    await sendMessage(credentials, customerPhone || customer_phone, {
-      type: 'interactive',
-      interactive: {
-        type: 'button',
-        body: { text: confirmText },
-        action: {
-          buttons: [
-            { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Reschedule' } },
-            { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
+    if (isReschedule) {
+      // Reschedule uses interactive message (no template needed)
+      await sendMessage(credentials, customerPhone || customer_phone, {
+        type: 'interactive',
+        interactive: {
+          type: 'button',
+          body: { text: `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateTimeFormatted}\n📍 ${salonName || 'Your Salon'}\n\nSee you at the new time! 😊` },
+          action: {
+            buttons: [
+              { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Change Again' } },
+              { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
+            ],
+          },
+        },
+      });
+    } else {
+      // New booking uses the approved template with URL button
+      await sendMessage(credentials, customerPhone || customer_phone, {
+        type: 'template',
+        template: {
+          name: 'booking_confirmation_v2',
+          language: { code: 'en' },
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: customerName },
+                { type: 'text', text: serviceNames },
+                { type: 'text', text: dateTimeFormatted },
+                { type: 'text', text: salonName || 'Your Salon' },
+              ],
+            },
+            {
+              type: 'button',
+              sub_type: 'url',
+              index: '0',
+              parameters: [{ type: 'text', text: calendarToken }],
+            },
           ],
         },
-      },
-    });
+      });
+    }
 
     // Send notification to salon owner
     const { data: tenantOwner } = await admin
