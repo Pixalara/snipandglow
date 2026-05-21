@@ -3,7 +3,7 @@ import { buildGoogleCalendarLink } from '@/lib/google-calendar';
 
 // =============================================================================
 // GET /cal/[token] — Short URL redirect to Google Calendar
-// Token is base64-encoded event data: title|date|startTime|endTime|location
+// Token is base64url-encoded: title|date|startTime|endTime|location
 // =============================================================================
 
 export async function GET(
@@ -12,11 +12,20 @@ export async function GET(
 ) {
   try {
     const { token } = await params;
+    console.log('[Cal] Token received:', token?.substring(0, 50));
+
     const decoded = Buffer.from(token, 'base64url').toString('utf-8');
-    const [title, date, startTime, endTime, location] = decoded.split('|');
+    console.log('[Cal] Decoded:', decoded);
+
+    const parts = decoded.split('|');
+    const [title, date, startTime, endTime, location] = parts;
 
     if (!title || !date || !startTime || !endTime) {
-      return NextResponse.redirect(new URL('/', request.url));
+      console.log('[Cal] Missing fields, parts:', parts.length);
+      return new NextResponse(null, {
+        status: 302,
+        headers: { Location: '/' },
+      });
     }
 
     const calendarUrl = buildGoogleCalendarLink({
@@ -25,11 +34,21 @@ export async function GET(
       startTime,
       endTime,
       location: location || '',
-      description: `Booked via SnipandGlow`,
+      description: 'Booked via SnipandGlow',
     });
 
-    return NextResponse.redirect(calendarUrl);
-  } catch {
-    return NextResponse.redirect(new URL('/', request.url));
+    console.log('[Cal] Redirecting to:', calendarUrl.substring(0, 100));
+
+    // Use 302 redirect with Location header for external URLs
+    return new NextResponse(null, {
+      status: 302,
+      headers: { Location: calendarUrl },
+    });
+  } catch (err) {
+    console.error('[Cal] Error:', err);
+    return new NextResponse(null, {
+      status: 302,
+      headers: { Location: '/' },
+    });
   }
 }
