@@ -719,15 +719,77 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Pricing</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Simple, honest & transparent pricing</h2>
-            <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">One plan. All features. No hidden charges. No upsells. Start free for 15 days.</p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Simple, honest &amp; transparent pricing</h2>
+            <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">Choose the plan that fits your salon. Start free for 15 days. No credit card required.</p>
           </div>
 
-          {/* Two Plan Cards */}
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 max-w-5xl mx-auto reveal">
+          {/* Three Plan Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-5 max-w-6xl mx-auto reveal">
 
-            {/* ESSENTIALS PLAN */}
-            <div className="relative rounded-2xl border-2 border-pink-500 bg-white p-6 sm:p-8 shadow-lg shadow-pink-100/50">
+            {/* ESSENTIAL PLAN */}
+            <div className="relative rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm hover:shadow-lg transition-shadow">
+              <div className="mb-5">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-1.5">Essential</h3>
+                <p className="text-slate-500 text-sm leading-snug">
+                  All core salon management features. Perfect for getting started.
+                </p>
+              </div>
+
+              {/* Pricing */}
+              <div className="mb-5">
+                <div className="flex items-end gap-1">
+                  <span className="text-4xl font-bold text-slate-900">&rupee;799</span>
+                  <span className="text-slate-500 mb-1">/mo</span>
+                </div>
+                <p className="text-slate-400 text-xs mt-1.5">Billed monthly &middot; Cancel anytime</p>
+              </div>
+
+              {/* CTA */}
+              <Link
+                href="/signup"
+                className="flex items-center justify-center w-full py-3 min-h-[44px] rounded-xl border-2 border-slate-900 text-slate-900 font-semibold text-sm hover:bg-slate-900 hover:text-white transition-colors mb-5"
+              >
+                Start Free Trial
+              </Link>
+
+              {/* Features */}
+              <div className="space-y-2.5">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">Includes:</p>
+                {[
+                  'Unlimited appointments & calendar',
+                  'GST billing & digital invoices',
+                  'Staff scheduling & management',
+                  'Client history & preferences',
+                  'Membership & loyalty packages',
+                  'Expense & payroll tracking',
+                  'Lead management & conversion',
+                  'Business reports & analytics',
+                  'Online booking via QR code',
+                  'In-app Help & Support tickets',
+                  'Free setup & onboarding',
+                  'Audit trails & activity log',
+                ].map((feature) => (
+                  <div key={feature} className="flex items-start gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-emerald-500 shrink-0 mt-0.5" />
+                    <span className="text-[13px] text-slate-700">{feature}</span>
+                  </div>
+                ))}
+                <div className="pt-2 border-t border-slate-100 mt-3">
+                  <p className="text-xs text-slate-400 font-medium">Not included:</p>
+                  <div className="mt-1.5 space-y-1.5">
+                    {['WhatsApp notifications & reminders', 'WhatsApp broadcasting', 'WhatsApp support'].map((f) => (
+                      <div key={f} className="flex items-start gap-2">
+                        <span className="text-slate-300 text-xs mt-0.5">&#x2715;</span>
+                        <span className="text-[12px] text-slate-400">{f}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* PRO PLAN - Most Popular */}
+            <div className="relative rounded-2xl border-2 border-pink-500 bg-white p-5 sm:p-6 shadow-lg shadow-pink-100/50">
               {/* Badge */}
               <div className="absolute -top-3.5 left-1/2 -translate-x-1/2">
                 <span className="inline-flex items-center rounded-full bg-slate-900 px-4 py-1.5 text-xs font-semibold text-white shadow-md">
@@ -735,100 +797,93 @@ export default function HomePage() {
                 </span>
               </div>
 
-              <div className="mt-2 mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Essentials</h3>
-                <p className="text-slate-500 text-sm">
-                  Everything you need to run, manage, and grow your single-location salon.
+              <div className="mt-2 mb-5">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-1.5">Pro</h3>
+                <p className="text-slate-500 text-sm leading-snug">
+                  Full automation with your own WhatsApp Business API. Own branding, full control.
                 </p>
               </div>
 
               {/* Pricing */}
-              <div className="mb-6">
-                <p className="text-slate-400 text-sm line-through">?1,999 /mo</p>
+              <div className="mb-5">
+                <p className="text-slate-400 text-sm line-through">&rupee;1,999 /mo</p>
                 <div className="flex items-end gap-1">
-                  <span className="text-5xl font-bold text-slate-900">?999</span>
-                  <span className="text-slate-500 mb-1.5">/mo</span>
+                  <span className="text-4xl font-bold text-slate-900">&rupee;999</span>
+                  <span className="text-slate-500 mb-1">/mo</span>
                 </div>
-                <p className="text-slate-400 text-xs mt-2">Billed ?11,988/year � Cancel anytime within 15 days for full refund</p>
+                <p className="text-slate-400 text-xs mt-1.5">Billed monthly &middot; 15-day money-back guarantee</p>
               </div>
 
               {/* CTA */}
               <Link
                 href="/signup"
-                className="flex items-center justify-center w-full py-3.5 min-h-[48px] rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors mb-5"
+                className="flex items-center justify-center w-full py-3 min-h-[44px] rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors mb-5"
               >
                 Start 15-Day Free Trial
               </Link>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-6">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-5">
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />No credit card</span>
-                <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />15-day money-back</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-pink-500" />Go live in 2 days</span>
               </div>
 
               {/* Features */}
-              <div className="grid grid-cols-1 gap-2.5 sm:gap-3">
+              <div className="space-y-2.5">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">Everything in Essential, plus:</p>
                 {[
-                  'Unlimited appointments & calendar',
-                  'GST billing & digital invoices',
-                  'WhatsApp notifications & reminders',
-                  'Staff scheduling & management',
-                  'Client history & preferences',
-                  'Membership & loyalty packages',
-                  'Expense & payroll tracking',
-                  'Lead management & conversion',
-                  'Business reports & analytics',
+                  'Own WhatsApp Business API branding',
+                  'WhatsApp appointment notifications',
+                  'WhatsApp booking confirmations',
+                  'WhatsApp bill receipts & feedback',
+                  'WhatsApp follow-ups & reminders',
+                  'WhatsApp broadcasting (birthday, festivals, offers)',
                   'WhatsApp marketing campaigns',
-                  'WhatsApp broadcast (birthday, festivals, offers)',
-                  'Online booking via QR code',
-                  'Feedback collection via WhatsApp',
-                  'In-app Help & Support tickets',
-                  'Free setup & onboarding',
-                  'Referral program tracking',
-                  'Audit trails & activity log',
-                  '24hr WhatsApp support',
+                  'Automated feedback collection',
+                  'Google Calendar integration',
+                  'Priority WhatsApp & call support',
+                  'Dedicated onboarding specialist',
                 ].map((feature) => (
-                  <div key={feature} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-pink-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-700">{feature}</span>
+                  <div key={feature} className="flex items-start gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-pink-500 shrink-0 mt-0.5" />
+                    <span className="text-[13px] text-slate-700">{feature}</span>
                   </div>
                 ))}
               </div>
             </div>
 
             {/* ENTERPRISE PLAN */}
-            <div className="relative rounded-2xl border border-slate-200 bg-white p-6 sm:p-8 shadow-sm hover:shadow-lg transition-shadow">
-              <div className="mb-6">
-                <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Enterprise</h3>
-                <p className="text-slate-500 text-sm">
-                  For salon chains and multi-location businesses that need centralized control.
+            <div className="relative rounded-2xl border border-slate-200 bg-white p-5 sm:p-6 shadow-sm hover:shadow-lg transition-shadow">
+              <div className="mb-5">
+                <h3 className="text-lg sm:text-xl font-bold text-slate-900 mb-1.5">Enterprise</h3>
+                <p className="text-slate-500 text-sm leading-snug">
+                  For salon chains and multi-location businesses needing centralized control.
                 </p>
               </div>
 
               {/* Pricing */}
-              <div className="mb-6">
+              <div className="mb-5">
                 <div className="flex items-end gap-1">
                   <span className="text-4xl font-bold text-slate-900">Custom</span>
                 </div>
-                <p className="text-slate-400 text-xs mt-2">Tailored pricing based on number of branches</p>
+                <p className="text-slate-400 text-xs mt-1.5">Tailored pricing based on branches</p>
               </div>
 
               {/* CTA */}
               <button
                 onClick={() => setShowDemoModal(true)}
-                className="flex items-center justify-center w-full py-3.5 min-h-[48px] rounded-xl border-2 border-slate-900 text-slate-900 font-semibold text-sm hover:bg-slate-900 hover:text-white transition-colors mb-5"
+                className="flex items-center justify-center w-full py-3 min-h-[44px] rounded-xl border-2 border-slate-900 text-slate-900 font-semibold text-sm hover:bg-slate-900 hover:text-white transition-colors mb-5"
               >
                 Contact Sales
               </button>
 
-              <div className="flex flex-wrap items-center gap-3 text-xs text-slate-500 mb-6">
+              <div className="flex flex-wrap items-center gap-2 text-xs text-slate-500 mb-5">
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-violet-500" />Custom onboarding</span>
                 <span className="flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-violet-500" />Volume discounts</span>
               </div>
 
               {/* Features */}
-              <div className="space-y-3">
-                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-3">Everything in Essentials, plus:</p>
+              <div className="space-y-2.5">
+                <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 mb-2">Everything in Pro, plus:</p>
                 {[
                   'Multi-branch management',
                   'Centralized dashboard for all locations',
@@ -836,16 +891,19 @@ export default function HomePage() {
                   'Inter-branch customer transfers',
                   'Priority support (< 4hr response)',
                   'Dedicated Relationship Manager',
-                  'Staff performance comparison across branches',
+                  'Staff performance across branches',
+                  'Custom integrations',
                 ].map((feature) => (
-                  <div key={feature} className="flex items-start gap-2.5">
-                    <CheckCircle2 className="h-4 w-4 text-violet-500 shrink-0 mt-0.5" />
-                    <span className="text-sm text-slate-700">{feature}</span>
+                  <div key={feature} className="flex items-start gap-2">
+                    <CheckCircle2 className="h-3.5 w-3.5 text-violet-500 shrink-0 mt-0.5" />
+                    <span className="text-[13px] text-slate-700">{feature}</span>
                   </div>
                 ))}
               </div>
             </div>
           </div>
+
+
 
           {/* Trust badges */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-12 reveal">
