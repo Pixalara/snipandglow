@@ -278,12 +278,13 @@ export default function HomePage() {
                   <div className="shrink-0" style={{ background: 'linear-gradient(135deg, #075e54 0%, #0a7a6e 100%)', padding: '8px 12px 8px 12px' }}>
                     <div className="flex items-center gap-2">
                       <div className="relative shrink-0">
-                        <div className="h-8 w-8 rounded-full flex items-center justify-center text-[10px] font-bold text-white"
-                          style={{ background: 'linear-gradient(135deg, #25d366 0%, #128c7e 100%)', boxShadow: '0 2px 8px rgba(0,0,0,0.3)' }}>SG</div>
+                        <div className="h-8 w-8 rounded-full overflow-hidden" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)', border: '1.5px solid rgba(255,255,255,0.3)' }}>
+                          <img src="/jksalonandspalogo.png" alt="JK Salon & Spa" className="w-full h-full object-cover" />
+                        </div>
                         <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400" style={{ border: '2px solid #075e54' }} />
                       </div>
                       <div className="flex-1 min-w-0">
-                        <p className="text-[11.5px] font-semibold text-white leading-tight">Snip and Glow</p>
+                        <p className="text-[11.5px] font-semibold text-white leading-tight">JK Salon &amp; Spa</p>
                         <p className="text-[8.5px] text-emerald-200 leading-tight">by Pixalara &middot; online</p>
                       </div>
                       <div className="flex items-center gap-2.5">
@@ -322,7 +323,7 @@ export default function HomePage() {
                       {/* 1. Customer sends friendly message */}
                       <div className="flex justify-end">
                         <div style={{ background: 'linear-gradient(135deg, #dcf8c6, #c8f0b0)', borderRadius: '14px 14px 2px 14px', padding: '6px 10px', maxWidth: '168px', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                          <p className="text-[10.5px] text-slate-800 leading-snug">Hi! I&apos;d like to book an appointment at Royal Saloon ✨</p>
+                          <p className="text-[10.5px] text-slate-800 leading-snug">Hi! I&apos;d like to book an appointment at JK Salon &amp; Spa ✨</p>
                           <p className="text-[8px] text-slate-500 text-right mt-0.5">10:01 AM ✓✓</p>
                         </div>
                       </div>
@@ -331,7 +332,7 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(0,0,0,0.05)' }}>
                           <div className="px-3 py-2">
-                            <p className="text-[11px] font-bold text-slate-800">👋 Welcome to <span style={{ color: '#075e54' }}>Royal Saloon</span>!</p>
+                            <p className="text-[11px] font-bold text-slate-800">👋 Welcome to <span style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>!</p>
                             <p className="text-[10px] text-slate-600 mt-0.5 leading-snug">Hi Priya, how can we help you today?</p>
                             <p className="text-[8.5px] text-slate-400 italic mt-0.5">Powered by SnipandGlow</p>
                           </div>
@@ -359,7 +360,7 @@ export default function HomePage() {
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(37,211,102,0.15)' }}>
                           <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #075e54, #0a7a6e)' }}>
                             <p className="text-[10.5px] font-bold text-white">📋 Book Your Appointment</p>
-                            <p className="text-[8.5px] text-emerald-200">Royal Saloon</p>
+                            <p className="text-[8.5px] text-emerald-200">JK Salon &amp; Spa</p>
                           </div>
                           <div className="px-2.5 py-2 space-y-1.5">
                             {[['Services','✅ Haircut + Facial'],['Date','📅 Thu, 22 May 2026'],['Time','⏰ 2:30 PM']].map(([label,val]) => (
@@ -383,7 +384,7 @@ export default function HomePage() {
                             <p className="text-[11px] font-bold text-emerald-800">✅ Booking Confirmed!</p>
                           </div>
                           <div className="px-3 py-2 space-y-0.5">
-                            {[['👤','Priya Sharma'],['✂️','Haircut, Facial'],['📅','22 May 2026, 2:30 PM'],['📍','Royal Saloon']].map(([icon,val]) => (
+                            {[['👤','Priya Sharma'],['✂️','Haircut, Facial'],['📅','22 May 2026, 2:30 PM'],['📍','JK Salon & Spa']].map(([icon,val]) => (
                               <div key={val} className="flex items-center gap-1.5">
                                 <span className="text-[9px]">{icon}</span>
                                 <p className="text-[10px] text-slate-700">{val}</p>
@@ -460,7 +461,7 @@ export default function HomePage() {
                       {/* 9. Thank you */}
                       <div className="flex justify-start">
                         <div className="px-3 py-2" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.05)' }}>
-                          <p className="text-[10px] text-slate-700 leading-snug">🎉 Thank you for the 5-star rating! We&apos;re thrilled you loved your experience at <span className="font-bold" style={{ color: '#075e54' }}>Royal Saloon</span>. See you again! 💇</p>
+                          <p className="text-[10px] text-slate-700 leading-snug">🎉 Thank you for the 5-star rating! We&apos;re thrilled you loved your experience at <span className="font-bold" style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>. See you again! 💇</p>
                           <p className="text-[8px] text-slate-400 text-right mt-1">5:32 PM</p>
                         </div>
                       </div>
