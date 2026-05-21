@@ -78,15 +78,25 @@ export async function middleware(request: NextRequest) {
 
   if (!user) {
     const url = request.nextUrl.clone();
-    url.pathname = "/login";
+    // Admin paths redirect to admin login
+    if (pathname.startsWith('/admin')) {
+      url.pathname = '/admin/login';
+    } else {
+      url.pathname = '/login';
+    }
     return NextResponse.redirect(url);
+  }
+
+  // Skip tenant checks for admin paths — admin users don't need tenant_id
+  if (pathname.startsWith('/admin')) {
+    return supabaseResponse;
   }
 
   const tenantId = user.user_metadata?.tenant_id;
   const branchId = user.user_metadata?.branch_id;
   const role = user.user_metadata?.role;
 
-  // Authenticated but no tenant → onboarding
+  // Authenticated but no tenant → onboarding (only for dashboard paths)
   if (!tenantId && !pathname.startsWith("/onboarding")) {
     const url = request.nextUrl.clone();
     url.pathname = "/onboarding";
