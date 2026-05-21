@@ -81,11 +81,28 @@ export async function resolveTenant(
     // Match by salon name (from friendly message)
     if (slug.startsWith('salon_name:')) {
       const salonName = slug.replace('salon_name:', '').trim();
-      const { data: tenantByName } = await (admin
+      console.log('[Router] Looking up salon by name:', salonName);
+
+      // Try exact case-insensitive match
+      const { data: matches } = await (admin
         .from('tenants' as any)
-        .select('id')
+        .select('id, name')
         .ilike('name', salonName)
-        .single() as any);
+        .limit(1) as any);
+
+      let tenantByName = matches?.[0] || null;
+
+      if (!tenantByName) {
+        // Try with wildcard
+        const { data: fuzzyMatches } = await (admin
+          .from('tenants' as any)
+          .select('id, name')
+          .ilike('name', `%${salonName}%`)
+          .limit(1) as any);
+        tenantByName = fuzzyMatches?.[0] || null;
+      }
+
+      console.log('[Router] Found tenant:', tenantByName?.name || 'NONE');
 
       if (tenantByName) {
         const tenant = await getTenantDetails(admin, tenantByName.id);
