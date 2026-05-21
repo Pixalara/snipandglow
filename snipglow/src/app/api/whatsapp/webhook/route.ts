@@ -881,7 +881,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         ).toString('base64url');
 
         // Send booking confirmation using approved template
-        await sendMessage(tenant.credentials, phone, {
+        const templateResult = await sendMessage(tenant.credentials, phone, {
           type: 'template',
           template: {
             name: 'booking_confirmation_v2',
@@ -899,12 +899,13 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
               {
                 type: 'button',
                 sub_type: 'url',
-                index: '0',
+                index: '2',
                 parameters: [{ type: 'text', text: calendarToken }],
               },
             ],
           },
         });
+        console.log('[Webhook] Template send result:', JSON.stringify(templateResult));
         break;
       }
 

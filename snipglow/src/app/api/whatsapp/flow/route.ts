@@ -348,7 +348,7 @@ async function processBooking(data: any, flowToken: string) {
       });
     } else {
       // New booking uses the approved template with URL button
-      await sendMessage(credentials, customerPhone || customer_phone, {
+      const templateResult = await sendMessage(credentials, customerPhone || customer_phone, {
         type: 'template',
         template: {
           name: 'booking_confirmation_v2',
@@ -366,12 +366,13 @@ async function processBooking(data: any, flowToken: string) {
             {
               type: 'button',
               sub_type: 'url',
-              index: '0',
+              index: '2',
               parameters: [{ type: 'text', text: calendarToken }],
             },
           ],
         },
       });
+      console.log('[Flow] Template send result:', JSON.stringify(templateResult));
     }
 
     // Send notification to salon owner
