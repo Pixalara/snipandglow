@@ -5,7 +5,7 @@ import { NextResponse, type NextRequest } from "next/server";
 const publicRoutes = new Set(["/", "/login", "/verify-otp", "/verify-phone", "/signup", "/blog", "/privacy", "/terms", "/refund"]);
 
 // Prefixes that are always public
-const publicPrefixes = ["/api/auth", "/api/whatsapp", "/blog/"];
+const publicPrefixes = ["/api/auth", "/api/whatsapp", "/blog/", "/cal/", "/book/"];
 
 // Admin-area public paths (login, forbidden)
 const adminPublicPaths = new Set(["/admin/login", "/admin/forbidden"]);
