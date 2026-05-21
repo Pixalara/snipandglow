@@ -175,6 +175,7 @@ async function sendFallbackMessage(phone: string, messageText: string) {
   const upper = messageText.trim().toUpperCase();
   const isBookingAttempt = upper.startsWith('BOOK_') ||
     /^SNG[-]?\d+$/i.test(messageText.trim()) ||
+    /\[SNG[-]?\d+\]/i.test(messageText) ||
     /book\s+an?\s+appointment\s+at/i.test(messageText);
 
   if (isBookingAttempt) {
@@ -199,9 +200,10 @@ async function sendFallbackMessage(phone: string, messageText: string) {
 async function handleTextMessage(tenant: TenantContext, phone: string, name: string, text: string) {
   const lowerText = text.toLowerCase().trim();
 
-  // Check if it's a booking trigger (slug, short code, or friendly message)
+  // Check if it's a booking trigger (slug, short code, embedded code, or friendly message)
   if (text.trim().toUpperCase().startsWith('BOOK_') ||
       /^SNG[-]?\d+$/i.test(text.trim()) ||
+      /\[SNG[-]?\d+\]/i.test(text) ||
       /book\s+an?\s+appointment\s+at/i.test(text)) {
     await sendWelcomeMenu(tenant, phone, name);
     return;

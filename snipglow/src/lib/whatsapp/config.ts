@@ -76,8 +76,13 @@ export function parseBookingSlug(message: string): string | null {
   if (/^SNG[-]?\d+$/i.test(trimmed)) {
     return trimmed.toLowerCase().replace('-', '');
   }
+  // Check for embedded tenant code in brackets: [SNG001]
+  const codeMatch = trimmed.match(/\[(SNG[-]?\d+)\]/i);
+  if (codeMatch) {
+    return codeMatch[1].toLowerCase().replace('-', '');
+  }
   // Friendly message: "I'd like to book an appointment at <SALON NAME>"
-  const friendlyMatch = trimmed.match(/book\s+an?\s+appointment\s+at\s+([^✨🙏💇📍\n]+)/i);
+  const friendlyMatch = trimmed.match(/book\s+an?\s+appointment\s+at\s+([^✨🙏💇📍\[\]\n]+)/i);
   if (friendlyMatch) {
     return ('salon_name:' + friendlyMatch[1].trim()).toLowerCase();
   }
