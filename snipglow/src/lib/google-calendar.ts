@@ -50,3 +50,13 @@ export function buildGoogleCalendarLink(event: CalendarEvent): string {
 
   return `https://calendar.google.com/calendar/render?${params.toString()}`;
 }
+
+/**
+ * Generate a short calendar URL that redirects to Google Calendar.
+ * Format: https://www.snipandglow.com/cal/<base64url-token>
+ */
+export function buildShortCalendarLink(event: CalendarEvent): string {
+  const payload = [event.title, event.startDate, event.startTime, event.endTime, event.location || ''].join('|');
+  const token = Buffer.from(payload).toString('base64url');
+  return `https://www.snipandglow.com/cal/${token}`;
+}

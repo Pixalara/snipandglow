@@ -320,18 +320,17 @@ async function processBooking(data: any, flowToken: string) {
   const credentials = getPlatformCredentials();
   if (credentials && (customerPhone || customer_phone)) {
     const { sendMessage } = await import('@/lib/whatsapp/templates');
-    const { buildGoogleCalendarLink } = await import('@/lib/google-calendar');
+    const { buildShortCalendarLink } = await import('@/lib/google-calendar');
     const dateLabel = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(time_slot);
 
-    // Build Google Calendar link with full event details
-    const calendarLink = buildGoogleCalendarLink({
+    // Build short calendar link
+    const calendarLink = buildShortCalendarLink({
       title: `${serviceNames} at ${salonName || 'Salon'}`,
-      description: `Appointment for ${serviceNames}\nCustomer: ${customerName}\nDuration: ${totalDuration} minutes\n\nBooked via SnipandGlow`,
-      location: salonName || 'Salon',
       startDate: date,
       startTime: time_slot,
       endTime: endTime,
+      location: salonName || 'Salon',
     });
 
     const confirmText = isReschedule

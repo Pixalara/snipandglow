@@ -875,15 +875,14 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         const period = startH >= 12 ? 'PM' : 'AM';
         const timeLabel = `${h}:00 ${period}`;
 
-        // Build Google Calendar link
-        const { buildGoogleCalendarLink } = await import('@/lib/google-calendar');
-        const calendarLink = buildGoogleCalendarLink({
+        // Build short Google Calendar link
+        const { buildShortCalendarLink } = await import('@/lib/google-calendar');
+        const calendarLink = buildShortCalendarLink({
           title: `${service.name} at ${tenant.salonName}`,
-          description: `Appointment for ${service.name}\nCustomer: ${name}\nDuration: ${service.duration_minutes} minutes\n\nBooked via SnipandGlow`,
-          location: tenant.salonName,
           startDate: dateStr,
           startTime: timeSlot,
           endTime: endTime,
+          location: tenant.salonName,
         });
 
         await sendMessage(tenant.credentials, phone, {
