@@ -568,8 +568,8 @@ export default function HomePage() {
             <div className="relative">
               <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60">
                 <img
-                  src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=800&h=600&fit=crop&q=80"
-                  alt="Salon professional helping a client"
+                  src="/qr-booking.png"
+                  alt="Customer scanning QR code to book appointment via WhatsApp"
                   className="w-full h-[350px] sm:h-[420px] object-cover"
                   loading="lazy"
                 />
