@@ -26,6 +26,7 @@ import {
 
 export interface TicketRow {
   id: string;
+  ticket_number: string | null;
   subject: string;
   description: string;
   category: string;
@@ -89,6 +90,13 @@ export function SupportClient({ tickets, userName, userPhone, tenantId, branchId
   const [showForm, setShowForm] = useState(false);
 
   const columns: Column<TicketRow>[] = [
+    {
+      key: 'ticket_number',
+      header: 'Ticket',
+      render: (row) => (
+        <span className="text-xs font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{row.ticket_number || '—'}</span>
+      ),
+    },
     {
       key: 'subject',
       header: 'Issue',

@@ -19,15 +19,16 @@ export default async function SupportPage() {
   const admin = createAdminClient();
 
   // Fetch existing support tickets for this tenant
-  const { data: tickets } = await admin
+  const { data: tickets } = await (admin
     .from('support_tickets' as any)
-    .select('id, subject, description, category, status, priority, created_at')
+    .select('id, ticket_number, subject, description, category, status, priority, created_at')
     .eq('tenant_id', tenantId)
     .order('created_at', { ascending: false })
-    .limit(50);
+    .limit(50) as any);
 
   const rows: TicketRow[] = (tickets ?? []).map((t: any) => ({
     id: t.id,
+    ticket_number: t.ticket_number ?? null,
     subject: t.subject ?? '',
     description: t.description ?? '',
     category: t.category ?? 'general',

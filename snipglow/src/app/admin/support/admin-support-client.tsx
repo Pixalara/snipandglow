@@ -7,6 +7,7 @@ import { updateTicketStatus } from './actions';
 
 interface Ticket {
   id: string;
+  ticket_number: string | null;
   subject: string;
   description: string;
   category: string;
@@ -119,6 +120,7 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
+            <span className="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">{ticket.ticket_number || ticket.id.substring(0, 8)}</span>
             <p className="text-sm font-medium text-white truncate">{ticket.subject}</p>
             <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${currentStatus?.color || 'bg-slate-800 text-slate-400'}`}>
               {currentStatus?.label || ticket.status}
@@ -165,7 +167,7 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
             </div>
             <div>
               <p className="text-slate-500">Ticket ID</p>
-              <p className="text-slate-300 font-mono mt-0.5">{ticket.id.substring(0, 8)}...</p>
+              <p className="text-slate-300 font-mono mt-0.5">{ticket.ticket_number || ticket.id.substring(0, 8)}</p>
             </div>
           </div>
 
