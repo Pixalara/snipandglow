@@ -638,6 +638,91 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== BUILD UNBREAKABLE LOYALTY ===== */}
+      <section className="py-16 sm:py-24 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+
+            {/* Left — Content */}
+            <div>
+              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+                Build Unbreakable{' '}
+                <span className="text-violet-600">Loyalty</span>
+              </h2>
+              <p className="text-slate-500 mt-4 text-base leading-relaxed max-w-lg">
+                Turn walk-ins into regulars. Capture leads, gather feedback, and reward your best clients automatically.
+              </p>
+
+              {/* Feature list */}
+              <div className="mt-8 space-y-6">
+                {[
+                  {
+                    icon: '👑',
+                    title: 'Membership & Loyalty Programs',
+                    desc: 'Creation of membership plans with automated discounts and reward systems to increase repeat visits.',
+                  },
+                  {
+                    icon: '⭐',
+                    title: 'Automated Customer Feedback',
+                    desc: 'Collection of ratings via WhatsApp after every visit to monitor service quality and boost online reviews.',
+                  },
+                  {
+                    icon: '🎯',
+                    title: 'Lead Management',
+                    desc: 'System to capture and track leads from walk-ins, social media, and referrals to convert them into loyal customers.',
+                  },
+                  {
+                    icon: '🎁',
+                    title: 'Win-Back Campaigns',
+                    desc: 'Automated 30-day and 60-day reminders with special offers to bring back inactive customers.',
+                  },
+                ].map((item) => (
+                  <div key={item.title} className="flex items-start gap-4">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-lg">
+                      {item.icon}
+                    </div>
+                    <div>
+                      <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                      <p className="text-sm text-slate-500 mt-1 leading-relaxed">{item.desc}</p>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            {/* Right — Image grid */}
+            <div className="grid grid-cols-2 gap-3">
+              <div className="rounded-2xl overflow-hidden shadow-lg">
+                <img
+                  src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop&q=80"
+                  alt="Happy salon client getting hair styled"
+                  className="w-full h-[240px] sm:h-[280px] object-cover"
+                  loading="lazy"
+                />
+              </div>
+              <div className="space-y-3">
+                <div className="rounded-2xl overflow-hidden shadow-lg">
+                  <img
+                    src="https://images.unsplash.com/photo-1600334129128-685c5582fd35?w=400&h=240&fit=crop&q=80"
+                    alt="Luxury salon towels and products"
+                    className="w-full h-[130px] sm:h-[135px] object-cover"
+                    loading="lazy"
+                  />
+                </div>
+                <div className="rounded-2xl overflow-hidden shadow-lg">
+                  <img
+                    src="https://images.unsplash.com/photo-1560066984-138dadb4c035?w=400&h=240&fit=crop&q=80"
+                    alt="Salon interior with warm lighting"
+                    className="w-full h-[100px] sm:h-[135px] object-cover"
+                    loading="lazy"
+                  />
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
       <section id="how-it-works" className="py-16 sm:py-24 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
