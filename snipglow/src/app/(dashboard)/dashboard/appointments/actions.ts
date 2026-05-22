@@ -478,10 +478,10 @@ export async function getAvailableSlots(
   const branch = branchRes.data;
   if (!branch || !branch.operating_hours) return [];
 
-  // 3. Determine the day name from the date
-  const dateObj = new Date(date + 'T00:00:00');
+  // 3. Determine the day name from the date (use IST to avoid timezone day shift)
+  const dateObj = new Date(date + 'T12:00:00+05:30');
   const dayNames = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  const dayName = dayNames[dateObj.getDay()];
+  const dayName = dayNames[dateObj.getUTCDay()];
 
   // Try multiple key formats (full name, 3-letter abbreviation)
   const hours = branch.operating_hours as Record<string, { open?: string; close?: string } | undefined>;
@@ -500,11 +500,10 @@ export async function getAvailableSlots(
   const closeMinutes = closeH * 60 + closeM;
 
   // If booking for today, skip past time slots (use IST timezone)
-  const now = new Date();
-  const istOffset = 5.5 * 60;
-  const utcMinutes = now.getUTCHours() * 60 + now.getUTCMinutes();
-  const currentISTMinutes = utcMinutes + istOffset;
-  const todayIST = new Date(now.getTime() + istOffset * 60000).toISOString().split('T')[0];
+  const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
+  const [todayIST, todayTimeStr] = nowIST.split(', ');
+  const [nowH, nowM] = (todayTimeStr || '00:00:00').split(':').map(Number);
+  const currentISTMinutes = nowH * 60 + nowM;
   const isToday = date === todayIST;
 
   for (let start = openMinutes; start + serviceDuration <= closeMinutes; start += 30) {

@@ -247,6 +247,18 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
       render: (row) => <StatusBadge status={row.status} />,
     },
     {
+      key: 'source',
+      header: 'Booked Via',
+      render: (row) => (
+        <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
+          row.source === 'whatsapp_flow' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+          'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
+        }`}>
+          {row.source === 'whatsapp_flow' ? '💬 WhatsApp' : '🖥️ Dashboard'}
+        </span>
+      ),
+    },
+    {
       key: 'actions',
       header: 'Actions',
       render: (row) => {
