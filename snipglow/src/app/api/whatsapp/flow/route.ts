@@ -354,29 +354,36 @@ async function processBooking(data: any, flowToken: string) {
     const dateTimeFormatted = `${dateLabel}, ${timeLabel}`;
 
     if (isReschedule) {
-      // Build short calendar link for reschedule
-      const { buildShortCalendarLink } = await import('@/lib/google-calendar');
-      const reschedCalLink = buildShortCalendarLink({
-        title: `${serviceNames} at ${salonName || 'Salon'}`,
-        startDate: date,
-        startTime: time_slot,
-        endTime: endTime,
-        location: salonName || 'Salon',
-      });
+      // Reschedule uses approved template with URL button
+      const reschedCalToken = Buffer.from(
+        [serviceNames + ' at ' + (salonName || 'Salon'), date, time_slot, endTime, salonName || ''].join('|')
+      ).toString('base64url');
 
-      await sendMessage(credentials, customerPhone || customer_phone, {
-        type: 'interactive',
-        interactive: {
-          type: 'button',
-          body: { text: `✅ *Appointment Rescheduled!*\n\n👤 ${customerName}\n✂️ ${serviceNames}\n📅 ${dateTimeFormatted}\n📍 ${salonName || 'Your Salon'}\n\n📲 *Save to Calendar:*\n${reschedCalLink}\n\nSee you at the new time! 😊` },
-          action: {
-            buttons: [
-              { type: 'reply', reply: { id: 'reschedule_appointment', title: 'Change Again' } },
-              { type: 'reply', reply: { id: 'cancel_appointment', title: 'Cancel' } },
-            ],
-          },
+      const reschedResult = await sendMessage(credentials, customerPhone || customer_phone, {
+        type: 'template',
+        template: {
+          name: 'appointment_rescheduled_v1',
+          language: { code: 'en' },
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: customerName },
+                { type: 'text', text: serviceNames },
+                { type: 'text', text: dateTimeFormatted },
+                { type: 'text', text: salonName || 'Your Salon' },
+              ],
+            },
+            {
+              type: 'button',
+              sub_type: 'url',
+              index: '2',
+              parameters: [{ type: 'text', text: reschedCalToken }],
+            },
+          ],
         },
       });
+      console.log('[Flow] Reschedule template result:', JSON.stringify(reschedResult));
     } else {
       // New booking uses the approved template with URL button
       const templateResult = await sendMessage(credentials, customerPhone || customer_phone, {

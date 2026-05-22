@@ -117,6 +117,7 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
       const templateButtonMap: Record<string, string> = {
         'Reschedule': 'reschedule_appointment',
         'Cancel': 'cancel_appointment',
+        'Change Again': 'reschedule_appointment',
         'reschedule_appointment': 'reschedule_appointment',
         'cancel_appointment': 'cancel_appointment',
       };
