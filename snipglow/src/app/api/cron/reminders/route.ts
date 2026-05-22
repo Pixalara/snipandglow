@@ -95,7 +95,7 @@ export async function GET(request: NextRequest) {
 
       await sendMessage(credentials, phone, {
         type: 'text',
-        text: { body: `⏰ *Appointment Reminder*\n\nHi ${customer.name}, this is a reminder for your appointment tomorrow!\n\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName}\n\nSee you tomorrow! 😊\n\n_Reply "Reschedule" or "Cancel" to manage your booking._` },
+        text: { body: `⏰ *Appointment Reminder*\n\nHi ${customer.name}, this is a reminder for your appointment tomorrow!\n\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName}\n\nSee you tomorrow! 😊` },
       });
 
       // Log to prevent duplicate sends
