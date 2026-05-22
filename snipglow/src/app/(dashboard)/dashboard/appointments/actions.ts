@@ -88,6 +88,68 @@ export async function createAppointment(
     return { success: false, error: 'Failed to create appointment. Please try again.' };
   }
 
+  // Send WhatsApp booking confirmation to customer
+  try {
+    const admin = createAdminClient();
+    const { data: customer } = await admin.from('customers').select('name, phone').eq('id', input.customer_id).single();
+    if (customer?.phone) {
+      const credentials = getPlatformCredentials();
+      if (credentials) {
+        // Get service names
+        const svcIds = input.extra_service_ids || [input.service_id];
+        const { data: svcs } = await admin.from('services').select('name').in('id', svcIds);
+        const serviceNames = svcs?.map((s: any) => s.name).join(', ') || '';
+
+        // Get salon name
+        const { data: tenantInfo } = await (admin.from('tenants' as any).select('name').eq('id', tenantId).single() as any);
+        const salonName = ((tenantInfo?.name as string) || '').trim();
+
+        // Format date/time
+        const dateLabel = new Date(input.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const [h, m] = input.start_time.split(':').map(Number);
+        const period = h >= 12 ? 'PM' : 'AM';
+        const timeLabel = `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
+        const dateTimeFormatted = `${dateLabel}, ${timeLabel}`;
+
+        // Build calendar token
+        const calendarToken = Buffer.from(
+          [serviceNames + ' at ' + salonName, input.appointment_date, input.start_time, input.end_time, salonName].join('|')
+        ).toString('base64url');
+
+        const phone = customer.phone.replace(/\D/g, '');
+
+        // Send booking_confirmation_v2 template
+        await sendMessage(credentials, phone, {
+          type: 'template',
+          template: {
+            name: 'booking_confirmation_v2',
+            language: { code: 'en' },
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: customer.name },
+                  { type: 'text', text: serviceNames },
+                  { type: 'text', text: dateTimeFormatted },
+                  { type: 'text', text: salonName },
+                ],
+              },
+              {
+                type: 'button',
+                sub_type: 'url',
+                index: '2',
+                parameters: [{ type: 'text', text: calendarToken }],
+              },
+            ],
+          },
+        });
+      }
+    }
+  } catch (err) {
+    console.error('[CreateAppointment] WhatsApp notification failed:', err);
+    // Don't fail the appointment creation if notification fails
+  }
+
   revalidatePath('/dashboard/appointments');
   return { success: true, data: data as Appointment };
 }
