@@ -60,7 +60,12 @@ export async function GET(request: NextRequest) {
 
   for (const appt of appts24h ?? []) {
     try {
-      // Check if 24h reminder already sent (use metadata in whatsapp_sessions)
+      // Get customer phone first
+      const { data: customer } = await admin.from('customers').select('name, phone').eq('id', appt.customer_id).single();
+      if (!customer?.phone) continue;
+      const phone = customer.phone.replace(/\D/g, '');
+
+      // Check if 24h reminder already sent
       const { data: existing } = await (admin
         .from('whatsapp_sessions' as any)
         .select('id')
@@ -68,10 +73,6 @@ export async function GET(request: NextRequest) {
         .limit(1) as any);
 
       if (existing && existing.length > 0) continue; // Already sent
-
-      // Get customer phone
-      const { data: customer } = await admin.from('customers').select('name, phone').eq('id', appt.customer_id).single();
-      if (!customer?.phone) continue;
 
       // Get service names
       let serviceNames = '';
@@ -91,23 +92,25 @@ export async function GET(request: NextRequest) {
       const timeLabel = `${h % 12 || 12}:${String(m).padStart(2, '0')} ${period}`;
       const dateLabel = new Date(appt.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
 
-      const phone = customer.phone.replace(/\D/g, '');
-
       await sendMessage(credentials, phone, {
         type: 'text',
         text: { body: `⏰ *Appointment Reminder*\n\nHi ${customer.name}, this is a reminder for your appointment tomorrow!\n\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName}\n\nSee you tomorrow! 😊` },
       });
 
-      // Log to prevent duplicate sends
-      await (admin.from('whatsapp_sessions' as any).insert({
-        tenant_id: appt.tenant_id,
-        message_id: `rem24_${appt.id}_${Date.now()}`,
-        phone,
-        direction: 'outbound',
-        template_name: `reminder_24h_${appt.id}`,
-        status: 'sent',
-        metadata: { type: '24h_reminder', appointment_id: appt.id },
-      } as any) as any);
+      // Log to prevent duplicate sends — use try-catch in case of DB issues
+      try {
+        await (admin.from('whatsapp_sessions' as any).insert({
+          tenant_id: appt.tenant_id,
+          message_id: `rem24_${appt.id}`,
+          phone: phone,
+          direction: 'outbound',
+          template_name: `reminder_24h_${appt.id}`,
+          status: 'sent',
+          metadata: { type: '24h_reminder' },
+        } as any) as any);
+      } catch (logErr) {
+        console.error('[Reminders] Failed to log 24h dedup:', logErr);
+      }
 
       sent24h++;
     } catch (err) {
@@ -167,15 +170,19 @@ export async function GET(request: NextRequest) {
         });
 
         // Log
-        await (admin.from('whatsapp_sessions' as any).insert({
-          tenant_id: appt.tenant_id,
-          message_id: `rem3_${appt.id}_${Date.now()}`,
-          phone,
-          direction: 'outbound',
-          template_name: `reminder_3h_${appt.id}`,
-          status: 'sent',
-          metadata: { type: '3h_reminder', appointment_id: appt.id },
-        } as any) as any);
+        try {
+          await (admin.from('whatsapp_sessions' as any).insert({
+            tenant_id: appt.tenant_id,
+            message_id: `rem3_${appt.id}`,
+            phone,
+            direction: 'outbound',
+            template_name: `reminder_3h_${appt.id}`,
+            status: 'sent',
+            metadata: { type: '3h_reminder' },
+          } as any) as any);
+        } catch (logErr) {
+          console.error('[Reminders] Failed to log 3h dedup:', logErr);
+        }
 
         sent3h++;
       } catch (err) {
