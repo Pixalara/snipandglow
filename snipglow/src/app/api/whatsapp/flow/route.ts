@@ -302,6 +302,19 @@ async function processBooking(data: any, flowToken: string) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is not available. Please choose another time.' } };
   }
 
+  // Validate: check if the selected slot is in the past (with 1-hour buffer)
+  const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
+  const [todayDate, todayTime] = nowIST.split(', ');
+  if (date === todayDate) {
+    const [nowH, nowM] = todayTime.split(':').map(Number);
+    const [slotH, slotM] = time_slot.split(':').map(Number);
+    const nowMinutes = nowH * 60 + nowM;
+    const slotMinutes = slotH * 60 + slotM;
+    if (slotMinutes <= nowMinutes + 60) {
+      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is no longer available. Please select a later time (at least 1 hour from now).' } };
+    }
+  }
+
   // Get first available employee
   const { data: employee } = await admin.from('employees').select('id').eq('tenant_id', primaryService.tenant_id).eq('is_active', true).limit(1).single();
 

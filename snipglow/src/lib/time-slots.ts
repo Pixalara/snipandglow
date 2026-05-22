@@ -142,33 +142,16 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
 
   console.log('[Slots] Open:', openTime, 'Close:', closeTime, 'Range:', openMinutes, '-', closeMinutes);
 
-  // For today: apply 1-hour buffer from current IST time
-  const isFirstDateToday = dates.length > 0 && dates[0].id === ist.date;
-  const currentMinutesIST = ist.hours * 60 + ist.minutes;
-  const bufferMinutes = isFirstDateToday ? currentMinutesIST + 60 : 0;
-
+  // Generate ALL time slots for the full operating hours range
+  // We show the complete range because WhatsApp Flow uses same slots for all dates
+  // Past/buffer validation happens at booking submission time
   for (let mins = openMinutes; mins < closeMinutes; mins += 30) {
-    // Skip past slots + 1-hour buffer for today
-    if (isFirstDateToday && mins <= bufferMinutes) continue;
-
     const hour = Math.floor(mins / 60);
     const min = mins % 60;
     const h = hour % 12 || 12;
     const period = hour >= 12 ? 'PM' : 'AM';
     const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
     timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
-  }
-
-  // Fallback if no slots (e.g., too late today — show tomorrow's full range)
-  if (timeSlots.length === 0 && dates.length > 0) {
-    for (let mins = openMinutes; mins < closeMinutes; mins += 30) {
-      const hour = Math.floor(mins / 60);
-      const min = mins % 60;
-      const h = hour % 12 || 12;
-      const period = hour >= 12 ? 'PM' : 'AM';
-      const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
-      timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
-    }
   }
 
   // Final fallback
