@@ -61,7 +61,6 @@ export default function NewAppointmentPage() {
   const [showDropdown, setShowDropdown] = useState(false);
 
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>([]);
-  const [employeeId, setEmployeeId] = useState('');
   const [appointmentDate, setAppointmentDate] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
 
@@ -110,25 +109,26 @@ export default function NewAppointmentPage() {
     return () => clearTimeout(timer);
   }, [customerSearch, selectedCustomer]);
 
-  // Fetch available slots when employee + date + service are selected
+  // Fetch available slots when date + service are selected
   const fetchSlots = useCallback(async () => {
-    if (!employeeId || !appointmentDate || !duration) return;
+    if (!appointmentDate || !duration || employees.length === 0) return;
 
     setLoadingSlots(true);
     setSlots([]);
     setSelectedSlot('');
 
-    const available = await getAvailableSlots(employeeId, appointmentDate, duration);
+    // Use first employee for slot calculation
+    const available = await getAvailableSlots(employees[0].id, appointmentDate, duration);
     setSlots(available);
     setLoadingSlots(false);
-  }, [employeeId, appointmentDate, duration]);
+  }, [appointmentDate, duration, employees]);
 
   useEffect(() => {
     fetchSlots();
   }, [fetchSlots]);
 
   // Form validation
-  const isFormValid = customerId && selectedServiceIds.length > 0 && employeeId && appointmentDate && selectedSlot;
+  const isFormValid = customerId && selectedServiceIds.length > 0 && appointmentDate && selectedSlot;
 
   // Handle customer selection
   function handleSelectCustomer(customer: CustomerOption) {
@@ -163,7 +163,7 @@ export default function NewAppointmentPage() {
         customer_id: customerId,
         service_id: selectedServiceIds[0], // Primary service
         extra_service_ids: selectedServiceIds, // All services
-        employee_id: employeeId,
+        employee_id: employees[0]?.id || '',
         appointment_date: appointmentDate,
         start_time: startTime,
         end_time: endTime,
@@ -335,33 +335,6 @@ export default function NewAppointmentPage() {
               )}
             </div>
 
-            {/* Employee/Stylist selection */}
-            <div className="space-y-1.5">
-              <label htmlFor="employee" className="text-sm font-medium text-foreground">
-                Stylist <span className="text-destructive">*</span>
-              </label>
-              <select
-                id="employee"
-                value={employeeId}
-                onChange={(e) => {
-                  setEmployeeId(e.target.value);
-                  setSelectedSlot('');
-                }}
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                aria-label="Select a stylist"
-              >
-                <option value="">Select a stylist...</option>
-                {employees.map((emp) => (
-                  <option key={emp.id} value={emp.id}>
-                    {emp.name}
-                    {emp.specializations?.length > 0
-                      ? ` (${emp.specializations.join(', ')})`
-                      : ''}
-                  </option>
-                ))}
-              </select>
-            </div>
-
             {/* Date picker */}
             <div className="space-y-1.5">
               <label htmlFor="date" className="text-sm font-medium text-foreground">
@@ -386,9 +359,9 @@ export default function NewAppointmentPage() {
               <label htmlFor="timeslot" className="text-sm font-medium text-foreground">
                 Time Slot <span className="text-destructive">*</span>
               </label>
-              {!employeeId || !appointmentDate || selectedServiceIds.length === 0 ? (
+              {!appointmentDate || selectedServiceIds.length === 0 ? (
                 <p className="text-xs text-muted-foreground">
-                  Select a service, stylist, and date to see available slots.
+                  Select a service and date to see available slots.
                 </p>
               ) : loadingSlots ? (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
