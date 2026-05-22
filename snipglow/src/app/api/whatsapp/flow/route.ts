@@ -293,6 +293,15 @@ async function processBooking(data: any, flowToken: string) {
       .limit(1) as any);
   }
 
+  // Validate: check if the selected slot is blocked
+  const { data: tenantCheck } = await (admin.from('tenants' as any).select('settings').eq('id', primaryService.tenant_id).single() as any);
+  const blockedSlots: Array<{ date: string; slots: string[] }> = (tenantCheck?.settings as any)?.blocked_slots || [];
+  const blockedForDate = blockedSlots.find((b: any) => b.date === date);
+  const slotTime = time_slot.substring(0, 5); // "09:00:00" → "09:00"
+  if (blockedForDate?.slots.includes(slotTime)) {
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is not available. Please choose another time.' } };
+  }
+
   // Get first available employee
   const { data: employee } = await admin.from('employees').select('id').eq('tenant_id', primaryService.tenant_id).eq('is_active', true).limit(1).single();
 

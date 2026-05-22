@@ -2,9 +2,10 @@
 // Smart Time Slot Generator
 // Generates available dates and time slots based on:
 // - Branch operating hours
-// - Blocked dates
-// - Current time (IST) with 1-hour buffer
-// - Skips past time slots for today
+// - Blocked dates (full day closures)
+// - Current time (IST) with 1-hour buffer for today
+// - Blocked slots are validated at booking time (not here, since Flow shows
+//   same slots for all dates)
 // =============================================================================
 
 import { createAdminClient } from '@/lib/supabase/admin';
@@ -20,46 +21,47 @@ interface GeneratedSlots {
 }
 
 /**
- * Get current IST time components.
+ * Get current IST date and time.
  */
 function getISTNow(): { date: string; hours: number; minutes: number } {
   const now = new Date();
-  // Convert to IST (UTC+5:30)
-  const istOffset = 5.5 * 60 * 60 * 1000;
-  const ist = new Date(now.getTime() + istOffset);
+  // Format in IST using Intl
+  const istStr = now.toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
+  // en-CA gives YYYY-MM-DD, HH:MM:SS format
+  const [datePart, timePart] = istStr.split(', ');
+  const [hours, minutes] = (timePart || '00:00:00').split(':').map(Number);
   return {
-    date: ist.toISOString().split('T')[0],
-    hours: ist.getUTCHours(),
-    minutes: ist.getUTCMinutes(),
+    date: datePart, // YYYY-MM-DD in IST
+    hours,
+    minutes,
   };
 }
 
 /**
  * Get day name from date string (full lowercase: monday, tuesday, etc.)
+ * Uses IST timezone to avoid UTC day mismatch.
  */
 function getDayName(dateStr: string): string {
-  const d = new Date(dateStr + 'T00:00:00');
+  // Parse as noon IST to avoid timezone day shift
+  const d = new Date(dateStr + 'T12:00:00+05:30');
   const days = ['sunday', 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday'];
-  return days[d.getDay()];
+  return days[d.getUTCDay()];
 }
 
 /**
  * Generate smart dates and time slots for a tenant's branch.
- * - Respects operating hours
- * - Skips blocked dates
- * - For today: skips past slots + adds 1-hour buffer
  */
 export async function generateSmartSlots(tenantId: string, branchId: string): Promise<GeneratedSlots> {
   const admin = createAdminClient();
 
-  // Fetch branch operating hours and blocked dates
+  // Fetch branch operating hours
   const { data: branch } = await admin
     .from('branches')
     .select('operating_hours')
     .eq('id', branchId)
     .single();
 
-  // Fetch blocked dates from tenant settings
+  // Fetch tenant settings (blocked dates)
   const { data: tenantData } = await (admin
     .from('tenants' as any)
     .select('settings')
@@ -68,106 +70,119 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
 
   const operatingHours = (branch?.operating_hours as Record<string, { open?: string; close?: string } | null>) || {};
   const blockedDates: string[] = (tenantData?.settings as any)?.blocked_dates || [];
-  const blockedSlots: Array<{ date: string; slots: string[] }> = (tenantData?.settings as any)?.blocked_slots || [];
   const ist = getISTNow();
 
-  // Generate available dates (next 14 open days, max 30 days lookahead)
+  console.log('[Slots] IST now:', ist.date, ist.hours + ':' + ist.minutes);
+  console.log('[Slots] Operating hours keys:', Object.keys(operatingHours));
+
+  // ─── GENERATE DATES ─────────────────────────────────────────────────────
   const dates: TimeSlotOption[] = [];
   let daysChecked = 0;
 
-  // Use IST date as starting point (not UTC)
-  const todayIST = ist.date; // Already in IST
-
   while (dates.length < 14 && daysChecked < 30) {
-    // Calculate date from IST today — avoid UTC conversion
-    const baseDate = new Date(todayIST + 'T12:00:00+05:30'); // Use noon to avoid timezone edge cases
-    baseDate.setDate(baseDate.getDate() + daysChecked);
-    // Format as YYYY-MM-DD without UTC conversion
-    const year = baseDate.getFullYear();
-    const month = String(baseDate.getMonth() + 1).padStart(2, '0');
-    const day = String(baseDate.getDate()).padStart(2, '0');
-    const dateStr = `${year}-${month}-${day}`;
+    // Add days to today's IST date
+    const [y, m, d] = ist.date.split('-').map(Number);
+    const baseDate = new Date(y, m - 1, d + daysChecked, 12, 0, 0); // Local noon
+    const dateStr = `${baseDate.getFullYear()}-${String(baseDate.getMonth() + 1).padStart(2, '0')}-${String(baseDate.getDate()).padStart(2, '0')}`;
     const dayName = getDayName(dateStr);
 
-    // Check if blocked
+    // Skip blocked dates
     if (blockedDates.includes(dateStr)) {
       daysChecked++;
       continue;
     }
 
-    // Check if branch is open on this day (try full name and 3-letter)
+    // Check if branch is open (try full name, then 3-letter abbreviation)
     const dayHours = operatingHours[dayName] || operatingHours[dayName.slice(0, 3)] || null;
     if (!dayHours || !dayHours.open || !dayHours.close) {
       daysChecked++;
       continue;
     }
 
-    const label = baseDate.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    // Format label
+    const labelDate = new Date(dateStr + 'T12:00:00+05:30');
+    const label = labelDate.toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short' });
     dates.push({ id: dateStr, title: label });
     daysChecked++;
   }
 
-  // Generate time slots based on the first available date's hours
-  // (All days typically have same hours, but we use the first date's hours)
+  // ─── GENERATE TIME SLOTS ────────────────────────────────────────────────
+  // Use operating hours to determine slot range
+  // Since WhatsApp Flow shows same slots for all dates, we generate the full range
+  // Blocked slots per date are validated at booking submission time
   const timeSlots: TimeSlotOption[] = [];
-  const firstDate = dates[0]?.id;
 
-  if (firstDate) {
-    const firstDayName = getDayName(firstDate);
-    const dayHours = operatingHours[firstDayName] || operatingHours[firstDayName.slice(0, 3)];
+  // Find the operating hours (use first available date's day, or any day with hours)
+  let openTime = '09:00';
+  let closeTime = '21:00';
 
-    if (dayHours?.open && dayHours?.close) {
-      const [openH, openM] = dayHours.open.split(':').map(Number);
-      const [closeH, closeM] = dayHours.close.split(':').map(Number);
-      const openMinutes = openH * 60 + (openM || 0);
-      const closeMinutes = closeH * 60 + (closeM || 0);
-
-      // For today: current time + 1 hour buffer
-      const isToday = firstDate === ist.date;
-      const currentMinutesIST = ist.hours * 60 + ist.minutes;
-      const bufferMinutes = isToday ? currentMinutesIST + 60 : 0; // 1 hour from now
-
-      for (let mins = openMinutes; mins < closeMinutes; mins += 30) {
-        // Skip past slots (with 1-hour buffer for today)
-        if (isToday && mins <= bufferMinutes) continue;
-
-        const hour = Math.floor(mins / 60);
-        const min = mins % 60;
-        const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-
-        // Skip blocked slots for this date
-        const blockedForDate = blockedSlots.find((b) => b.date === firstDate);
-        if (blockedForDate?.slots.includes(timeStr)) continue;
-
-        const h = hour % 12 || 12;
-        const period = hour >= 12 ? 'PM' : 'AM';
-        timeSlots.push({ id: timeStr + ':00', title: `${h}:${String(min).padStart(2, '0')} ${period}` });
+  if (dates.length > 0) {
+    const firstDayName = getDayName(dates[0].id);
+    const dh = operatingHours[firstDayName] || operatingHours[firstDayName.slice(0, 3)];
+    if (dh?.open && dh?.close) {
+      openTime = dh.open;
+      closeTime = dh.close;
+    }
+  } else {
+    // Fallback: find any day with hours
+    for (const key of Object.keys(operatingHours)) {
+      const h = operatingHours[key];
+      if (h?.open && h?.close) {
+        openTime = h.open;
+        closeTime = h.close;
+        break;
       }
     }
   }
 
-  // Fallback if no slots generated (shouldn't happen but safety)
-  if (timeSlots.length === 0) {
-    for (let hour = 9; hour < 20; hour++) {
-      for (const min of [0, 30]) {
-        const h = hour % 12 || 12;
-        const period = hour >= 12 ? 'PM' : 'AM';
-        const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
-        timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
-      }
+  const [openH, openM] = openTime.split(':').map(Number);
+  const [closeH, closeM] = closeTime.split(':').map(Number);
+  const openMinutes = openH * 60 + (openM || 0);
+  const closeMinutes = closeH * 60 + (closeM || 0);
+
+  console.log('[Slots] Open:', openTime, 'Close:', closeTime, 'Range:', openMinutes, '-', closeMinutes);
+
+  // For today: apply 1-hour buffer from current IST time
+  const isFirstDateToday = dates.length > 0 && dates[0].id === ist.date;
+  const currentMinutesIST = ist.hours * 60 + ist.minutes;
+  const bufferMinutes = isFirstDateToday ? currentMinutesIST + 60 : 0;
+
+  for (let mins = openMinutes; mins < closeMinutes; mins += 30) {
+    // Skip past slots + 1-hour buffer for today
+    if (isFirstDateToday && mins <= bufferMinutes) continue;
+
+    const hour = Math.floor(mins / 60);
+    const min = mins % 60;
+    const h = hour % 12 || 12;
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
+    timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
+  }
+
+  // Fallback if no slots (e.g., too late today — show tomorrow's full range)
+  if (timeSlots.length === 0 && dates.length > 0) {
+    for (let mins = openMinutes; mins < closeMinutes; mins += 30) {
+      const hour = Math.floor(mins / 60);
+      const min = mins % 60;
+      const h = hour % 12 || 12;
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
+      timeSlots.push({ id: timeStr, title: `${h}:${String(min).padStart(2, '0')} ${period}` });
     }
   }
 
-  // Fallback dates if none generated
+  // Final fallback
   if (dates.length === 0) {
+    const [y, m, d] = ist.date.split('-').map(Number);
     for (let i = 0; i < 14; i++) {
-      const d = new Date(ist.date + 'T00:00:00+05:30');
-      d.setDate(d.getDate() + i);
-      const dateStr = d.toISOString().split('T')[0];
-      const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
-      dates.push({ id: dateStr, title: label });
+      const fd = new Date(y, m - 1, d + i, 12, 0, 0);
+      const ds = `${fd.getFullYear()}-${String(fd.getMonth() + 1).padStart(2, '0')}-${String(fd.getDate()).padStart(2, '0')}`;
+      const label = fd.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+      dates.push({ id: ds, title: label });
     }
   }
+
+  console.log('[Slots] Generated:', dates.length, 'dates,', timeSlots.length, 'slots');
 
   return { dates, timeSlots };
 }
