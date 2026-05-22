@@ -60,19 +60,20 @@ export async function GET(request: NextRequest) {
 
   for (const appt of appts24h ?? []) {
     try {
+      // Check if 24h reminder already sent — use appointment's own field
+      // We mark it by checking if this appointment ID exists in a simple GET query
+      const { data: alreadySent } = await (admin
+        .from('whatsapp_sessions' as any)
+        .select('id')
+        .eq('message_id', `rem24_${appt.id}`)
+        .maybeSingle() as any);
+
+      if (alreadySent) continue; // Already sent
+
       // Get customer phone first
       const { data: customer } = await admin.from('customers').select('name, phone').eq('id', appt.customer_id).single();
       if (!customer?.phone) continue;
       const phone = customer.phone.replace(/\D/g, '');
-
-      // Check if 24h reminder already sent
-      const { data: existing } = await (admin
-        .from('whatsapp_sessions' as any)
-        .select('id')
-        .eq('template_name', `reminder_24h_${appt.id}`)
-        .limit(1) as any);
-
-      if (existing && existing.length > 0) continue; // Already sent
 
       // Get service names
       let serviceNames = '';
@@ -97,17 +98,17 @@ export async function GET(request: NextRequest) {
         text: { body: `⏰ *Appointment Reminder*\n\nHi ${customer.name}, this is a reminder for your appointment tomorrow!\n\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName}\n\nSee you tomorrow! 😊` },
       });
 
-      // Log to prevent duplicate sends — use try-catch in case of DB issues
+      // Log to prevent duplicate sends — use upsert to handle conflicts
       try {
-        await (admin.from('whatsapp_sessions' as any).insert({
-          tenant_id: appt.tenant_id,
+        await (admin.from('whatsapp_sessions' as any).upsert({
           message_id: `rem24_${appt.id}`,
+          tenant_id: appt.tenant_id,
           phone: phone,
           direction: 'outbound',
           template_name: `reminder_24h_${appt.id}`,
           status: 'sent',
           metadata: { type: '24h_reminder' },
-        } as any) as any);
+        } as any, { onConflict: 'message_id' }) as any);
       } catch (logErr) {
         console.error('[Reminders] Failed to log 24h dedup:', logErr);
       }
@@ -133,13 +134,13 @@ export async function GET(request: NextRequest) {
     for (const appt of appts3h ?? []) {
       try {
         // Check if 3h reminder already sent
-        const { data: existing } = await (admin
+        const { data: existing3h } = await (admin
           .from('whatsapp_sessions' as any)
           .select('id')
-          .eq('template_name', `reminder_3h_${appt.id}`)
-          .limit(1) as any);
+          .eq('message_id', `rem3_${appt.id}`)
+          .maybeSingle() as any);
 
-        if (existing && existing.length > 0) continue;
+        if (existing3h) continue;
 
         // Get customer phone
         const { data: customer } = await admin.from('customers').select('name, phone').eq('id', appt.customer_id).single();
@@ -171,15 +172,15 @@ export async function GET(request: NextRequest) {
 
         // Log
         try {
-          await (admin.from('whatsapp_sessions' as any).insert({
-            tenant_id: appt.tenant_id,
+          await (admin.from('whatsapp_sessions' as any).upsert({
             message_id: `rem3_${appt.id}`,
+            tenant_id: appt.tenant_id,
             phone,
             direction: 'outbound',
             template_name: `reminder_3h_${appt.id}`,
             status: 'sent',
             metadata: { type: '3h_reminder' },
-          } as any) as any);
+          } as any, { onConflict: 'message_id' }) as any);
         } catch (logErr) {
           console.error('[Reminders] Failed to log 3h dedup:', logErr);
         }
