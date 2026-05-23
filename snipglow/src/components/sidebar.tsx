@@ -21,7 +21,6 @@ import {
   MessageCircle,
   Star,
   Headphones,
-  Zap,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { can, type Resource } from '@/lib/permissions';
@@ -48,7 +47,6 @@ const navItems: NavItem[] = [
   { label: 'Payroll', href: '/dashboard/payroll', icon: BadgeDollarSign, resource: 'payroll' },
   { label: 'Branches', href: '/dashboard/branches', icon: Building2, resource: 'branches' },
   { label: 'WhatsApp', href: '/dashboard/whatsapp', icon: MessageCircle, resource: 'settings' },
-  { label: 'Automation Logs', href: '/dashboard/automation-logs', icon: Zap, resource: 'dashboard' },
   { label: 'Feedback', href: '/dashboard/feedback', icon: Star, resource: 'analytics' },
   { label: 'Analytics', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
   { label: 'Audit Log', href: '/dashboard/audit-log', icon: FileText, resource: 'audit' },

@@ -11,7 +11,8 @@ const navItems = [
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   { label: 'Support Tickets', href: '/admin/support', icon: Headphones },
   { label: 'WhatsApp Health', href: '/admin/whatsapp', icon: Zap },
-  { label: 'Audit Logs', href: '/admin/audit', icon: FileText },
+  { label: 'Automation Logs', href: '/admin/automation-logs', icon: FileText },
+  { label: 'Audit Logs', href: '/admin/audit', icon: Shield },
   { label: 'Force Delete', href: '/admin/force-delete', icon: Trash2 },
 ];
 
