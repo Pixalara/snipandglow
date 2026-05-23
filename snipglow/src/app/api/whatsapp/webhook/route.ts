@@ -533,19 +533,23 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       } as any) as any);
 
       // Send appropriate response based on rating
-      if (rating >= 4) {
-        // High rating — ask if they'd like to leave a Google review
+      if (rating >= 3) {
+        // 3-5 stars — ask if they'd like to leave a Google review
         // Get Google review link from tenant settings
         const { data: tenantSettings } = await (admin.from('tenants' as any).select('settings').eq('id', tenant.tenantId).single() as any);
         const googleReviewLink = (tenantSettings?.settings as any)?.google_review_link || '';
 
         if (googleReviewLink) {
+          const thankMsg = rating >= 4
+            ? `🎉 Thank you for the ${rating}-star rating, ${name}! We're so glad you loved your experience at *${tenant.salonName}*.`
+            : `Thank you for your feedback, ${name}! We appreciate you taking the time to rate *${tenant.salonName}*.`;
+
           await sendMessage(tenant.credentials, phone, {
             type: 'interactive',
             interactive: {
               type: 'button',
               body: {
-                text: `🎉 Thank you for the ${rating}-star rating, ${name}! We're so glad you loved your experience at *${tenant.salonName}*.\n\nWould you mind sharing your experience on Google? It really helps other customers find us! 🙏`,
+                text: `${thankMsg}\n\nWould you mind sharing your experience on Google? It really helps other customers find us! 🙏`,
               },
               action: {
                 buttons: [
@@ -556,16 +560,14 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
             },
           });
         } else {
+          const thankMsg = rating >= 4
+            ? `🎉 Thank you for the ${rating}-star rating! We're thrilled you loved your experience at *${tenant.salonName}*.\n\nWe look forward to seeing you again! 💇`
+            : `Thank you for your feedback, ${name}! We appreciate your honesty at *${tenant.salonName}*.\n\nSee you next time! 🙏`;
           await sendMessage(tenant.credentials, phone, {
             type: 'text',
-            text: { body: `🎉 Thank you for the ${rating}-star rating! We're thrilled you loved your experience at *${tenant.salonName}*.\n\nWe look forward to seeing you again! 💇` },
+            text: { body: thankMsg },
           });
         }
-      } else if (rating === 3) {
-        await sendMessage(tenant.credentials, phone, {
-          type: 'text',
-          text: { body: `Thank you for your feedback, ${name}! We appreciate your honesty and will work to improve your experience at *${tenant.salonName}*.\n\nSee you next time! 🙏` },
-        });
       } else {
         // 1-2 stars — apologize and offer to help
         await sendMessage(tenant.credentials, phone, {
