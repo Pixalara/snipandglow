@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { formatINR, formatDateIN } from '@/lib/utils';
+import { getLoyaltyTier, getAverageSpend, getVisitFrequency, getDaysSinceLastVisit } from '@/lib/loyalty';
 import { ProfileTabs } from './profile-tabs';
 import {
   VisitHistoryTable,
@@ -142,9 +143,18 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
           notes: customer.notes,
           total_visits: customer.total_visits ?? 0,
           total_spent: customer.total_spent ?? 0,
+          last_visit_at: customer.last_visit_at ?? null,
           created_at: customer.created_at ?? '',
         }}
         activeMembership={activeMembership}
+      />
+
+      {/* Loyalty & Stats Card */}
+      <LoyaltyStatsCard
+        totalVisits={customer.total_visits ?? 0}
+        totalSpent={customer.total_spent ?? 0}
+        lastVisitAt={customer.last_visit_at ?? null}
+        createdAt={customer.created_at ?? ''}
       />
 
       {/* Tabs: Visit History & Billing History (Client Components) */}
@@ -172,15 +182,23 @@ function CustomerProfileHeader({
     notes: string | null;
     total_visits: number;
     total_spent: number;
+    last_visit_at: string | null;
     created_at: string;
   };
   activeMembership: ActiveMembership | null;
 }) {
+  const loyalty = getLoyaltyTier(customer.total_visits);
+
   return (
     <div className="rounded-lg border border-border bg-card p-6 space-y-4">
-      {/* Name and Membership Badge */}
+      {/* Name, Loyalty Badge, and Membership Badge */}
       <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-        <h1 className="text-2xl font-bold text-foreground">{customer.name}</h1>
+        <div className="flex items-center gap-3">
+          <h1 className="text-2xl font-bold text-foreground">{customer.name}</h1>
+          <span className={`inline-flex items-center gap-1 rounded-full px-2.5 py-0.5 text-xs font-medium ${loyalty.color} ${loyalty.textColor}`}>
+            {loyalty.emoji} {loyalty.label}
+          </span>
+        </div>
         {activeMembership && (
           <div className="inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400">
             <span>🏅 {activeMembership.membership_name}</span>
@@ -225,4 +243,84 @@ function DetailItem({ label, value }: { label: string; value: string }) {
 
 function capitalize(str: string): string {
   return str.charAt(0).toUpperCase() + str.slice(1).toLowerCase();
+}
+
+// =============================================================================
+// Loyalty Stats Card — Shows tier progress, avg spend, frequency, last visit
+// =============================================================================
+
+function LoyaltyStatsCard({
+  totalVisits,
+  totalSpent,
+  lastVisitAt,
+  createdAt,
+}: {
+  totalVisits: number;
+  totalSpent: number;
+  lastVisitAt: string | null;
+  createdAt: string;
+}) {
+  const loyalty = getLoyaltyTier(totalVisits);
+  const avgSpend = getAverageSpend(totalSpent, totalVisits);
+  const frequency = getVisitFrequency(totalVisits, createdAt);
+  const daysSince = getDaysSinceLastVisit(lastVisitAt);
+
+  // Progress to next tier
+  const tierThresholds: Record<string, number> = { new: 0, regular: 1, silver: 5, gold: 10, vip: 25 };
+  const currentThreshold = tierThresholds[loyalty.tier] ?? 0;
+  const nextThreshold = loyalty.nextTier ? tierThresholds[loyalty.nextTier] : totalVisits;
+  const progressPct = loyalty.nextTier
+    ? Math.min(100, Math.round(((totalVisits - currentThreshold) / (nextThreshold - currentThreshold)) * 100))
+    : 100;
+
+  return (
+    <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+      <div className="flex items-center gap-2">
+        <span className="text-lg">{loyalty.emoji}</span>
+        <h2 className="text-sm font-semibold text-foreground">Loyalty Status</h2>
+        <span className={`ml-auto inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ${loyalty.color} ${loyalty.textColor}`}>
+          {loyalty.label}
+        </span>
+      </div>
+
+      {/* Progress to next tier */}
+      {loyalty.nextTier && (
+        <div className="space-y-1.5">
+          <div className="flex items-center justify-between text-xs text-muted-foreground">
+            <span>{totalVisits} visits</span>
+            <span>{loyalty.visitsToNextTier} more to {loyalty.nextTier.charAt(0).toUpperCase() + loyalty.nextTier.slice(1)}</span>
+          </div>
+          <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+            <div
+              className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-500"
+              style={{ width: `${progressPct}%` }}
+            />
+          </div>
+        </div>
+      )}
+      {!loyalty.nextTier && (
+        <p className="text-xs text-muted-foreground">🎉 Highest tier reached! Thank you for being a loyal customer.</p>
+      )}
+
+      {/* Stats Grid */}
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
+        <StatBox label="Avg. Spend" value={avgSpend > 0 ? formatINR(avgSpend) : '—'} />
+        <StatBox label="Frequency" value={frequency} />
+        <StatBox
+          label="Last Visit"
+          value={daysSince !== null ? (daysSince === 0 ? 'Today' : `${daysSince}d ago`) : '—'}
+        />
+        <StatBox label="Total Visits" value={String(totalVisits)} />
+      </div>
+    </div>
+  );
+}
+
+function StatBox({ label, value }: { label: string; value: string }) {
+  return (
+    <div className="rounded-lg bg-muted/50 p-3 text-center">
+      <p className="text-xs text-muted-foreground">{label}</p>
+      <p className="text-sm font-semibold text-foreground mt-0.5">{value}</p>
+    </div>
+  );
 }

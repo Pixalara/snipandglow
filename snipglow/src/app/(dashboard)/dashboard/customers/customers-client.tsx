@@ -19,6 +19,7 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership, deleteCustomer } from './actions';
+import { getLoyaltyTier } from '@/lib/loyalty';
 import type { Customer, Membership } from '@/types';
 
 /** Customer row with optional active membership info (serialized-safe) */
@@ -56,6 +57,18 @@ export function CustomersTable({ customers }: CustomersTableProps) {
       key: 'phone',
       header: 'Phone',
       render: (row) => <span className="text-muted-foreground">{row.phone}</span>,
+    },
+    {
+      key: 'loyalty',
+      header: 'Loyalty',
+      render: (row) => {
+        const loyalty = getLoyaltyTier(row.total_visits);
+        return (
+          <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${loyalty.color} ${loyalty.textColor}`}>
+            {loyalty.emoji} {loyalty.label}
+          </span>
+        );
+      },
     },
     {
       key: 'total_visits',
