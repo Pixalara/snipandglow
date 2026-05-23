@@ -303,9 +303,28 @@ async function sendBillReceiptWhatsApp(
 
     const phone = customer.phone.replace(/\D/g, '');
     console.log('[BillReceipt] Sending to phone:', phone);
+
+    // Use approved template (works outside 24-hour window)
+    const serviceList = items.map((s) => s.service_name).join(', ');
     const sendResult = await sendMessage(credentials, phone, {
-      type: 'text',
-      text: { body: billText },
+      type: 'template',
+      template: {
+        name: 'bill_receipt_v1',
+        language: { code: 'en' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: customer.name },
+              { type: 'text', text: salonName },
+              { type: 'text', text: invoiceNumber },
+              { type: 'text', text: serviceList },
+              { type: 'text', text: String(total) },
+              { type: 'text', text: paymentMethod.toUpperCase() },
+            ],
+          },
+        ],
+      },
     });
     console.log('[BillReceipt] Send result:', JSON.stringify(sendResult));
 
@@ -320,29 +339,21 @@ async function sendBillReceiptWhatsApp(
       metadata: { customer_name: customer.name },
     } as any) as any);
 
-    // Send feedback request immediately after bill
+    // Send feedback request using approved template (works outside 24h window)
     await sendMessage(credentials, phone, {
-      type: 'interactive',
-      interactive: {
-        type: 'list',
-        body: {
-          text: `⭐ How was your experience at *${salonName}* today?\n\nYour feedback helps us serve you better. Tap below to rate:`,
-        },
-        action: {
-          button: 'Rate Now',
-          sections: [
-            {
-              title: 'Select Your Rating',
-              rows: [
-                { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Excellent!', description: 'Absolutely loved it' },
-                { id: 'feedback_4', title: '⭐⭐⭐⭐ Very Good', description: 'Great experience' },
-                { id: 'feedback_3', title: '⭐⭐⭐ Good', description: 'It was okay' },
-                { id: 'feedback_2', title: '⭐⭐ Fair', description: 'Could be better' },
-                { id: 'feedback_1', title: '⭐ Poor', description: 'Not satisfied' },
-              ],
-            },
-          ],
-        },
+      type: 'template',
+      template: {
+        name: 'feedback_request_v1',
+        language: { code: 'en' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: customer.name },
+              { type: 'text', text: salonName },
+            ],
+          },
+        ],
       },
     });
 

@@ -844,28 +844,31 @@ async function notifyCustomerBillReceipt(
     const { data: tenant } = await (admin.from('tenants' as any).select('name, tenant_code').eq('id', tenantId).single() as any);
     const salonName = ((tenant?.name as string) || 'the salon').trim();
 
-    // Build service list
-    const serviceLines = services.map((s) => `  • ${s.name} — ₹${s.price.toLocaleString('en-IN')}`).join('\n');
-
-    // Build bill message
-    let billText = `🧾 *Bill Receipt*\n\n`;
-    billText += `Hi ${customer.name}, thank you for visiting *${salonName}*! Here's your bill:\n\n`;
-    billText += `📋 *Invoice:* ${invoiceNumber}\n\n`;
-    billText += `*Services:*\n${serviceLines}\n\n`;
-    billText += `━━━━━━━━━━━━━━━\n`;
-    if (discountPct > 0) {
-      billText += `Subtotal: ₹${subtotal.toLocaleString('en-IN')}\n`;
-      billText += `Discount (${discountPct}%): -₹${discountAmount.toLocaleString('en-IN')}\n`;
-    }
-    billText += `*Total: ₹${total.toLocaleString('en-IN')}*\n`;
-    billText += `Payment: ${paymentMethod.toUpperCase()}\n`;
-    billText += `━━━━━━━━━━━━━━━\n\n`;
-    billText += `Thank you for choosing us! 😊`;
-
     const phone = customer.phone.replace(/\D/g, '');
+
+    // Build service list for template
+    const serviceList = services.map((s) => s.name).join(', ');
+
+    // Send bill_receipt_v1 template (works outside 24-hour window)
     await sendMessage(credentials, phone, {
-      type: 'text',
-      text: { body: billText },
+      type: 'template',
+      template: {
+        name: 'bill_receipt_v1',
+        language: { code: 'en' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: customer.name },
+              { type: 'text', text: salonName },
+              { type: 'text', text: invoiceNumber },
+              { type: 'text', text: serviceList },
+              { type: 'text', text: String(total) },
+              { type: 'text', text: paymentMethod.toUpperCase() },
+            ],
+          },
+        ],
+      },
     });
 
     // Log bill receipt to whatsapp_sessions
@@ -874,34 +877,26 @@ async function notifyCustomerBillReceipt(
       message_id: `bill_${Date.now()}`,
       phone,
       direction: 'outbound',
-      template_name: 'bill_receipt',
+      template_name: 'bill_receipt_v1',
       status: 'sent',
       metadata: { customer_name: customer.name },
     } as any) as any);
 
-    // Send feedback request immediately after bill
+    // Send feedback_request_v1 template (works outside 24-hour window)
     await sendMessage(credentials, phone, {
-      type: 'interactive',
-      interactive: {
-        type: 'list',
-        body: {
-          text: `⭐ How was your experience at *${salonName}* today?\n\nYour feedback helps us serve you better. Tap below to rate:`,
-        },
-        action: {
-          button: 'Rate Now',
-          sections: [
-            {
-              title: 'Select Your Rating',
-              rows: [
-                { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Excellent!', description: 'Absolutely loved it' },
-                { id: 'feedback_4', title: '⭐⭐⭐⭐ Very Good', description: 'Great experience' },
-                { id: 'feedback_3', title: '⭐⭐⭐ Good', description: 'It was okay' },
-                { id: 'feedback_2', title: '⭐⭐ Fair', description: 'Could be better' },
-                { id: 'feedback_1', title: '⭐ Poor', description: 'Not satisfied' },
-              ],
-            },
-          ],
-        },
+      type: 'template',
+      template: {
+        name: 'feedback_request_v1',
+        language: { code: 'en' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: customer.name },
+              { type: 'text', text: salonName },
+            ],
+          },
+        ],
       },
     });
 
@@ -911,7 +906,7 @@ async function notifyCustomerBillReceipt(
       message_id: `feedback_req_${Date.now()}`,
       phone,
       direction: 'outbound',
-      template_name: 'feedback_request',
+      template_name: 'feedback_request_v1',
       status: 'sent',
       metadata: { customer_name: customer.name },
     } as any) as any);

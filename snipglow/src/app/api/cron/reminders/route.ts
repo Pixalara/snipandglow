@@ -73,8 +73,22 @@ export async function GET(request: NextRequest) {
       const phone = customer.phone.replace(/\D/g, '');
 
       await sendMessage(credentials, phone, {
-        type: 'text',
-        text: { body: `⏰ *Appointment Reminder*\n\nHi ${customer.name}, this is a reminder for your appointment tomorrow!\n\n✂️ ${serviceNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${salonName}\n\nSee you tomorrow! 😊` },
+        type: 'template',
+        template: {
+          name: 'appointment_reminder_v1',
+          language: { code: 'en' },
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: customer.name },
+                { type: 'text', text: serviceNames },
+                { type: 'text', text: `${dateLabel}, ${timeLabel}` },
+                { type: 'text', text: salonName },
+              ],
+            },
+          ],
+        },
       });
 
       // Mark as sent — this is the dedup
@@ -123,8 +137,22 @@ export async function GET(request: NextRequest) {
         const phone = customer.phone.replace(/\D/g, '');
 
         await sendMessage(credentials, phone, {
-          type: 'text',
-          text: { body: `🔔 *Coming Up in 3 Hours!*\n\nHi ${customer.name}, your appointment at *${salonName}* is in 3 hours.\n\n✂️ ${serviceNames}\n⏰ ${timeLabel}\n\nWe're looking forward to seeing you! 💇` },
+          type: 'template',
+          template: {
+            name: 'appointment_reminder_v1',
+            language: { code: 'en' },
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: customer.name },
+                  { type: 'text', text: serviceNames },
+                  { type: 'text', text: `Today, ${timeLabel}` },
+                  { type: 'text', text: salonName },
+                ],
+              },
+            ],
+          },
         });
 
         // Mark as sent

@@ -120,6 +120,8 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
         'Change Again': 'reschedule_appointment',
         'reschedule_appointment': 'reschedule_appointment',
         'cancel_appointment': 'cancel_appointment',
+        'Rate Us': 'rate_us',
+        'Rate Now': 'rate_now',
       };
       buttonReplyId = templateButtonMap[payload] || payload;
       messageText = message.button?.text ?? '';
@@ -510,6 +512,37 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       await sendMessage(tenant.credentials, phone, {
         type: 'text',
         text: { body: `Great! Your appointment is still on. See you soon! 😊` },
+      });
+      break;
+    }
+
+    case 'rate_us':
+    case 'rate_now': {
+      // Customer tapped "Rate Us" on bill_receipt_v1 or "Rate Now" on feedback_request_v1
+      // Send the 5-option feedback list
+      await sendMessage(tenant.credentials, phone, {
+        type: 'interactive',
+        interactive: {
+          type: 'list',
+          body: {
+            text: `⭐ How was your experience at *${tenant.salonName}* today?\n\nYour feedback helps us serve you better. Tap below to rate:`,
+          },
+          action: {
+            button: 'Rate Now',
+            sections: [
+              {
+                title: 'Select Your Rating',
+                rows: [
+                  { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Excellent!', description: 'Absolutely loved it' },
+                  { id: 'feedback_4', title: '⭐⭐⭐⭐ Very Good', description: 'Great experience' },
+                  { id: 'feedback_3', title: '⭐⭐⭐ Good', description: 'It was okay' },
+                  { id: 'feedback_2', title: '⭐⭐ Fair', description: 'Could be better' },
+                  { id: 'feedback_1', title: '⭐ Poor', description: 'Not satisfied' },
+                ],
+              },
+            ],
+          },
+        },
       });
       break;
     }
