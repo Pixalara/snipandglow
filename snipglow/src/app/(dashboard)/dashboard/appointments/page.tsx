@@ -34,29 +34,45 @@ export default async function AppointmentsPage() {
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
 
-  // Fetch appointments — last 90 days + upcoming, limit 200 for performance
+  // Fetch appointments — today first (booked/confirmed), then recent history
   const ninetyDaysAgo = new Date();
   ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
   const cutoffDate = ninetyDaysAgo.toISOString().split('T')[0];
 
-  const { data: appointments, error } = await supabase
+  const todayIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false }).split(', ')[0];
+
+  // Fetch today's active appointments first, then all others
+  const [todayRes, historyRes] = await Promise.all([
+    supabase
+      .from('appointments')
+      .select('id, appointment_date, start_time, end_time, status, source, customer_id, service_id, employee_id, whatsapp_flow_ref')
+      .eq('appointment_date', todayIST)
+      .in('status', ['booked', 'confirmed'])
+      .order('start_time', { ascending: true }),
+    supabase
+      .from('appointments')
+      .select('id, appointment_date, start_time, end_time, status, source, customer_id, service_id, employee_id, whatsapp_flow_ref')
+      .gte('appointment_date', cutoffDate)
+      .not('appointment_date', 'eq', todayIST)
+      .order('appointment_date', { ascending: false })
+      .order('start_time', { ascending: true })
+      .limit(200),
+  ]);
+
+  // Also get today's completed/cancelled to show below active
+  const { data: todayOthers } = await supabase
     .from('appointments')
-    .select(`
-      id,
-      appointment_date,
-      start_time,
-      end_time,
-      status,
-      source,
-      customer_id,
-      service_id,
-      employee_id,
-      whatsapp_flow_ref
-    `)
-    .gte('appointment_date', cutoffDate)
-    .order('appointment_date', { ascending: false })
-    .order('start_time', { ascending: true })
-    .limit(200);
+    .select('id, appointment_date, start_time, end_time, status, source, customer_id, service_id, employee_id, whatsapp_flow_ref')
+    .eq('appointment_date', todayIST)
+    .not('status', 'in', '("booked","confirmed")')
+    .order('start_time', { ascending: true });
+
+  const appointments = [
+    ...(todayRes.data ?? []),
+    ...(todayOthers ?? []),
+    ...(historyRes.data ?? []),
+  ];
+  const error = todayRes.error || historyRes.error;
 
   if (error) {
     return (
