@@ -57,16 +57,30 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
     );
   }
 
-  // Fetch completed appointments
-  const { data: appointments } = await supabase
-    .from('appointments')
-    .select('id, appointment_date, start_time, service_id, employee_id')
-    .eq('customer_id', id)
-    .eq('status', 'completed')
-    .order('appointment_date', { ascending: false });
+  // Fetch all data in parallel
+  const [appointmentsRes, invoicesRes, membershipRes] = await Promise.all([
+    supabase
+      .from('appointments')
+      .select('id, appointment_date, start_time, service_id, employee_id')
+      .eq('customer_id', id)
+      .eq('status', 'completed')
+      .order('appointment_date', { ascending: false })
+      .limit(50),
+    supabase
+      .from('invoices')
+      .select('id, invoice_number, total, payment_method, delivery_status, created_at')
+      .eq('customer_id', id)
+      .order('created_at', { ascending: false })
+      .limit(50),
+    supabase
+      .from('customer_memberships')
+      .select('id, end_date, membership_id, memberships(name, discount_pct)')
+      .eq('customer_id', id)
+      .eq('status', 'active')
+      .maybeSingle(),
+  ]);
 
-  // Fetch service and employee names separately (avoid join issues)
-  const apptList = appointments ?? [];
+  const apptList = appointmentsRes.data ?? [];
   const svcIds = [...new Set(apptList.map((a) => a.service_id).filter(Boolean))];
   const empIds = [...new Set(apptList.map((a) => a.employee_id).filter(Boolean))];
 
@@ -88,14 +102,7 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
     employee_name: empMap[a.employee_id ?? ''] ?? '—',
   }));
 
-  // Fetch invoices
-  const { data: invoices } = await supabase
-    .from('invoices')
-    .select('id, invoice_number, total, payment_method, delivery_status, created_at')
-    .eq('customer_id', id)
-    .order('created_at', { ascending: false });
-
-  const billingRows: BillingHistoryRow[] = (invoices ?? []).map((inv) => ({
+  const billingRows: BillingHistoryRow[] = (invoicesRes.data ?? []).map((inv) => ({
     id: inv.id,
     invoice_number: inv.invoice_number,
     total: inv.total,
@@ -104,27 +111,14 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
     created_at: inv.created_at ?? '',
   }));
 
-  // Fetch active membership
-  const { data: activeMembershipData } = await supabase
-    .from('customer_memberships')
-    .select('id, end_date, membership_id')
-    .eq('customer_id', id)
-    .eq('status', 'active')
-    .maybeSingle();
-
   let activeMembership: ActiveMembership | null = null;
-  if (activeMembershipData) {
-    const { data: plan } = await supabase
-      .from('memberships')
-      .select('name, discount_pct')
-      .eq('id', activeMembershipData.membership_id)
-      .maybeSingle();
-
+  if (membershipRes.data) {
+    const m = membershipRes.data as any;
     activeMembership = {
-      id: activeMembershipData.id,
-      end_date: activeMembershipData.end_date,
-      membership_name: plan?.name ?? 'Membership',
-      discount_pct: plan?.discount_pct ?? 0,
+      id: m.id,
+      end_date: m.end_date,
+      membership_name: m.memberships?.name ?? 'Membership',
+      discount_pct: m.memberships?.discount_pct ?? 0,
     };
   }
 

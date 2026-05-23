@@ -42,35 +42,23 @@ export default async function BranchesPage() {
     );
   }
 
-  // Fetch branch stats
+  // Fetch branch stats in parallel (not sequential loop)
   const branchIds = (branches ?? []).filter((b) => b.is_active).map((b) => b.id);
-  const stats: BranchStats[] = [];
-
-  for (const branchId of branchIds) {
-    const { count: appointmentCount } = await supabase
-      .from('appointments')
-      .select('*', { count: 'exact', head: true })
-      .eq('branch_id', branchId);
-
-    const { count: customerCount } = await supabase
-      .from('customers')
-      .select('*', { count: 'exact', head: true })
-      .eq('branch_id', branchId);
-
-    const { data: invoices } = await supabase
-      .from('invoices')
-      .select('total')
-      .eq('branch_id', branchId);
-
-    const revenue = (invoices ?? []).reduce((sum, inv) => sum + (inv.total ?? 0), 0);
-
-    stats.push({
-      branch_id: branchId,
-      appointment_count: appointmentCount ?? 0,
-      customer_count: customerCount ?? 0,
-      revenue,
-    });
-  }
+  const stats: BranchStats[] = await Promise.all(
+    branchIds.map(async (branchId) => {
+      const [apptRes, custRes, invRes] = await Promise.all([
+        supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('branch_id', branchId),
+        supabase.from('customers').select('id', { count: 'exact', head: true }).eq('branch_id', branchId),
+        supabase.from('invoices').select('total').eq('branch_id', branchId).eq('payment_status', 'paid'),
+      ]);
+      return {
+        branch_id: branchId,
+        appointment_count: apptRes.count ?? 0,
+        customer_count: custRes.count ?? 0,
+        revenue: (invRes.data ?? []).reduce((sum, inv) => sum + (inv.total ?? 0), 0),
+      };
+    })
+  );
 
   return (
     <BranchesClient

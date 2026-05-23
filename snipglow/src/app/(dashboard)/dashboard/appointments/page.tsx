@@ -34,7 +34,11 @@ export default async function AppointmentsPage() {
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
 
-  // Fetch appointments with joined customer, service, and employee names
+  // Fetch appointments — last 90 days + upcoming, limit 200 for performance
+  const ninetyDaysAgo = new Date();
+  ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90);
+  const cutoffDate = ninetyDaysAgo.toISOString().split('T')[0];
+
   const { data: appointments, error } = await supabase
     .from('appointments')
     .select(`
@@ -49,8 +53,10 @@ export default async function AppointmentsPage() {
       employee_id,
       whatsapp_flow_ref
     `)
+    .gte('appointment_date', cutoffDate)
     .order('appointment_date', { ascending: false })
-    .order('start_time', { ascending: true });
+    .order('start_time', { ascending: true })
+    .limit(200);
 
   if (error) {
     return (

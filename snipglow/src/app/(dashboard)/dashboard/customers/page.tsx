@@ -29,17 +29,21 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
 
-  // Fetch customers (RLS enforces tenant/branch scoping)
+  // Fetch customers with only needed columns + limit for performance
   let query = supabase
     .from('customers')
-    .select('*')
-    .order('name', { ascending: true });
+    .select('id, name, phone, email, gender, notes, total_visits, total_spent, last_visit_at, created_at, tenant_id, branch_id')
+    .order('name', { ascending: true })
+    .limit(200);
 
   if (search) {
     query = query.or(`name.ilike.%${search}%,phone.ilike.%${search}%`);
   }
 
-  const { data: customers, error } = await query;
+  const [{ data: customers, error }, membershipsRes] = await Promise.all([
+    query,
+    supabase.from('customer_memberships').select('customer_id').eq('status', 'active'),
+  ]);
 
   if (error) {
     return (
@@ -49,24 +53,8 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     );
   }
 
-  // Fetch active memberships to show badge
-  const customerIds = (customers ?? []).map((c) => c.id);
-  let activeMemberships: Record<string, boolean> = {};
-
-  if (customerIds.length > 0) {
-    const { data: memberships } = await supabase
-      .from('customer_memberships')
-      .select('customer_id')
-      .in('customer_id', customerIds)
-      .eq('status', 'active');
-
-    if (memberships) {
-      activeMemberships = memberships.reduce<Record<string, boolean>>((acc, m) => {
-        acc[m.customer_id] = true;
-        return acc;
-      }, {});
-    }
-  }
+  const activeMemberships: Record<string, boolean> = {};
+  for (const m of membershipsRes.data ?? []) activeMemberships[m.customer_id] = true;
 
   // Merge membership info into customer rows
   const rows: CustomerRow[] = (customers ?? []).map((c) => ({

@@ -18,12 +18,11 @@ export default async function MembershipsPage() {
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
 
-  // Fetch active membership plans (RLS enforces tenant/branch scoping)
-  const { data: memberships, error } = await supabase
-    .from('memberships')
-    .select('*')
-    .eq('is_active', true)
-    .order('created_at', { ascending: false });
+  // Fetch both in parallel
+  const [{ data: memberships, error }, { count: activeMembershipCount }] = await Promise.all([
+    supabase.from('memberships').select('*').eq('is_active', true).order('created_at', { ascending: false }),
+    supabase.from('customer_memberships').select('id', { count: 'exact', head: true }).eq('status', 'active'),
+  ]);
 
   if (error) {
     return (
@@ -32,12 +31,6 @@ export default async function MembershipsPage() {
       </div>
     );
   }
-
-  // Get active membership count (customer_memberships where status = 'active')
-  const { count: activeMembershipCount } = await supabase
-    .from('customer_memberships')
-    .select('id', { count: 'exact', head: true })
-    .eq('status', 'active');
 
   return (
     <MembershipsClient
