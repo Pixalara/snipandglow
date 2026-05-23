@@ -122,6 +122,8 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
         'cancel_appointment': 'cancel_appointment',
         'Rate Us': 'rate_us',
         'Rate Now': 'rate_now',
+        'Book Now': 'book_appointment',
+        'View Services': 'services_prices',
       };
       buttonReplyId = templateButtonMap[payload] || payload;
       messageText = message.button?.text ?? '';
