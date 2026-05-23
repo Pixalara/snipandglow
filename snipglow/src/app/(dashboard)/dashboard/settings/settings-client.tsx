@@ -885,25 +885,39 @@ export function SalonTimingsCard({ operatingHours }: SalonTimingsProps) {
       <div className="p-6 space-y-4">
         <p className="text-sm text-muted-foreground">Set your salon&apos;s operating hours. Customers can only book within these times.</p>
 
-        <div className="space-y-2">
+        <div className="space-y-3">
           {DAYS.map((day) => (
-            <div key={day} className="flex items-center gap-3">
-              <span className="w-10 text-xs font-medium text-foreground">{DAY_LABELS[day]}</span>
-              <label className="flex items-center gap-1.5 cursor-pointer">
-                <input
-                  type="checkbox"
-                  checked={!hours[day].closed}
-                  onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], closed: !e.target.checked } })}
-                  className="size-3.5 rounded border-border"
-                />
-                <span className="text-xs text-muted-foreground">{hours[day].closed ? 'Closed' : 'Open'}</span>
-              </label>
+            <div key={day} className="flex flex-col sm:flex-row sm:items-center gap-2 sm:gap-3 p-3 rounded-lg bg-muted/30">
+              <div className="flex items-center justify-between sm:justify-start gap-3">
+                <span className="w-10 text-sm font-semibold text-foreground">{DAY_LABELS[day]}</span>
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={!hours[day].closed}
+                    onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], closed: !e.target.checked } })}
+                    className="size-4 rounded border-border accent-pink-500"
+                  />
+                  <span className={`text-xs font-medium ${hours[day].closed ? 'text-muted-foreground' : 'text-emerald-600'}`}>
+                    {hours[day].closed ? 'Closed' : 'Open'}
+                  </span>
+                </label>
+              </div>
               {!hours[day].closed && (
-                <>
-                  <input type="time" value={hours[day].open} onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], open: e.target.value } })} className="h-8 rounded-lg border border-border bg-background px-2 text-xs" />
+                <div className="flex items-center gap-2 flex-wrap">
+                  <input
+                    type="time"
+                    value={hours[day].open}
+                    onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], open: e.target.value } })}
+                    className="h-9 flex-1 min-w-[110px] rounded-lg border border-border bg-background px-2 text-sm"
+                  />
                   <span className="text-xs text-muted-foreground">to</span>
-                  <input type="time" value={hours[day].close} onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], close: e.target.value } })} className="h-8 rounded-lg border border-border bg-background px-2 text-xs" />
-                </>
+                  <input
+                    type="time"
+                    value={hours[day].close}
+                    onChange={(e) => setHours({ ...hours, [day]: { ...hours[day], close: e.target.value } })}
+                    className="h-9 flex-1 min-w-[110px] rounded-lg border border-border bg-background px-2 text-sm"
+                  />
+                </div>
               )}
             </div>
           ))}
@@ -977,9 +991,9 @@ export function BlockCalendarCard({ blockedDates: initialDates }: BlockCalendarP
         <p className="text-sm text-muted-foreground">Block specific dates when your salon is closed (holidays, events, etc.). Customers won&apos;t be able to book on these dates.</p>
 
         {/* Add date */}
-        <div className="flex items-center gap-2">
-          <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} min={today} className="w-44" />
-          <Button variant="outline" className="rounded-xl" onClick={addDate} disabled={!newDate}>Add</Button>
+        <div className="flex items-center gap-2 flex-wrap">
+          <Input type="date" value={newDate} onChange={(e) => setNewDate(e.target.value)} min={today} className="flex-1 min-w-[160px]" />
+          <Button variant="outline" className="rounded-xl min-h-[44px]" onClick={addDate} disabled={!newDate}>Add Date</Button>
         </div>
 
         {/* Blocked dates list */}
@@ -1116,14 +1130,14 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
 
         {/* Date picker */}
         <div className="flex items-center gap-2 flex-wrap">
-          <Input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlots([]); }} min={today} className="w-44" />
+          <Input type="date" value={selectedDate} onChange={(e) => { setSelectedDate(e.target.value); setSelectedSlots([]); }} min={today} className="flex-1 min-w-[160px]" />
         </div>
 
         {/* Slot selector */}
         {selectedDate && availableSlots.length > 0 && (
           <div className="space-y-2">
             <p className="text-xs font-medium text-muted-foreground">Tap slots to block on {new Date(selectedDate + 'T12:00:00').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}:</p>
-            <div className="flex flex-wrap gap-1.5">
+            <div className="flex flex-wrap gap-2">
               {availableSlots.map((slot) => {
                 const isSelected = selectedSlots.includes(slot);
                 const isAlreadyBlocked = existingEntry?.slots.includes(slot);
@@ -1133,7 +1147,7 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
                     type="button"
                     onClick={() => !isAlreadyBlocked && toggleSlot(slot)}
                     disabled={isAlreadyBlocked}
-                    className={`px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    className={`px-3 py-2 min-h-[40px] rounded-lg text-xs font-medium transition-all ${
                       isAlreadyBlocked ? 'bg-red-100 text-red-500 dark:bg-red-900/30 cursor-not-allowed line-through' :
                       isSelected ? 'bg-red-500 text-white' :
                       'bg-muted text-foreground hover:bg-red-50 hover:text-red-600 dark:hover:bg-red-900/20'
@@ -1145,7 +1159,7 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
               })}
             </div>
             {selectedSlots.length > 0 && (
-              <Button variant="outline" className="rounded-xl text-xs" onClick={addBlockedSlots}>
+              <Button variant="outline" className="rounded-xl w-full sm:w-auto min-h-[44px]" onClick={addBlockedSlots}>
                 Block {selectedSlots.length} slot{selectedSlots.length > 1 ? 's' : ''}
               </Button>
             )}
