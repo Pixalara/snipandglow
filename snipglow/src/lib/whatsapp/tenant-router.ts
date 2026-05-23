@@ -174,7 +174,27 @@ export async function resolveTenant(
     }
   }
 
-  // 3. Cannot resolve tenant — return null (webhook will send fallback)
+  // 3. Fallback: Look up customer by phone in the customers table
+  //    This handles walk-in customers who received a template but never messaged before
+  const phoneE164 = `+${customerPhone}`;
+  const { data: customerRecord } = await (admin
+    .from('customers')
+    .select('tenant_id')
+    .eq('phone', phoneE164)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .single() as any);
+
+  if (customerRecord) {
+    const tenant = await getTenantDetails(admin, customerRecord.tenant_id);
+    if (tenant) {
+      // Create a session so subsequent messages route correctly
+      await upsertSession(admin, customerRecord.tenant_id, customerPhone, 'template_reply', 'customer_lookup');
+      return { ...tenant, mode: 'shared', credentials };
+    }
+  }
+
+  // 4. Cannot resolve tenant — return null (webhook will send fallback)
   return null;
 }
 
