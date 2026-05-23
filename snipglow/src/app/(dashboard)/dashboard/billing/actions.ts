@@ -260,16 +260,22 @@ async function sendBillReceiptWhatsApp(
   paymentMethod: string
 ) {
   try {
+    console.log('[BillReceipt] Starting for customer:', customerId, 'tenant:', tenantId);
     const admin = createAdminClient();
     const credentials = getPlatformCredentials();
-    if (!credentials) return;
+    if (!credentials) {
+      console.log('[BillReceipt] No credentials found');
+      return;
+    }
 
     // Get customer phone and name
-    const { data: customer } = await admin
+    const { data: customer, error: custErr } = await admin
       .from('customers')
       .select('name, phone')
       .eq('id', customerId)
       .single();
+
+    console.log('[BillReceipt] Customer:', customer?.name, customer?.phone, 'Error:', custErr?.message);
 
     if (!customer?.phone) return;
 
@@ -296,10 +302,12 @@ async function sendBillReceiptWhatsApp(
     billText += `Thank you for choosing us! 😊`;
 
     const phone = customer.phone.replace(/\D/g, '');
-    await sendMessage(credentials, phone, {
+    console.log('[BillReceipt] Sending to phone:', phone);
+    const sendResult = await sendMessage(credentials, phone, {
       type: 'text',
       text: { body: billText },
     });
+    console.log('[BillReceipt] Send result:', JSON.stringify(sendResult));
 
     // Log bill receipt to whatsapp_sessions
     await (admin.from('whatsapp_sessions').insert({
