@@ -1420,7 +1420,7 @@ export default function HomePage() {
             Get Started - It's Free
           </Link>
 
-          {/* Trust points */
+          {/* Trust points */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-slate-400">
             <span className="flex items-center gap-1.5">
               <CheckCircle2 className="h-4 w-4 text-pink-400" />
