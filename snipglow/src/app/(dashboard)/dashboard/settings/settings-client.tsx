@@ -1059,6 +1059,7 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
 
   // Sync entries with initial prop when it changes (after save and revalidation)
   useEffect(() => {
+    console.log('[BlockSlots] Initial prop changed:', initial);
     setEntries(initial);
   }, [initial]);
 
@@ -1108,9 +1109,15 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
   function handleSave() {
     setError('');
     setSuccess(false);
+    
+    console.log('[BlockSlots] Saving entries:', entries);
+    
     startTransition(async () => {
       const { updateBlockedSlots } = await import('./actions');
       const result = await updateBlockedSlots(entries);
+      
+      console.log('[BlockSlots] Save result:', result);
+      
       if (result.success) {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);

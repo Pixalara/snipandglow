@@ -259,11 +259,17 @@ export async function updateBlockedSlots(blockedSlots: Array<{ date: string; slo
   const tenantId = user.user_metadata?.tenant_id;
   if (!tenantId) return { success: false, error: 'No tenant context found.' };
 
-  const { data: tenant } = await supabase
+  // Get current settings
+  const { data: tenant, error: fetchError } = await supabase
     .from('tenants')
     .select('settings')
     .eq('id', tenantId)
     .single();
+
+  if (fetchError) {
+    console.error('[updateBlockedSlots] Fetch error:', fetchError);
+    return { success: false, error: 'Failed to fetch current settings.' };
+  }
 
   const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
 
@@ -276,12 +282,15 @@ export async function updateBlockedSlots(blockedSlots: Array<{ date: string; slo
     blocked_slots: filtered,
   };
 
+  console.log('[updateBlockedSlots] Saving:', JSON.stringify(updatedSettings.blocked_slots));
+
   const { error } = await supabase
     .from('tenants')
     .update({ settings: updatedSettings })
     .eq('id', tenantId);
 
   if (error) {
+    console.error('[updateBlockedSlots] Update error:', error);
     return { success: false, error: 'Failed to update blocked slots.' };
   }
 
