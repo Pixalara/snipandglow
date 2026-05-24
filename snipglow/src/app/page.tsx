@@ -1244,7 +1244,7 @@ export default function HomePage() {
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">No hidden charges</p>
-              <p className="text-xs text-slate-500 mt-1">&#8377;799 or &#8377;999 is exactly what you pay. No surprises.</p>
+              <p className="text-xs text-slate-500 mt-1">&#8377;799 or &#8377;1,499 is exactly what you pay. No surprises.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">15-day full refund</p>
