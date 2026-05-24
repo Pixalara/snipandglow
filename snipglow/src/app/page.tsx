@@ -32,8 +32,9 @@ import {
 // Animated counter that counts up when scrolled into view
 function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; suffix?: string; prefix?: string }) {
   const ref = useRef<HTMLSpanElement>(null);
-  const [display, setDisplay] = useState(0);
   const [hasAnimated, setHasAnimated] = useState(false);
+  const [display, setDisplay] = useState(0);
+  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -42,24 +43,32 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
-          const duration = 2800; // slower — 2.8 seconds
-          const steps = 80;     // more steps = smoother
-          const interval = duration / steps;
-          let step = 0;
-          const timer = setInterval(() => {
-            step++;
-            // Ease-out: fast start, slow finish
-            const progress = 1 - Math.pow(1 - step / steps, 3);
-            const current = Math.round(progress * value);
-            setDisplay(current);
-            if (step >= steps) { setDisplay(value); clearInterval(timer); }
-          }, interval);
+          const duration = 2500;
+          const startTime = performance.now();
+
+          const tick = (now: number) => {
+            const elapsed = now - startTime;
+            const t = Math.min(elapsed / duration, 1);
+            // Ease-out cubic
+            const eased = 1 - Math.pow(1 - t, 3);
+            setDisplay(Math.round(eased * value));
+            if (t < 1) {
+              rafRef.current = requestAnimationFrame(tick);
+            } else {
+              setDisplay(value);
+            }
+          };
+
+          rafRef.current = requestAnimationFrame(tick);
         }
       },
-      { threshold: 0.5 }
+      { threshold: 0.3 }
     );
     observer.observe(el);
-    return () => observer.disconnect();
+    return () => {
+      observer.disconnect();
+      if (rafRef.current) cancelAnimationFrame(rafRef.current);
+    };
   }, [value, hasAnimated]);
 
   return <span ref={ref}>{prefix}{display.toLocaleString('en-IN')}{suffix}</span>;
