@@ -385,7 +385,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         let ownerPhone = tenantData.phone.replace(/\D/g, '');
         if (ownerPhone.length === 10) ownerPhone = '91' + ownerPhone;
 
-        const waLink = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(`Hi, I'm a customer from ${tenant.salonName}. I'd like to talk to the salon.`)}`;
+        const waLink = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(`Hi! I'd like to know more about your services.`)}`;
 
         await sendMessage(tenant.credentials, phone, {
           type: 'text',
