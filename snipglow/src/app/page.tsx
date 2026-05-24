@@ -1002,6 +1002,7 @@ export default function HomePage() {
               </div>
 
               <div className="mb-8">
+                <p className="text-lg text-slate-400 line-through">₹999/month</p>
                 <div className="flex items-baseline gap-2 mb-2">
                   <span className="text-5xl font-bold text-slate-900">₹799</span>
                   <span className="text-lg text-slate-500">/month</span>
@@ -1129,6 +1130,7 @@ export default function HomePage() {
               </div>
 
               <div className="relative mb-8">
+                <p className="text-lg text-slate-500 line-through">₹1,999/month</p>
                 <div className="flex items-baseline gap-2 mb-2">
                   <span className="text-5xl font-bold text-white">₹1,499</span>
                   <span className="text-lg text-slate-400">/month</span>
