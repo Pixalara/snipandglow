@@ -511,7 +511,7 @@ async function processBooking(data: any, flowToken: string) {
   const credentials = getPlatformCredentials();
   if (credentials && (customerPhone || customer_phone)) {
     const { sendMessage } = await import('@/lib/whatsapp/templates');
-    const dateLabel = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const dateLabel = new Date(date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(time_slot);
     const dateTimeFormatted = `${dateLabel}, ${timeLabel}`;
     const calendarToken = Buffer.from(
@@ -570,7 +570,7 @@ async function processBooking(data: any, flowToken: string) {
       if (ownerPhone.length === 10) ownerPhone = '91' + ownerPhone;
       console.log('[Flow] Sending owner notification to:', ownerPhone);
 
-      const dateLabel2 = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+      const dateLabel2 = new Date(date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
       const timeLabel2 = formatTime12h(time_slot);
       const ownerText = isReschedule
         ? `📅 Appointment Rescheduled\n\nCustomer: ${customerName}\nPhone: +${customerPhone || customer_phone}\nServices: ${serviceNames}\nNew Date: ${dateLabel2}\nNew Time: ${timeLabel2}\n\nThe customer rescheduled via WhatsApp. Check your dashboard.`

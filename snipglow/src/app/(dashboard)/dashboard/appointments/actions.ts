@@ -721,8 +721,8 @@ async function notifyCustomerCancellation(appointment: any) {
     const salonName = tenant?.name || 'the salon';
 
     // Format date
-    const dateLabel = new Date(appointment.appointment_date + 'T00:00:00+05:30')
-      .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const dateLabel = new Date(appointment.appointment_date + 'T12:00:00+05:30')
+      .toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(appointment.start_time);
 
     // Send cancellation message
@@ -795,12 +795,12 @@ async function notifyCustomerReschedule(
     const salonName = tenant?.name || 'the salon';
 
     // Format old and new dates
-    const oldDateLabel = new Date(appointment.appointment_date + 'T00:00:00+05:30')
-      .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const oldDateLabel = new Date(appointment.appointment_date + 'T12:00:00+05:30')
+      .toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
     const oldTimeLabel = formatTime12h(appointment.start_time);
 
-    const newDateLabel = new Date(newSchedule.appointment_date + 'T00:00:00+05:30')
-      .toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+    const newDateLabel = new Date(newSchedule.appointment_date + 'T12:00:00+05:30')
+      .toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
     const newTimeLabel = formatTime12h(newSchedule.start_time);
 
     // Send reschedule message

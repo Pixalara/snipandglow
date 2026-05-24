@@ -471,7 +471,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
             svcNames = svcs?.map((s: any) => s.name).join(', ') || '';
           } catch { svcNames = ''; }
 
-          const dateLabel = new Date(activeAppt.appointment_date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+          const dateLabel = new Date(activeAppt.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
           const timeLabel = formatTime12hWebhook(activeAppt.start_time);
 
           await sendMessage(tenant.credentials, phone, {
@@ -723,7 +723,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           }
         }
 
-        const dateLabel = new Date(selectedDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { weekday: 'long', day: 'numeric', month: 'short' });
+        const dateLabel = new Date(selectedDate + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'short' });
 
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
@@ -785,7 +785,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           .eq('id', apptId) as any);
 
         if (!reschedError) {
-          const dateLabel = new Date(newDate + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+          const dateLabel = new Date(newDate + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
           const timeLabel = formatTime12hWebhook(newTime);
 
           // Notify customer
@@ -968,7 +968,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         } as any) as any);
 
         // Send confirmation
-        const dateLabel = new Date(dateStr + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
+        const dateLabel = new Date(dateStr + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
         const h = startH % 12 || 12;
         const period = startH >= 12 ? 'PM' : 'AM';
         const timeLabel = `${h}:00 ${period}`;
