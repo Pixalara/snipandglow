@@ -624,11 +624,43 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
             text: { body: thankMsg },
           });
         }
+
+        // Booking nudge — encourage next visit via WhatsApp
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'button',
+            body: {
+              text: `💡 *Next time, skip the wait!*\nBook your next appointment in advance via WhatsApp - just say *Hi* to this chat and we'll get you booked in seconds. 😊`,
+            },
+            action: {
+              buttons: [
+                { type: 'reply', reply: { id: 'book_appointment', title: '📅 Book Now' } },
+              ],
+            },
+          },
+        });
       } else {
         // 1-2 stars — apologize and offer to help
         await sendMessage(tenant.credentials, phone, {
           type: 'text',
           text: { body: `We're sorry to hear that, ${name}. Your feedback is important to us and we'll do our best to improve.\n\nIf you'd like to share more details, just type your message here. Our team at *${tenant.salonName}* will look into it. 🙏` },
+        });
+
+        // Still nudge for next booking even after low rating
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'button',
+            body: {
+              text: `💡 *Next time, skip the wait!*\nBook your next appointment in advance via WhatsApp - just say *Hi* to this chat and we'll get you booked in seconds. 😊`,
+            },
+            action: {
+              buttons: [
+                { type: 'reply', reply: { id: 'book_appointment', title: '📅 Book Now' } },
+              ],
+            },
+          },
         });
       }
 
