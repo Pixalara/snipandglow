@@ -34,7 +34,6 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
   const ref = useRef<HTMLSpanElement>(null);
   const [hasAnimated, setHasAnimated] = useState(false);
   const [display, setDisplay] = useState(0);
-  const rafRef = useRef<number | null>(null);
 
   useEffect(() => {
     const el = ref.current;
@@ -44,31 +43,30 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
           const duration = 2500;
-          const startTime = performance.now();
+          let startTime: number | null = null;
+          let rafId: number;
 
-          const tick = (now: number) => {
-            const elapsed = now - startTime;
+          const tick = (timestamp: number) => {
+            if (!startTime) startTime = timestamp;
+            const elapsed = timestamp - startTime;
             const t = Math.min(elapsed / duration, 1);
-            // Ease-out cubic
+            // Ease-out cubic: decelerates toward end
             const eased = 1 - Math.pow(1 - t, 3);
-            setDisplay(Math.round(eased * value));
+            const current = Math.round(eased * value);
+            setDisplay(current);
             if (t < 1) {
-              rafRef.current = requestAnimationFrame(tick);
-            } else {
-              setDisplay(value);
+              rafId = requestAnimationFrame(tick);
             }
           };
 
-          rafRef.current = requestAnimationFrame(tick);
+          rafId = requestAnimationFrame(tick);
+          return () => cancelAnimationFrame(rafId);
         }
       },
       { threshold: 0.3 }
     );
     observer.observe(el);
-    return () => {
-      observer.disconnect();
-      if (rafRef.current) cancelAnimationFrame(rafRef.current);
-    };
+    return () => observer.disconnect();
   }, [value, hasAnimated]);
 
   return <span ref={ref}>{prefix}{display.toLocaleString('en-IN')}{suffix}</span>;
