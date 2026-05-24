@@ -227,7 +227,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center w-full">
           {/* Left */}
-          <div className="space-y-8 reveal-left">
+          <div className="space-y-8 reveal-left min-w-0 overflow-hidden">
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
