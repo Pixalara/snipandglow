@@ -329,31 +329,24 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Pain calculator */}
-            <div className="rounded-2xl border border-red-200/80 bg-gradient-to-br from-red-50 to-orange-50/50 px-4 py-4 sm:px-5">
-              <div className="flex items-start gap-3">
-                <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-red-100 text-lg">
-                  💸
-                </div>
-                <div className="flex-1 min-w-0">
-                  <p className="text-sm font-bold text-red-700 leading-snug">
-                    3 missed appointments/day = <span className="text-red-600">₹<AnimatedNumber value={30000} /></span> lost every month
-                  </p>
-                  <p className="text-xs text-slate-500 mt-1 leading-snug">
-                    Recover bookings with automatic WhatsApp reminders.
-                  </p>
-                </div>
-                <div className="shrink-0 hidden sm:flex items-center gap-1 rounded-full bg-emerald-100 border border-emerald-200 px-2.5 py-1">
-                  <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" />
-                  <span className="text-[10px] font-semibold text-emerald-700">Auto-fixed</span>
-                </div>
+            {/* Pain calculator — alert style */}
+            <div className="rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 to-orange-50/60 px-4 py-4 sm:px-5 shadow-sm">
+              <div className="flex items-start gap-3 mb-3">
+                <span className="text-xl shrink-0 mt-0.5">⚠️</span>
+                <p className="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
+                  2 missed appointments/day? At ₹500 per service, that&apos;s{' '}
+                  <span className="text-red-600 font-bold">₹<AnimatedNumber value={30000} /></span>{' '}
+                  lost every month.{' '}
+                  <span className="text-slate-600 font-normal">SnipandGlow sends automatic WhatsApp reminders before every visit.</span>
+                </p>
               </div>
-              <div className="mt-3 flex items-center gap-2">
-                <div className="flex-1 h-1.5 rounded-full bg-red-200 overflow-hidden">
-                  <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-red-400 to-orange-400" />
-                </div>
-                <span className="text-[10px] sm:text-xs text-slate-500 shrink-0"><AnimatedNumber value={72} suffix="%" /> of salons face this</span>
-              </div>
+              <button
+                onClick={() => setShowDemoModal(true)}
+                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
+              >
+                Recover Lost Bookings
+                <ArrowRight className="h-3.5 w-3.5" />
+              </button>
             </div>
           </div>
 
