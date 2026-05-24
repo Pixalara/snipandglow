@@ -59,6 +59,34 @@ export async function createAppointment(
     return { success: false, error: 'Date and time slot are required.' };
   }
 
+  // Validate: same customer cannot book the same overlapping slot twice
+  const { data: customerConflicts } = await supabase
+    .from('appointments')
+    .select('start_time, end_time')
+    .eq('customer_id', input.customer_id)
+    .eq('tenant_id', tenantId)
+    .eq('appointment_date', input.appointment_date)
+    .neq('status', 'cancelled');
+
+  if (customerConflicts && customerConflicts.length > 0) {
+    const newStart = input.start_time.split(':').slice(0, 2).map(Number);
+    const newEnd = input.end_time.split(':').slice(0, 2).map(Number);
+    const newStartMin = newStart[0] * 60 + newStart[1];
+    const newEndMin = newEnd[0] * 60 + newEnd[1];
+
+    const duplicate = customerConflicts.some((appt) => {
+      const apptStart = appt.start_time.split(':').slice(0, 2).map(Number);
+      const apptEnd = appt.end_time.split(':').slice(0, 2).map(Number);
+      const apptStartMin = apptStart[0] * 60 + apptStart[1];
+      const apptEndMin = apptEnd[0] * 60 + apptEnd[1];
+      return newStartMin < apptEndMin && newEndMin > apptStartMin;
+    });
+
+    if (duplicate) {
+      return { success: false, error: 'This customer already has an appointment at this time.' };
+    }
+  }
+
   const { data, error } = await supabase
     .from('appointments')
     .insert({

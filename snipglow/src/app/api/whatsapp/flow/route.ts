@@ -445,6 +445,28 @@ async function processBooking(data: any, flowToken: string) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is not available. Please choose another time.' } };
   }
 
+  // Validate: same customer cannot book the same overlapping slot twice
+  const { data: customerExistingAppts } = await (admin
+    .from('appointments')
+    .select('start_time, end_time')
+    .eq('customer_id', customerId)
+    .eq('tenant_id', primaryService.tenant_id)
+    .eq('appointment_date', date)
+    .neq('status', 'cancelled') as any);
+
+  if (customerExistingAppts && customerExistingAppts.length > 0) {
+    const slotStart = toMinutes(time_slot);
+    const slotEnd = slotStart + totalDuration;
+    const alreadyBooked = customerExistingAppts.some((appt: any) => {
+      const apptStart = toMinutes(appt.start_time);
+      const apptEnd = toMinutes(appt.end_time);
+      return slotStart < apptEnd && slotEnd > apptStart;
+    });
+    if (alreadyBooked) {
+      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You already have an appointment at this time. Please choose a different slot.' } };
+    }
+  }
+
   // Validate: check for overlapping existing appointments (respect capacity)
   const { data: existingAppts } = await (admin
     .from('appointments')
