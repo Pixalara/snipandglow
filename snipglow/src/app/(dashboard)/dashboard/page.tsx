@@ -236,8 +236,8 @@ export default async function DashboardPage() {
                   {recentFeedback.map((fb, i) => (
                     <li key={i} className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors">
                       <div className="flex items-center gap-3 min-w-0">
-                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20 text-sm">
-                          {'⭐'.repeat(Math.min(fb.rating, 5))}
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20 text-sm font-bold text-amber-600">
+                          {fb.rating}★
                         </div>
                         <div className="min-w-0">
                           <p className="text-sm font-medium text-foreground truncate">{fb.customer_name}</p>
@@ -246,7 +246,7 @@ export default async function DashboardPage() {
                           </p>
                         </div>
                       </div>
-                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 shrink-0 ml-2">
+                      <span className={`text-xs font-semibold shrink-0 ml-2 ${fb.rating >= 4 ? 'text-emerald-600 dark:text-emerald-400' : fb.rating >= 3 ? 'text-amber-600 dark:text-amber-400' : 'text-red-600 dark:text-red-400'}`}>
                         {fb.rating}/5
                       </span>
                     </li>
