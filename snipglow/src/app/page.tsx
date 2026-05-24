@@ -1155,7 +1155,7 @@ export default function HomePage() {
                       <CheckCircle2 className="h-3 w-3 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">Free WhatsApp API Setup (₹2,500 value)</p>
+                      <p className="text-sm font-semibold text-white">Free WhatsApp API Setup (₹5,500 value)</p>
                       <p className="text-xs text-slate-400 mt-0.5">Complete setup: Meta verification, number registration & template approvals</p>
                     </div>
                   </div>
