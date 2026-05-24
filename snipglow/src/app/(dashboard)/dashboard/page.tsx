@@ -101,11 +101,14 @@ export default async function DashboardPage() {
   // Fetch recent feedback
   let recentFeedback: { customer_name: string; rating: number; created_at: string }[] = [];
   if (tenantId) {
-    const { data: feedback } = await supabase
+    const { createAdminClient } = await import('@/lib/supabase/admin');
+    const admin = createAdminClient();
+    const { data: feedback } = await (admin
       .from('feedback' as any)
       .select('customer_name, rating, created_at')
+      .eq('tenant_id', tenantId)
       .order('created_at', { ascending: false })
-      .limit(5) as any;
+      .limit(5) as any);
     recentFeedback = (feedback ?? []) as { customer_name: string; rating: number; created_at: string }[];
   }
 
