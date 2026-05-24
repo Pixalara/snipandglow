@@ -881,7 +881,7 @@ export default function HomePage() {
                 <div className="space-y-3">
                   {[
                     { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-pink-100 text-pink-600' },
-                    { icon: FileText, label: 'Invoice ?450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
+                    { icon: FileText, label: 'Invoice ₹450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
                     { icon: Gift, label: 'Loyalty points added', color: 'bg-violet-100 text-violet-600' },
                     { icon: Repeat2, label: 'Re-booking nudge scheduled', color: 'bg-purple-100 text-purple-600' },
                   ].map(({ icon: Icon, label, color }) => (
@@ -947,7 +947,7 @@ export default function HomePage() {
               { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
               { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
-              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5? reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
+              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5★ reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
               { icon: Headphones, title: '24hr Support', desc: 'Report any issue from the dashboard. Our team responds within 24 hours on WhatsApp. No chatbots, real humans.', color: 'bg-indigo-100 text-indigo-600' },
               { icon: FileText, title: 'Audit Trails', desc: 'Track every action — who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
               { icon: Megaphone, title: 'WhatsApp Broadcast', desc: 'Send birthday wishes, festival offers, flash sales & win-back campaigns to all customers with one click.', color: 'bg-green-100 text-green-600' },
@@ -1265,7 +1265,7 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 text-center reveal">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-1.5 mb-8">
-            <span className="text-lg">?</span>
+            <span className="text-lg">🚀</span>
             <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-violet-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
               Ready for the future?
             </span>
@@ -1367,7 +1367,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can I manage multiple branches?"
-              answer="Yes, multi-branch support is included in the ?999/mo plan. You can manage all your salon locations from a single dashboard with branch-level reporting and staff management."
+              answer="Yes, multi-branch support is included in the Growth plan. You can manage all your salon locations from a single dashboard with branch-level reporting and staff management."
             />
             <FaqItem
               question="What payment methods do my customers need?"
@@ -1379,7 +1379,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ₹3,000-5,000/mo. SnipandGlow is built specifically for Indian salons — with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ?999/mo with all features included."
+              answer="Most salon software is built for Western markets and costs ₹3,000-5,000/mo. SnipandGlow is built specifically for Indian salons — with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ₹799/mo with all features included."
             />
             <FaqItem
               question="Do you offer customer support?"
@@ -1428,7 +1428,7 @@ export default function HomePage() {
           <div className="py-6 text-center">
             <p className="text-sm text-slate-500">
               &copy; {new Date().getFullYear()} SnipandGlow — <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
-              <span className="text-pink-500">?</span> by{' '}
+              <span className="text-pink-500">❤️</span> by{' '}
               <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
                 Pixalara LLP
               </a>
