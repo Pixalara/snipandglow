@@ -337,7 +337,7 @@ export default function HomePage() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <p className="text-sm font-bold text-red-700 leading-snug">
-                    3 missed appointments/day = <span className="text-red-600">₹30,000 lost every month</span>
+                    3 missed appointments/day = <span className="text-red-600">₹<AnimatedNumber value={30000} /></span> lost every month
                   </p>
                   <p className="text-xs text-slate-500 mt-1 leading-snug">
                     Recover bookings with automatic WhatsApp reminders.
@@ -352,7 +352,7 @@ export default function HomePage() {
                 <div className="flex-1 h-1.5 rounded-full bg-red-200 overflow-hidden">
                   <div className="h-full w-[72%] rounded-full bg-gradient-to-r from-red-400 to-orange-400" />
                 </div>
-                <span className="text-[10px] sm:text-xs text-slate-500 shrink-0">72% of salons face this</span>
+                <span className="text-[10px] sm:text-xs text-slate-500 shrink-0"><AnimatedNumber value={72} suffix="%" /> of salons face this</span>
               </div>
             </div>
           </div>
