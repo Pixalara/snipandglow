@@ -1086,24 +1086,81 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
 
   function addBlockedSlots() {
     if (!selectedDate || selectedSlots.length === 0) return;
+    
+    console.log('[BlockSlots] Adding slots:', selectedDate, selectedSlots);
+    
     const updated = entries.filter((e) => e.date !== selectedDate);
     const merged = [...(existingEntry?.slots || []), ...selectedSlots];
     const unique = [...new Set(merged)].sort();
     updated.push({ date: selectedDate, slots: unique });
-    setEntries(updated.sort((a, b) => a.date.localeCompare(b.date)));
+    
+    const sorted = updated.sort((a, b) => a.date.localeCompare(b.date));
+    console.log('[BlockSlots] Updated entries:', sorted);
+    
+    setEntries(sorted);
     setSelectedSlots([]);
+    
+    // Auto-save after adding slots
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const { updateBlockedSlots } = await import('./actions');
+      const result = await updateBlockedSlots(sorted);
+      
+      console.log('[BlockSlots] Auto-save result:', result);
+      
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
   }
 
   function removeEntry(date: string) {
-    setEntries(entries.filter((e) => e.date !== date));
+    const updated = entries.filter((e) => e.date !== date);
+    setEntries(updated);
+    
+    // Auto-save after removing
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const { updateBlockedSlots } = await import('./actions');
+      const result = await updateBlockedSlots(updated);
+      
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
   }
 
   function removeSlotFromEntry(date: string, slot: string) {
-    setEntries(entries.map((e) => {
+    const updated = entries.map((e) => {
       if (e.date !== date) return e;
       const newSlots = e.slots.filter((s) => s !== slot);
       return { ...e, slots: newSlots };
-    }).filter((e) => e.slots.length > 0));
+    }).filter((e) => e.slots.length > 0);
+    
+    setEntries(updated);
+    
+    // Auto-save after removing slot
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const { updateBlockedSlots } = await import('./actions');
+      const result = await updateBlockedSlots(updated);
+      
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
   }
 
   function handleSave() {
@@ -1171,8 +1228,8 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
               })}
             </div>
             {selectedSlots.length > 0 && (
-              <Button variant="outline" className="rounded-xl w-full sm:w-auto min-h-[44px]" onClick={addBlockedSlots}>
-                Block {selectedSlots.length} slot{selectedSlots.length > 1 ? 's' : ''}
+              <Button variant="outline" className="rounded-xl w-full sm:w-auto min-h-[44px]" onClick={addBlockedSlots} disabled={isPending}>
+                {isPending ? 'Saving...' : `Block & Save ${selectedSlots.length} slot${selectedSlots.length > 1 ? 's' : ''}`}
               </Button>
             )}
           </div>
@@ -1208,11 +1265,12 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
         )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
-        {success && <p className="text-sm text-emerald-600">Blocked slots saved!</p>}
-
-        <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
-          {isPending ? 'Saving...' : 'Save Blocked Slots'}
-        </Button>
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Blocked slots saved!</p>
+          </div>
+        )}
       </div>
     </div>
   );
