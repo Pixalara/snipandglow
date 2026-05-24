@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -295,6 +295,12 @@ export default async function SettingsPage() {
       <BlockSlotsCard
         blockedSlots={((tenant.settings as any)?.blocked_slots as Array<{ date: string; slots: string[] }>) || []}
         operatingHours={branchOperatingHours}
+      />
+
+      {/* Booking Capacity */}
+      <BookingCapacityCard
+        maxAppointmentsPerSlot={((tenant.settings as any)?.max_appointments_per_slot as number) || 1}
+        slotDurationMinutes={((tenant.settings as any)?.slot_duration_minutes as number) || 30}
       />
 
       {/* QR Code Generator */}

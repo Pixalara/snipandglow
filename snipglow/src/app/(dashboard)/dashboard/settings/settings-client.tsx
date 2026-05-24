@@ -1275,3 +1275,164 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
     </div>
   );
 }
+
+// =============================================================================
+// Booking Capacity Card
+// =============================================================================
+
+interface BookingCapacityProps {
+  maxAppointmentsPerSlot: number;
+  slotDurationMinutes: number;
+}
+
+export function BookingCapacityCard({ maxAppointmentsPerSlot: initialMax, slotDurationMinutes: initialDuration }: BookingCapacityProps) {
+  const [isPending, startTransition] = useTransition();
+  const [maxSlots, setMaxSlots] = useState(initialMax || 1);
+  const [slotDuration, setSlotDuration] = useState(initialDuration || 30);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const { updateBookingCapacity } = await import('./actions');
+      const result = await updateBookingCapacity({
+        max_appointments_per_slot: maxSlots,
+        slot_duration_minutes: slotDuration,
+      });
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Users className="size-4 text-blue-500" />
+          <h2 className="text-sm font-semibold text-foreground">Booking Capacity</h2>
+          <span className="inline-flex items-center gap-1 rounded-full bg-blue-100 dark:bg-blue-900/30 px-2 py-0.5 text-xs font-medium text-blue-700 dark:text-blue-400">
+            {maxSlots} per slot
+          </span>
+        </div>
+      </div>
+      <div className="p-6 space-y-5">
+        <p className="text-sm text-muted-foreground">
+          Control how many appointments can be booked at the same time. Useful when you have multiple staff handling clients in parallel.
+        </p>
+
+        {/* Visual example */}
+        <div className="rounded-xl bg-blue-50 dark:bg-blue-900/10 border border-blue-200 dark:border-blue-800/30 p-4">
+          <p className="text-xs font-semibold text-blue-800 dark:text-blue-200 mb-2">Example with {maxSlots} staff:</p>
+          <div className="flex flex-wrap gap-2">
+            {Array.from({ length: Math.min(maxSlots, 6) }).map((_, i) => (
+              <div key={i} className="flex items-center gap-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 px-2.5 py-1.5">
+                <div className="size-2 rounded-full bg-emerald-500" />
+                <span className="text-xs text-blue-700 dark:text-blue-300">Staff {i + 1}</span>
+              </div>
+            ))}
+            {maxSlots > 6 && (
+              <div className="flex items-center gap-1.5 rounded-lg bg-blue-100 dark:bg-blue-900/30 px-2.5 py-1.5">
+                <span className="text-xs text-blue-700 dark:text-blue-300">+{maxSlots - 6} more</span>
+              </div>
+            )}
+          </div>
+          <p className="text-xs text-blue-600 dark:text-blue-400 mt-2">
+            The {maxSlots + 1}{maxSlots + 1 === 2 ? 'nd' : maxSlots + 1 === 3 ? 'rd' : 'th'} booking on the same slot will be automatically blocked.
+          </p>
+        </div>
+
+        {/* Max appointments per slot */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">
+            Max appointments per slot
+          </label>
+          <div className="flex items-center gap-3">
+            <button
+              type="button"
+              onClick={() => setMaxSlots(Math.max(1, maxSlots - 1))}
+              className="flex size-9 items-center justify-center rounded-lg border border-border bg-muted hover:bg-muted/80 text-foreground font-bold text-lg transition-colors"
+              aria-label="Decrease"
+            >
+              −
+            </button>
+            <div className="flex-1 text-center">
+              <span className="text-3xl font-bold text-foreground">{maxSlots}</span>
+              <p className="text-xs text-muted-foreground mt-0.5">
+                {maxSlots === 1 ? 'Only 1 appointment at a time' : `Up to ${maxSlots} simultaneous appointments`}
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => setMaxSlots(Math.min(20, maxSlots + 1))}
+              className="flex size-9 items-center justify-center rounded-lg border border-border bg-muted hover:bg-muted/80 text-foreground font-bold text-lg transition-colors"
+              aria-label="Increase"
+            >
+              +
+            </button>
+          </div>
+          <p className="text-xs text-muted-foreground">Set this to the number of staff who can work simultaneously (1–20).</p>
+        </div>
+
+        {/* Slot duration */}
+        <div className="space-y-2">
+          <label className="text-sm font-medium text-foreground">Slot duration</label>
+          <div className="grid grid-cols-2 gap-2">
+            {[30, 60].map((dur) => (
+              <button
+                key={dur}
+                type="button"
+                onClick={() => setSlotDuration(dur)}
+                className={`rounded-xl border px-4 py-3 text-sm font-medium transition-all ${
+                  slotDuration === dur
+                    ? 'border-primary bg-primary/10 text-primary'
+                    : 'border-border bg-muted/30 text-muted-foreground hover:border-primary/50 hover:text-foreground'
+                }`}
+              >
+                <p className="font-semibold">{dur} minutes</p>
+                <p className="text-xs mt-0.5 opacity-70">
+                  {dur === 30 ? 'Standard (recommended)' : 'For longer services'}
+                </p>
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* Status summary */}
+        <div className="rounded-lg bg-muted/50 px-4 py-3">
+          <p className="text-sm text-foreground font-medium">
+            Current setting: <span className="text-primary">{maxSlots} appointment{maxSlots > 1 ? 's' : ''} per {slotDuration}-minute slot</span>
+          </p>
+          <p className="text-xs text-muted-foreground mt-1">
+            {maxSlots === 1
+              ? 'Only 1 customer can book any given time slot. Best for solo stylists.'
+              : `Up to ${maxSlots} customers can book the same time slot. The ${maxSlots + 1}${maxSlots + 1 === 2 ? 'nd' : maxSlots + 1 === 3 ? 'rd' : 'th'} booking will be blocked.`}
+          </p>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+            <AlertTriangle className="size-4 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Booking capacity saved!</p>
+          </div>
+        )}
+
+        <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+          {isPending ? 'Saving...' : 'Save Capacity Settings'}
+        </Button>
+      </div>
+    </div>
+  );
+}

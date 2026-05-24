@@ -297,3 +297,55 @@ export async function updateBlockedSlots(blockedSlots: Array<{ date: string; slo
   revalidatePath('/dashboard/settings');
   return { success: true, data: undefined };
 }
+
+/**
+ * Update booking capacity settings.
+ * max_appointments_per_slot: how many appointments can be booked at the same time
+ * slot_duration_minutes: 30 or 60 minutes per slot
+ */
+export async function updateBookingCapacity(input: {
+  max_appointments_per_slot: number;
+  slot_duration_minutes: number;
+}): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  if (input.max_appointments_per_slot < 1 || input.max_appointments_per_slot > 20) {
+    return { success: false, error: 'Max appointments per slot must be between 1 and 20.' };
+  }
+
+  if (![30, 60].includes(input.slot_duration_minutes)) {
+    return { success: false, error: 'Slot duration must be 30 or 60 minutes.' };
+  }
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .single();
+
+  const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
+
+  const updatedSettings = {
+    ...currentSettings,
+    max_appointments_per_slot: input.max_appointments_per_slot,
+    slot_duration_minutes: input.slot_duration_minutes,
+  };
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ settings: updatedSettings })
+    .eq('id', tenantId);
+
+  if (error) {
+    return { success: false, error: 'Failed to update booking capacity.' };
+  }
+
+  revalidatePath('/dashboard/settings');
+  return { success: true, data: undefined };
+}

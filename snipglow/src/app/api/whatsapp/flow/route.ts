@@ -192,6 +192,13 @@ async function handleFlowInit(data: any) {
     }
   }
 
+  // Capacity: max appointments per slot (default 1)
+  let maxPerSlot = 1;
+  if (tenantId) {
+    const { data: tenantCap } = await (admin.from('tenants' as any).select('settings').eq('id', tenantId).single() as any);
+    maxPerSlot = (tenantCap?.settings as any)?.max_appointments_per_slot || 1;
+  }
+
   // Generate all time slots (9 AM to 8 PM at 30-min intervals)
   const allTimeSlots: Array<{ id: string; title: string }> = [];
   for (let hour = 9; hour < 20; hour++) {
@@ -205,25 +212,22 @@ async function handleFlowInit(data: any) {
   }
 
   // Filter: only show slots that are available on at least one of the 7 dates
-  // This removes slots that are blocked/booked on EVERY single date (permanently unavailable)
   const allDates = dates.map((d) => d.id);
   const filteredTimeSlots = allTimeSlots.filter((slot) => {
-    const slotHHMM = slot.id.substring(0, 5); // "09:00:00" -> "09:00"
+    const slotHHMM = slot.id.substring(0, 5);
     const slotMin = toMinutes(slotHHMM);
     const slotEndMin = slotMin + 30;
 
-    // Keep if available on at least one date
     return allDates.some((dateStr) => {
-      // Skip if blocked on this date
       if (blockedSlotsByDate.get(dateStr)?.has(slotHHMM)) return false;
-      // Skip if overlaps a booked appointment on this date
       const booked = bookedSlotsByDate.get(dateStr) || [];
-      const isBooked = booked.some((appt) => {
+      // Count overlapping appointments — slot is full if count >= maxPerSlot
+      const overlapCount = booked.filter((appt) => {
         const apptStart = toMinutes(appt.start);
         const apptEnd = toMinutes(appt.end);
         return slotMin < apptEnd && slotEndMin > apptStart;
-      });
-      return !isBooked;
+      }).length;
+      return overlapCount < maxPerSlot;
     });
   });
 
@@ -270,7 +274,7 @@ async function handleDateSelected(data: any, flowToken: string) {
 
   const admin = createAdminClient();
 
-  // Fetch blocked slots and booked appointments for this specific date in parallel
+  // Fetch blocked slots, booked appointments, and capacity for this specific date in parallel
   const [tenantRes, apptsRes] = await Promise.all([
     tenantId
       ? (admin.from('tenants' as any).select('settings').eq('id', tenantId).single() as any)
@@ -290,6 +294,9 @@ async function handleDateSelected(data: any, flowToken: string) {
     (tenantRes.data?.settings as any)?.blocked_slots || [];
   const blockedForDate = blockedSlots.find((b: any) => b.date === date);
   const blockedTimes = new Set(blockedForDate?.slots || []);
+
+  // Capacity
+  const maxPerSlot: number = (tenantRes.data?.settings as any)?.max_appointments_per_slot || 1;
 
   // Build booked set for this date
   const bookedAppts: Array<{ start_time: string; end_time: string }> = apptsRes.data || [];
@@ -314,14 +321,14 @@ async function handleDateSelected(data: any, flowToken: string) {
       // Skip blocked slots
       if (blockedTimes.has(slotHHMM)) continue;
 
-      // Skip booked slots (overlap check)
+      // Skip booked slots (capacity check)
       const slotEnd = slotMin + 30;
-      const isBooked = bookedAppts.some((appt) => {
+      const overlapCount = bookedAppts.filter((appt) => {
         const apptStart = toMinutes(appt.start_time);
         const apptEnd = toMinutes(appt.end_time);
         return slotMin < apptEnd && slotEnd > apptStart;
-      });
-      if (isBooked) continue;
+      }).length;
+      if (overlapCount >= maxPerSlot) continue;
 
       const h = hour % 12 || 12;
       const period = hour >= 12 ? 'PM' : 'AM';
@@ -440,7 +447,7 @@ async function processBooking(data: any, flowToken: string) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is not available. Please choose another time.' } };
   }
 
-  // Validate: check for overlapping existing appointments
+  // Validate: check for overlapping existing appointments (respect capacity)
   const { data: existingAppts } = await (admin
     .from('appointments')
     .select('start_time, end_time')
@@ -451,13 +458,14 @@ async function processBooking(data: any, flowToken: string) {
   if (existingAppts && existingAppts.length > 0) {
     const slotStart = toMinutes(time_slot);
     const slotEnd = slotStart + totalDuration;
-    const hasOverlap = existingAppts.some((appt: any) => {
+    const overlapCount = existingAppts.filter((appt: any) => {
       const apptStart = toMinutes(appt.start_time);
       const apptEnd = toMinutes(appt.end_time);
       return slotStart < apptEnd && slotEnd > apptStart;
-    });
-    if (hasOverlap) {
-      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is already booked. Please choose another time.' } };
+    }).length;
+    const maxPerSlot: number = (tenantCheck?.settings as any)?.max_appointments_per_slot || 1;
+    if (overlapCount >= maxPerSlot) {
+      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is fully booked. Please choose another time.' } };
     }
   }
 

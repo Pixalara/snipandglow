@@ -498,11 +498,14 @@ export async function getAvailableSlots(
   const openTime = dayHours.open;
   const closeTime = dayHours.close;
 
-  // 4. Get blocked slots for this date from tenant settings
+  // 4. Get blocked slots and capacity settings from tenant settings
   const tenantSettings = (tenantRes.data?.settings as any) ?? {};
   const blockedSlotEntries: Array<{ date: string; slots: string[] }> = tenantSettings.blocked_slots || [];
   const blockedForDate = blockedSlotEntries.find((b) => b.date === date);
   const blockedTimes = new Set(blockedForDate?.slots || []); // Set<"HH:MM">
+
+  // Capacity: how many appointments allowed per slot (default 1)
+  const maxPerSlot: number = tenantSettings.max_appointments_per_slot || 1;
 
   // 5. Generate all possible slots at 30-minute intervals
   const slots: TimeSlot[] = [];
@@ -532,7 +535,7 @@ export async function getAvailableSlots(
     slots.push({ slot_start: startStr, slot_end: endStr });
   }
 
-  // 5. Filter out slots that overlap with existing appointments
+  // 6. Filter out slots that exceed capacity (count overlapping appointments per slot)
   const existingAppts = apptsRes.data;
   if (!existingAppts || existingAppts.length === 0) return slots;
 
@@ -540,11 +543,15 @@ export async function getAvailableSlots(
     const slotStart = timeToMinutes(slot.slot_start);
     const slotEnd = timeToMinutes(slot.slot_end);
 
-    return !existingAppts.some((appt) => {
+    // Count how many existing appointments overlap this slot
+    const overlappingCount = existingAppts.filter((appt) => {
       const apptStart = timeToMinutes(appt.start_time);
       const apptEnd = timeToMinutes(appt.end_time);
       return slotStart < apptEnd && slotEnd > apptStart;
-    });
+    }).length;
+
+    // Slot is available if current bookings are below capacity
+    return overlappingCount < maxPerSlot;
   });
 
   return available;
