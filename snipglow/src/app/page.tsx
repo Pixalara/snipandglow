@@ -277,7 +277,7 @@ export default function HomePage() {
             </div>
 
             {/* Benefit cards — infinite horizontal scroll marquee */}
-            <div className="relative overflow-hidden -mx-4 sm:-mx-0">
+            <div className="relative overflow-hidden">
               {/* Fade edges */}
               <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(255,255,255,1), transparent)' }} />
               <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, rgba(255,255,255,1), transparent)' }} />
@@ -300,10 +300,8 @@ export default function HomePage() {
                 ].map(({ icon, title, desc, gradient, border, iconBg, titleColor }, i) => (
                   <div
                     key={i}
-                    className={`relative shrink-0 w-[160px] sm:w-[180px] rounded-2xl border ${border} bg-gradient-to-br ${gradient} p-4 overflow-hidden`}
-                    style={{ backdropFilter: 'blur(8px)' }}
+                    className={`relative shrink-0 w-[155px] sm:w-[175px] rounded-2xl border ${border} bg-gradient-to-br ${gradient} p-4 overflow-hidden`}
                   >
-                    <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full opacity-20 blur-xl" />
                     <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${iconBg} text-lg mb-3 shadow-sm`}>
                       {icon}
                     </div>
