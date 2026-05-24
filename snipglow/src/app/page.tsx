@@ -1,4 +1,4 @@
-﻿'use client';
+'use client';
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
@@ -64,10 +64,10 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
   return <span ref={ref}>{prefix}{display.toLocaleString('en-IN')}{suffix}</span>;
 }
 
-// Rolling text component ΓÇö cycles through items with smooth fade+slide animation
+// Rolling text component - cycles through items with smooth fade+slide animation
 const ROLLING_ITEMS = [
   { text: 'Book clients automatically via WhatsApp.', color: 'from-emerald-500 to-teal-500' },
-  { text: 'Send reminders ΓÇö zero no-shows.', color: 'from-blue-500 to-indigo-500' },
+  { text: 'Send reminders - zero no-shows.', color: 'from-blue-500 to-indigo-500' },
   { text: 'Generate bills in seconds.', color: 'from-violet-500 to-purple-500' },
   { text: 'Collect feedback after every visit.', color: 'from-amber-500 to-orange-500' },
   { text: 'Bring back inactive customers on autopilot.', color: 'from-pink-500 to-rose-500' },
@@ -255,10 +255,10 @@ export default function HomePage() {
             {/* Trust pills */}
             <div className="flex flex-wrap gap-2 py-2">
               {[
-                { icon: 'ΓÜí', label: 'Setup in 10 Minutes', sub: 'No tech skills needed' },
+                { icon: '⚡', label: 'Setup in 10 Minutes', sub: 'No tech skills needed' },
                 { icon: '🇮🇳', label: 'Built for Indian Salons', sub: 'WhatsApp, UPI, GST-ready' },
                 { icon: 'whatsapp', label: 'Book via WhatsApp', sub: 'No app download needed' },
-                { icon: '≡ƒÄü', label: '15-Day Free Trial', sub: 'No card required' },
+                { icon: '🎁', label: '15-Day Free Trial', sub: 'No card required' },
               ].map(({ icon, label, sub }) => (
                 <div key={label} className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
                   {icon === 'whatsapp' ? (
@@ -379,8 +379,8 @@ export default function HomePage() {
                       {/* 1. Customer sends friendly message */}
                       <div className="flex justify-end">
                         <div style={{ background: 'linear-gradient(135deg, #dcf8c6, #c8f0b0)', borderRadius: '14px 14px 2px 14px', padding: '6px 10px', maxWidth: '168px', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                          <p className="text-[10.5px] text-slate-800 leading-snug">Hi! I&apos;d like to book an appointment at JK Salon &amp; Spa Γ£¿</p>
-                          <p className="text-[8px] text-slate-500 text-right mt-0.5">10:01 AM Γ£ôΓ£ô</p>
+                          <p className="text-[10.5px] text-slate-800 leading-snug">Hi! I&apos;d like to book an appointment at JK Salon &amp; Spa ✨</p>
+                          <p className="text-[8px] text-slate-500 text-right mt-0.5">10:01 AM ✓✓</p>
                         </div>
                       </div>
 
@@ -388,12 +388,12 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(0,0,0,0.05)' }}>
                           <div className="px-3 py-2">
-                            <p className="text-[11px] font-bold text-slate-800">≡ƒæï Welcome to <span style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>!</p>
+                            <p className="text-[11px] font-bold text-slate-800">👋 Welcome to <span style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>!</p>
                             <p className="text-[10px] text-slate-600 mt-0.5 leading-snug">Hi Priya, how can we help you today?</p>
                             <p className="text-[8.5px] text-slate-400 italic mt-0.5">Powered by SnipandGlow</p>
                           </div>
                           <div style={{ borderTop: '1px solid #f0f0f0' }}>
-                            {[['≡ƒôà Book Appointment','#25d366'],['Γ£é∩╕Å View Services','#128c7e'],['≡ƒƼ Talk to Salon','#075e54']].map(([label,color]) => (
+                            {[['📅 Book Appointment','#25d366'],['✂️ View Services','#128c7e'],['💬 Talk to Salon','#075e54']].map(([label,color]) => (
                               <div key={label} className="px-3 py-1.5 text-center" style={{ borderBottom: '1px solid #f5f5f5' }}>
                                 <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
                               </div>
@@ -406,8 +406,8 @@ export default function HomePage() {
                       {/* 3. Customer taps Book */}
                       <div className="flex justify-end">
                         <div style={{ background: 'linear-gradient(135deg, #dcf8c6, #c8f0b0)', borderRadius: '14px 14px 2px 14px', padding: '6px 10px', maxWidth: '140px', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                          <p className="text-[10.5px] text-slate-800">≡ƒôà Book Appointment</p>
-                          <p className="text-[8px] text-slate-500 text-right mt-0.5">10:02 AM Γ£ôΓ£ô</p>
+                          <p className="text-[10.5px] text-slate-800">📅 Book Appointment</p>
+                          <p className="text-[8px] text-slate-500 text-right mt-0.5">10:02 AM ✓✓</p>
                         </div>
                       </div>
 
@@ -415,18 +415,18 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(37,211,102,0.15)' }}>
                           <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #075e54, #0a7a6e)' }}>
-                            <p className="text-[10.5px] font-bold text-white">≡ƒôï Book Your Appointment</p>
+                            <p className="text-[10.5px] font-bold text-white">📋 Book Your Appointment</p>
                             <p className="text-[8.5px] text-emerald-200">JK Salon &amp; Spa</p>
                           </div>
                           <div className="px-2.5 py-2 space-y-1.5">
-                            {[['Services','Γ£à Haircut + Facial'],['Date','≡ƒôà Thu, 22 May 2026'],['Time','ΓÅ░ 2:30 PM']].map(([label,val]) => (
+                            {[['Services','✅ Haircut + Facial'],['Date','📅 Thu, 22 May 2026'],['Time','⏰ 2:30 PM']].map(([label,val]) => (
                               <div key={label} className="rounded-lg px-2 py-1.5" style={{ background: '#f8f8f8', border: '1px solid #ebebeb' }}>
                                 <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">{label}</p>
                                 <p className="text-[10px] text-slate-800 font-semibold">{val}</p>
                               </div>
                             ))}
                             <div className="rounded-lg py-1.5 text-center" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)', boxShadow: '0 2px 6px rgba(37,211,102,0.3)' }}>
-                              <p className="text-[10.5px] text-white font-bold">Γ£ô Confirm Booking</p>
+                              <p className="text-[10.5px] text-white font-bold">✓ Confirm Booking</p>
                             </div>
                           </div>
                           <p className="text-[8px] text-slate-400 text-right px-3 pb-1">10:02 AM</p>
@@ -437,25 +437,25 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(37,211,102,0.2)' }}>
                           <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #e8fdf0, #d0f7e0)' }}>
-                            <p className="text-[11px] font-bold text-emerald-800">Γ£à Booking Confirmed!</p>
+                            <p className="text-[11px] font-bold text-emerald-800">✅ Booking Confirmed!</p>
                           </div>
                           <div className="px-3 py-2 space-y-0.5">
-                            {[['≡ƒæñ','Priya Sharma'],['Γ£é∩╕Å','Haircut, Facial'],['≡ƒôà','22 May 2026, 2:30 PM'],['≡ƒôì','JK Salon & Spa']].map(([icon,val]) => (
+                            {[['👤','Priya Sharma'],['✂️','Haircut, Facial'],['📅','22 May 2026, 2:30 PM'],['📍','JK Salon & Spa']].map(([icon,val]) => (
                               <div key={val} className="flex items-center gap-1.5">
                                 <span className="text-[9px]">{icon}</span>
                                 <p className="text-[10px] text-slate-700">{val}</p>
                               </div>
                             ))}
                             <div className="rounded-md px-2 py-1 mt-1" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                              <p className="text-[9px] text-emerald-700 font-medium">≡ƒô▓ Add to Google Calendar ΓåÆ</p>
+                              <p className="text-[9px] text-emerald-700 font-medium">📲 Add to Google Calendar →</p>
                             </div>
                           </div>
                           <div style={{ borderTop: '1px solid #f0f0f0', display: 'flex' }}>
                             <div className="flex-1 py-1.5 text-center" style={{ borderRight: '1px solid #f0f0f0' }}>
-                              <p className="text-[9.5px] font-semibold text-amber-600">≡ƒôà Reschedule</p>
+                              <p className="text-[9.5px] font-semibold text-amber-600">📅 Reschedule</p>
                             </div>
                             <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[9.5px] font-semibold text-red-500">Γ£ò Cancel</p>
+                              <p className="text-[9.5px] font-semibold text-red-500">✕ Cancel</p>
                             </div>
                           </div>
                           <p className="text-[8px] text-slate-400 text-right px-3 pb-1">10:03 AM</p>
@@ -466,20 +466,20 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(139,92,246,0.15)' }}>
                           <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
-                            <p className="text-[10.5px] font-bold text-violet-800">≡ƒº╛ Bill Receipt</p>
+                            <p className="text-[10.5px] font-bold text-violet-800">🧾 Bill Receipt</p>
                             <p className="text-[8.5px] text-violet-500">Invoice INV-SEE-0015</p>
                           </div>
                           <div className="px-2.5 py-2">
-                            <p className="text-[10px] text-slate-600 mb-1.5">Hi Priya, thank you for visiting! ≡ƒÿè</p>
+                            <p className="text-[10px] text-slate-600 mb-1.5">Hi Priya, thank you for visiting! 😊</p>
                             <div className="rounded-lg p-1.5 space-y-0.5" style={{ background: '#fafafa', border: '1px solid #f0f0f0' }}>
                               <div className="flex justify-between text-[9.5px]"><span className="text-slate-500">Haircut</span><span className="font-semibold text-slate-800">Rs.300</span></div>
                               <div className="flex justify-between text-[9.5px]"><span className="text-slate-500">Facial</span><span className="font-semibold text-slate-800">Rs.800</span></div>
-                              <div className="flex justify-between text-[9.5px] text-amber-600"><span>≡ƒææ Membership (20%)</span><span>-Rs.220</span></div>
+                              <div className="flex justify-between text-[9.5px] text-amber-600"><span>👑 Membership (20%)</span><span>-Rs.220</span></div>
                               <div className="flex justify-between text-[10px] font-bold text-emerald-700 pt-0.5" style={{ borderTop: '1px solid #e8e8e8' }}><span>Total</span><span>Rs.880</span></div>
                             </div>
                             <div className="rounded-md px-2 py-1 mt-1.5" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                              <p className="text-[9px] text-emerald-700 font-semibold">≡ƒÆí Next time, skip the wait!</p>
-                              <p className="text-[8.5px] text-emerald-600">Book in advance via WhatsApp ΓåÆ</p>
+                              <p className="text-[9px] text-emerald-700 font-semibold">💡 Next time, skip the wait!</p>
+                              <p className="text-[8.5px] text-emerald-600">Book in advance via WhatsApp →</p>
                             </div>
                           </div>
                           <p className="text-[8px] text-slate-400 text-right px-3 pb-1">5:30 PM</p>
@@ -490,12 +490,12 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(251,191,36,0.25)' }}>
                           <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)' }}>
-                            <p className="text-[10.5px] font-bold text-amber-800">Γ¡É How was your experience?</p>
+                            <p className="text-[10.5px] font-bold text-amber-800">⭐ How was your experience?</p>
                           </div>
                           <div className="px-3 py-2">
                             <p className="text-[10px] text-slate-600 mb-1.5">Your feedback helps us serve you better:</p>
                             <div style={{ borderTop: '1px solid #f0f0f0' }}>
-                              {[['Γ¡ÉΓ¡ÉΓ¡ÉΓ¡ÉΓ¡É Loved it!','#f59e0b'],['Γ¡ÉΓ¡ÉΓ¡É It was okay','#6b7280'],['≡ƒÿ₧ Not satisfied','#ef4444']].map(([label,color]) => (
+                              {[['⭐⭐⭐⭐⭐ Loved it!','#f59e0b'],['⭐⭐⭐ It was okay','#6b7280'],['😞 Not satisfied','#ef4444']].map(([label,color]) => (
                                 <div key={label} className="px-3 py-1.5 text-center" style={{ borderBottom: '1px solid #f8f8f8' }}>
                                   <p className="text-[9.5px] font-semibold" style={{ color }}>{label}</p>
                                 </div>
@@ -509,15 +509,15 @@ export default function HomePage() {
                       {/* 8. Customer gives 5 stars */}
                       <div className="flex justify-end">
                         <div style={{ background: 'linear-gradient(135deg, #dcf8c6, #c8f0b0)', borderRadius: '14px 14px 2px 14px', padding: '6px 10px', maxWidth: '140px', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                          <p className="text-[12px] text-slate-800">Γ¡ÉΓ¡ÉΓ¡ÉΓ¡ÉΓ¡É Loved it!</p>
-                          <p className="text-[8px] text-slate-500 text-right mt-0.5">5:32 PM Γ£ôΓ£ô</p>
+                          <p className="text-[12px] text-slate-800">⭐⭐⭐⭐⭐ Loved it!</p>
+                          <p className="text-[8px] text-slate-500 text-right mt-0.5">5:32 PM ✓✓</p>
                         </div>
                       </div>
 
                       {/* 9. Thank you */}
                       <div className="flex justify-start">
                         <div className="px-3 py-2" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.05)' }}>
-                          <p className="text-[10px] text-slate-700 leading-snug">≡ƒÄë Thank you for the 5-star rating! We&apos;re thrilled you loved your experience at <span className="font-bold" style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>. See you again! ≡ƒÆç</p>
+                          <p className="text-[10px] text-slate-700 leading-snug">🎉 Thank you for the 5-star rating! We&apos;re thrilled you loved your experience at <span className="font-bold" style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>. See you again! 💇</p>
                           <p className="text-[8px] text-slate-400 text-right mt-1">5:32 PM</p>
                         </div>
                       </div>
@@ -526,13 +526,13 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>
                           <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
-                            <p className="text-[10.5px] font-bold text-violet-800">≡ƒƣ Time for a Touch-Up!</p>
+                            <p className="text-[10.5px] font-bold text-violet-800">💜 Time for a Touch-Up!</p>
                             <p className="text-[8.5px] text-violet-500">30 days since last visit</p>
                           </div>
                           <div className="px-3 py-2">
-                            <p className="text-[10px] text-slate-600 leading-snug mb-1.5">Hi Priya! Your hair is due for a refresh Γ£¿ Book your next appointment now!</p>
+                            <p className="text-[10px] text-slate-600 leading-snug mb-1.5">Hi Priya! Your hair is due for a refresh ✨ Book your next appointment now!</p>
                             <div className="rounded-lg py-1.5 text-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 2px 6px rgba(124,58,237,0.3)' }}>
-                              <p className="text-[10px] text-white font-bold">≡ƒôà Book Now</p>
+                              <p className="text-[10px] text-white font-bold">📅 Book Now</p>
                             </div>
                           </div>
                           <p className="text-[8px] text-slate-400 text-right px-3 pb-1">Jun 21, 10:00 AM</p>
@@ -543,21 +543,21 @@ export default function HomePage() {
                       <div className="flex justify-start">
                         <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(236,72,153,0.2)' }}>
                           <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #fdf2f8, #fce7f3)' }}>
-                            <p className="text-[10.5px] font-bold text-pink-800">≡ƒÆû We Miss You, Priya!</p>
+                            <p className="text-[10.5px] font-bold text-pink-800">💖 We Miss You, Priya!</p>
                             <p className="text-[8.5px] text-pink-500">60 days since last visit</p>
                           </div>
                           <div className="px-3 py-2">
-                            <p className="text-[10px] text-slate-600 leading-snug mb-1.5">It&apos;s been 2 months ΓÇö come back for some self-care! We have a special offer just for you ≡ƒÄü</p>
+                            <p className="text-[10px] text-slate-600 leading-snug mb-1.5">It&apos;s been 2 months - come back for some self-care! We have a special offer just for you 🎁</p>
                             <div className="rounded-lg p-2 text-center mb-1.5" style={{ background: 'linear-gradient(135deg, #fdf2f8, #fce7f3)', border: '1px solid rgba(236,72,153,0.25)' }}>
                               <p className="text-[14px] font-black text-pink-600">15% OFF</p>
                               <p className="text-[8.5px] text-slate-500">Code: <span className="font-bold text-slate-700">MISSYOU15</span></p>
                             </div>
                             <div style={{ borderTop: '1px solid #f0f0f0', display: 'flex', gap: '0' }}>
                               <div className="flex-1 py-1.5 text-center" style={{ borderRight: '1px solid #f0f0f0' }}>
-                                <p className="text-[9.5px] font-bold text-pink-600">≡ƒÄü Claim Offer</p>
+                                <p className="text-[9.5px] font-bold text-pink-600">🎁 Claim Offer</p>
                               </div>
                               <div className="flex-1 py-1.5 text-center">
-                                <p className="text-[9.5px] font-semibold text-blue-500">Γ£é∩╕Å Services</p>
+                                <p className="text-[9.5px] font-semibold text-blue-500">✂️ Services</p>
                               </div>
                             </div>
                           </div>
@@ -585,7 +585,7 @@ export default function HomePage() {
 
 
 
-              {/* Floating badge ΓÇö bottom left (hidden on mobile) */}
+              {/* Floating badge - bottom left (hidden on mobile) */}
               <div className="hidden lg:block absolute -bottom-6 -left-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
@@ -598,7 +598,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              {/* Floating badge ΓÇö top right (hidden on mobile) */}
+              {/* Floating badge - top right (hidden on mobile) */}
               <div className="hidden lg:block absolute -top-6 -right-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
@@ -620,7 +620,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-            {/* Left ΓÇö Image */}
+            {/* Left - Image */}
             <div className="relative reveal-left">
               <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60 card-float">
                 <img
@@ -644,7 +644,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right ΓÇö Content */}
+            {/* Right - Content */}
             <div className="reveal-right">
               <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
                 Effortless Bookings via{' '}
@@ -658,22 +658,22 @@ export default function HomePage() {
               <div className="mt-8 space-y-6 stagger-cards">
                 {[
                   {
-                    icon: '≡ƒôà',
+                    icon: '📅',
                     title: 'Smart Appointments',
                     desc: 'Online booking system with instant WhatsApp confirmation that allows clients to reschedule or cancel with a tap.',
                   },
                   {
-                    icon: '≡ƒñû',
+                    icon: '🤖',
                     title: 'WhatsApp Automation',
                     desc: 'Automated delivery of booking confirmations, 24-hour reminders, and re-booking nudges to reduce no-shows.',
                   },
                   {
-                    icon: '≡ƒôó',
+                    icon: '📢',
                     title: 'WhatsApp Marketing & Broadcasts',
                     desc: 'One-click messaging for birthday wishes, festival offers, flash sales, and win-back campaigns.',
                   },
                   {
-                    icon: 'Γ¡É',
+                    icon: '⭐',
                     title: 'Instant Feedback Collection',
                     desc: 'Automatically request ratings after every visit. 5-star reviews get redirected to Google. Low ratings alert you instantly.',
                   },
@@ -699,7 +699,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-            {/* Left ΓÇö Content */}
+            {/* Left - Content */}
             <div className="reveal-left">
               <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
                 Build Unbreakable{' '}
@@ -713,22 +713,22 @@ export default function HomePage() {
               <div className="mt-8 space-y-6 stagger-cards">
                 {[
                   {
-                    icon: '≡ƒææ',
+                    icon: '👑',
                     title: 'Membership & Loyalty Programs',
                     desc: 'Creation of membership plans with automated discounts and reward systems to increase repeat visits.',
                   },
                   {
-                    icon: 'Γ¡É',
+                    icon: '⭐',
                     title: 'Automated Customer Feedback',
                     desc: 'Collection of ratings via WhatsApp after every visit to monitor service quality and boost online reviews.',
                   },
                   {
-                    icon: '≡ƒĻ',
+                    icon: '🎯',
                     title: 'Lead Management',
                     desc: 'System to capture and track leads from walk-ins, social media, and referrals to convert them into loyal customers.',
                   },
                   {
-                    icon: '≡ƒÄü',
+                    icon: '🎁',
                     title: 'Win-Back Campaigns',
                     desc: 'Automated 30-day and 60-day reminders with special offers to bring back inactive customers.',
                   },
@@ -746,7 +746,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right ΓÇö Image grid */}
+            {/* Right - Image grid */}
             <div className="grid grid-cols-2 gap-3 reveal-right">
               <div className="rounded-2xl overflow-hidden shadow-lg card-float">
                 <img
@@ -784,7 +784,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
-            {/* Left ΓÇö Image */}
+            {/* Left - Image */}
             <div className="relative reveal-left">
               <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60 card-float">
                 <img
@@ -796,7 +796,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Right ΓÇö Content */}
+            {/* Right - Content */}
             <div className="reveal-right">
               <div className="space-y-8 stagger-cards">
                 {/* Analytics Dashboard */}
@@ -867,7 +867,7 @@ export default function HomePage() {
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Snip and Glow by Pixalara</p>
-                    <p className="text-xs text-slate-500">3 staff ΓÇö 12 services</p>
+                    <p className="text-xs text-slate-500">3 staff - 12 services</p>
                   </div>
                 </div>
                 <div className="grid grid-cols-2 gap-2">
@@ -890,7 +890,7 @@ export default function HomePage() {
                     <div key={appt.name} className="flex items-center justify-between py-2 border-b border-slate-50 last:border-0">
                       <div>
                         <p className="text-sm font-medium text-slate-900">{appt.name}</p>
-                        <p className="text-xs text-slate-500">{appt.service} ΓÇö {appt.time}</p>
+                        <p className="text-xs text-slate-500">{appt.service} - {appt.time}</p>
                       </div>
                       <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-pink-100 text-pink-700' : appt.status === 'Reminded' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                     </div>
@@ -915,7 +915,7 @@ export default function HomePage() {
                 <div className="space-y-3">
                   {[
                     { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-pink-100 text-pink-600' },
-                    { icon: FileText, label: 'Invoice Γé╣450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
+                    { icon: FileText, label: 'Invoice ₹450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
                     { icon: Gift, label: 'Loyalty points added', color: 'bg-violet-100 text-violet-600' },
                     { icon: Repeat2, label: 'Re-booking nudge scheduled', color: 'bg-purple-100 text-purple-600' },
                   ].map(({ icon: Icon, label, color }) => (
@@ -971,12 +971,11 @@ export default function HomePage() {
           </div>
 
           <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 reveal">
-
             {/* BEFORE */}
             <div className="rounded-2xl border border-red-200 bg-red-50/60 p-6 sm:p-8">
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
-                  <span className="text-lg">≡ƒÿô</span>
+                  <span className="text-lg">😓</span>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-red-400 mb-0.5">Before SnipandGlow</p>
@@ -984,18 +983,10 @@ export default function HomePage() {
                 </div>
               </div>
               <ul className="space-y-3">
-                {[
-                  'Manual calls to book appointments',
-                  'Missed WhatsApp messages',
-                  'Forgotten appointments & no-shows',
-                  'No customer history or records',
-                  'No follow-up after visit',
-                ].map((item) => (
+                {['Manual calls to book appointments', 'Missed WhatsApp messages', 'Forgotten appointments & no-shows', 'No customer history or records', 'No follow-up after visit'].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-200">
-                      <svg className="h-3 w-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
-                      </svg>
+                      <svg className="h-3 w-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
                     </span>
                     <span className="text-sm text-red-800">{item}</span>
                   </li>
@@ -1008,7 +999,7 @@ export default function HomePage() {
               <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-t-2xl" />
               <div className="flex items-center gap-3 mb-6">
                 <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
-                  <span className="text-lg">Γ£¿</span>
+                  <span className="text-lg">✨</span>
                 </div>
                 <div>
                   <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-0.5">After SnipandGlow</p>
@@ -1016,25 +1007,16 @@ export default function HomePage() {
                 </div>
               </div>
               <ul className="space-y-3">
-                {[
-                  'Auto WhatsApp booking ΓÇö 24/7',
-                  'Auto reminders ΓÇö zero no-shows',
-                  'Full customer CRM & history',
-                  'Billing and payments tracked',
-                  'Win-back campaigns on autopilot',
-                ].map((item) => (
+                {['Auto WhatsApp booking - 24/7', 'Auto reminders - zero no-shows', 'Full customer CRM & history', 'Billing and payments tracked', 'Win-back campaigns on autopilot'].map((item) => (
                   <li key={item} className="flex items-start gap-3">
                     <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-200">
-                      <svg className="h-3 w-3 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
-                      </svg>
+                      <svg className="h-3 w-3 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
                     </span>
                     <span className="text-sm text-emerald-900 font-medium">{item}</span>
                   </li>
                 ))}
               </ul>
             </div>
-
           </div>
         </div>
       </section>
@@ -1050,17 +1032,17 @@ export default function HomePage() {
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
               { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
-              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges ΓÇö all sent automatically.', color: 'bg-green-100 text-green-600' },
+              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges - all sent automatically.', color: 'bg-green-100 text-green-600' },
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
-              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns ΓÇö all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
+              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns - all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
               { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
               { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
-              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5Γÿà reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
+              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5★ reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
               { icon: Headphones, title: '24hr Support', desc: 'Report any issue from the dashboard. Our team responds within 24 hours on WhatsApp. No chatbots, real humans.', color: 'bg-indigo-100 text-indigo-600' },
-              { icon: FileText, title: 'Audit Trails', desc: 'Track every action ΓÇö who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
+              { icon: FileText, title: 'Audit Trails', desc: 'Track every action - who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
               { icon: Megaphone, title: 'WhatsApp Broadcast', desc: 'Send birthday wishes, festival offers, flash sales & win-back campaigns to all customers with one click.', color: 'bg-green-100 text-green-600' },
             ].map(({ icon: Icon, title, desc, color }) => (
               <div key={title} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow reveal-scale">
@@ -1113,12 +1095,12 @@ export default function HomePage() {
               </div>
 
               <div className="mb-8">
-                <p className="text-lg text-slate-400 line-through">Γé╣999/month</p>
+                <p className="text-lg text-slate-400 line-through">₹999/month</p>
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-5xl font-bold text-slate-900">Γé╣799</span>
+                  <span className="text-5xl font-bold text-slate-900">₹799</span>
                   <span className="text-lg text-slate-500">/month</span>
                 </div>
-                <p className="text-sm text-slate-500">Γé╣9,588/year ΓÇó Cancel anytime ΓÇó 15-day free trial</p>
+                <p className="text-sm text-slate-500">₹9,588/year • Cancel anytime • 15-day free trial</p>
               </div>
 
               <Link 
@@ -1200,7 +1182,7 @@ export default function HomePage() {
                     {['Own WhatsApp Business API', 'WhatsApp marketing broadcasts', 'Multi-branch management'].map((f) => (
                       <div key={f} className="flex items-center gap-2">
                         <div className="h-4 w-4 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                          <span className="text-slate-400 text-xs">Γ£ò</span>
+                          <span className="text-slate-400 text-xs">✕</span>
                         </div>
                         <span className="text-xs text-slate-400">{f}</span>
                       </div>
@@ -1241,12 +1223,12 @@ export default function HomePage() {
               </div>
 
               <div className="relative mb-8">
-                <p className="text-lg text-slate-500 line-through">Γé╣1,999/month</p>
+                <p className="text-lg text-slate-500 line-through">₹1,999/month</p>
                 <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-5xl font-bold text-white">Γé╣1,499</span>
+                  <span className="text-5xl font-bold text-white">₹1,499</span>
                   <span className="text-lg text-slate-400">/month</span>
                 </div>
-                <p className="text-sm text-slate-400">Includes 2 branches ΓÇó +Γé╣499/month per additional branch ΓÇó Billed yearly</p>
+                <p className="text-sm text-slate-400">Includes 2 branches • +₹499/month per additional branch • Billed yearly</p>
               </div>
 
               <button 
@@ -1266,7 +1248,7 @@ export default function HomePage() {
                       <CheckCircle2 className="h-3 w-3 text-white" />
                     </div>
                     <div>
-                      <p className="text-sm font-semibold text-white">Free WhatsApp API Setup (Γé╣5,500 value)</p>
+                      <p className="text-sm font-semibold text-white">Free WhatsApp API Setup (₹5,500 value)</p>
                       <p className="text-xs text-slate-400 mt-0.5">Complete setup: Meta verification, number registration & template approvals</p>
                     </div>
                   </div>
@@ -1334,12 +1316,12 @@ export default function HomePage() {
 
                 <div className="pt-6 mt-6 border-t border-slate-700/50">
                   <div className="bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20 rounded-xl p-4">
-                    <p className="text-xs font-semibold text-white mb-2">≡ƒÜÇ Perfect for:</p>
+                    <p className="text-xs font-semibold text-white mb-2">🚀 Perfect for:</p>
                     <ul className="text-xs text-slate-300 space-y-1">
-                      <li>ΓÇó Multi-location salon chains (Γé╣499/month per branch after 2)</li>
-                      <li>ΓÇó Salons wanting their own branded WhatsApp</li>
-                      <li>ΓÇó Businesses running marketing campaigns</li>
-                      <li>ΓÇó Growing salon brands with 2+ locations</li>
+                      <li>• Multi-location salon chains (₹499/month per branch after 2)</li>
+                      <li>• Salons wanting their own branded WhatsApp</li>
+                      <li>• Businesses running marketing campaigns</li>
+                      <li>• Growing salon brands with 2+ locations</li>
                     </ul>
                   </div>
                 </div>
@@ -1376,7 +1358,7 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 text-center reveal">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-1.5 mb-8">
-            <span className="text-lg">≡ƒÜÇ</span>
+            <span className="text-lg">🚀</span>
             <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-violet-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
               Done-for-you setup
             </span>
@@ -1391,8 +1373,8 @@ export default function HomePage() {
           </h2>
 
           {/* Subtext */}
-          <p className="text-slate-400 mb-10 text-sm sm:text-base max-w-lg mx-auto">
-            From smart bookings to WhatsApp automation ΓÇö get everything you need in one powerful dashboard.
+          <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
+            From smart bookings to WhatsApp automation - get everything you need in one powerful dashboard.
           </p>
 
           {/* Free Setup Card */}
@@ -1417,7 +1399,7 @@ export default function HomePage() {
             style={{ background: 'linear-gradient(135deg, #f97316, #ec4899, #8b5cf6)' }}
           >
             <Zap className="h-5 w-5" />
-            Get Started - It's Free
+            {"Get Started - It's Free"}
           </Link>
 
           {/* Trust points */}
@@ -1445,7 +1427,7 @@ export default function HomePage() {
             Ready to run your salon like this?
           </h2>
           <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
-            Get your own snipandglow dashboard and start automating bookings, billing, and growth ΓÇö all in one place.
+            Get your own snipandglow dashboard and start automating bookings, billing, and growth - all in one place.
           </p>
           <button
             onClick={() => setShowDemoModal(true)}
@@ -1473,7 +1455,7 @@ export default function HomePage() {
           <div className="space-y-4 reveal">
             <FaqItem
               question="What is SnipandGlow?"
-              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more ΓÇö all from one dashboard."
+              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more - all from one dashboard."
             />
             <FaqItem
               question="How long is the free trial?"
@@ -1501,15 +1483,15 @@ export default function HomePage() {
             />
             <FaqItem
               question="What payment methods do my customers need?"
-              answer="SnipandGlow tracks payments ΓÇö it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
+              answer="SnipandGlow tracks payments - it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
             />
             <FaqItem
               question="Can I cancel anytime?"
-              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund ΓÇö no questions asked."
+              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund - no questions asked."
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs Γé╣3,000ΓÇô5,000/mo. SnipandGlow is built specifically for Indian salons ΓÇö with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense: Essentials at Γé╣799/mo and Growth at Γé╣1,499/mo (includes 2 branches + free WhatsApp API setup worth Γé╣5,500)."
+              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is built specifically for Indian salons - with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense: Essentials at ₹799/mo and Growth at ₹1,499/mo (includes 2 branches + free WhatsApp API setup worth ₹5,500)."
             />
             <FaqItem
               question="Do you offer customer support?"
@@ -1517,7 +1499,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can I import my existing customer data?"
-              answer="Yes, we help you import your existing customer database during onboarding ΓÇö whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
+              answer="Yes, we help you import your existing customer database during onboarding - whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
             />
           </div>
         </div>
@@ -1557,12 +1539,12 @@ export default function HomePage() {
           {/* Middle row: Copyright + Crafted by */}
           <div className="py-6 text-center">
             <p className="text-sm text-slate-500">
-              &copy; {new Date().getFullYear()} SnipandGlow ΓÇö <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
-              <span className="text-pink-500">Γ¥ñ∩╕Å</span> by{' '}
+              &copy; {new Date().getFullYear()} SnipandGlow - <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
+              <span className="text-pink-500">❤️</span> by{' '}
               <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
                 Pixalara LLP
               </a>
-              {' '}ΓÇö A DPIIT Recognized Technology Company by Govt. of India
+              {' '}- A DPIIT Recognized Technology Company by Govt. of India
             </p>
           </div>
 
@@ -1690,7 +1672,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_key: '75debe40-e347-41ce-a203-93266c993232',
-          subject: `New Demo Booking ΓÇö ${name}`,
+          subject: `New Demo Booking - ${name}`,
           name,
           phone,
           salon_name: salonName || 'Not provided',
