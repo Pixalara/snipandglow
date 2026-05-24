@@ -962,6 +962,83 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== BEFORE VS AFTER ===== */}
+      <section className="py-12 sm:py-20 bg-white">
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="text-center mb-10 reveal">
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">The Difference</p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">Running a salon, before and after</h2>
+          </div>
+
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 reveal">
+
+            {/* BEFORE */}
+            <div className="rounded-2xl border border-red-200 bg-red-50/60 p-6 sm:p-8">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
+                  <span className="text-lg">😓</span>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-red-400 mb-0.5">Before SnipandGlow</p>
+                  <p className="text-base font-bold text-red-700">The old way</p>
+                </div>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  'Manual calls to book appointments',
+                  'Missed WhatsApp messages',
+                  'Forgotten appointments & no-shows',
+                  'No customer history or records',
+                  'No follow-up after visit',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-200">
+                      <svg className="h-3 w-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" />
+                      </svg>
+                    </span>
+                    <span className="text-sm text-red-800">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* AFTER */}
+            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 sm:p-8 relative overflow-hidden">
+              <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-t-2xl" />
+              <div className="flex items-center gap-3 mb-6">
+                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
+                  <span className="text-lg">✨</span>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-0.5">After SnipandGlow</p>
+                  <p className="text-base font-bold text-emerald-700">The smart way</p>
+                </div>
+              </div>
+              <ul className="space-y-3">
+                {[
+                  'Auto WhatsApp booking — 24/7',
+                  'Auto reminders — zero no-shows',
+                  'Full customer CRM & history',
+                  'Billing and payments tracked',
+                  'Win-back campaigns on autopilot',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-3">
+                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-200">
+                      <svg className="h-3 w-3 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                      </svg>
+                    </span>
+                    <span className="text-sm text-emerald-900 font-medium">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+          </div>
+        </div>
+      </section>
+
       {/* ===== FEATURES GRID ===== */}
       <section id="features" className="pt-16 pb-8 sm:pt-24 sm:pb-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
