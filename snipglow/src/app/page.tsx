@@ -65,7 +65,15 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
 }
 
 // Rolling text component — cycles through items with smooth fade+slide animation
-function RollingText({ items }: { items: string[] }) {
+const ROLLING_ITEMS = [
+  { text: 'Book clients automatically via WhatsApp.', color: 'from-emerald-500 to-teal-500' },
+  { text: 'Send reminders — zero no-shows.', color: 'from-blue-500 to-indigo-500' },
+  { text: 'Generate bills in seconds.', color: 'from-violet-500 to-purple-500' },
+  { text: 'Collect feedback after every visit.', color: 'from-amber-500 to-orange-500' },
+  { text: 'Bring back inactive customers on autopilot.', color: 'from-pink-500 to-rose-500' },
+];
+
+function RollingText({ items }: { items: typeof ROLLING_ITEMS }) {
   const [index, setIndex] = useState(0);
   const [visible, setVisible] = useState(true);
 
@@ -82,15 +90,15 @@ function RollingText({ items }: { items: string[] }) {
 
   return (
     <span
-      className="transition-all duration-400"
+      className={`bg-gradient-to-r ${items[index].color} bg-clip-text text-transparent font-semibold`}
       style={{
         opacity: visible ? 1 : 0,
-        transform: visible ? 'translateY(0)' : 'translateY(8px)',
+        transform: visible ? 'translateY(0)' : 'translateY(10px)',
         transition: 'opacity 0.4s ease, transform 0.4s ease',
         display: 'inline-block',
       }}
     >
-      {items[index]}
+      {items[index].text}
     </span>
   );
 }
@@ -239,15 +247,8 @@ export default function HomePage() {
               </p>
 
               {/* Rolling text */}
-              <div className="flex items-start gap-2 text-slate-500 text-base max-w-lg leading-relaxed min-h-[28px]">
-                <span className="shrink-0">✦</span>
-                <RollingText items={[
-                  'Book clients automatically via WhatsApp.',
-                  'Send reminders — zero no-shows.',
-                  'Generate bills in seconds.',
-                  'Collect feedback after every visit.',
-                  'Bring back inactive customers on autopilot.',
-                ]} />
+              <div className="text-xl sm:text-2xl max-w-lg min-h-[36px]">
+                <RollingText items={ROLLING_ITEMS} />
               </div>
             </div>
 
