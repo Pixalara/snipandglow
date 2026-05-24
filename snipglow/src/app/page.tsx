@@ -64,6 +64,37 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
   return <span ref={ref}>{prefix}{display.toLocaleString('en-IN')}{suffix}</span>;
 }
 
+// Rolling text component — cycles through items with smooth fade+slide animation
+function RollingText({ items }: { items: string[] }) {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(true);
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setVisible(false);
+      setTimeout(() => {
+        setIndex((i) => (i + 1) % items.length);
+        setVisible(true);
+      }, 400);
+    }, 2800);
+    return () => clearInterval(interval);
+  }, [items.length]);
+
+  return (
+    <span
+      className="transition-all duration-400"
+      style={{
+        opacity: visible ? 1 : 0,
+        transform: visible ? 'translateY(0)' : 'translateY(8px)',
+        transition: 'opacity 0.4s ease, transform 0.4s ease',
+        display: 'inline-block',
+      }}
+    >
+      {items[index]}
+    </span>
+  );
+}
+
 export default function HomePage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
@@ -206,9 +237,18 @@ export default function HomePage() {
               <p className="text-lg sm:text-xl text-slate-700 font-medium">
                 Appointments. WhatsApp Reminders. Billing. All on Autopilot.
               </p>
-              <p className="text-slate-500 text-base max-w-lg leading-relaxed">
-                Set it up once. Every client gets booked, reminded, billed, and brought back automatically.
-              </p>
+
+              {/* Rolling text */}
+              <div className="flex items-start gap-2 text-slate-500 text-base max-w-lg leading-relaxed min-h-[28px]">
+                <span className="shrink-0">✦</span>
+                <RollingText items={[
+                  'Book clients automatically via WhatsApp.',
+                  'Send reminders — zero no-shows.',
+                  'Generate bills in seconds.',
+                  'Collect feedback after every visit.',
+                  'Bring back inactive customers on autopilot.',
+                ]} />
+              </div>
             </div>
 
             {/* Stats row */}
@@ -244,19 +284,19 @@ export default function HomePage() {
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-              <Link
-                href="/signup"
+              <button
+                onClick={() => setShowDemoModal(true)}
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-violet-500 text-white font-semibold rounded-xl hover:from-pink-600 hover:to-violet-600 transition-colors text-sm shadow-md shadow-pink-200"
               >
-                Start Free Trial
+                Book Free Setup Call
                 <ArrowRight className="h-4 w-4" />
-              </Link>
-              <a
-                href="#how-it-works"
+              </button>
+              <Link
+                href="/signup"
                 className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl hover:border-pink-300 hover:text-pink-600 transition-all text-sm bg-white"
               >
-                See How It Works
-              </a>
+                Start Free Trial
+              </Link>
             </div>
           </div>
 
