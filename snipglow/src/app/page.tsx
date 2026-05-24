@@ -1376,9 +1376,9 @@ export default function HomePage() {
         <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 text-center reveal">
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-1.5 mb-8">
-            <span className="text-lg">ðŸš€</span>
+            <span className="text-lg">🚀</span>
             <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-violet-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
-              Ready for the future?
+              Done-for-you setup
             </span>
           </div>
 
@@ -1391,18 +1391,33 @@ export default function HomePage() {
           </h2>
 
           {/* Subtext */}
-          <p className="text-slate-400 mb-10 text-sm sm:text-base max-w-lg mx-auto">
-            From smart bookings to WhatsApp automation â€” get everything you need in one powerful dashboard.
+          <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
+            From smart bookings to WhatsApp automation - get everything you need in one powerful dashboard.
           </p>
 
-          {/* CTA Button with gradient */}
+          {/* Free Setup Card */}
+          <div className="mx-auto max-w-xl mb-10 rounded-2xl border border-emerald-500/30 bg-emerald-500/10 px-6 py-5 text-left">
+            <div className="flex items-start gap-3">
+              <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-500/20">
+                <CheckCircle2 className="h-5 w-5 text-emerald-400" />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-emerald-300 mb-1">Free Setup Included</p>
+                <p className="text-sm text-slate-300 leading-relaxed">
+                  We help you add your services, staff, prices, booking link, and WhatsApp flow. You can start taking bookings the same day.
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* CTA Button */}
           <Link
             href="/signup"
             className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 sm:px-10 py-4 rounded-2xl font-semibold text-white text-base shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
             style={{ background: 'linear-gradient(135deg, #f97316, #ec4899, #8b5cf6)' }}
           >
             <Zap className="h-5 w-5" />
-            Get Started
+            Get Started - It's Free
           </Link>
 
           {/* Trust points */}
@@ -1414,6 +1429,10 @@ export default function HomePage() {
             <span className="flex items-center gap-1.5">
               <Zap className="h-4 w-4 text-amber-400" />
               Setup in 10 mins
+            </span>
+            <span className="flex items-center gap-1.5">
+              <CheckCircle2 className="h-4 w-4 text-emerald-400" />
+              15-day free trial
             </span>
           </div>
         </div>
