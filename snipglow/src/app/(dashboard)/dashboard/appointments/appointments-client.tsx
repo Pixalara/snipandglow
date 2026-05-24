@@ -114,7 +114,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as AppointmentStatus | 'all')}
-                className="h-9 min-h-[44px] sm:min-h-0 rounded-xl border border-border bg-background pl-8 pr-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
+                className="h-9 min-h-[44px] sm:min-h-0 rounded-xl border border-border bg-background pl-8 pr-8 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
                 aria-label="Filter by status"
               >
                 <option value="all">All Status</option>
@@ -123,6 +123,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
+              <svg className="absolute right-2.5 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
             </div>
 
             <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1">
