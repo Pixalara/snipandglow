@@ -1018,60 +1018,74 @@ export default function HomePage() {
       </section>
 
       {/* ===== BEFORE VS AFTER ===== */}
-      <section className="py-12 sm:py-20 bg-white">
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="text-center mb-10 reveal">
-            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">The Difference</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900">Running a salon, before and after</h2>
+      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 6%, #0f172a 94%, #ffffff 100%)' }}>
+        {/* Background glow */}
+        <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
+          <div className="w-[800px] h-[400px] rounded-full blur-3xl opacity-20" style={{ background: 'radial-gradient(ellipse, #ec4899 0%, #8b5cf6 50%, transparent 70%)' }} />
+        </div>
+
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+          {/* Header */}
+          <div className="text-center mb-12 reveal">
+            <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/60 px-4 py-1.5 mb-5">
+              <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">The Difference</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">Running a salon, before and after</h2>
+            <p className="text-slate-400 text-sm sm:text-base">See exactly what changes when you switch to SnipandGlow</p>
           </div>
 
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 sm:gap-6 reveal">
-            {/* BEFORE */}
-            <div className="rounded-2xl border border-red-200 bg-red-50/60 p-6 sm:p-8">
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-red-100">
-                  <span className="text-lg">😓</span>
-                </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-red-400 mb-0.5">Before SnipandGlow</p>
-                  <p className="text-base font-bold text-red-700">The old way</p>
-                </div>
+          {/* Column headers */}
+          <div className="grid grid-cols-2 gap-4 sm:gap-6 mb-4 reveal">
+            <div className="flex items-center gap-2.5 rounded-2xl border border-red-900/40 bg-red-950/30 px-5 py-3">
+              <span className="text-xl">😓</span>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-red-400">Before</p>
+                <p className="text-sm font-bold text-red-300">The old way</p>
               </div>
-              <ul className="space-y-3">
-                {['Manual calls to book appointments', 'Missed WhatsApp messages', 'Forgotten appointments & no-shows', 'No customer history or records', 'No follow-up after visit'].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-red-200">
-                      <svg className="h-3 w-3 text-red-600" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
-                    </span>
-                    <span className="text-sm text-red-800">{item}</span>
-                  </li>
-                ))}
-              </ul>
             </div>
+            <div className="flex items-center gap-2.5 rounded-2xl border border-emerald-700/40 bg-emerald-950/30 px-5 py-3">
+              <span className="text-xl">✨</span>
+              <div>
+                <p className="text-[10px] font-semibold uppercase tracking-widest text-emerald-400">After SnipandGlow</p>
+                <p className="text-sm font-bold text-emerald-300">The smart way</p>
+              </div>
+            </div>
+          </div>
 
-            {/* AFTER */}
-            <div className="rounded-2xl border border-emerald-200 bg-emerald-50/60 p-6 sm:p-8 relative overflow-hidden">
-              <div className="absolute top-0 right-0 left-0 h-1 bg-gradient-to-r from-emerald-400 to-teal-400 rounded-t-2xl" />
-              <div className="flex items-center gap-3 mb-6">
-                <div className="flex h-9 w-9 items-center justify-center rounded-full bg-emerald-100">
-                  <span className="text-lg">✨</span>
+          {/* Comparison rows */}
+          <div className="space-y-3 reveal">
+            {[
+              { before: 'Manual calls to book appointments', after: 'Auto WhatsApp booking - 24/7' },
+              { before: 'Missed WhatsApp messages', after: 'Auto reminders - zero no-shows' },
+              { before: 'Forgotten appointments & no-shows', after: 'Full customer CRM & history' },
+              { before: 'No customer history or records', after: 'Billing and payments tracked' },
+              { before: 'No follow-up after visit', after: 'Win-back campaigns on autopilot' },
+            ].map(({ before, after }, i) => (
+              <div key={i} className="grid grid-cols-2 gap-3 sm:gap-4">
+                {/* Before */}
+                <div className="flex items-center gap-3 rounded-xl border border-red-900/30 bg-slate-900/60 px-4 py-3 group hover:border-red-800/50 transition-colors">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-red-900/50">
+                    <svg className="h-3 w-3 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </div>
+                  <span className="text-xs sm:text-sm text-slate-400 leading-snug">{before}</span>
                 </div>
-                <div>
-                  <p className="text-xs font-semibold uppercase tracking-widest text-emerald-500 mb-0.5">After SnipandGlow</p>
-                  <p className="text-base font-bold text-emerald-700">The smart way</p>
+                {/* After */}
+                <div className="flex items-center gap-3 rounded-xl border border-emerald-800/40 bg-emerald-950/20 px-4 py-3 group hover:border-emerald-700/60 transition-colors">
+                  <div className="flex h-6 w-6 shrink-0 items-center justify-center rounded-full bg-emerald-900/60">
+                    <svg className="h-3 w-3 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
+                  </div>
+                  <span className="text-xs sm:text-sm text-emerald-300 font-medium leading-snug">{after}</span>
                 </div>
               </div>
-              <ul className="space-y-3">
-                {['Auto WhatsApp booking - 24/7', 'Auto reminders - zero no-shows', 'Full customer CRM & history', 'Billing and payments tracked', 'Win-back campaigns on autopilot'].map((item) => (
-                  <li key={item} className="flex items-start gap-3">
-                    <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-emerald-200">
-                      <svg className="h-3 w-3 text-emerald-700" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>
-                    </span>
-                    <span className="text-sm text-emerald-900 font-medium">{item}</span>
-                  </li>
-                ))}
-              </ul>
-            </div>
+            ))}
+          </div>
+
+          {/* Bottom CTA */}
+          <div className="text-center mt-10 reveal">
+            <Link href="/signup" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-semibold text-sm hover:from-pink-600 hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/20">
+              Switch to the smart way
+              <ArrowRight className="h-4 w-4" />
+            </Link>
           </div>
         </div>
       </section>
