@@ -429,7 +429,11 @@ async function processBooking(data: any, flowToken: string) {
     console.log('[Flow] Owner notification - tenant phone:', tenantOwner?.phone);
 
     if (tenantOwner?.phone && credentials) {
-      const ownerPhone = tenantOwner.phone.replace(/\D/g, '');
+      // Ensure phone has country code (India +91)
+      let ownerPhone = tenantOwner.phone.replace(/\D/g, '');
+      if (ownerPhone.length === 10) {
+        ownerPhone = '91' + ownerPhone; // Add India country code
+      }
       console.log('[Flow] Sending owner notification to:', ownerPhone);
       
       const dateLabel2 = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });

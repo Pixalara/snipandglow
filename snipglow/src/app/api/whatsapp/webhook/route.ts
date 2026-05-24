@@ -661,7 +661,11 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           console.log('[Webhook] Cancel - owner phone:', tenantData?.phone);
           
           if (tenantData?.phone) {
-            const ownerPhone = tenantData.phone.replace(/\D/g, '');
+            // Ensure phone has country code (India +91)
+            let ownerPhone = tenantData.phone.replace(/\D/g, '');
+            if (ownerPhone.length === 10) {
+              ownerPhone = '91' + ownerPhone; // Add India country code
+            }
             console.log('[Webhook] Sending cancel notification to owner:', ownerPhone);
             
             try {
@@ -804,7 +808,11 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           console.log('[Webhook] Reschedule - owner phone:', tenantData?.phone);
           
           if (tenantData?.phone) {
-            const ownerPhone = tenantData.phone.replace(/\D/g, '');
+            // Ensure phone has country code (India +91)
+            let ownerPhone = tenantData.phone.replace(/\D/g, '');
+            if (ownerPhone.length === 10) {
+              ownerPhone = '91' + ownerPhone; // Add India country code
+            }
             console.log('[Webhook] Sending reschedule notification to owner:', ownerPhone);
             
             try {
@@ -1013,7 +1021,12 @@ async function notifyOwnerFeedback(admin: any, tenant: TenantContext, customerNa
     const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
     if (!tenantData?.phone) return;
 
-    const ownerPhone = tenantData.phone.replace(/\D/g, '');
+    // Ensure phone has country code (India +91)
+    let ownerPhone = tenantData.phone.replace(/\D/g, '');
+    if (ownerPhone.length === 10) {
+      ownerPhone = '91' + ownerPhone; // Add India country code
+    }
+    
     const stars = '⭐'.repeat(rating);
     const emoji = rating >= 4 ? '🎉' : rating >= 3 ? '📝' : '⚠️';
     const urgency = rating <= 2 ? '\n\n🔴 *Needs immediate attention!*' : '';
