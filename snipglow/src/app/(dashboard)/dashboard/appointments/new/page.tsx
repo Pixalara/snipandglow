@@ -35,10 +35,10 @@ function getToday(): string {
   return now.toISOString().split('T')[0];
 }
 
-/** Get date 30 days from today in YYYY-MM-DD format */
+/** Get date 7 days from today in YYYY-MM-DD format */
 function getMaxDate(): string {
   const d = new Date();
-  d.setDate(d.getDate() + 30);
+  d.setDate(d.getDate() + 7);
   return d.toISOString().split('T')[0];
 }
 

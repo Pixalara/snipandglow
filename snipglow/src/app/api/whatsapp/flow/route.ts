@@ -144,9 +144,9 @@ async function handleFlowInit(data: any) {
   const { data: services, error: svcError } = await serviceQuery;
   console.log('[Flow INIT] tenant_id:', tenantId, 'services found:', services?.length, 'error:', svcError);
 
-  // Generate next 14 days in IST timezone
+  // Generate next 7 days in IST timezone
   const dates: Array<{ id: string; title: string }> = [];
-  for (let i = 0; i < 14; i++) {
+  for (let i = 0; i < 7; i++) {
     const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
     const [todayIST] = nowIST.split(', ');
     const d = new Date(todayIST + 'T00:00:00');
@@ -204,7 +204,7 @@ async function handleFlowInit(data: any) {
     }
   }
 
-  // Filter: only show slots that are available on at least one of the 14 dates
+  // Filter: only show slots that are available on at least one of the 7 dates
   // This removes slots that are blocked/booked on EVERY single date (permanently unavailable)
   const allDates = dates.map((d) => d.id);
   const filteredTimeSlots = allTimeSlots.filter((slot) => {
