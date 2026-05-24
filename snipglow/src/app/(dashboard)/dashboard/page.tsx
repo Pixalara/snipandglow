@@ -12,7 +12,6 @@ import {
   Plus,
   TrendingUp,
   Clock,
-  Star,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 
@@ -246,21 +245,6 @@ export default async function DashboardPage() {
 
       {/* Peak Hours & Appointments by Day */}
       <DashboardCharts dailyAppointments={dailyAppointments} peakHours={peakHours} />
-
-      {/* Tips Section */}
-      <div className="rounded-xl border border-border bg-gradient-to-r from-salon-gold/5 to-transparent p-5">
-        <div className="flex items-start gap-3">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-lg bg-salon-gold/10">
-            <Star className="size-4 text-salon-gold" />
-          </div>
-          <div>
-            <p className="text-sm font-medium text-foreground">Pro Tip</p>
-            <p className="text-sm text-muted-foreground mt-0.5">
-              Add your services and staff members to start booking appointments. WhatsApp automation will be available soon!
-            </p>
-          </div>
-        </div>
-      </div>
     </div>
   );
 }
