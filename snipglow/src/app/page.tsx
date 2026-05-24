@@ -276,6 +276,22 @@ export default function HomePage() {
               ))}
             </div>
 
+            {/* Benefit cards */}
+            <div className="grid grid-cols-2 gap-2.5">
+              {[
+                { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', color: 'bg-pink-50 border-pink-100' },
+                { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day and 60-day win-back messages', color: 'bg-violet-50 border-violet-100' },
+                { icon: '⭐', title: 'Get More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', color: 'bg-amber-50 border-amber-100' },
+                { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', color: 'bg-emerald-50 border-emerald-100' },
+              ].map(({ icon, title, desc, color }) => (
+                <div key={title} className={`rounded-xl border ${color} px-3.5 py-3`}>
+                  <span className="text-base">{icon}</span>
+                  <p className="text-xs font-bold text-slate-900 mt-1.5 leading-snug">{title}</p>
+                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{desc}</p>
+                </div>
+              ))}
+            </div>
+
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
               <button
