@@ -478,49 +478,18 @@ async function processBooking(data: any, flowToken: string) {
     }
   }
 
-  // Get an available employee for this slot (round-robin to respect DB overlap constraint)
-  // Fetch all active employees, then pick one who has no conflicting appointment at this slot
-  const { data: allEmployees } = await admin
+  // Get first active employee — capacity is enforced by application logic above,
+  // not by DB constraint (which has been dropped). Same employee can handle
+  // multiple concurrent bookings when max_appointments_per_slot > 1.
+  const { data: firstEmployee } = await admin
     .from('employees')
     .select('id')
     .eq('tenant_id', primaryService.tenant_id)
-    .eq('is_active', true);
+    .eq('is_active', true)
+    .limit(1)
+    .single();
 
-  let assignedEmployeeId: string | null = null;
-
-  if (allEmployees && allEmployees.length > 0) {
-    const slotStartMin = toMinutes(time_slot);
-    const slotEndMin = slotStartMin + totalDuration;
-
-    // Find first employee who has no overlapping appointment at this slot
-    for (const emp of allEmployees) {
-      const { data: conflicts } = await (admin
-        .from('appointments')
-        .select('start_time, end_time')
-        .eq('employee_id', emp.id)
-        .eq('appointment_date', date)
-        .neq('status', 'cancelled') as any);
-
-      const hasConflict = (conflicts || []).some((appt: any) => {
-        const apptStart = toMinutes(appt.start_time);
-        const apptEnd = toMinutes(appt.end_time);
-        return slotStartMin < apptEnd && slotEndMin > apptStart;
-      });
-
-      if (!hasConflict) {
-        assignedEmployeeId = emp.id;
-        break;
-      }
-    }
-
-    // Fallback: use first employee (DB will reject if truly at capacity)
-    if (!assignedEmployeeId) {
-      assignedEmployeeId = allEmployees[0].id;
-    }
-  }
-
-  // Final fallback to customerId if no employees exist
-  if (!assignedEmployeeId) assignedEmployeeId = customerId!;
+  const assignedEmployeeId = firstEmployee?.id ?? customerId!;
 
   // Create appointment
   const { error: apptError } = await (admin.from('appointments').insert({

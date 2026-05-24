@@ -78,13 +78,7 @@ export async function createAppointment(
     .single();
 
   if (error) {
-    // Handle overlap constraint violation
-    if (error.code === '23P01') {
-      return {
-        success: false,
-        error: 'This time slot overlaps with an existing appointment for the selected stylist.',
-      };
-    }
+    // 23P01 = exclusion constraint violation (was overlap check, now dropped)
     return { success: false, error: 'Failed to create appointment. Please try again.' };
   }
 
@@ -404,9 +398,6 @@ export async function rescheduleAppointment(
     .eq('id', appointmentId);
 
   if (updateError) {
-    if (updateError.code === '23P01') {
-      return { success: false, error: 'This time slot overlaps with another appointment.' };
-    }
     return { success: false, error: 'Failed to reschedule. Please try again.' };
   }
 
