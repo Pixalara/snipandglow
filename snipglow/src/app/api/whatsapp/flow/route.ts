@@ -455,6 +455,12 @@ async function processBooking(data: any, flowToken: string) {
     .neq('status', 'cancelled') as any);
 
   if (customerExistingAppts && customerExistingAppts.length > 0) {
+    // Max 2 bookings per customer per day
+    if (customerExistingAppts.length >= 2) {
+      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You can only book up to 2 appointments per day. Please choose a different date.' } };
+    }
+
+    // Also block overlapping time
     const slotStart = toMinutes(time_slot);
     const slotEnd = slotStart + totalDuration;
     const alreadyBooked = customerExistingAppts.some((appt: any) => {

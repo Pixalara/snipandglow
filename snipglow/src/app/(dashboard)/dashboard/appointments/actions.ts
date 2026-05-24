@@ -60,6 +60,7 @@ export async function createAppointment(
   }
 
   // Validate: same customer cannot book the same overlapping slot twice
+  // and max 2 bookings per customer per day
   const { data: customerConflicts } = await supabase
     .from('appointments')
     .select('start_time, end_time')
@@ -69,6 +70,12 @@ export async function createAppointment(
     .neq('status', 'cancelled');
 
   if (customerConflicts && customerConflicts.length > 0) {
+    // Max 2 bookings per customer per day
+    if (customerConflicts.length >= 2) {
+      return { success: false, error: 'This customer already has 2 appointments on this date. Maximum 2 per day allowed.' };
+    }
+
+    // Block overlapping time
     const newStart = input.start_time.split(':').slice(0, 2).map(Number);
     const newEnd = input.end_time.split(':').slice(0, 2).map(Number);
     const newStartMin = newStart[0] * 60 + newStart[1];
