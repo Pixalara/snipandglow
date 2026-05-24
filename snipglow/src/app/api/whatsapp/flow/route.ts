@@ -159,6 +159,8 @@ async function handleFlowInit(data: any) {
   // Fetch blocked slots and booked appointments in parallel (if tenant known)
   let blockedSlotsByDate: Map<string, Set<string>> = new Map();
   let bookedSlotsByDate: Map<string, Array<{ start: string; end: string }>> = new Map();
+  let maxPerSlot = 1;
+  let slotDurationMinutes = 30;
 
   if (tenantId && dates.length > 0) {
     const firstDate = dates[0].id;
@@ -175,9 +177,13 @@ async function handleFlowInit(data: any) {
         .neq('status', 'cancelled') as any),
     ]);
 
+    // Read capacity settings
+    const tenantSettings = (tenantRes.data?.settings as any) ?? {};
+    maxPerSlot = tenantSettings.max_appointments_per_slot || 1;
+    slotDurationMinutes = tenantSettings.slot_duration_minutes || 30;
+
     // Build blocked slots map
-    const blockedSlots: Array<{ date: string; slots: string[] }> =
-      (tenantRes.data?.settings as any)?.blocked_slots || [];
+    const blockedSlots: Array<{ date: string; slots: string[] }> = tenantSettings.blocked_slots || [];
     for (const entry of blockedSlots) {
       blockedSlotsByDate.set(entry.date, new Set(entry.slots));
     }
@@ -192,36 +198,28 @@ async function handleFlowInit(data: any) {
     }
   }
 
-  // Capacity: max appointments per slot (default 1)
-  let maxPerSlot = 1;
-  if (tenantId) {
-    const { data: tenantCap } = await (admin.from('tenants' as any).select('settings').eq('id', tenantId).single() as any);
-    maxPerSlot = (tenantCap?.settings as any)?.max_appointments_per_slot || 1;
-  }
-
-  // Generate all time slots (9 AM to 8 PM at 30-min intervals)
+  // Generate time slots (9 AM to 8 PM) at the configured interval
   const allTimeSlots: Array<{ id: string; title: string }> = [];
-  for (let hour = 9; hour < 20; hour++) {
-    for (const min of [0, 30]) {
-      const h = hour % 12 || 12;
-      const period = hour >= 12 ? 'PM' : 'AM';
-      const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}:00`;
-      const label = `${h}:${String(min).padStart(2, '0')} ${period}`;
-      allTimeSlots.push({ id: timeStr, title: label });
-    }
+  for (let min = 9 * 60; min < 20 * 60; min += slotDurationMinutes) {
+    const hour = Math.floor(min / 60);
+    const m = min % 60;
+    const h = hour % 12 || 12;
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const timeStr = `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+    const label = `${h}:${String(m).padStart(2, '0')} ${period}`;
+    allTimeSlots.push({ id: timeStr, title: label });
   }
 
-  // Filter: only show slots that are available on at least one of the 7 dates
+  // Filter: only show slots available on at least one of the 7 dates
   const allDates = dates.map((d) => d.id);
   const filteredTimeSlots = allTimeSlots.filter((slot) => {
     const slotHHMM = slot.id.substring(0, 5);
     const slotMin = toMinutes(slotHHMM);
-    const slotEndMin = slotMin + 30;
+    const slotEndMin = slotMin + slotDurationMinutes;
 
     return allDates.some((dateStr) => {
       if (blockedSlotsByDate.get(dateStr)?.has(slotHHMM)) return false;
       const booked = bookedSlotsByDate.get(dateStr) || [];
-      // Count overlapping appointments — slot is full if count >= maxPerSlot
       const overlapCount = booked.filter((appt) => {
         const apptStart = toMinutes(appt.start);
         const apptEnd = toMinutes(appt.end);
@@ -297,6 +295,7 @@ async function handleDateSelected(data: any, flowToken: string) {
 
   // Capacity
   const maxPerSlot: number = (tenantRes.data?.settings as any)?.max_appointments_per_slot || 1;
+  const slotDuration: number = (tenantRes.data?.settings as any)?.slot_duration_minutes || 30;
 
   // Build booked set for this date
   const bookedAppts: Array<{ start_time: string; end_time: string }> = apptsRes.data || [];
@@ -307,34 +306,33 @@ async function handleDateSelected(data: any, flowToken: string) {
   const [nowH, nowM] = (todayTimeStr || '00:00').split(':').map(Number);
   const isToday = date === todayIST;
 
-  // Generate filtered time slots for this date
+  // Generate filtered time slots for this date at configured interval
   const filteredSlots: Array<{ id: string; title: string }> = [];
-  for (let hour = 9; hour < 20; hour++) {
-    for (const min of [0, 30]) {
-      const slotMin = hour * 60 + min;
-      const slotHHMM = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
-      const timeStr = `${slotHHMM}:00`;
+  for (let min = 9 * 60; min < 20 * 60; min += slotDuration) {
+    const hour = Math.floor(min / 60);
+    const m = min % 60;
+    const slotHHMM = `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')}`;
+    const timeStr = `${slotHHMM}:00`;
 
-      // Skip past slots (today only, with 1-hour buffer)
-      if (isToday && slotMin <= nowH * 60 + nowM + 60) continue;
+    // Skip past slots (today only, with 1-hour buffer)
+    if (isToday && min <= nowH * 60 + nowM + 60) continue;
 
-      // Skip blocked slots
-      if (blockedTimes.has(slotHHMM)) continue;
+    // Skip blocked slots
+    if (blockedTimes.has(slotHHMM)) continue;
 
-      // Skip booked slots (capacity check)
-      const slotEnd = slotMin + 30;
-      const overlapCount = bookedAppts.filter((appt) => {
-        const apptStart = toMinutes(appt.start_time);
-        const apptEnd = toMinutes(appt.end_time);
-        return slotMin < apptEnd && slotEnd > apptStart;
-      }).length;
-      if (overlapCount >= maxPerSlot) continue;
+    // Capacity check
+    const slotEnd = min + slotDuration;
+    const overlapCount = bookedAppts.filter((appt) => {
+      const apptStart = toMinutes(appt.start_time);
+      const apptEnd = toMinutes(appt.end_time);
+      return min < apptEnd && slotEnd > apptStart;
+    }).length;
+    if (overlapCount >= maxPerSlot) continue;
 
-      const h = hour % 12 || 12;
-      const period = hour >= 12 ? 'PM' : 'AM';
-      const label = `${h}:${String(min).padStart(2, '0')} ${period}`;
-      filteredSlots.push({ id: timeStr, title: label });
-    }
+    const h = hour % 12 || 12;
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const label = `${h}:${String(m).padStart(2, '0')} ${period}`;
+    filteredSlots.push({ id: timeStr, title: label });
   }
 
   return {
