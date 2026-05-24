@@ -1435,15 +1435,17 @@ export default function HomePage() {
 
           {/* Heading */}
           <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-white mb-4 leading-tight">
-            See your salon running{' '}
+            We set it up{' '}
             <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-violet-500 bg-clip-text text-transparent italic">
-              on autopilot.
+              for you.
             </span>
+            <br />
+            <span className="text-xl sm:text-2xl lg:text-3xl font-semibold text-slate-300">Your salon booking system, ready in 1 day.</span>
           </h2>
 
           {/* Subtext */}
-          <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
-            From smart bookings to WhatsApp automation - get everything you need in one powerful dashboard.
+          <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-xl mx-auto leading-relaxed">
+            SnipandGlow configures your WhatsApp booking flow, service menu, staff calendar, reminders, invoices, and customer CRM - so you can focus on clients.
           </p>
 
           {/* Free Setup Card */}
