@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Inter, Syne } from 'next/font/google'
+import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
 import { SpeedInsights } from '@vercel/speed-insights/next'
@@ -11,11 +11,11 @@ const inter = Inter({
   weight: ['300', '400', '500', '600', '700'],
 })
 
-const syne = Syne({
-  variable: '--font-syne',
+const plusJakartaSans = Plus_Jakarta_Sans({
+  variable: '--font-jakarta',
   subsets: ['latin'],
   display: 'swap',
-  weight: ['600', '700', '800'],
+  weight: ['500', '600', '700', '800'],
 })
 
 export const metadata: Metadata = {
@@ -111,7 +111,7 @@ export default function RootLayout({
   children: React.ReactNode
 }>) {
   return (
-    <html lang="en" className={`${inter.variable} ${syne.variable} h-full antialiased`} suppressHydrationWarning>
+    <html lang="en" className={`${inter.variable} ${plusJakartaSans.variable} h-full antialiased`} suppressHydrationWarning>
       <head>
         {/* Preconnect to Google Fonts */}
         <link rel="preconnect" href="https://fonts.googleapis.com" />

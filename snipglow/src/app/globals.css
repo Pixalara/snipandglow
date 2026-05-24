@@ -11,7 +11,7 @@
   --color-background: var(--background);
   --color-foreground: var(--foreground);
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
-  --font-display: 'Syne', system-ui, sans-serif;
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
   --font-mono: var(--font-geist-mono);
   --font-heading: var(--font-display);
   --color-sidebar-ring: var(--sidebar-ring);
@@ -176,14 +176,14 @@
 
   body {
     @apply bg-background text-foreground;
-    font-family: 'Inter', system-ui, -apple-system, sans-serif;
+    font-family: var(--font-inter), 'Inter', system-ui, -apple-system, sans-serif;
     font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
     overflow-x: hidden;
   }
 
-  /* Premium display headings use Syne */
-  h1, h2, h3 {
-    font-family: 'Syne', system-ui, sans-serif;
+  /* Plus Jakarta Sans for all headings */
+  h1, h2, h3, h4, h5, h6 {
+    font-family: var(--font-jakarta), 'Plus Jakarta Sans', system-ui, sans-serif;
     letter-spacing: -0.02em;
   }
 }
