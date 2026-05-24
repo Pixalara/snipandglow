@@ -247,9 +247,98 @@ async function handleFlowInit(data: any) {
 
 async function handleDataExchange(screen: string, data: any, flowToken: string) {
   if (screen === 'BOOKING_SCREEN') {
+    // If only date is selected (no time_slot yet), return filtered slots for that date
+    if (data?.date && !data?.time_slot) {
+      return await handleDateSelected(data, flowToken);
+    }
     return await processBooking(data, flowToken);
   }
   return { version: '3.0', screen: 'BOOKING_SCREEN', data: {} };
+}
+
+/**
+ * Called when customer selects a date — returns filtered time slots for that specific date.
+ * This removes already-booked and admin-blocked slots from the list dynamically.
+ */
+async function handleDateSelected(data: any, flowToken: string) {
+  const { date } = data;
+  if (!date) return { version: '3.0', screen: 'BOOKING_SCREEN', data: {} };
+
+  let tokenData: any = {};
+  try { tokenData = JSON.parse(flowToken); } catch {}
+  const tenantId = tokenData.tenant_id || data?.tenant_id || '';
+
+  const admin = createAdminClient();
+
+  // Fetch blocked slots and booked appointments for this specific date in parallel
+  const [tenantRes, apptsRes] = await Promise.all([
+    tenantId
+      ? (admin.from('tenants' as any).select('settings').eq('id', tenantId).single() as any)
+      : Promise.resolve({ data: null }),
+    tenantId
+      ? (admin
+          .from('appointments')
+          .select('start_time, end_time')
+          .eq('tenant_id', tenantId)
+          .eq('appointment_date', date)
+          .neq('status', 'cancelled') as any)
+      : Promise.resolve({ data: [] }),
+  ]);
+
+  // Build blocked set for this date
+  const blockedSlots: Array<{ date: string; slots: string[] }> =
+    (tenantRes.data?.settings as any)?.blocked_slots || [];
+  const blockedForDate = blockedSlots.find((b: any) => b.date === date);
+  const blockedTimes = new Set(blockedForDate?.slots || []);
+
+  // Build booked set for this date
+  const bookedAppts: Array<{ start_time: string; end_time: string }> = apptsRes.data || [];
+
+  // IST now for past-slot filtering
+  const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
+  const [todayIST, todayTimeStr] = nowIST.split(', ');
+  const [nowH, nowM] = (todayTimeStr || '00:00').split(':').map(Number);
+  const isToday = date === todayIST;
+
+  // Generate filtered time slots for this date
+  const filteredSlots: Array<{ id: string; title: string }> = [];
+  for (let hour = 9; hour < 20; hour++) {
+    for (const min of [0, 30]) {
+      const slotMin = hour * 60 + min;
+      const slotHHMM = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+      const timeStr = `${slotHHMM}:00`;
+
+      // Skip past slots (today only, with 1-hour buffer)
+      if (isToday && slotMin <= nowH * 60 + nowM + 60) continue;
+
+      // Skip blocked slots
+      if (blockedTimes.has(slotHHMM)) continue;
+
+      // Skip booked slots (overlap check)
+      const slotEnd = slotMin + 30;
+      const isBooked = bookedAppts.some((appt) => {
+        const apptStart = toMinutes(appt.start_time);
+        const apptEnd = toMinutes(appt.end_time);
+        return slotMin < apptEnd && slotEnd > apptStart;
+      });
+      if (isBooked) continue;
+
+      const h = hour % 12 || 12;
+      const period = hour >= 12 ? 'PM' : 'AM';
+      const label = `${h}:${String(min).padStart(2, '0')} ${period}`;
+      filteredSlots.push({ id: timeStr, title: label });
+    }
+  }
+
+  return {
+    version: '3.0',
+    screen: 'BOOKING_SCREEN',
+    data: {
+      time_slots: filteredSlots.length > 0
+        ? filteredSlots
+        : [{ id: 'none', title: 'No slots available for this date' }],
+    },
+  };
 }
 
 async function processBooking(data: any, flowToken: string) {
