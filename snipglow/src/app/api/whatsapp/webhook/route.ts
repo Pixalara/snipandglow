@@ -373,10 +373,31 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     }
 
     case 'talk_to_salon': {
-      await sendMessage(tenant.credentials, phone, {
-        type: 'text',
-        text: { body: `You can reach *${tenant.salonName}* right here! Just type your message and the salon team will respond shortly. 😊` },
-      });
+      // Fetch owner's phone from tenants table
+      const { data: tenantData } = await admin
+        .from('tenants')
+        .select('phone')
+        .eq('id', tenant.tenantId)
+        .single();
+
+      if (tenantData?.phone) {
+        // Format phone for wa.me link (digits only, with country code)
+        let ownerPhone = tenantData.phone.replace(/\D/g, '');
+        if (ownerPhone.length === 10) ownerPhone = '91' + ownerPhone;
+
+        const waLink = `https://wa.me/${ownerPhone}?text=${encodeURIComponent(`Hi, I'm a customer from ${tenant.salonName}. I'd like to talk to the salon.`)}`;
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'text',
+          text: { body: `📞 *Talk to ${tenant.salonName}*\n\nTap the link below to connect directly with the salon owner on WhatsApp:\n\n${waLink}\n\nThey'll get back to you shortly! 😊` },
+        });
+      } else {
+        // Fallback if no phone set
+        await sendMessage(tenant.credentials, phone, {
+          type: 'text',
+          text: { body: `You can reach *${tenant.salonName}* right here! Just type your message and the salon team will respond shortly. 😊` },
+        });
+      }
       break;
     }
 
