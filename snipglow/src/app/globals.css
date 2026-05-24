@@ -317,6 +317,68 @@ html {
 .stagger > *:nth-child(7) { transition-delay: 600ms; }
 .stagger > *:nth-child(8) { transition-delay: 700ms; }
 
+/* ─── Smooth Card Animations for Feature Sections ─────────────────────── */
+
+/* Staggered card items — each child slides up with delay */
+.stagger-cards .feature-card-item {
+  opacity: 0;
+  transform: translateY(30px);
+  transition: opacity 0.7s cubic-bezier(0.22, 1, 0.36, 1),
+              transform 0.7s cubic-bezier(0.22, 1, 0.36, 1);
+}
+
+.stagger-cards .feature-card-item:nth-child(1) { transition-delay: 100ms; }
+.stagger-cards .feature-card-item:nth-child(2) { transition-delay: 200ms; }
+.stagger-cards .feature-card-item:nth-child(3) { transition-delay: 300ms; }
+.stagger-cards .feature-card-item:nth-child(4) { transition-delay: 400ms; }
+
+/* When parent becomes visible, animate children */
+.reveal-left.visible ~ .reveal-right .stagger-cards .feature-card-item,
+.reveal-right.visible .stagger-cards .feature-card-item,
+.reveal-left.visible .stagger-cards .feature-card-item {
+  opacity: 1;
+  transform: translateY(0);
+}
+
+/* Floating card animation — subtle hover effect */
+@keyframes floatCard {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-8px); }
+}
+
+.card-float {
+  animation: floatCard 6s ease-in-out infinite;
+  animation-play-state: paused;
+}
+
+.card-float-delayed {
+  animation: floatCard 5s ease-in-out infinite;
+  animation-delay: 1s;
+  animation-play-state: paused;
+}
+
+.card-float-delayed-2 {
+  animation: floatCard 5.5s ease-in-out infinite;
+  animation-delay: 2s;
+  animation-play-state: paused;
+}
+
+/* Start floating when visible */
+.reveal-left.visible .card-float,
+.reveal-right.visible .card-float {
+  animation-play-state: running;
+}
+
+.reveal-left.visible .card-float-delayed,
+.reveal-right.visible .card-float-delayed {
+  animation-play-state: running;
+}
+
+.reveal-left.visible .card-float-delayed-2,
+.reveal-right.visible .card-float-delayed-2 {
+  animation-play-state: running;
+}
+
 /* Smooth hover lift for cards */
 .hover-lift {
   transition: transform 0.3s cubic-bezier(0.22, 1, 0.36, 1),
@@ -430,6 +492,14 @@ a, button {
     transform: none !important;
     filter: none !important;
     transition: none !important;
+  }
+  .stagger-cards .feature-card-item {
+    opacity: 1 !important;
+    transform: none !important;
+    transition: none !important;
+  }
+  .card-float, .card-float-delayed, .card-float-delayed-2 {
+    animation: none !important;
   }
   html {
     scroll-behavior: auto;

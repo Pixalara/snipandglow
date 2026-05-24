@@ -80,7 +80,29 @@ export default function HomePage() {
       { threshold: 0.08, rootMargin: '0px 0px -60px 0px' }
     );
     document.querySelectorAll('.reveal, .reveal-left, .reveal-right, .reveal-scale').forEach((el) => observer.observe(el));
-    return () => observer.disconnect();
+    
+    // Separate observer for stagger-cards children with lower threshold
+    const cardObserver = new IntersectionObserver(
+      (entries) => {
+        entries.forEach((entry) => {
+          if (entry.isIntersecting) {
+            // Animate each child with stagger
+            const items = entry.target.querySelectorAll('.feature-card-item');
+            items.forEach((item, i) => {
+              setTimeout(() => {
+                (item as HTMLElement).style.opacity = '1';
+                (item as HTMLElement).style.transform = 'translateY(0)';
+              }, i * 120);
+            });
+            cardObserver.unobserve(entry.target);
+          }
+        });
+      },
+      { threshold: 0.15, rootMargin: '0px 0px -40px 0px' }
+    );
+    document.querySelectorAll('.stagger-cards').forEach((el) => cardObserver.observe(el));
+    
+    return () => { observer.disconnect(); cardObserver.disconnect(); };
   }, []);
 
   return (
@@ -560,13 +582,13 @@ export default function HomePage() {
       </section>
 
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
-      <section className="py-10 sm:py-16 bg-white">
+      <section className="py-10 sm:py-16 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             {/* Left — Image */}
-            <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60">
+            <div className="relative reveal-left">
+              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60 card-float">
                 <img
                   src="/qr-booking.png"
                   alt="Customer scanning QR code to book appointment via WhatsApp"
@@ -575,7 +597,7 @@ export default function HomePage() {
                 />
               </div>
               {/* Floating stat card */}
-              <div className="absolute -bottom-4 -right-4 sm:bottom-6 sm:right-6 bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-lg">
+              <div className="absolute -bottom-4 -right-4 sm:bottom-6 sm:right-6 bg-white rounded-xl border border-slate-200 px-4 py-3 shadow-lg card-float-delayed">
                 <div className="flex items-center gap-2">
                   <div className="h-8 w-8 rounded-full bg-emerald-100 flex items-center justify-center">
                     <CheckCircle2 className="h-4 w-4 text-emerald-600" />
@@ -589,7 +611,7 @@ export default function HomePage() {
             </div>
 
             {/* Right — Content */}
-            <div>
+            <div className="reveal-right">
               <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
                 Effortless Bookings via{' '}
                 <span className="text-emerald-600">WhatsApp</span>
@@ -599,7 +621,7 @@ export default function HomePage() {
               </p>
 
               {/* Feature list */}
-              <div className="mt-8 space-y-6">
+              <div className="mt-8 space-y-6 stagger-cards">
                 {[
                   {
                     icon: '📅',
@@ -622,7 +644,7 @@ export default function HomePage() {
                     desc: 'Automatically request ratings after every visit. 5-star reviews get redirected to Google. Low ratings alert you instantly.',
                   },
                 ].map((item) => (
-                  <div key={item.title} className="flex items-start gap-4">
+                  <div key={item.title} className="flex items-start gap-4 feature-card-item">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-slate-100 text-lg">
                       {item.icon}
                     </div>
@@ -639,12 +661,12 @@ export default function HomePage() {
       </section>
 
       {/* ===== BUILD UNBREAKABLE LOYALTY ===== */}
-      <section className="py-10 sm:py-16 bg-white">
+      <section className="py-10 sm:py-16 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             {/* Left — Content */}
-            <div>
+            <div className="reveal-left">
               <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
                 Build Unbreakable{' '}
                 <span className="text-violet-600">Loyalty</span>
@@ -654,7 +676,7 @@ export default function HomePage() {
               </p>
 
               {/* Feature list */}
-              <div className="mt-8 space-y-6">
+              <div className="mt-8 space-y-6 stagger-cards">
                 {[
                   {
                     icon: '👑',
@@ -677,7 +699,7 @@ export default function HomePage() {
                     desc: 'Automated 30-day and 60-day reminders with special offers to bring back inactive customers.',
                   },
                 ].map((item) => (
-                  <div key={item.title} className="flex items-start gap-4">
+                  <div key={item.title} className="flex items-start gap-4 feature-card-item">
                     <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-violet-50 text-lg">
                       {item.icon}
                     </div>
@@ -691,8 +713,8 @@ export default function HomePage() {
             </div>
 
             {/* Right — Image grid */}
-            <div className="grid grid-cols-2 gap-3">
-              <div className="rounded-2xl overflow-hidden shadow-lg">
+            <div className="grid grid-cols-2 gap-3 reveal-right">
+              <div className="rounded-2xl overflow-hidden shadow-lg card-float">
                 <img
                   src="https://images.unsplash.com/photo-1522337360788-8b13dee7a37e?w=400&h=500&fit=crop&q=80"
                   alt="Happy salon client getting hair styled"
@@ -701,7 +723,7 @@ export default function HomePage() {
                 />
               </div>
               <div className="space-y-3">
-                <div className="rounded-2xl overflow-hidden shadow-lg">
+                <div className="rounded-2xl overflow-hidden shadow-lg card-float-delayed">
                   <img
                     src="https://images.unsplash.com/photo-1544161515-4ab6ce6db874?w=400&h=240&fit=crop&q=80"
                     alt="Spa hot stone massage treatment"
@@ -709,7 +731,7 @@ export default function HomePage() {
                     loading="lazy"
                   />
                 </div>
-                <div className="rounded-2xl overflow-hidden shadow-lg">
+                <div className="rounded-2xl overflow-hidden shadow-lg card-float-delayed-2">
                   <img
                     src="https://images.unsplash.com/photo-1521590832167-7bcbfaa6381f?w=400&h=240&fit=crop&q=80"
                     alt="Loyal customer at salon reception"
@@ -724,13 +746,13 @@ export default function HomePage() {
       </section>
 
       {/* ===== ANALYTICS & DASHBOARD ===== */}
-      <section className="py-10 sm:py-16 bg-white">
+      <section className="py-10 sm:py-16 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center reveal">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             {/* Left — Image */}
-            <div className="relative">
-              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60">
+            <div className="relative reveal-left">
+              <div className="rounded-2xl overflow-hidden shadow-2xl shadow-slate-200/60 card-float">
                 <img
                   src="https://images.unsplash.com/photo-1633681926022-84c23e8cb2d6?w=800&h=600&fit=crop&q=80"
                   alt="Modern salon interior with styling stations"
@@ -741,10 +763,10 @@ export default function HomePage() {
             </div>
 
             {/* Right — Content */}
-            <div>
-              <div className="space-y-8">
+            <div className="reveal-right">
+              <div className="space-y-8 stagger-cards">
                 {/* Analytics Dashboard */}
-                <div className="pb-8" style={{ borderBottom: '1px solid #f0f0f0' }}>
+                <div className="pb-8 feature-card-item" style={{ borderBottom: '1px solid #f0f0f0' }}>
                   <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #8b5cf6, #6d28d9)' }}>
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M3 13h8V3H3v10zm0 8h8v-6H3v6zm10 0h8V11h-8v10zm0-18v6h8V3h-8z"/></svg>
                   </div>
@@ -772,7 +794,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Free Setup & Onboarding */}
-                <div>
+                <div className="feature-card-item">
                   <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
                   </div>
