@@ -276,59 +276,42 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Benefit cards */}
-            <div className="grid grid-cols-2 gap-3">
-              {[
-                {
-                  icon: '🔔',
-                  title: 'Reduce No-Shows',
-                  desc: 'WhatsApp reminders before every appointment',
-                  gradient: 'from-pink-500/10 to-rose-500/5',
-                  border: 'border-pink-200/60',
-                  iconBg: 'bg-pink-100',
-                  titleColor: 'text-pink-700',
-                },
-                {
-                  icon: '🔄',
-                  title: 'Bring Back Old Clients',
-                  desc: '30-day & 60-day win-back messages',
-                  gradient: 'from-violet-500/10 to-purple-500/5',
-                  border: 'border-violet-200/60',
-                  iconBg: 'bg-violet-100',
-                  titleColor: 'text-violet-700',
-                },
-                {
-                  icon: '⭐',
-                  title: 'More Repeat Visits',
-                  desc: 'Feedback, memberships & rebooking nudges',
-                  gradient: 'from-amber-500/10 to-yellow-500/5',
-                  border: 'border-amber-200/60',
-                  iconBg: 'bg-amber-100',
-                  titleColor: 'text-amber-700',
-                },
-                {
-                  icon: '🧾',
-                  title: 'Bill Faster',
-                  desc: 'GST-ready invoices in seconds',
-                  gradient: 'from-emerald-500/10 to-teal-500/5',
-                  border: 'border-emerald-200/60',
-                  iconBg: 'bg-emerald-100',
-                  titleColor: 'text-emerald-700',
-                },
-              ].map(({ icon, title, desc, gradient, border, iconBg, titleColor }) => (
-                <div
-                  key={title}
-                  className={`relative rounded-2xl border ${border} bg-gradient-to-br ${gradient} backdrop-blur-sm p-4 sm:p-5 overflow-hidden group hover:scale-[1.02] hover:shadow-md transition-all duration-300`}
-                >
-                  {/* Subtle glow dot */}
-                  <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-30 blur-xl bg-current" />
-                  <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${iconBg} text-lg mb-3 shadow-sm`}>
-                    {icon}
+            {/* Benefit cards — infinite horizontal scroll marquee */}
+            <div className="relative overflow-hidden -mx-4 sm:-mx-0">
+              {/* Fade edges */}
+              <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(255,255,255,1), transparent)' }} />
+              <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, rgba(255,255,255,1), transparent)' }} />
+
+              <div className="flex gap-3 benefit-marquee">
+                {[
+                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', gradient: 'from-pink-500/10 to-rose-500/5', border: 'border-pink-200/60', iconBg: 'bg-pink-100', titleColor: 'text-pink-700' },
+                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', gradient: 'from-violet-500/10 to-purple-500/5', border: 'border-violet-200/60', iconBg: 'bg-violet-100', titleColor: 'text-violet-700' },
+                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', gradient: 'from-amber-500/10 to-yellow-500/5', border: 'border-amber-200/60', iconBg: 'bg-amber-100', titleColor: 'text-amber-700' },
+                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', gradient: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-200/60', iconBg: 'bg-emerald-100', titleColor: 'text-emerald-700' },
+                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', gradient: 'from-green-500/10 to-teal-500/5', border: 'border-green-200/60', iconBg: 'bg-green-100', titleColor: 'text-green-700' },
+                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', gradient: 'from-blue-500/10 to-indigo-500/5', border: 'border-blue-200/60', iconBg: 'bg-blue-100', titleColor: 'text-blue-700' },
+                  // Duplicate for seamless loop
+                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', gradient: 'from-pink-500/10 to-rose-500/5', border: 'border-pink-200/60', iconBg: 'bg-pink-100', titleColor: 'text-pink-700' },
+                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', gradient: 'from-violet-500/10 to-purple-500/5', border: 'border-violet-200/60', iconBg: 'bg-violet-100', titleColor: 'text-violet-700' },
+                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', gradient: 'from-amber-500/10 to-yellow-500/5', border: 'border-amber-200/60', iconBg: 'bg-amber-100', titleColor: 'text-amber-700' },
+                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', gradient: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-200/60', iconBg: 'bg-emerald-100', titleColor: 'text-emerald-700' },
+                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', gradient: 'from-green-500/10 to-teal-500/5', border: 'border-green-200/60', iconBg: 'bg-green-100', titleColor: 'text-green-700' },
+                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', gradient: 'from-blue-500/10 to-indigo-500/5', border: 'border-blue-200/60', iconBg: 'bg-blue-100', titleColor: 'text-blue-700' },
+                ].map(({ icon, title, desc, gradient, border, iconBg, titleColor }, i) => (
+                  <div
+                    key={i}
+                    className={`relative shrink-0 w-[160px] sm:w-[180px] rounded-2xl border ${border} bg-gradient-to-br ${gradient} p-4 overflow-hidden`}
+                    style={{ backdropFilter: 'blur(8px)' }}
+                  >
+                    <div className="absolute -top-3 -right-3 w-10 h-10 rounded-full opacity-20 blur-xl" />
+                    <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${iconBg} text-lg mb-3 shadow-sm`}>
+                      {icon}
+                    </div>
+                    <p className={`text-sm font-bold ${titleColor} leading-tight mb-1`}>{title}</p>
+                    <p className="text-xs text-slate-500 leading-snug">{desc}</p>
                   </div>
-                  <p className={`text-sm font-bold ${titleColor} leading-tight mb-1`}>{title}</p>
-                  <p className="text-xs text-slate-500 leading-snug">{desc}</p>
-                </div>
-              ))}
+                ))}
+              </div>
             </div>
 
             {/* CTAs */}

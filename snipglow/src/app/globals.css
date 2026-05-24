@@ -485,7 +485,28 @@ a, button {
   color: #fff;
 }
 
-/* ─── Reduced motion ────────────────────────────────────────────────────── */
+/* ─── Benefit Cards Marquee ─────────────────────────────────────────────── */
+@keyframes marqueeScroll {
+  0% { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
+}
+
+.benefit-marquee {
+  animation: marqueeScroll 22s linear infinite;
+  width: max-content;
+}
+
+.benefit-marquee:hover {
+  animation-play-state: paused;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .benefit-marquee {
+    animation: none;
+    flex-wrap: wrap;
+    width: 100%;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-left, .reveal-right, .reveal-scale {
     opacity: 1 !important;
