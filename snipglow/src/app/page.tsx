@@ -42,17 +42,18 @@ function AnimatedNumber({ value, suffix = '', prefix = '' }: { value: number; su
       ([entry]) => {
         if (entry.isIntersecting && !hasAnimated) {
           setHasAnimated(true);
-          const duration = 1500;
-          const steps = 40;
-          const increment = value / steps;
-          let current = 0;
+          const duration = 2800; // slower — 2.8 seconds
+          const steps = 80;     // more steps = smoother
+          const interval = duration / steps;
           let step = 0;
           const timer = setInterval(() => {
             step++;
-            current = Math.min(current + increment, value);
-            setDisplay(Math.round(current));
+            // Ease-out: fast start, slow finish
+            const progress = 1 - Math.pow(1 - step / steps, 3);
+            const current = Math.round(progress * value);
+            setDisplay(current);
             if (step >= steps) { setDisplay(value); clearInterval(timer); }
-          }, duration / steps);
+          }, interval);
         }
       },
       { threshold: 0.5 }
