@@ -1,36 +1,55 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# SnipandGlow — Salon Management Software
 
-## Getting Started
+WhatsApp-native salon management platform built for Indian salons. Manage appointments, billing, customers, staff, and grow your business on autopilot.
 
-First, run the development server:
+## Product
+
+**Live:** https://snipandglow.com
+
+### Plans
+
+| Plan | Price | Includes |
+|---|---|---|
+| **Essentials** | ₹799/month | Appointments, billing, staff, CRM, WhatsApp automation (shared number), analytics |
+| **Growth** | ₹1,499/month | Everything in Essentials + own WhatsApp Business API (free setup ₹5,500 value), 2 branches, +₹499/branch, marketing broadcasts, multi-branch management |
+
+Both plans: billed yearly · 15-day free trial · cancel anytime
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router)
+- **Database:** Supabase (PostgreSQL + RLS)
+- **Auth:** Supabase Auth (Google OAuth + Email)
+- **Hosting:** Vercel
+- **WhatsApp:** Meta Cloud API (WhatsApp Business Platform)
+- **Payments:** Razorpay
+- **UI:** Tailwind CSS v4 + shadcn/ui
+
+## Development
 
 ```bash
+npm install
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Open [http://localhost:3000](http://localhost:3000)
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+See `.env.local` for required variables (Supabase, Meta WhatsApp, Razorpay, etc.)
 
-## Learn More
+## Key Features
 
-To learn more about Next.js, take a look at the following resources:
+- WhatsApp booking flow (Meta Flows API)
+- Automated reminders, receipts, feedback collection
+- Win-back campaigns (30-day + 60-day)
+- GST billing & digital invoices
+- Loyalty tiers (New → Regular → Silver → Gold → VIP)
+- Revenue dashboard with CSV export
+- Multi-branch support
+- Booking capacity settings (max appointments per slot)
+- Admin panel for platform management
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Built by
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+[Pixalara LLP](https://pixalara.io) — A DPIIT Recognized Technology Company

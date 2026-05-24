@@ -11,19 +11,23 @@ export function StructuredData() {
     offers: [
       {
         '@type': 'Offer',
-        name: 'Starter Plan',
+        name: 'Essentials Plan',
+        description: 'Complete salon management with WhatsApp automation for single-location salons.',
         price: '799',
         priceCurrency: 'INR',
         priceValidUntil: '2027-12-31',
         availability: 'https://schema.org/InStock',
+        url: 'https://snipandglow.com/#pricing',
       },
       {
         '@type': 'Offer',
-        name: 'Pro Plan',
-        price: '1199',
+        name: 'Growth Plan',
+        description: 'Own WhatsApp Business API, multi-branch management, and marketing broadcasts for scaling salon brands.',
+        price: '1499',
         priceCurrency: 'INR',
         priceValidUntil: '2027-12-31',
         availability: 'https://schema.org/InStock',
+        url: 'https://snipandglow.com/#pricing',
       },
     ],
     aggregateRating: {

@@ -1420,7 +1420,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ₹3,000-5,000/mo. SnipandGlow is built specifically for Indian salons — with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense for Indian businesses at just ₹799/mo with all features included."
+              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is built specifically for Indian salons — with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense: Essentials at ₹799/mo and Growth at ₹1,499/mo (includes 2 branches + free WhatsApp API setup worth ₹5,500)."
             />
             <FaqItem
               question="Do you offer customer support?"

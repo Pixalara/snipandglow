@@ -135,7 +135,7 @@ export default async function SettingsPage() {
                   {isExpired ? 'Subscription Expired' : isTrial ? 'Free Trial' : 'Active Subscription'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  SnipandGlow — All Features Plan (₹999/mo)
+                  SnipandGlow — Essentials Plan (₹799/mo)
                 </p>
               </div>
             </div>
