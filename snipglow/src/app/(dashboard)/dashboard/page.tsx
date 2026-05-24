@@ -98,6 +98,17 @@ export default async function DashboardPage() {
     }
   }
 
+  // Fetch recent feedback
+  let recentFeedback: { customer_name: string; rating: number; created_at: string }[] = [];
+  if (tenantId) {
+    const { data: feedback } = await supabase
+      .from('feedback' as any)
+      .select('customer_name, rating, created_at')
+      .order('created_at', { ascending: false })
+      .limit(5) as any;
+    recentFeedback = (feedback ?? []) as { customer_name: string; rating: number; created_at: string }[];
+  }
+
   // Get greeting based on time
   const hour = new Date().getHours();
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -196,6 +207,50 @@ export default async function DashboardPage() {
               href="/dashboard/billing/new"
               color="bg-violet-50 text-violet-600 dark:bg-violet-900/20 dark:text-violet-400"
             />
+          </div>
+
+          {/* Recent Feedback */}
+          <div className="mt-2">
+            <div className="flex items-center justify-between mb-3">
+              <h2 className="text-lg font-semibold text-foreground">Recent Feedback</h2>
+              <Link
+                href="/dashboard/feedback"
+                className="text-xs font-medium text-salon-rose hover:text-salon-rose/80 transition-colors"
+              >
+                View all →
+              </Link>
+            </div>
+            <div className="rounded-xl border border-border bg-card overflow-hidden">
+              {recentFeedback.length === 0 ? (
+                <div className="flex flex-col items-center justify-center p-8 text-center">
+                  <div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
+                    <span className="text-xl">⭐</span>
+                  </div>
+                  <p className="text-sm text-muted-foreground">No feedback yet</p>
+                </div>
+              ) : (
+                <ul className="divide-y divide-border">
+                  {recentFeedback.map((fb, i) => (
+                    <li key={i} className="flex items-center justify-between px-4 py-3 hover:bg-muted/50 transition-colors">
+                      <div className="flex items-center gap-3 min-w-0">
+                        <div className="flex size-8 shrink-0 items-center justify-center rounded-full bg-amber-50 dark:bg-amber-900/20 text-sm">
+                          {'⭐'.repeat(Math.min(fb.rating, 5))}
+                        </div>
+                        <div className="min-w-0">
+                          <p className="text-sm font-medium text-foreground truncate">{fb.customer_name}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {new Date(fb.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}
+                          </p>
+                        </div>
+                      </div>
+                      <span className="text-xs font-medium text-amber-600 dark:text-amber-400 shrink-0 ml-2">
+                        {fb.rating}/5
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
           </div>
         </div>
 
