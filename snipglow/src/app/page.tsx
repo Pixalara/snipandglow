@@ -277,17 +277,56 @@ export default function HomePage() {
             </div>
 
             {/* Benefit cards */}
-            <div className="grid grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-2 gap-3">
               {[
-                { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', color: 'bg-pink-50 border-pink-100' },
-                { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day and 60-day win-back messages', color: 'bg-violet-50 border-violet-100' },
-                { icon: '⭐', title: 'Get More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', color: 'bg-amber-50 border-amber-100' },
-                { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', color: 'bg-emerald-50 border-emerald-100' },
-              ].map(({ icon, title, desc, color }) => (
-                <div key={title} className={`rounded-xl border ${color} px-3.5 py-3`}>
-                  <span className="text-base">{icon}</span>
-                  <p className="text-xs font-bold text-slate-900 mt-1.5 leading-snug">{title}</p>
-                  <p className="text-[11px] text-slate-500 mt-0.5 leading-snug">{desc}</p>
+                {
+                  icon: '🔔',
+                  title: 'Reduce No-Shows',
+                  desc: 'WhatsApp reminders before every appointment',
+                  gradient: 'from-pink-500/10 to-rose-500/5',
+                  border: 'border-pink-200/60',
+                  iconBg: 'bg-pink-100',
+                  titleColor: 'text-pink-700',
+                },
+                {
+                  icon: '🔄',
+                  title: 'Bring Back Old Clients',
+                  desc: '30-day & 60-day win-back messages',
+                  gradient: 'from-violet-500/10 to-purple-500/5',
+                  border: 'border-violet-200/60',
+                  iconBg: 'bg-violet-100',
+                  titleColor: 'text-violet-700',
+                },
+                {
+                  icon: '⭐',
+                  title: 'More Repeat Visits',
+                  desc: 'Feedback, memberships & rebooking nudges',
+                  gradient: 'from-amber-500/10 to-yellow-500/5',
+                  border: 'border-amber-200/60',
+                  iconBg: 'bg-amber-100',
+                  titleColor: 'text-amber-700',
+                },
+                {
+                  icon: '🧾',
+                  title: 'Bill Faster',
+                  desc: 'GST-ready invoices in seconds',
+                  gradient: 'from-emerald-500/10 to-teal-500/5',
+                  border: 'border-emerald-200/60',
+                  iconBg: 'bg-emerald-100',
+                  titleColor: 'text-emerald-700',
+                },
+              ].map(({ icon, title, desc, gradient, border, iconBg, titleColor }) => (
+                <div
+                  key={title}
+                  className={`relative rounded-2xl border ${border} bg-gradient-to-br ${gradient} backdrop-blur-sm p-4 overflow-hidden group hover:scale-[1.02] hover:shadow-md transition-all duration-300`}
+                >
+                  {/* Subtle glow dot */}
+                  <div className="absolute -top-3 -right-3 w-12 h-12 rounded-full opacity-30 blur-xl bg-current" />
+                  <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${iconBg} text-lg mb-3 shadow-sm`}>
+                    {icon}
+                  </div>
+                  <p className={`text-sm font-bold ${titleColor} leading-tight mb-1`}>{title}</p>
+                  <p className="text-[11px] text-slate-500 leading-snug">{desc}</p>
                 </div>
               ))}
             </div>
