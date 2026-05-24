@@ -252,35 +252,21 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Stats row */}
-            <div className="flex flex-wrap gap-4 py-2">
-              <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
-                <div className="h-8 w-8 rounded-lg bg-pink-100 flex items-center justify-center">
-                  <Users className="h-4 w-4 text-pink-600" />
+            {/* Trust pills */}
+            <div className="flex flex-wrap gap-2 py-2">
+              {[
+                { icon: '⚡', label: 'Setup in 10 Minutes', sub: 'No tech skills needed' },
+                { icon: '🇮🇳', label: 'Built for Indian Salons', sub: 'WhatsApp, UPI, GST-ready' },
+                { icon: '🎁', label: '15-Day Free Trial', sub: 'No card required' },
+              ].map(({ icon, label, sub }) => (
+                <div key={label} className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
+                  <span className="text-lg">{icon}</span>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{label}</p>
+                    <p className="text-xs text-slate-500">{sub}</p>
+                  </div>
                 </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">500+ Salons</p>
-                  <p className="text-xs text-slate-500">Active users</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
-                <div className="h-8 w-8 rounded-lg bg-blue-100 flex items-center justify-center">
-                  <Calendar className="h-4 w-4 text-blue-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">5,00,000+</p>
-                  <p className="text-xs text-slate-500">Appointments</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
-                <div className="h-8 w-8 rounded-lg bg-amber-100 flex items-center justify-center">
-                  <Clock className="h-4 w-4 text-amber-600" />
-                </div>
-                <div>
-                  <p className="text-sm font-bold text-slate-900">15-Day Free</p>
-                  <p className="text-xs text-slate-500">Trial, no card</p>
-                </div>
-              </div>
+              ))}
             </div>
 
             {/* CTAs */}
