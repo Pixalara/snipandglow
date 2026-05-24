@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback, useTransition } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -50,13 +50,20 @@ interface CustomerOption {
 
 export default function NewAppointmentPage() {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const [isPending, startTransition] = useTransition();
 
+  // Pre-fill from query params (from customer profile "Book Appointment" button)
+  const prefillCustomerId = searchParams.get('customer_id') || '';
+  const prefillCustomerName = searchParams.get('customer_name') || '';
+
   // Form state
-  const [customerId, setCustomerId] = useState('');
-  const [customerSearch, setCustomerSearch] = useState('');
+  const [customerId, setCustomerId] = useState(prefillCustomerId);
+  const [customerSearch, setCustomerSearch] = useState(prefillCustomerName);
   const [customerResults, setCustomerResults] = useState<CustomerOption[]>([]);
-  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(null);
+  const [selectedCustomer, setSelectedCustomer] = useState<CustomerOption | null>(
+    prefillCustomerId ? { id: prefillCustomerId, name: prefillCustomerName, phone: '' } : null
+  );
   const [isSearching, setIsSearching] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
 
