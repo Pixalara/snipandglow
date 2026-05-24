@@ -145,11 +145,17 @@ async function handleFlowInit(data: any) {
   
   console.log('[Flow INIT] tenant_id:', tenantId, 'services found:', services?.length, 'error:', svcError);
 
-  // Generate next 14 days
+  // Generate next 14 days in IST timezone
   const dates: Array<{ id: string; title: string }> = [];
   for (let i = 0; i < 14; i++) {
-    const d = new Date();
+    // Get current date in IST
+    const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
+    const [todayIST] = nowIST.split(', ');
+    
+    // Parse IST date and add days
+    const d = new Date(todayIST + 'T00:00:00');
     d.setDate(d.getDate() + i);
+    
     const dateStr = d.toISOString().split('T')[0];
     const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
     dates.push({ id: dateStr, title: label });

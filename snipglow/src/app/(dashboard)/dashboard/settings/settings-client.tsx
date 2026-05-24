@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateGstSettings, updateSalonProfile, updateDiscountSettings } from './actions';
@@ -1056,6 +1056,11 @@ export function BlockSlotsCard({ blockedSlots: initial, operatingHours }: BlockS
   const [selectedSlots, setSelectedSlots] = useState<string[]>([]);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Sync entries with initial prop when it changes (after save and revalidation)
+  useEffect(() => {
+    setEntries(initial);
+  }, [initial]);
 
   const today = new Date().toISOString().split('T')[0];
 
