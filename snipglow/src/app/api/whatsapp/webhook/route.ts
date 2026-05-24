@@ -658,12 +658,23 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         if (!cancelError) {
           // Notify salon owner
           const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
+          console.log('[Webhook] Cancel - owner phone:', tenantData?.phone);
+          
           if (tenantData?.phone) {
             const ownerPhone = tenantData.phone.replace(/\D/g, '');
-            await sendMessage(tenant.credentials, ownerPhone, {
-              type: 'text',
-              text: { body: `⚠️ Appointment Cancelled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\n\nThe customer cancelled their appointment via WhatsApp. Check your dashboard for details.` },
-            });
+            console.log('[Webhook] Sending cancel notification to owner:', ownerPhone);
+            
+            try {
+              await sendMessage(tenant.credentials, ownerPhone, {
+                type: 'text',
+                text: { body: `⚠️ Appointment Cancelled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\n\nThe customer cancelled their appointment via WhatsApp. Check your dashboard for details.` },
+              });
+              console.log('[Webhook] Cancel notification sent to owner');
+            } catch (err) {
+              console.error('[Webhook] Failed to send cancel notification to owner:', err);
+            }
+          } else {
+            console.log('[Webhook] Cancel notification skipped - no owner phone');
           }
 
           await sendMessage(tenant.credentials, phone, {
@@ -790,12 +801,23 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
           // Notify salon owner
           const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
+          console.log('[Webhook] Reschedule - owner phone:', tenantData?.phone);
+          
           if (tenantData?.phone) {
             const ownerPhone = tenantData.phone.replace(/\D/g, '');
-            await sendMessage(tenant.credentials, ownerPhone, {
-              type: 'text',
-              text: { body: `📅 Appointment Rescheduled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\nNew Date: ${dateLabel}\nNew Time: ${timeLabel}\n\nCheck your dashboard for details.` },
-            });
+            console.log('[Webhook] Sending reschedule notification to owner:', ownerPhone);
+            
+            try {
+              await sendMessage(tenant.credentials, ownerPhone, {
+                type: 'text',
+                text: { body: `📅 Appointment Rescheduled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\nNew Date: ${dateLabel}\nNew Time: ${timeLabel}\n\nCheck your dashboard for details.` },
+              });
+              console.log('[Webhook] Reschedule notification sent to owner');
+            } catch (err) {
+              console.error('[Webhook] Failed to send reschedule notification to owner:', err);
+            }
+          } else {
+            console.log('[Webhook] Reschedule notification skipped - no owner phone');
           }
         } else {
           await sendMessage(tenant.credentials, phone, {

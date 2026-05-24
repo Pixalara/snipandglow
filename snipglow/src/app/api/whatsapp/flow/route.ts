@@ -426,8 +426,12 @@ async function processBooking(data: any, flowToken: string) {
       .eq('id', primaryService.tenant_id)
       .single();
 
+    console.log('[Flow] Owner notification - tenant phone:', tenantOwner?.phone);
+
     if (tenantOwner?.phone && credentials) {
       const ownerPhone = tenantOwner.phone.replace(/\D/g, '');
+      console.log('[Flow] Sending owner notification to:', ownerPhone);
+      
       const dateLabel2 = new Date(date + 'T00:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' });
       const timeLabel2 = formatTime12h(time_slot);
 
@@ -435,10 +439,17 @@ async function processBooking(data: any, flowToken: string) {
         ? `📅 Appointment Rescheduled\n\nCustomer: ${customerName}\nPhone: +${customerPhone || customer_phone}\nServices: ${serviceNames}\nNew Date: ${dateLabel2}\nNew Time: ${timeLabel2}\n\nThe customer rescheduled via WhatsApp. Check your dashboard.`
         : `🆕 New Booking Alert!\n\nCustomer: ${customerName}\nPhone: +${customerPhone || customer_phone}\nServices: ${serviceNames}\nDate: ${dateLabel2}\nTime: ${timeLabel2}\n\nCheck your SnipandGlow dashboard for details.`;
 
-      await sendMessage(credentials, ownerPhone, {
-        type: 'text',
-        text: { body: ownerText },
-      });
+      try {
+        await sendMessage(credentials, ownerPhone, {
+          type: 'text',
+          text: { body: ownerText },
+        });
+        console.log('[Flow] Owner notification sent successfully');
+      } catch (err) {
+        console.error('[Flow] Failed to send owner notification:', err);
+      }
+    } else {
+      console.log('[Flow] Owner notification skipped - phone:', tenantOwner?.phone, 'credentials:', !!credentials);
     }
   }
 
