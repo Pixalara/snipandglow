@@ -257,6 +257,7 @@ export default function HomePage() {
               {[
                 { icon: '⚡', label: 'Setup in 10 Minutes', sub: 'No tech skills needed' },
                 { icon: '🇮🇳', label: 'Built for Indian Salons', sub: 'WhatsApp, UPI, GST-ready' },
+                { icon: '💬', label: 'WhatsApp Booking', sub: 'Clients book without calling' },
                 { icon: '🎁', label: '15-Day Free Trial', sub: 'No card required' },
               ].map(({ icon, label, sub }) => (
                 <div key={label} className="flex items-center gap-2 bg-white rounded-xl px-4 py-2.5 border border-slate-100 shadow-sm">
