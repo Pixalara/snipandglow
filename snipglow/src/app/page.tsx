@@ -247,7 +247,7 @@ export default function HomePage() {
               <h1 className="text-3xl sm:text-4xl lg:text-[3.5rem] font-bold leading-[1.1] tracking-tight text-slate-900">
                 Get More Salon Bookings
                 <br />
-                <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">From WhatsApp</span>
+                <span style={{ color: '#25D366' }}>From WhatsApp</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-700 font-medium">
                 Appointments. WhatsApp Reminders. Billing. All on Autopilot.
