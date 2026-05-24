@@ -207,7 +207,6 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
         dailyRevenue={data.dailyRevenue}
         topServices={data.topServices}
         paymentBreakdown={data.paymentBreakdown}
-        hourlyHeatmap={data.hourlyHeatmap}
       />
     </div>
   );

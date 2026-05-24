@@ -1,5 +1,6 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { formatINR } from '@/lib/utils';
 import { getDailyQuote } from '@/lib/daily-quote';
@@ -14,6 +15,10 @@ import {
   Star,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
+
+const DashboardCharts = dynamic(() => import('./dashboard-charts').then(mod => ({ default: mod.DashboardCharts })), {
+  loading: () => <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">Loading charts...</div>,
+});
 
 export default async function DashboardPage() {
   const supabase = await createClient();
@@ -49,6 +54,49 @@ export default async function DashboardPage() {
     serviceCount = svcRes.count ?? 0;
     todayAppointments = todayRes.count ?? 0;
     recentCustomers = (recentRes.data ?? []) as { name: string; phone: string }[];
+  }
+
+  // Fetch last 7 days appointments for charts (peak hours + daily breakdown)
+  let dailyAppointments: { label: string; count: number }[] = [];
+  let peakHours: { hour: number; label: string; count: number }[] = [];
+
+  if (tenantId) {
+    const sevenDaysAgo = new Date();
+    sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 6);
+    const sevenDaysAgoStr = sevenDaysAgo.toISOString().split('T')[0];
+
+    const { data: weekAppts } = await supabase
+      .from('appointments')
+      .select('appointment_date, start_time')
+      .gte('appointment_date', sevenDaysAgoStr)
+      .order('appointment_date', { ascending: true });
+
+    const appts = weekAppts ?? [];
+
+    // Daily breakdown
+    const dailyMap: Record<string, number> = {};
+    const hourMap: Record<number, number> = {};
+
+    for (const a of appts) {
+      // Daily
+      const dateLabel = new Date(a.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { day: 'numeric', month: 'short' });
+      dailyMap[dateLabel] = (dailyMap[dateLabel] || 0) + 1;
+
+      // Hourly
+      if (a.start_time) {
+        const hour = parseInt(a.start_time.split(':')[0], 10);
+        hourMap[hour] = (hourMap[hour] || 0) + 1;
+      }
+    }
+
+    dailyAppointments = Object.entries(dailyMap).map(([label, count]) => ({ label, count }));
+
+    // Build peak hours (6 AM to 9 PM)
+    for (let h = 6; h <= 21; h++) {
+      const period = h >= 12 ? 'PM' : 'AM';
+      const display = h % 12 || 12;
+      peakHours.push({ hour: h, label: `${display} ${period}`, count: hourMap[h] || 0 });
+    }
   }
 
   // Get greeting based on time
@@ -195,6 +243,9 @@ export default async function DashboardPage() {
           </div>
         </div>
       </div>
+
+      {/* Peak Hours & Appointments by Day */}
+      <DashboardCharts dailyAppointments={dailyAppointments} peakHours={peakHours} />
 
       {/* Tips Section */}
       <div className="rounded-xl border border-border bg-gradient-to-r from-salon-gold/5 to-transparent p-5">

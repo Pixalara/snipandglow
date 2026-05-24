@@ -3,8 +3,6 @@
 import {
   LineChart,
   Line,
-  BarChart,
-  Bar,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -16,13 +14,12 @@ import {
   Legend,
 } from 'recharts';
 import { formatINR } from '@/lib/utils';
-import type { DailyRevenue, ServiceRevenue, PaymentBreakdown, HourlyHeatmap } from './actions';
+import type { DailyRevenue, ServiceRevenue, PaymentBreakdown } from './actions';
 
 interface RevenueChartsProps {
   dailyRevenue: DailyRevenue[];
   topServices: ServiceRevenue[];
   paymentBreakdown: PaymentBreakdown[];
-  hourlyHeatmap: HourlyHeatmap[];
 }
 
 const PAYMENT_COLORS: Record<string, string> = {
@@ -32,9 +29,7 @@ const PAYMENT_COLORS: Record<string, string> = {
   other: '#94a3b8',
 };
 
-export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown, hourlyHeatmap }: RevenueChartsProps) {
-  const maxHourCount = Math.max(...hourlyHeatmap.map((h) => h.count), 1);
-
+export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: RevenueChartsProps) {
   return (
     <div className="space-y-6">
       {/* Revenue Over Time */}
@@ -147,72 +142,6 @@ export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown, hou
           )}
         </div>
       </div>
-
-      {/* Peak Hours Heatmap */}
-      <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Peak Hours</h3>
-        {hourlyHeatmap.every((h) => h.count === 0) ? (
-          <EmptyChart message="No appointment data for peak hours" />
-        ) : (
-          <div className="space-y-3">
-            <div className="grid grid-cols-4 sm:grid-cols-8 lg:grid-cols-16 gap-1.5">
-              {hourlyHeatmap.map((slot) => {
-                const intensity = slot.count / maxHourCount;
-                const bg = intensity === 0
-                  ? 'bg-muted'
-                  : intensity < 0.25
-                    ? 'bg-emerald-100 dark:bg-emerald-900/30'
-                    : intensity < 0.5
-                      ? 'bg-emerald-200 dark:bg-emerald-800/40'
-                      : intensity < 0.75
-                        ? 'bg-emerald-400 dark:bg-emerald-700/60'
-                        : 'bg-emerald-600 dark:bg-emerald-500';
-                const textColor = intensity >= 0.75 ? 'text-white' : 'text-foreground';
-
-                return (
-                  <div
-                    key={slot.hour}
-                    className={`flex flex-col items-center justify-center rounded-lg p-2 ${bg} transition-colors`}
-                    title={`${slot.label}: ${slot.count} appointments`}
-                  >
-                    <span className={`text-xs font-medium ${textColor}`}>{slot.label}</span>
-                    <span className={`text-sm font-bold ${textColor}`}>{slot.count}</span>
-                  </div>
-                );
-              })}
-            </div>
-            <div className="flex items-center justify-end gap-2 text-xs text-muted-foreground">
-              <span>Less</span>
-              <div className="flex gap-0.5">
-                <div className="size-3 rounded-sm bg-muted" />
-                <div className="size-3 rounded-sm bg-emerald-100 dark:bg-emerald-900/30" />
-                <div className="size-3 rounded-sm bg-emerald-200 dark:bg-emerald-800/40" />
-                <div className="size-3 rounded-sm bg-emerald-400 dark:bg-emerald-700/60" />
-                <div className="size-3 rounded-sm bg-emerald-600 dark:bg-emerald-500" />
-              </div>
-              <span>More</span>
-            </div>
-          </div>
-        )}
-      </div>
-
-      {/* Appointments by Day — Bar Chart */}
-      <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Appointments by Day</h3>
-        {dailyRevenue.length === 0 ? (
-          <EmptyChart message="No appointment data" />
-        ) : (
-          <ResponsiveContainer width="100%" height={250}>
-            <BarChart data={dailyRevenue} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} className="text-muted-foreground" />
-              <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" allowDecimals={false} />
-              <Tooltip content={<AppointmentsTooltip />} />
-              <Bar dataKey="appointments" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={40} />
-            </BarChart>
-          </ResponsiveContainer>
-        )}
-      </div>
     </div>
   );
 }
@@ -227,16 +156,6 @@ function RevenueTooltip({ active, payload, label }: any) {
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm font-semibold text-foreground">{formatINR(payload[0].value)}</p>
-    </div>
-  );
-}
-
-function AppointmentsTooltip({ active, payload, label }: any) {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
-      <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm font-semibold text-foreground">{payload[0].value} appointments</p>
     </div>
   );
 }
