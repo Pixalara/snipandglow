@@ -36,7 +36,7 @@ export function DashboardCharts({ dailyAppointments, peakHours }: DashboardChart
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 10 }} className="text-muted-foreground" interval={1} />
               <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" allowDecimals={false} />
-              <Tooltip content={<PeakHoursTooltip />} />
+              <Tooltip content={<PeakHoursTooltip />} cursor={false} />
               <Bar dataKey="count" radius={[4, 4, 0, 0]} maxBarSize={28}>
                 {peakHours.map((entry, index) => {
                   const max = Math.max(...peakHours.map((h) => h.count), 1);
@@ -69,7 +69,7 @@ export function DashboardCharts({ dailyAppointments, peakHours }: DashboardChart
               <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
               <XAxis dataKey="label" tick={{ fontSize: 11 }} className="text-muted-foreground" />
               <YAxis tick={{ fontSize: 11 }} className="text-muted-foreground" allowDecimals={false} />
-              <Tooltip content={<AppointmentsTooltip />} />
+              <Tooltip content={<AppointmentsTooltip />} cursor={false} />
               <Bar dataKey="count" fill="hsl(var(--primary))" radius={[4, 4, 0, 0]} maxBarSize={36} />
             </BarChart>
           </ResponsiveContainer>
