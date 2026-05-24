@@ -1133,7 +1133,7 @@ export default function HomePage() {
                   <span className="text-5xl font-bold text-white">₹1,499</span>
                   <span className="text-lg text-slate-400">/month</span>
                 </div>
-                <p className="text-sm text-slate-400">₹17,988/year • +₹499/month per additional branch</p>
+                <p className="text-sm text-slate-400">Includes 2 branches • +₹499/month per additional branch • Billed yearly</p>
               </div>
 
               <button 
@@ -1223,7 +1223,7 @@ export default function HomePage() {
                   <div className="bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20 rounded-xl p-4">
                     <p className="text-xs font-semibold text-white mb-2">🚀 Perfect for:</p>
                     <ul className="text-xs text-slate-300 space-y-1">
-                      <li>• Multi-location salon chains (₹499/month per additional branch)</li>
+                      <li>• Multi-location salon chains (₹499/month per branch after 2)</li>
                       <li>• Salons wanting their own branded WhatsApp</li>
                       <li>• Businesses running marketing campaigns</li>
                       <li>• Growing salon brands with 2+ locations</li>
