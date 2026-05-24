@@ -176,9 +176,10 @@ export default function HomePage() {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowDemoModal(true)}
-              className="hidden sm:inline-flex px-4 py-2 text-sm text-white border border-slate-600 rounded-full hover:border-pink-400 hover:text-pink-300 transition-all"
+              className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
+              style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
             >
-              Live Demo
+              Book Free Setup Call
             </button>
             <Link
               href="/login"
@@ -212,8 +213,8 @@ export default function HomePage() {
             <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Pricing</a>
             <Link href="/blog" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Blog</Link>
             <div className="pt-2 border-t border-slate-800 flex flex-col gap-2">
-              <button onClick={() => { setMobileMenuOpen(false); setShowDemoModal(true); }} className="flex items-center justify-center py-2.5 text-sm text-white border border-slate-600 rounded-full hover:border-pink-400 transition-all">
-                Live Demo
+              <button onClick={() => { setMobileMenuOpen(false); setShowDemoModal(true); }} className="flex items-center justify-center py-2.5 text-sm font-semibold text-white rounded-full transition-all" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
+                Book Free Setup Call
               </button>
               <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm text-slate-300 border border-slate-600 rounded-full hover:text-white transition-all">
                 Login
@@ -244,11 +245,9 @@ export default function HomePage() {
 
             <div className="space-y-4">
               <h1 className="text-3xl sm:text-4xl lg:text-[3.5rem] font-bold leading-[1.1] tracking-tight text-slate-900">
-                The Salon Management
+                Get More Salon Bookings
                 <br />
-                <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">Software That Brings</span>
-                <br />
-                Clients Back
+                <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">From WhatsApp</span>
               </h1>
               <p className="text-lg sm:text-xl text-slate-700 font-medium">
                 Appointments. WhatsApp Reminders. Billing. All on Autopilot.
