@@ -478,14 +478,49 @@ async function processBooking(data: any, flowToken: string) {
     }
   }
 
-  // Get first available employee
-  const { data: employee } = await admin
+  // Get an available employee for this slot (round-robin to respect DB overlap constraint)
+  // Fetch all active employees, then pick one who has no conflicting appointment at this slot
+  const { data: allEmployees } = await admin
     .from('employees')
     .select('id')
     .eq('tenant_id', primaryService.tenant_id)
-    .eq('is_active', true)
-    .limit(1)
-    .single();
+    .eq('is_active', true);
+
+  let assignedEmployeeId: string | null = null;
+
+  if (allEmployees && allEmployees.length > 0) {
+    const slotStartMin = toMinutes(time_slot);
+    const slotEndMin = slotStartMin + totalDuration;
+
+    // Find first employee who has no overlapping appointment at this slot
+    for (const emp of allEmployees) {
+      const { data: conflicts } = await (admin
+        .from('appointments')
+        .select('start_time, end_time')
+        .eq('employee_id', emp.id)
+        .eq('appointment_date', date)
+        .neq('status', 'cancelled') as any);
+
+      const hasConflict = (conflicts || []).some((appt: any) => {
+        const apptStart = toMinutes(appt.start_time);
+        const apptEnd = toMinutes(appt.end_time);
+        return slotStartMin < apptEnd && slotEndMin > apptStart;
+      });
+
+      if (!hasConflict) {
+        assignedEmployeeId = emp.id;
+        break;
+      }
+    }
+
+    // Fallback: use first employee (DB will reject if truly at capacity)
+    if (!assignedEmployeeId) {
+      assignedEmployeeId = allEmployees[0].id;
+    }
+  }
+
+  // Final fallback to customerId if no employees exist
+  if (!assignedEmployeeId) assignedEmployeeId = customerId!;
 
   // Create appointment
   const { error: apptError } = await (admin.from('appointments').insert({
@@ -493,7 +528,7 @@ async function processBooking(data: any, flowToken: string) {
     branch_id: primaryService.branch_id,
     customer_id: customerId,
     service_id: selectedServiceIds[0],
-    employee_id: employee?.id ?? customerId,
+    employee_id: assignedEmployeeId,
     appointment_date: date,
     start_time: time_slot,
     end_time: endTime,
@@ -503,7 +538,8 @@ async function processBooking(data: any, flowToken: string) {
   } as any).select('id').single() as any);
 
   if (apptError) {
-    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Slot may be taken. Try another time.' } };
+    console.error('[Flow] Appointment insert error:', apptError);
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This slot is fully booked. Please choose another time.' } };
   }
 
   // Send confirmation messages
