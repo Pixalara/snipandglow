@@ -200,12 +200,22 @@ export function MembershipsClient({ memberships, activeMembershipCount, role, lo
 
 function LoyaltyTierSettings({ config, role }: { config: LoyaltyTierConfig; role: UserRole }) {
   const [isPending, startTransition] = useTransition();
+  const [isEditing, setIsEditing] = useState(false);
   const [regularMin, setRegularMin] = useState(config.regular_min);
   const [silverMin, setSilverMin] = useState(config.silver_min);
   const [goldMin, setGoldMin] = useState(config.gold_min);
   const [vipMin, setVipMin] = useState(config.vip_min);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  function handleCancel() {
+    setRegularMin(config.regular_min);
+    setSilverMin(config.silver_min);
+    setGoldMin(config.gold_min);
+    setVipMin(config.vip_min);
+    setError('');
+    setIsEditing(false);
+  }
 
   function handleSave() {
     setError('');
@@ -219,6 +229,7 @@ function LoyaltyTierSettings({ config, role }: { config: LoyaltyTierConfig; role
       });
       if (result.success) {
         setSuccess(true);
+        setIsEditing(false);
         setTimeout(() => setSuccess(false), 3000);
       } else {
         setError(result.error);
@@ -227,35 +238,46 @@ function LoyaltyTierSettings({ config, role }: { config: LoyaltyTierConfig; role
   }
 
   const tiers = [
-    { emoji: '🆕', label: 'New', desc: 'Always 0 visits', value: 0, fixed: true, color: 'text-blue-600' },
-    { emoji: '👤', label: 'Regular', desc: 'Starts at', value: regularMin, fixed: false, setter: setRegularMin, color: 'text-slate-600' },
-    { emoji: '🥈', label: 'Silver', desc: 'Starts at', value: silverMin, fixed: false, setter: setSilverMin, color: 'text-gray-600' },
-    { emoji: '🥇', label: 'Gold', desc: 'Starts at', value: goldMin, fixed: false, setter: setGoldMin, color: 'text-amber-600' },
-    { emoji: '💎', label: 'VIP', desc: 'Starts at', value: vipMin, fixed: false, setter: setVipMin, color: 'text-purple-600' },
+    { emoji: '🆕', label: 'New', desc: '0 visits', value: 0, fixed: true, color: 'text-blue-600' },
+    { emoji: '👤', label: 'Regular', desc: `${regularMin}+ visits`, value: regularMin, fixed: false, setter: setRegularMin, color: 'text-slate-600' },
+    { emoji: '🥈', label: 'Silver', desc: `${silverMin}+ visits`, value: silverMin, fixed: false, setter: setSilverMin, color: 'text-gray-600' },
+    { emoji: '🥇', label: 'Gold', desc: `${goldMin}+ visits`, value: goldMin, fixed: false, setter: setGoldMin, color: 'text-amber-600' },
+    { emoji: '💎', label: 'VIP', desc: `${vipMin}+ visits`, value: vipMin, fixed: false, setter: setVipMin, color: 'text-purple-600' },
   ];
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="border-b border-border px-6 py-4 bg-muted/30">
-        <div className="flex items-center gap-2">
-          <Settings2 className="size-4 text-muted-foreground" />
-          <h2 className="text-sm font-semibold text-foreground">Loyalty Tier Thresholds</h2>
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-2">
+            <Settings2 className="size-4 text-muted-foreground" />
+            <h2 className="text-sm font-semibold text-foreground">Loyalty Tier Thresholds</h2>
+          </div>
+          {role === 'owner' && !isEditing && (
+            <button
+              onClick={() => setIsEditing(true)}
+              className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            >
+              <Pencil className="size-3" />
+              Edit
+            </button>
+          )}
         </div>
         <p className="text-xs text-muted-foreground mt-1">
           Set how many visits a customer needs to reach each loyalty tier.
         </p>
       </div>
       <div className="p-6 space-y-5">
-        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-5 gap-3">
           {tiers.map((tier) => (
             <div key={tier.label} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/30 p-4 text-center">
               <span className="text-2xl">{tier.emoji}</span>
               <p className={`text-sm font-bold ${tier.color}`}>{tier.label}</p>
               {tier.fixed ? (
                 <p className="text-xs text-muted-foreground">0 visits</p>
-              ) : (
+              ) : isEditing ? (
                 <div className="w-full space-y-1">
-                  <p className="text-[10px] text-muted-foreground">{tier.desc}</p>
+                  <p className="text-[10px] text-muted-foreground">Starts at</p>
                   <Input
                     type="number"
                     min={1}
@@ -263,10 +285,11 @@ function LoyaltyTierSettings({ config, role }: { config: LoyaltyTierConfig; role
                     value={tier.value}
                     onChange={(e) => tier.setter?.(Number(e.target.value))}
                     className="h-8 text-center text-sm font-semibold"
-                    disabled={role !== 'owner'}
                   />
                   <p className="text-[10px] text-muted-foreground">visits</p>
                 </div>
+              ) : (
+                <p className="text-sm font-semibold text-foreground">{tier.value}+ visits</p>
               )}
             </div>
           ))}
@@ -298,10 +321,15 @@ function LoyaltyTierSettings({ config, role }: { config: LoyaltyTierConfig; role
           </div>
         )}
 
-        {role === 'owner' && (
-          <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
-            {isPending ? 'Saving...' : 'Save Tier Settings'}
-          </Button>
+        {isEditing && (
+          <div className="flex items-center gap-2">
+            <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+              {isPending ? 'Saving...' : 'Save Tier Settings'}
+            </Button>
+            <Button variant="outline" className="rounded-xl" onClick={handleCancel} disabled={isPending}>
+              Cancel
+            </Button>
+          </div>
         )}
       </div>
     </div>
