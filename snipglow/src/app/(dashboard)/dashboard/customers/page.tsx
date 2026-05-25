@@ -5,8 +5,9 @@ import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { CustomerSearch } from './customer-search';
 import { CustomersTable, type CustomerRow } from './customers-client';
-import { Users, UserPlus, Search } from 'lucide-react';
+import { Users, UserPlus } from 'lucide-react';
 import type { UserRole } from '@/types';
+import { DEFAULT_LOYALTY_CONFIG, type LoyaltyTierConfig } from '@/lib/loyalty';
 
 // =============================================================================
 // Customer List Page — Server Component
@@ -28,6 +29,14 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   }
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
+  const tenantId = user.user_metadata?.tenant_id;
+
+  // Fetch loyalty config
+  let loyaltyConfig: LoyaltyTierConfig = { ...DEFAULT_LOYALTY_CONFIG };
+  if (tenantId) {
+    const { data: tenant } = await supabase.from('tenants').select('settings').eq('id', tenantId).single();
+    loyaltyConfig = { ...DEFAULT_LOYALTY_CONFIG, ...((tenant?.settings as any)?.loyalty_tiers ?? {}) };
+  }
 
   // Fetch customers with only needed columns + limit for performance
   let query = supabase
@@ -108,10 +117,10 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         <div className="flex flex-wrap gap-2">
           {[
             { emoji: '🆕', label: 'New', range: '0 visits', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800/30' },
-            { emoji: '👤', label: 'Regular', range: '1–4 visits', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300', border: 'border-slate-200 dark:border-slate-700/30' },
-            { emoji: '🥈', label: 'Silver', range: '5–9 visits', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-700/30' },
-            { emoji: '🥇', label: 'Gold', range: '10–24 visits', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800/30' },
-            { emoji: '💎', label: 'VIP', range: '25+ visits', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800/30' },
+            { emoji: '👤', label: 'Regular', range: `${loyaltyConfig.regular_min}–${loyaltyConfig.silver_min - 1} visits`, color: 'bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300', border: 'border-slate-200 dark:border-slate-700/30' },
+            { emoji: '🥈', label: 'Silver', range: `${loyaltyConfig.silver_min}–${loyaltyConfig.gold_min - 1} visits`, color: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-700/30' },
+            { emoji: '🥇', label: 'Gold', range: `${loyaltyConfig.gold_min}–${loyaltyConfig.vip_min - 1} visits`, color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800/30' },
+            { emoji: '💎', label: 'VIP', range: `${loyaltyConfig.vip_min}+ visits`, color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800/30' },
           ].map(({ emoji, label, range, color, border }) => (
             <div key={label} className={`flex items-center gap-2 rounded-xl border ${border} ${color} px-3 py-2`}>
               <span className="text-base">{emoji}</span>
@@ -125,7 +134,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
       </div>
 
       {/* Customer Table (Client Component) */}
-      <CustomersTable customers={rows} />
+      <CustomersTable customers={rows} loyaltyConfig={loyaltyConfig} />
     </div>
   );
 }

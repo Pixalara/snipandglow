@@ -1,11 +1,12 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useTransition } from 'react';
 import { formatINR } from '@/lib/utils';
 import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import { MembershipForm } from './membership-form';
-import { deleteMembership } from './actions';
+import { deleteMembership, updateLoyaltyTiers } from './actions';
 import {
   Crown,
   Plus,
@@ -16,8 +17,12 @@ import {
   Trash2,
   Sparkles,
   Award,
+  CheckCircle2,
+  AlertTriangle,
+  Settings2,
 } from 'lucide-react';
 import type { Membership, UserRole } from '@/types';
+import type { LoyaltyTierConfig } from '@/lib/loyalty';
 
 // =============================================================================
 // MembershipsClient — Interactive client wrapper for memberships page
@@ -28,9 +33,10 @@ interface MembershipsClientProps {
   memberships: Membership[];
   activeMembershipCount: number;
   role: UserRole;
+  loyaltyConfig: LoyaltyTierConfig;
 }
 
-export function MembershipsClient({ memberships, activeMembershipCount, role }: MembershipsClientProps) {
+export function MembershipsClient({ memberships, activeMembershipCount, role, loyaltyConfig }: MembershipsClientProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingMembership, setEditingMembership] = useState<Membership | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Membership | null>(null);
@@ -134,6 +140,9 @@ export function MembershipsClient({ memberships, activeMembershipCount, role }: 
         </div>
       )}
 
+      {/* Loyalty Tier Settings */}
+      <LoyaltyTierSettings config={loyaltyConfig} role={role} />
+
       {/* Create/Edit Modal */}
       {showForm && (
         <Modal onClose={handleCloseForm}>
@@ -181,6 +190,120 @@ export function MembershipsClient({ memberships, activeMembershipCount, role }: 
           </div>
         </Modal>
       )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Loyalty Tier Settings Card
+// =============================================================================
+
+function LoyaltyTierSettings({ config, role }: { config: LoyaltyTierConfig; role: UserRole }) {
+  const [isPending, startTransition] = useTransition();
+  const [regularMin, setRegularMin] = useState(config.regular_min);
+  const [silverMin, setSilverMin] = useState(config.silver_min);
+  const [goldMin, setGoldMin] = useState(config.gold_min);
+  const [vipMin, setVipMin] = useState(config.vip_min);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const result = await updateLoyaltyTiers({
+        regular_min: regularMin,
+        silver_min: silverMin,
+        gold_min: goldMin,
+        vip_min: vipMin,
+      });
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setError(result.error);
+      }
+    });
+  }
+
+  const tiers = [
+    { emoji: '🆕', label: 'New', desc: 'Always 0 visits', value: 0, fixed: true, color: 'text-blue-600' },
+    { emoji: '👤', label: 'Regular', desc: 'Starts at', value: regularMin, fixed: false, setter: setRegularMin, color: 'text-slate-600' },
+    { emoji: '🥈', label: 'Silver', desc: 'Starts at', value: silverMin, fixed: false, setter: setSilverMin, color: 'text-gray-600' },
+    { emoji: '🥇', label: 'Gold', desc: 'Starts at', value: goldMin, fixed: false, setter: setGoldMin, color: 'text-amber-600' },
+    { emoji: '💎', label: 'VIP', desc: 'Starts at', value: vipMin, fixed: false, setter: setVipMin, color: 'text-purple-600' },
+  ];
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <Settings2 className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">Loyalty Tier Thresholds</h2>
+        </div>
+        <p className="text-xs text-muted-foreground mt-1">
+          Set how many visits a customer needs to reach each loyalty tier.
+        </p>
+      </div>
+      <div className="p-6 space-y-5">
+        <div className="grid grid-cols-1 sm:grid-cols-5 gap-3">
+          {tiers.map((tier) => (
+            <div key={tier.label} className="flex flex-col items-center gap-2 rounded-xl border border-border bg-muted/30 p-4 text-center">
+              <span className="text-2xl">{tier.emoji}</span>
+              <p className={`text-sm font-bold ${tier.color}`}>{tier.label}</p>
+              {tier.fixed ? (
+                <p className="text-xs text-muted-foreground">0 visits</p>
+              ) : (
+                <div className="w-full space-y-1">
+                  <p className="text-[10px] text-muted-foreground">{tier.desc}</p>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={999}
+                    value={tier.value}
+                    onChange={(e) => tier.setter?.(Number(e.target.value))}
+                    className="h-8 text-center text-sm font-semibold"
+                    disabled={role !== 'owner'}
+                  />
+                  <p className="text-[10px] text-muted-foreground">visits</p>
+                </div>
+              )}
+            </div>
+          ))}
+        </div>
+
+        {/* Visual flow */}
+        <div className="flex items-center gap-1 text-xs text-muted-foreground flex-wrap">
+          <span className="font-medium text-blue-600">🆕 New (0)</span>
+          <span>→</span>
+          <span className="font-medium text-slate-600">👤 Regular ({regularMin}+)</span>
+          <span>→</span>
+          <span className="font-medium text-gray-600">🥈 Silver ({silverMin}+)</span>
+          <span>→</span>
+          <span className="font-medium text-amber-600">🥇 Gold ({goldMin}+)</span>
+          <span>→</span>
+          <span className="font-medium text-purple-600">💎 VIP ({vipMin}+)</span>
+        </div>
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+            <AlertTriangle className="size-4 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Loyalty tiers saved!</p>
+          </div>
+        )}
+
+        {role === 'owner' && (
+          <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+            {isPending ? 'Saving...' : 'Save Tier Settings'}
+          </Button>
+        )}
+      </div>
     </div>
   );
 }

@@ -277,3 +277,41 @@ export async function getMembershipsExpiringWithin7Days(): Promise<CustomerMembe
 
   return (data ?? []) as CustomerMembership[];
 }
+
+/**
+ * Save custom loyalty tier thresholds to tenant settings.
+ */
+export async function updateLoyaltyTiers(config: {
+  regular_min: number;
+  silver_min: number;
+  gold_min: number;
+  vip_min: number;
+}): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  // Validate: thresholds must be ascending
+  if (config.regular_min < 1) return { success: false, error: 'Regular must start at 1 or more visits.' };
+  if (config.silver_min <= config.regular_min) return { success: false, error: 'Silver must be higher than Regular.' };
+  if (config.gold_min <= config.silver_min) return { success: false, error: 'Gold must be higher than Silver.' };
+  if (config.vip_min <= config.gold_min) return { success: false, error: 'VIP must be higher than Gold.' };
+
+  const { data: tenant } = await supabase.from('tenants').select('settings').eq('id', tenantId).single();
+  const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ settings: { ...currentSettings, loyalty_tiers: config } })
+    .eq('id', tenantId);
+
+  if (error) return { success: false, error: 'Failed to save loyalty tier settings.' };
+
+  revalidatePath('/dashboard/memberships');
+  revalidatePath('/dashboard/customers');
+  return { success: true, data: undefined };
+}

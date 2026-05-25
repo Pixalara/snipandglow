@@ -21,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership, deleteCustomer } from './actions';
 import { getLoyaltyTier } from '@/lib/loyalty';
 import type { Customer, Membership } from '@/types';
+import type { LoyaltyTierConfig } from '@/lib/loyalty';
 
 /** Customer row with optional active membership info (serialized-safe) */
 export interface CustomerRow extends Customer {
@@ -29,9 +30,10 @@ export interface CustomerRow extends Customer {
 
 interface CustomersTableProps {
   customers: CustomerRow[];
+  loyaltyConfig?: LoyaltyTierConfig;
 }
 
-export function CustomersTable({ customers }: CustomersTableProps) {
+export function CustomersTable({ customers, loyaltyConfig }: CustomersTableProps) {
   const [editingCustomer, setEditingCustomer] = useState<CustomerRow | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<CustomerRow | null>(null);
 
@@ -62,7 +64,7 @@ export function CustomersTable({ customers }: CustomersTableProps) {
       key: 'loyalty',
       header: 'Loyalty',
       render: (row) => {
-        const loyalty = getLoyaltyTier(row.total_visits);
+        const loyalty = getLoyaltyTier(row.total_visits, loyaltyConfig);
         return (
           <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${loyalty.color} ${loyalty.textColor}`}>
             {loyalty.emoji} {loyalty.label}
