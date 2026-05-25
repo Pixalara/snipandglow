@@ -363,3 +363,25 @@ export async function createCustomerWithMembership(
   revalidatePath('/dashboard/customers');
   return { success: true, data: data as Customer };
 }
+
+/**
+ * Fetch loyalty tier config for the current tenant.
+ * Called client-side to always get fresh config.
+ */
+export async function getLoyaltyConfig(): Promise<{ regular_min: number; silver_min: number; gold_min: number; vip_min: number }> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { regular_min: 1, silver_min: 5, gold_min: 10, vip_min: 25 };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { regular_min: 1, silver_min: 5, gold_min: 10, vip_min: 25 };
+
+  const { data: tenant } = await supabase.from('tenants').select('settings').eq('id', tenantId).single();
+  const saved = (tenant?.settings as any)?.loyalty_tiers;
+  return {
+    regular_min: saved?.regular_min ?? 1,
+    silver_min: saved?.silver_min ?? 5,
+    gold_min: saved?.gold_min ?? 10,
+    vip_min: saved?.vip_min ?? 25,
+  };
+}

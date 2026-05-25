@@ -18,8 +18,8 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership, deleteCustomer } from './actions';
-import { getLoyaltyTier } from '@/lib/loyalty';
+import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership, deleteCustomer, getLoyaltyConfig } from './actions';
+import { getLoyaltyTier, DEFAULT_LOYALTY_CONFIG } from '@/lib/loyalty';
 import type { Customer, Membership } from '@/types';
 import type { LoyaltyTierConfig } from '@/lib/loyalty';
 
@@ -33,9 +33,15 @@ interface CustomersTableProps {
   loyaltyConfig?: LoyaltyTierConfig;
 }
 
-export function CustomersTable({ customers, loyaltyConfig }: CustomersTableProps) {
+export function CustomersTable({ customers, loyaltyConfig: initialConfig }: CustomersTableProps) {
   const [editingCustomer, setEditingCustomer] = useState<CustomerRow | null>(null);
   const [deletingCustomer, setDeletingCustomer] = useState<CustomerRow | null>(null);
+  // Always fetch fresh loyalty config from server on mount
+  const [loyaltyConfig, setLoyaltyConfig] = useState<LoyaltyTierConfig>(initialConfig ?? DEFAULT_LOYALTY_CONFIG);
+
+  useEffect(() => {
+    getLoyaltyConfig().then(setLoyaltyConfig);
+  }, []);
 
   const columns: Column<CustomerRow>[] = [
     {
