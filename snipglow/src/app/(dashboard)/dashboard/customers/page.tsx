@@ -102,6 +102,28 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
         <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-emerald-400/5" />
       </div>
 
+      {/* Loyalty Tier Legend */}
+      <div className="rounded-xl border border-border bg-card px-4 py-3">
+        <p className="text-xs font-semibold text-muted-foreground uppercase tracking-wide mb-3">Loyalty Tiers — based on total visits</p>
+        <div className="flex flex-wrap gap-2">
+          {[
+            { emoji: '🆕', label: 'New', range: '0 visits', color: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400', border: 'border-blue-200 dark:border-blue-800/30' },
+            { emoji: '👤', label: 'Regular', range: '1–4 visits', color: 'bg-slate-100 text-slate-700 dark:bg-slate-800/50 dark:text-slate-300', border: 'border-slate-200 dark:border-slate-700/30' },
+            { emoji: '🥈', label: 'Silver', range: '5–9 visits', color: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300', border: 'border-gray-200 dark:border-gray-700/30' },
+            { emoji: '🥇', label: 'Gold', range: '10–24 visits', color: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', border: 'border-amber-200 dark:border-amber-800/30' },
+            { emoji: '💎', label: 'VIP', range: '25+ visits', color: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-400', border: 'border-purple-200 dark:border-purple-800/30' },
+          ].map(({ emoji, label, range, color, border }) => (
+            <div key={label} className={`flex items-center gap-2 rounded-xl border ${border} ${color} px-3 py-2`}>
+              <span className="text-base">{emoji}</span>
+              <div>
+                <p className="text-xs font-bold leading-tight">{label}</p>
+                <p className="text-[10px] opacity-70 leading-tight">{range}</p>
+              </div>
+            </div>
+          ))}
+        </div>
+      </div>
+
       {/* Customer Table (Client Component) */}
       <CustomersTable customers={rows} />
     </div>
