@@ -32,26 +32,52 @@ interface NavItem {
   href: string;
   icon: React.ComponentType<{ className?: string }>;
   resource: Resource;
+  enterpriseOnly?: boolean;
 }
 
-const navItems: NavItem[] = [
-  { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, resource: 'dashboard' },
-  { label: 'Appointments', href: '/dashboard/appointments', icon: Calendar, resource: 'appointments' },
-  { label: 'Customers', href: '/dashboard/customers', icon: Users, resource: 'customers' },
-  { label: 'Leads', href: '/dashboard/leads', icon: Target, resource: 'leads' },
-  { label: 'Services', href: '/dashboard/services', icon: Scissors, resource: 'services' },
-  { label: 'Billing', href: '/dashboard/billing', icon: Receipt, resource: 'billing' },
-  { label: 'Expenses', href: '/dashboard/expenses', icon: Wallet, resource: 'expenses' },
-  { label: 'Memberships', href: '/dashboard/memberships', icon: CreditCard, resource: 'memberships' },
-  { label: 'Staff', href: '/dashboard/staff', icon: UserCog, resource: 'staff' },
-  { label: 'Payroll', href: '/dashboard/payroll', icon: BadgeDollarSign, resource: 'payroll' },
-  { label: 'Branches', href: '/dashboard/branches', icon: Building2, resource: 'branches' },
-  { label: 'WhatsApp', href: '/dashboard/whatsapp', icon: MessageCircle, resource: 'settings' },
-  { label: 'Feedback', href: '/dashboard/feedback', icon: Star, resource: 'analytics' },
-  { label: 'Revenue', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
-  { label: 'Audit Log', href: '/dashboard/audit-log', icon: FileText, resource: 'audit' },
-  { label: 'Help & Support', href: '/dashboard/support', icon: Headphones, resource: 'dashboard' },
-  { label: 'Settings', href: '/dashboard/settings', icon: Settings, resource: 'settings' },
+interface NavGroup {
+  label: string;
+  items: NavItem[];
+}
+
+const navGroups: NavGroup[] = [
+  {
+    label: 'Main',
+    items: [
+      { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, resource: 'dashboard' },
+      { label: 'Appointments', href: '/dashboard/appointments', icon: Calendar, resource: 'appointments' },
+      { label: 'Customers', href: '/dashboard/customers', icon: Users, resource: 'customers' },
+      { label: 'Billing', href: '/dashboard/billing', icon: Receipt, resource: 'billing' },
+    ],
+  },
+  {
+    label: 'Growth',
+    items: [
+      { label: 'WhatsApp', href: '/dashboard/whatsapp', icon: MessageCircle, resource: 'settings' },
+      { label: 'Leads', href: '/dashboard/leads', icon: Target, resource: 'leads' },
+      { label: 'Feedback', href: '/dashboard/feedback', icon: Star, resource: 'analytics' },
+      { label: 'Memberships', href: '/dashboard/memberships', icon: CreditCard, resource: 'memberships' },
+    ],
+  },
+  {
+    label: 'Business',
+    items: [
+      { label: 'Services', href: '/dashboard/services', icon: Scissors, resource: 'services' },
+      { label: 'Revenue', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
+      { label: 'Staff', href: '/dashboard/staff', icon: UserCog, resource: 'staff' },
+      { label: 'Expenses', href: '/dashboard/expenses', icon: Wallet, resource: 'expenses' },
+      { label: 'Payroll', href: '/dashboard/payroll', icon: BadgeDollarSign, resource: 'payroll' },
+      { label: 'Branches', href: '/dashboard/branches', icon: Building2, resource: 'branches', enterpriseOnly: true },
+    ],
+  },
+  {
+    label: 'Admin',
+    items: [
+      { label: 'Audit Log', href: '/dashboard/audit-log', icon: FileText, resource: 'audit' },
+      { label: 'Help & Support', href: '/dashboard/support', icon: Headphones, resource: 'dashboard' },
+      { label: 'Settings', href: '/dashboard/settings', icon: Settings, resource: 'settings' },
+    ],
+  },
 ];
 
 interface SidebarProps {
@@ -63,14 +89,6 @@ interface SidebarProps {
 
 export function Sidebar({ role, planTier, isOpen, onClose }: SidebarProps) {
   const pathname = usePathname();
-
-  const filteredNavItems = navItems.filter((item) => {
-    // Hide Branches for non-enterprise users
-    if (item.href === '/dashboard/branches' && planTier !== 'enterprise') {
-      return false;
-    }
-    return can(role, 'read', item.resource);
-  });
 
   return (
     <>
@@ -112,39 +130,60 @@ export function Sidebar({ role, planTier, isOpen, onClose }: SidebarProps) {
 
         {/* Navigation */}
         <nav className="flex-1 overflow-y-auto px-3 py-4">
-          <ul className="space-y-1">
-            {filteredNavItems.map((item) => {
-              const Icon = item.icon;
-              const isActive =
-                pathname === item.href ||
-                (item.href !== '/dashboard' && pathname.startsWith(item.href));
+          <div className="space-y-5">
+            {navGroups.map((group) => {
+              // Filter items by role and plan
+              const visibleItems = group.items.filter((item) => {
+                if (item.enterpriseOnly && planTier !== 'enterprise') return false;
+                return can(role, 'read', item.resource);
+              });
+
+              if (visibleItems.length === 0) return null;
 
               return (
-                <li key={item.href}>
-                  <Link
-                    href={item.href}
-                    onClick={onClose}
-                    prefetch={true}
-                    className={cn(
-                      'group flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200',
-                      isActive
-                        ? 'bg-sidebar-accent text-sidebar-primary shadow-sm'
-                        : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:translate-x-0.5'
-                    )}
-                  >
-                    <Icon className={cn(
-                      'size-4 shrink-0 transition-transform duration-200',
-                      isActive ? 'scale-110' : 'group-hover:scale-105'
-                    )} />
-                    {item.label}
-                    {isActive && (
-                      <span className="ml-auto size-1.5 rounded-full bg-sidebar-primary" />
-                    )}
-                  </Link>
-                </li>
+                <div key={group.label}>
+                  {/* Group label */}
+                  <p className="mb-1.5 px-3 text-[10px] font-semibold uppercase tracking-widest text-sidebar-foreground/40 select-none">
+                    {group.label}
+                  </p>
+
+                  <ul className="space-y-0.5">
+                    {visibleItems.map((item) => {
+                      const Icon = item.icon;
+                      const isActive =
+                        pathname === item.href ||
+                        (item.href !== '/dashboard' && pathname.startsWith(item.href));
+
+                      return (
+                        <li key={item.href}>
+                          <Link
+                            href={item.href}
+                            onClick={onClose}
+                            prefetch={true}
+                            className={cn(
+                              'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                              isActive
+                                ? 'bg-sidebar-accent text-sidebar-primary shadow-sm'
+                                : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:translate-x-0.5'
+                            )}
+                          >
+                            <Icon className={cn(
+                              'size-4 shrink-0 transition-transform duration-200',
+                              isActive ? 'scale-110' : 'group-hover:scale-105'
+                            )} />
+                            {item.label}
+                            {isActive && (
+                              <span className="ml-auto size-1.5 rounded-full bg-sidebar-primary" />
+                            )}
+                          </Link>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                </div>
               );
             })}
-          </ul>
+          </div>
         </nav>
       </aside>
     </>
