@@ -266,24 +266,24 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
         const loading = isPending && actionId === row.id;
         const canReschedule = row.status === 'booked' || row.status === 'confirmed';
         return (
-          <div className="flex items-center gap-2 flex-wrap">
+          <div className="grid grid-cols-2 gap-1.5 w-fit">
             {canReschedule && (
               <button
                 onClick={() => setEditTarget(row)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 hover:border-violet-300 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-900/40 transition-all active:scale-95"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 hover:border-violet-300 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-900/40 transition-all active:scale-95"
                 title="Edit Services"
               >
-                <Pencil className="size-5" />
+                <Pencil className="size-3.5" />
                 <span>Edit</span>
               </button>
             )}
             {canReschedule && (
               <button
                 onClick={() => setRescheduleTarget(row)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-900/40 transition-all active:scale-95"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-900/40 transition-all active:scale-95"
                 title="Reschedule"
               >
-                <CalendarClock className="size-5" />
+                <CalendarClock className="size-3.5" />
                 <span>Reschedule</span>
               </button>
             )}
@@ -291,10 +291,10 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
               <button
                 onClick={() => setCompleteTarget(row)}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/40 transition-all active:scale-95 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/40 transition-all active:scale-95 disabled:opacity-50"
                 title="Complete & Bill"
               >
-                <CircleCheck className="size-5" />
+                <CircleCheck className="size-3.5" />
                 <span>Complete</span>
               </button>
             )}
@@ -302,10 +302,10 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
               <button
                 onClick={() => handleStatusChange(row.id, 'cancelled')}
                 disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-4 py-2.5 min-h-[48px] text-sm font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/40 transition-all active:scale-95 disabled:opacity-50"
+                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/40 transition-all active:scale-95 disabled:opacity-50"
                 title="Cancel"
               >
-                <XCircle className="size-5" />
+                <XCircle className="size-3.5" />
                 <span>Cancel</span>
               </button>
             )}
