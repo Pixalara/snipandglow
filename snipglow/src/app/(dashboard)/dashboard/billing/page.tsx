@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
+import { DiscountSettingsCard } from '../settings/settings-client';
 import { Receipt, Plus } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
 
@@ -19,6 +20,21 @@ export default async function BillingPage() {
   }
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
+  const tenantId = user.user_metadata?.tenant_id;
+
+  // Fetch discount settings from tenant
+  let discountEnabled = false;
+  let discountValue = 0;
+  if (tenantId) {
+    const { data: tenant } = await supabase
+      .from('tenants')
+      .select('settings')
+      .eq('id', tenantId)
+      .single();
+    const settings = (tenant?.settings as Record<string, unknown>) ?? {};
+    discountEnabled = (settings.discount_enabled as boolean) ?? false;
+    discountValue = (settings.discount_value as number) ?? 0;
+  }
 
   // Fetch invoices (RLS enforces tenant/branch scoping)
   const { data: invoices, error } = await supabase
@@ -104,6 +120,12 @@ export default async function BillingPage() {
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-violet-500/5" />
         <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-violet-400/5" />
       </div>
+
+      {/* Default Discount Settings */}
+      <DiscountSettingsCard
+        discountEnabled={discountEnabled}
+        discountValue={discountValue}
+      />
 
       {/* Invoice Table (Client Component) */}
       <InvoicesTable invoices={rows} />

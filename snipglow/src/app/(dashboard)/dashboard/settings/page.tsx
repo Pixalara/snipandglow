@@ -1,7 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
-import { GstSettingsCard, SalonProfileCard, DiscountSettingsCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -266,12 +266,6 @@ export default async function SettingsPage() {
         currentGstNumber={gstNumber}
         currentGstRate={gstRate}
         gstEnabled={gstEnabled}
-      />
-
-      {/* Discount Settings */}
-      <DiscountSettingsCard
-        discountEnabled={discountEnabled}
-        discountValue={discountValue}
       />
 
       {/* WhatsApp Booking Link */}
