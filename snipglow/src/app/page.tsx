@@ -342,7 +342,7 @@ export default function HomePage() {
                 <span className="text-xl shrink-0 mt-0.5">⚠️</span>
                 <p className="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
                   2 missed appointments/day? At ₹500 per service, that&apos;s{' '}
-                  <span className="text-red-600 font-bold">₹<AnimatedNumber value={30000} /></span>{' '}
+                  <span className="text-red-600 font-bold">₹30,000</span>{' '}
                   lost every month.{' '}
                   <span className="text-slate-600 font-normal">SnipandGlow sends automatic WhatsApp reminders before every visit.</span>
                 </p>
