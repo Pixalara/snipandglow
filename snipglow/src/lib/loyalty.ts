@@ -53,6 +53,18 @@ export function getLoyaltyTier(totalVisits: number, config?: Partial<LoyaltyTier
     };
   }
 
+  if (totalVisits < c.regular_min) {
+    return {
+      tier: 'new',
+      label: 'New',
+      emoji: '🆕',
+      color: 'bg-blue-100 dark:bg-blue-900/30',
+      textColor: 'text-blue-700 dark:text-blue-400',
+      nextTier: 'regular',
+      visitsToNextTier: c.regular_min - totalVisits,
+    };
+  }
+
   if (totalVisits < c.silver_min) {
     return {
       tier: 'regular',
