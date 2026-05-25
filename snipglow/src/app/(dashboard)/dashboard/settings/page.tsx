@@ -214,7 +214,7 @@ export default async function SettingsPage() {
                 className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-pink-500 hover:to-fuchsia-500 transition-all"
               >
                 <Crown className="size-4" />
-                Renew Subscription — ₹999/mo
+                Renew Subscription — ₹799/mo
               </Link>
             </div>
           )}
@@ -239,7 +239,7 @@ export default async function SettingsPage() {
                 className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-blue-500 hover:to-indigo-500 transition-all"
               >
                 <Crown className="size-4" />
-                Subscribe Now — ₹999/mo
+                Subscribe Now — ₹799/mo
               </Link>
             </div>
           )}
