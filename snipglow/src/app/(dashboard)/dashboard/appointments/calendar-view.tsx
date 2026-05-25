@@ -93,10 +93,6 @@ export function CalendarView({ appointments }: CalendarViewProps) {
           Booked
         </span>
         <span className="flex items-center gap-1">
-          <span className={`size-2 rounded-full ${dotColors.confirmed}`} />
-          Confirmed
-        </span>
-        <span className="flex items-center gap-1">
           <span className={`size-2 rounded-full ${dotColors.completed}`} />
           Completed
         </span>

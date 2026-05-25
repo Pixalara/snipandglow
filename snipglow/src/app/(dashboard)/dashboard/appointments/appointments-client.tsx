@@ -119,7 +119,6 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               >
                 <option value="all">All Status</option>
                 <option value="booked">Booked</option>
-                <option value="confirmed">Confirmed</option>
                 <option value="completed">Completed</option>
                 <option value="cancelled">Cancelled</option>
               </select>
