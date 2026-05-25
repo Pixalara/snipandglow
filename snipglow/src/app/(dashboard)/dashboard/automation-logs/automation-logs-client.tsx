@@ -1,11 +1,11 @@
 'use client';
 
 import { useState } from 'react';
-import { Zap, ArrowUpRight, ArrowDownLeft, CheckCircle2, XCircle, Clock, Filter } from 'lucide-react';
+import { Zap } from 'lucide-react';
 import type { AutomationLogRow } from './page';
 
 // =============================================================================
-// Automation Logs Client — Shows WhatsApp notification activity in plain English
+// Automation Logs Client — Dark table layout matching admin dashboard style
 // =============================================================================
 
 interface Props {
@@ -14,71 +14,69 @@ interface Props {
 
 type DirectionFilter = 'all' | 'outbound' | 'inbound';
 
-const statusIcons: Record<string, React.ReactNode> = {
-  sent: <CheckCircle2 className="size-3.5 text-emerald-500" />,
-  delivered: <CheckCircle2 className="size-3.5 text-blue-500" />,
-  read: <CheckCircle2 className="size-3.5 text-blue-600" />,
-  failed: <XCircle className="size-3.5 text-red-500" />,
-};
-
-const statusLabels: Record<string, string> = {
-  sent: 'Sent',
-  delivered: 'Delivered',
-  read: 'Read',
-  failed: 'Failed',
+const statusColors: Record<string, string> = {
+  sent: 'text-emerald-400',
+  delivered: 'text-blue-400',
+  read: 'text-blue-300',
+  failed: 'text-red-400',
+  pending: 'text-slate-400',
 };
 
 function formatDateTime(iso: string): string {
   if (!iso) return '—';
   const d = new Date(iso);
-  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) +
-    ', ' +
-    d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short' }) +
+    ', ' + d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
 }
 
 export function AutomationLogsClient({ logs }: Props) {
   const [filter, setFilter] = useState<DirectionFilter>('all');
 
   const filtered = filter === 'all' ? logs : logs.filter((l) => l.direction === filter);
-
   const outboundCount = logs.filter((l) => l.direction === 'outbound').length;
   const inboundCount = logs.filter((l) => l.direction === 'inbound').length;
+  const failedCount = logs.filter((l) => l.status === 'failed').length;
 
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent border border-violet-200/50 dark:border-violet-800/30 p-6">
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
-              <Zap className="size-5 text-violet-600 dark:text-violet-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Automation Logs</h1>
-              <p className="text-sm text-muted-foreground">
-                {filtered.length} messages · {outboundCount} sent · {inboundCount} received
-              </p>
-            </div>
-          </div>
-
-          <div className="flex items-center gap-2">
-            <Filter className="size-3.5 text-muted-foreground" />
-            <select
-              value={filter}
-              onChange={(e) => setFilter(e.target.value as DirectionFilter)}
-              className="h-9 min-h-[44px] sm:min-h-0 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
-              aria-label="Filter by direction"
-            >
-              <option value="all">All Messages</option>
-              <option value="outbound">Sent Only</option>
-              <option value="inbound">Received Only</option>
-            </select>
-          </div>
-        </div>
-        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-violet-500/5" />
+      <div>
+        <h1 className="text-2xl font-bold text-foreground">Automation Logs</h1>
+        <p className="text-sm text-muted-foreground mt-1">All WhatsApp activity for your salon</p>
       </div>
 
-      {/* Logs List */}
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">Sent</p>
+          <p className="text-2xl font-bold text-emerald-500 mt-1">{outboundCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">Received</p>
+          <p className="text-2xl font-bold text-blue-400 mt-1">{inboundCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide">Failed</p>
+          <p className="text-2xl font-bold text-red-400 mt-1">{failedCount}</p>
+        </div>
+      </div>
+
+      {/* Filter */}
+      <div className="flex items-center gap-3">
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as DirectionFilter)}
+          className="h-9 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+          aria-label="Filter by direction"
+        >
+          <option value="all">All Messages</option>
+          <option value="outbound">Sent Only</option>
+          <option value="inbound">Received Only</option>
+        </select>
+        <span className="text-xs text-muted-foreground">{filtered.length} messages</span>
+      </div>
+
+      {/* Table */}
       {filtered.length === 0 ? (
         <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-12 text-center">
           <div className="flex size-14 items-center justify-center rounded-full bg-violet-50 dark:bg-violet-900/20 mb-4">
@@ -90,46 +88,49 @@ export function AutomationLogsClient({ logs }: Props) {
           </p>
         </div>
       ) : (
-        <div className="space-y-2">
-          {filtered.map((log) => (
-            <div
-              key={log.id}
-              className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 hover:bg-muted/30 transition-colors"
-            >
-              {/* Direction icon */}
-              <div className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
-                log.direction === 'outbound'
-                  ? 'bg-emerald-50 dark:bg-emerald-900/20'
-                  : 'bg-blue-50 dark:bg-blue-900/20'
-              }`}>
-                {log.direction === 'outbound' ? (
-                  <ArrowUpRight className="size-4 text-emerald-600 dark:text-emerald-400" />
-                ) : (
-                  <ArrowDownLeft className="size-4 text-blue-600 dark:text-blue-400" />
-                )}
-              </div>
-
-              {/* Content */}
-              <div className="flex-1 min-w-0">
-                <p className="text-sm font-medium text-foreground leading-snug">
-                  {log.description}
-                </p>
-                <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-                  <span className="text-xs text-muted-foreground">{log.phone}</span>
-                  <span className="text-xs text-muted-foreground">·</span>
-                  <span className="text-xs text-muted-foreground">{formatDateTime(log.created_at)}</span>
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="flex items-center gap-1.5 shrink-0">
-                {statusIcons[log.status] || <Clock className="size-3.5 text-muted-foreground" />}
-                <span className="text-xs text-muted-foreground capitalize">
-                  {statusLabels[log.status] || log.status}
-                </span>
-              </div>
-            </div>
-          ))}
+        <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-sm">
+              <thead>
+                <tr className="border-b border-border bg-muted/30">
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">Time</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">Phone</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Activity</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">Direction</th>
+                  <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground whitespace-nowrap">Status</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {filtered.map((log) => (
+                  <tr key={log.id} className="hover:bg-muted/20 transition-colors">
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {formatDateTime(log.created_at)}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-muted-foreground whitespace-nowrap">
+                      {log.phone}
+                    </td>
+                    <td className="px-4 py-3 text-xs text-foreground max-w-xs">
+                      {log.description}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`inline-flex items-center gap-1 text-xs px-2 py-0.5 rounded-full font-medium ${
+                        log.direction === 'outbound'
+                          ? 'bg-emerald-500/10 text-emerald-500'
+                          : 'bg-blue-500/10 text-blue-400'
+                      }`}>
+                        {log.direction === 'outbound' ? '↑ sent' : '↓ received'}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      <span className={`text-xs font-medium capitalize ${statusColors[log.status] || 'text-muted-foreground'}`}>
+                        {log.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
       )}
     </div>
