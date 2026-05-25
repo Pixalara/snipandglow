@@ -19,6 +19,11 @@ import {
   Sparkles,
   Copy,
   Eye,
+  Zap,
+  ArrowUpRight,
+  ArrowDownLeft,
+  XCircle,
+  Filter,
 } from 'lucide-react';
 import type { PlanTier } from '@/types';
 
@@ -53,7 +58,7 @@ interface WhatsAppClientProps {
   planTier: PlanTier;
 }
 
-type TabType = 'connect' | 'broadcast';
+type TabType = 'connect' | 'broadcast' | 'logs';
 
 export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
   const [activeTab, setActiveTab] = useState<TabType>('broadcast');
@@ -69,7 +74,7 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
           <div>
             <h1 className="text-xl font-bold text-foreground">WhatsApp</h1>
             <p className="text-sm text-muted-foreground">
-              Broadcast messages & connect your WhatsApp Business number
+              Broadcast messages, connect your number & view activity logs
             </p>
           </div>
         </div>
@@ -80,30 +85,252 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
       <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1 gap-1">
         <button
           onClick={() => setActiveTab('broadcast')}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
             activeTab === 'broadcast'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <Megaphone className="size-4" />
-          Broadcast
+          <span className="hidden sm:inline">Broadcast</span>
+        </button>
+        <button
+          onClick={() => setActiveTab('logs')}
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
+            activeTab === 'logs'
+              ? 'bg-background text-foreground shadow-sm'
+              : 'text-muted-foreground hover:text-foreground'
+          }`}
+        >
+          <Zap className="size-4" />
+          <span className="hidden sm:inline">Activity Logs</span>
         </button>
         <button
           onClick={() => setActiveTab('connect')}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-4 py-2.5 text-sm font-medium transition-all ${
+          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
             activeTab === 'connect'
               ? 'bg-background text-foreground shadow-sm'
               : 'text-muted-foreground hover:text-foreground'
           }`}
         >
           <Smartphone className="size-4" />
-          Connect Number
+          <span className="hidden sm:inline">Connect Number</span>
         </button>
       </div>
 
       {/* Tab Content */}
-      {activeTab === 'broadcast' ? <BroadcastSection /> : <WhatsAppConnectCard />}
+      {activeTab === 'broadcast' && <BroadcastSection />}
+      {activeTab === 'logs' && <WhatsAppLogsSection />}
+      {activeTab === 'connect' && <WhatsAppConnectCard />}
+    </div>
+  );
+}
+
+// =============================================================================
+// WhatsApp Activity Logs Section
+// =============================================================================
+
+interface LogRow {
+  id: string;
+  phone: string;
+  direction: 'inbound' | 'outbound';
+  template_name: string | null;
+  status: string;
+  created_at: string;
+  description: string;
+}
+
+function formatPhoneDisplay(phone: string): string {
+  if (!phone) return '—';
+  const cleaned = phone.replace(/\D/g, '');
+  if (cleaned.startsWith('91') && cleaned.length === 12) {
+    return `+91 ${cleaned.slice(2, 7)} ${cleaned.slice(7)}`;
+  }
+  return `+${cleaned}`;
+}
+
+function getLogDescription(log: any): string {
+  const meta = log.metadata || {};
+  const direction = log.direction;
+  const template = log.template_name;
+  const customerName = meta.customer_name || '';
+  const messageText = meta.message_text || '';
+  const buttonReplyId = meta.button_reply_id || '';
+
+  if (direction === 'outbound') {
+    switch (template) {
+      case 'booking_confirmation':
+      case 'booking_confirmation_v2': return `Booking confirmation sent to ${customerName || 'customer'}`;
+      case 'appointment_reminder':
+      case 'appointment_reminder_v1': return `Appointment reminder sent to ${customerName || 'customer'}`;
+      case 'appointment_rescheduled_v1': return `Reschedule confirmation sent to ${customerName || 'customer'}`;
+      case 'bill_receipt_v1':
+      case 'bill_receipt': return `Bill receipt sent to ${customerName || 'customer'}`;
+      case 'feedback_request_v1':
+      case 'feedback_request': return `Feedback request sent to ${customerName || 'customer'}`;
+      case 'appointment_cancelled': return `Cancellation notice sent to ${customerName || 'customer'}`;
+      case 'renewal_reminder': return `30-day win-back sent to ${customerName || 'customer'}`;
+      case 'winback_60_day': return `60-day win-back sent to ${customerName || 'customer'}`;
+      case 'otp_verification': return `OTP verification code sent`;
+      default:
+        if (template) return `"${template}" sent to ${customerName || 'customer'}`;
+        return `WhatsApp message sent`;
+    }
+  }
+
+  if (direction === 'inbound') {
+    if (buttonReplyId) {
+      const map: Record<string, string> = {
+        'book_appointment': 'tapped "Book Appointment"',
+        'services_prices': 'tapped "View Services"',
+        'talk_to_salon': 'tapped "Talk to Salon"',
+        'reschedule_appointment': 'tapped "Reschedule"',
+        'cancel_appointment': 'tapped "Cancel"',
+        'feedback_5': 'rated ⭐⭐⭐⭐⭐ (Loved it!)',
+        'feedback_3': 'rated ⭐⭐⭐ (It was okay)',
+        'feedback_1': 'rated 😞 (Not satisfied)',
+        'google_review_yes': 'agreed to leave Google review',
+        'google_review_no': 'declined Google review',
+      };
+      if (buttonReplyId.startsWith('confirm_cancel_')) return `${customerName || 'Customer'} confirmed cancellation`;
+      if (buttonReplyId.startsWith('resched.')) return `${customerName || 'Customer'} selected reschedule date`;
+      if (buttonReplyId.startsWith('reschedtime.')) return `${customerName || 'Customer'} selected reschedule time`;
+      const action = map[buttonReplyId] || `tapped "${buttonReplyId}"`;
+      return `${customerName || 'Customer'} ${action}`;
+    }
+    if (messageText) {
+      const upper = messageText.trim().toUpperCase();
+      if (upper.startsWith('BOOK_') || /\[SNG[-]?\d+\]/i.test(messageText)) {
+        return `${customerName || 'Customer'} scanned QR code to book`;
+      }
+      return `${customerName || 'Customer'} sent: "${messageText.substring(0, 50)}${messageText.length > 50 ? '...' : ''}"`;
+    }
+    return `Message received from ${customerName || 'customer'}`;
+  }
+
+  return 'WhatsApp activity';
+}
+
+function formatDateTime(iso: string): string {
+  if (!iso) return '—';
+  const d = new Date(iso);
+  return d.toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' }) +
+    ', ' + d.toLocaleTimeString('en-IN', { hour: 'numeric', minute: '2-digit', hour12: true });
+}
+
+const statusIcons: Record<string, React.ReactNode> = {
+  sent: <CheckCircle2 className="size-3.5 text-emerald-500" />,
+  delivered: <CheckCircle2 className="size-3.5 text-blue-500" />,
+  read: <CheckCircle2 className="size-3.5 text-blue-600" />,
+  failed: <XCircle className="size-3.5 text-red-500" />,
+};
+
+function WhatsAppLogsSection() {
+  const [logs, setLogs] = useState<LogRow[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [filter, setFilter] = useState<'all' | 'outbound' | 'inbound'>('all');
+
+  useEffect(() => {
+    async function fetchLogs() {
+      try {
+        const { getWhatsAppLogs } = await import('./actions');
+        const data = await getWhatsAppLogs();
+        setLogs(data);
+      } catch (err) {
+        console.error('[WhatsAppLogs] Failed to fetch:', err);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchLogs();
+  }, []);
+
+  const filtered = filter === 'all' ? logs : logs.filter((l) => l.direction === filter);
+  const outboundCount = logs.filter((l) => l.direction === 'outbound').length;
+  const inboundCount = logs.filter((l) => l.direction === 'inbound').length;
+  const failedCount = logs.filter((l) => l.status === 'failed').length;
+
+  return (
+    <div className="space-y-5">
+      {/* Stats */}
+      <div className="grid grid-cols-3 gap-3">
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Sent</p>
+          <p className="text-2xl font-bold text-emerald-600">{loading ? '—' : outboundCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Received</p>
+          <p className="text-2xl font-bold text-blue-600">{loading ? '—' : inboundCount}</p>
+        </div>
+        <div className="rounded-xl border border-border bg-card p-4 text-center">
+          <p className="text-xs text-muted-foreground uppercase tracking-wide mb-1">Failed</p>
+          <p className="text-2xl font-bold text-red-500">{loading ? '—' : failedCount}</p>
+        </div>
+      </div>
+
+      {/* Filter */}
+      <div className="flex items-center gap-2">
+        <Filter className="size-3.5 text-muted-foreground shrink-0" />
+        <select
+          value={filter}
+          onChange={(e) => setFilter(e.target.value as any)}
+          className="h-9 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+        >
+          <option value="all">All Messages</option>
+          <option value="outbound">Sent Only</option>
+          <option value="inbound">Received Only</option>
+        </select>
+        <span className="text-xs text-muted-foreground ml-auto">{filtered.length} messages</span>
+      </div>
+
+      {/* Logs */}
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="flex flex-col items-center justify-center rounded-2xl border border-border bg-card p-12 text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-emerald-50 dark:bg-emerald-900/20 mb-4">
+            <Zap className="size-6 text-emerald-500" />
+          </div>
+          <h3 className="text-base font-semibold text-foreground">No activity yet</h3>
+          <p className="text-sm text-muted-foreground mt-1 max-w-sm">
+            WhatsApp messages will appear here once customers start booking or you send bills.
+          </p>
+        </div>
+      ) : (
+        <div className="space-y-2">
+          {filtered.map((log) => (
+            <div
+              key={log.id}
+              className="flex items-start gap-3 rounded-xl border border-border bg-card p-4 hover:bg-muted/30 transition-colors"
+            >
+              <div className={`flex size-9 shrink-0 items-center justify-center rounded-full ${
+                log.direction === 'outbound'
+                  ? 'bg-emerald-50 dark:bg-emerald-900/20'
+                  : 'bg-blue-50 dark:bg-blue-900/20'
+              }`}>
+                {log.direction === 'outbound'
+                  ? <ArrowUpRight className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  : <ArrowDownLeft className="size-4 text-blue-600 dark:text-blue-400" />
+                }
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="text-sm font-medium text-foreground leading-snug">{log.description}</p>
+                <div className="flex items-center gap-2 mt-1 flex-wrap">
+                  <span className="text-xs text-muted-foreground">{log.phone}</span>
+                  <span className="text-xs text-muted-foreground">·</span>
+                  <span className="text-xs text-muted-foreground">{formatDateTime(log.created_at)}</span>
+                </div>
+              </div>
+              <div className="flex items-center gap-1.5 shrink-0">
+                {statusIcons[log.status] || <Clock className="size-3.5 text-muted-foreground" />}
+                <span className="text-xs text-muted-foreground capitalize">{log.status}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
     </div>
   );
 }
