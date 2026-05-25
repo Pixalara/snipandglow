@@ -58,11 +58,9 @@ interface WhatsAppClientProps {
   planTier: PlanTier;
 }
 
-type TabType = 'connect' | 'broadcast' | 'logs';
+type TabType = 'logs';
 
 export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
-  const [activeTab, setActiveTab] = useState<TabType>('broadcast');
-
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -74,54 +72,14 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
           <div>
             <h1 className="text-xl font-bold text-foreground">WhatsApp</h1>
             <p className="text-sm text-muted-foreground">
-              Broadcast messages, connect your number & view activity logs
+              All WhatsApp activity for your salon
             </p>
           </div>
         </div>
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-500/5" />
       </div>
 
-      {/* Tabs */}
-      <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1 gap-1">
-        <button
-          onClick={() => setActiveTab('broadcast')}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-            activeTab === 'broadcast'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Megaphone className="size-4" />
-          <span className="hidden sm:inline">Broadcast</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('logs')}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-            activeTab === 'logs'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Zap className="size-4" />
-          <span className="hidden sm:inline">Activity Logs</span>
-        </button>
-        <button
-          onClick={() => setActiveTab('connect')}
-          className={`flex-1 flex items-center justify-center gap-2 rounded-lg px-3 py-2.5 text-sm font-medium transition-all ${
-            activeTab === 'connect'
-              ? 'bg-background text-foreground shadow-sm'
-              : 'text-muted-foreground hover:text-foreground'
-          }`}
-        >
-          <Smartphone className="size-4" />
-          <span className="hidden sm:inline">Connect Number</span>
-        </button>
-      </div>
-
-      {/* Tab Content */}
-      {activeTab === 'broadcast' && <BroadcastSection />}
-      {activeTab === 'logs' && <WhatsAppLogsSection />}
-      {activeTab === 'connect' && <WhatsAppConnectCard />}
+      <WhatsAppLogsSection />
     </div>
   );
 }
