@@ -411,7 +411,7 @@ export function DiscountSettingsCard({ discountEnabled: initialEnabled, discount
             aria-label="Toggle discount"
             onClick={() => setEnabled(!enabled)}
             className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
-              enabled ? 'bg-primary' : 'bg-muted'
+              enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
             }`}
           >
             <span
