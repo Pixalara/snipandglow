@@ -114,7 +114,7 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
               <select
                 value={statusFilter}
                 onChange={(e) => setStatusFilter(e.target.value as AppointmentStatus | 'all')}
-                className="h-9 min-w-[140px] min-h-[44px] sm:min-h-0 rounded-xl border border-border bg-background pl-9 pr-9 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
+                className="h-9 min-w-[160px] min-h-[44px] sm:min-h-0 rounded-xl border border-border bg-background pl-9 pr-8 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring appearance-none cursor-pointer"
                 aria-label="Filter by status"
               >
                 <option value="all">All Status</option>
