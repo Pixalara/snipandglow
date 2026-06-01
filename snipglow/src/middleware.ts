@@ -2,7 +2,7 @@ import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
 
 // Routes that don't require authentication
-const publicRoutes = new Set(["/", "/login", "/verify-otp", "/verify-phone", "/signup", "/blog", "/privacy", "/terms", "/refund"]);
+const publicRoutes = new Set(["/", "/login", "/verify-otp", "/verify-phone", "/signup", "/blog", "/privacy", "/terms", "/refund", "/auth/confirm"]);
 
 // Prefixes that are always public
 const publicPrefixes = ["/api/auth", "/api/whatsapp", "/api/cron", "/blog/", "/cal/", "/book/"];

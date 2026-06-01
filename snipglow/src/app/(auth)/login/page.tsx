@@ -22,7 +22,8 @@ export default function LoginPage() {
         provider: 'google',
         options: {
           redirectTo: `${window.location.origin}/api/auth/callback`,
-          queryParams: { access_type: 'offline', prompt: 'consent' },
+          queryParams: { access_type: 'offline', prompt: 'select_account' },
+          skipBrowserRedirect: false,
         },
       });
       if (error) {
