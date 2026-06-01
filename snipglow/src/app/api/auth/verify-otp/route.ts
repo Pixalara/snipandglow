@@ -73,45 +73,45 @@ export async function POST(request: NextRequest) {
     const phoneE164 = `+${phoneNormalized}`;
     let existingUser: any = null;
 
-    // 1. Check employees table for this phone (links to auth_user_id)
-    const { data: employee } = await (admin
-      .from('employees')
-      .select('auth_user_id, tenant_id, branch_id, role, name')
-      .eq('phone', phoneE164)
-      .eq('is_active', true)
-      .limit(1)
-      .maybeSingle() as any);
-
-    if (!employee) {
-      // Also try without + prefix
-      const { data: emp2 } = await (admin
+    // 1. Check employees table for this phone — try multiple formats
+    let foundEmployee: any = null;
+    const phonesToTry = [phoneE164, phoneNormalized, phone, `+${phone}`];
+    
+    for (const p of phonesToTry) {
+      const { data: emp } = await (admin
         .from('employees')
         .select('auth_user_id, tenant_id, branch_id, role, name')
-        .eq('phone', phoneNormalized)
+        .eq('phone', p)
         .eq('is_active', true)
         .limit(1)
         .maybeSingle() as any);
-      if (emp2) Object.assign(employee || {}, emp2);
+      if (emp?.auth_user_id) {
+        foundEmployee = emp;
+        break;
+      }
     }
 
-    if (employee?.auth_user_id) {
-      // Found employee — get their auth user
-      const { data: { user: authUser } } = await admin.auth.admin.getUserById(employee.auth_user_id);
+    if (foundEmployee?.auth_user_id) {
+      const { data: { user: authUser } } = await admin.auth.admin.getUserById(foundEmployee.auth_user_id);
       if (authUser) {
         existingUser = authUser;
       }
     }
 
-    // 2. Fallback: check auth.users directly
+    // 2. Fallback: check auth.users directly by phone or metadata
     if (!existingUser) {
-      const { data: existingUsers } = await admin.auth.admin.listUsers();
+      const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
       existingUser = existingUsers?.users?.find(
         (u: any) => u.phone === phoneE164 ||
           u.user_metadata?.phone === phone ||
           u.user_metadata?.phone === phoneNormalized ||
-          u.user_metadata?.phone === phoneE164
+          u.user_metadata?.phone === phoneE164 ||
+          u.email === `${phoneNormalized}@phone.snipandglow.com`
       ) || null;
     }
+
+    // Use foundEmployee for tenant context (more reliable than existingUser.user_metadata)
+    const employee = foundEmployee;
 
     if (existingUser) {
       // User exists — generate a magic link for sign-in
@@ -135,7 +135,7 @@ export async function POST(request: NextRequest) {
       const type = actionUrl.searchParams.get('type') || 'magiclink';
 
       // Determine redirect: check employee record or user_metadata
-      const hasTenant = employee?.tenant_id || existingUser.user_metadata?.tenant_id;
+      const hasTenant = foundEmployee?.tenant_id || existingUser.user_metadata?.tenant_id;
 
       return NextResponse.json({
         success: true,
