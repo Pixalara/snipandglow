@@ -77,29 +77,51 @@ export async function POST(request: NextRequest) {
     let foundEmployee: any = null;
     const phonesToTry = [phoneE164, phoneNormalized, phone, `+${phone}`];
     
+    console.log('[VerifyOTP] Looking up employee for phones:', phonesToTry);
+    
     for (const p of phonesToTry) {
       const { data: emp } = await (admin
         .from('employees')
-        .select('auth_user_id, tenant_id, branch_id, role, name')
+        .select('auth_user_id, tenant_id, branch_id, role, name, id')
         .eq('phone', p)
         .eq('is_active', true)
         .limit(1)
         .maybeSingle() as any);
-      if (emp?.auth_user_id) {
+      if (emp) {
         foundEmployee = emp;
+        console.log('[VerifyOTP] Found employee:', emp.name, 'auth_user_id:', emp.auth_user_id);
         break;
       }
     }
 
-    if (foundEmployee?.auth_user_id) {
+    // If employee found but no auth_user_id, search auth.users by email pattern
+    if (foundEmployee && !foundEmployee.auth_user_id) {
+      console.log('[VerifyOTP] Employee found but no auth_user_id — searching auth.users');
+      const tempEmail = `${phoneNormalized}@phone.snipandglow.com`;
+      const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      const matchedUser = existingUsers?.users?.find(
+        (u: any) => u.email === tempEmail ||
+          u.user_metadata?.phone === phoneNormalized ||
+          u.user_metadata?.phone === phoneE164 ||
+          u.phone === phoneE164
+      );
+      if (matchedUser) {
+        existingUser = matchedUser;
+        // Backfill auth_user_id on the employee record
+        await (admin.from('employees').update({ auth_user_id: matchedUser.id } as any).eq('id', foundEmployee.id) as any);
+        console.log('[VerifyOTP] Backfilled auth_user_id for employee:', foundEmployee.name);
+      }
+    } else if (foundEmployee?.auth_user_id) {
       const { data: { user: authUser } } = await admin.auth.admin.getUserById(foundEmployee.auth_user_id);
       if (authUser) {
         existingUser = authUser;
+        console.log('[VerifyOTP] Found auth user:', authUser.email);
       }
     }
 
     // 2. Fallback: check auth.users directly by phone or metadata
     if (!existingUser) {
+      console.log('[VerifyOTP] No employee match — searching all auth.users');
       const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
       existingUser = existingUsers?.users?.find(
         (u: any) => u.phone === phoneE164 ||
@@ -108,6 +130,7 @@ export async function POST(request: NextRequest) {
           u.user_metadata?.phone === phoneE164 ||
           u.email === `${phoneNormalized}@phone.snipandglow.com`
       ) || null;
+      console.log('[VerifyOTP] Auth.users search result:', existingUser?.email || 'NOT FOUND');
     }
 
     // Use foundEmployee for tenant context (more reliable than existingUser.user_metadata)
@@ -136,6 +159,7 @@ export async function POST(request: NextRequest) {
 
       // Determine redirect: check employee record or user_metadata
       const hasTenant = foundEmployee?.tenant_id || existingUser.user_metadata?.tenant_id;
+      console.log('[VerifyOTP] hasTenant:', hasTenant, 'redirecting to:', hasTenant ? '/dashboard' : '/onboarding');
 
       return NextResponse.json({
         success: true,
