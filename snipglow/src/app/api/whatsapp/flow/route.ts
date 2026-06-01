@@ -350,12 +350,8 @@ async function handleDateSelected(data: any, flowToken: string) {
 async function processBooking(data: any, flowToken: string) {
   const { service_ids, service_id, date, time_slot, customer_name, customer_phone, gender } = data;
 
-  console.log('[Flow Booking] Full data:', JSON.stringify(data));
-
   let tokenData: any = {};
-  try {
-    tokenData = JSON.parse(flowToken);
-  } catch {}
+  try { tokenData = JSON.parse(flowToken); } catch {}
   const customerPhone = tokenData.phone || customer_phone || '';
   const salonName = tokenData.salon_name || '';
   const isReschedule = tokenData.is_reschedule === true;
@@ -371,43 +367,72 @@ async function processBooking(data: any, flowToken: string) {
   }
 
   const admin = createAdminClient();
+  const phoneE164 = customerPhone ? (customerPhone.startsWith('+') ? customerPhone : `+${customerPhone}`) : '';
+  const customerName = existingCustomerName || customer_name || 'WhatsApp Customer';
 
-  // Fetch all selected services
-  const { data: services } = await admin
-    .from('services')
-    .select('id, name, price, duration_minutes, tenant_id, branch_id')
-    .in('id', selectedServiceIds);
+  // ── PARALLEL FETCH: services + tenant settings + existing appointments + customer ──
+  const [servicesRes, tenantRes, existingApptsRes, customerRes] = await Promise.all([
+    admin.from('services').select('id, name, price, duration_minutes, tenant_id, branch_id').in('id', selectedServiceIds),
+    (admin.from('tenants' as any).select('settings').eq('id', tokenData.tenant_id || '').single() as any),
+    tokenData.tenant_id ? (admin.from('appointments').select('start_time, end_time, customer_id').eq('tenant_id', tokenData.tenant_id).eq('appointment_date', date).neq('status', 'cancelled') as any) : Promise.resolve({ data: [] }),
+    existingCustomerId
+      ? Promise.resolve({ data: { id: existingCustomerId } })
+      : phoneE164
+        ? (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', tokenData.tenant_id || '').maybeSingle() as any)
+        : Promise.resolve({ data: null }),
+  ]);
 
+  const services = servicesRes.data;
   if (!services || services.length === 0) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Service not found.' } };
   }
 
   const primaryService = services[0];
   const totalDuration = services.reduce((sum: number, s: any) => sum + s.duration_minutes, 0);
-
-  // Calculate end time
   const [startH, startM] = time_slot.split(':').map(Number);
   const totalMin = startH * 60 + startM + totalDuration;
   const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
 
-  const customerName = existingCustomerName || customer_name || 'WhatsApp Customer';
-  let customerId: string | null = existingCustomerId || null;
-  const phoneE164 = customerPhone ? (customerPhone.startsWith('+') ? customerPhone : `+${customerPhone}`) : '';
+  // ── VALIDATIONS (using already-fetched data, no extra DB calls) ──
+  const tenantSettings = (tenantRes.data?.settings as any) ?? {};
+  const blockedSlots: Array<{ date: string; slots: string[] }> = tenantSettings.blocked_slots || [];
+  const blockedForDate = blockedSlots.find((b: any) => b.date === date);
+  const slotTime = time_slot.substring(0, 5);
+  if (blockedForDate?.slots.includes(slotTime)) {
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is not available. Please choose another time.' } };
+  }
 
-  if (!customerId && phoneE164) {
-    const { data: existing } = await (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', primaryService.tenant_id).single() as any);
-    if (existing) {
-      customerId = existing.id;
-      if (gender) await (admin.from('customers').update({ gender } as any).eq('id', existing.id) as any);
+  const allAppts: any[] = existingApptsRes.data || [];
+  const slotStart = toMinutes(time_slot);
+  const slotEnd = slotStart + totalDuration;
+  const maxPerSlot: number = tenantSettings.max_appointments_per_slot || 1;
+
+  const overlapCount = allAppts.filter((appt: any) => {
+    const apptStart = toMinutes(appt.start_time);
+    const apptEnd = toMinutes(appt.end_time);
+    return slotStart < apptEnd && slotEnd > apptStart;
+  }).length;
+  if (overlapCount >= maxPerSlot) {
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is fully booked. Please choose another time.' } };
+  }
+
+  // Past slot check
+  const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
+  const [todayDate, todayTime] = nowIST.split(', ');
+  if (date === todayDate) {
+    const [nowH, nowM] = todayTime.split(':').map(Number);
+    const [slotH, slotM] = time_slot.split(':').map(Number);
+    if (slotH * 60 + slotM <= nowH * 60 + nowM + 60) {
+      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is no longer available. Please select a later time (at least 1 hour from now).' } };
     }
   }
 
+  // ── RESOLVE CUSTOMER (create if needed) ──
+  let customerId: string | null = existingCustomerId || customerRes.data?.id || null;
+
   if (!customerId && customerName !== 'WhatsApp Customer') {
-    const { data: byName } = await (admin.from('customers').select('id').eq('name', customerName).eq('tenant_id', primaryService.tenant_id).limit(1).single() as any);
-    if (byName) {
-      customerId = byName.id;
-      if (gender) await (admin.from('customers').update({ gender } as any).eq('id', byName.id) as any);
-    }
+    const { data: byName } = await (admin.from('customers').select('id').eq('name', customerName).eq('tenant_id', primaryService.tenant_id).limit(1).maybeSingle() as any);
+    customerId = byName?.id ?? null;
   }
 
   if (!customerId) {
@@ -425,102 +450,32 @@ async function processBooking(data: any, flowToken: string) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'Could not create booking. Please try again.' } };
   }
 
-  // If reschedule: cancel existing active appointment
-  if (isReschedule && customerId) {
-    await (admin
-      .from('appointments')
-      .update({ status: 'cancelled' } as any)
-      .eq('customer_id', customerId)
-      .eq('tenant_id', primaryService.tenant_id)
-      .in('status', ['booked', 'confirmed'])
-      .order('appointment_date', { ascending: true })
-      .limit(1) as any);
+  // Per-customer daily limit check (using already-fetched allAppts)
+  const customerAppts = allAppts.filter((a: any) => a.customer_id === customerId);
+  if (customerAppts.length >= 2) {
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You can only book up to 2 appointments per day. Please choose a different date.' } };
+  }
+  const alreadyBooked = customerAppts.some((appt: any) => {
+    const apptStart = toMinutes(appt.start_time);
+    const apptEnd = toMinutes(appt.end_time);
+    return slotStart < apptEnd && slotEnd > apptStart;
+  });
+  if (alreadyBooked) {
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You already have an appointment at this time. Please choose a different slot.' } };
   }
 
-  // Validate: check blocked slots
-  const { data: tenantCheck } = await (admin.from('tenants' as any).select('settings').eq('id', primaryService.tenant_id).single() as any);
-  const blockedSlots: Array<{ date: string; slots: string[] }> = (tenantCheck?.settings as any)?.blocked_slots || [];
-  const blockedForDate = blockedSlots.find((b: any) => b.date === date);
-  const slotTime = time_slot.substring(0, 5); // "09:00:00" -> "09:00"
-  if (blockedForDate?.slots.includes(slotTime)) {
-    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is not available. Please choose another time.' } };
-  }
+  // ── PARALLEL: reschedule cancel + employee fetch ──
+  const [, employeeRes] = await Promise.all([
+    isReschedule ? (admin.from('appointments').update({ status: 'cancelled' } as any)
+      .eq('customer_id', customerId).eq('tenant_id', primaryService.tenant_id)
+      .in('status', ['booked', 'confirmed']).order('appointment_date', { ascending: true }).limit(1) as any)
+      : Promise.resolve(null),
+    admin.from('employees').select('id').eq('tenant_id', primaryService.tenant_id).eq('is_active', true).limit(1).single(),
+  ]);
 
-  // Validate: same customer cannot book the same overlapping slot twice
-  const { data: customerExistingAppts } = await (admin
-    .from('appointments')
-    .select('start_time, end_time')
-    .eq('customer_id', customerId)
-    .eq('tenant_id', primaryService.tenant_id)
-    .eq('appointment_date', date)
-    .neq('status', 'cancelled') as any);
+  const assignedEmployeeId = employeeRes.data?.id ?? customerId;
 
-  if (customerExistingAppts && customerExistingAppts.length > 0) {
-    // Max 2 bookings per customer per day
-    if (customerExistingAppts.length >= 2) {
-      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You can only book up to 2 appointments per day. Please choose a different date.' } };
-    }
-
-    // Also block overlapping time
-    const slotStart = toMinutes(time_slot);
-    const slotEnd = slotStart + totalDuration;
-    const alreadyBooked = customerExistingAppts.some((appt: any) => {
-      const apptStart = toMinutes(appt.start_time);
-      const apptEnd = toMinutes(appt.end_time);
-      return slotStart < apptEnd && slotEnd > apptStart;
-    });
-    if (alreadyBooked) {
-      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You already have an appointment at this time. Please choose a different slot.' } };
-    }
-  }
-
-  // Validate: check for overlapping existing appointments (respect capacity)
-  const { data: existingAppts } = await (admin
-    .from('appointments')
-    .select('start_time, end_time')
-    .eq('tenant_id', primaryService.tenant_id)
-    .eq('appointment_date', date)
-    .neq('status', 'cancelled') as any);
-
-  if (existingAppts && existingAppts.length > 0) {
-    const slotStart = toMinutes(time_slot);
-    const slotEnd = slotStart + totalDuration;
-    const overlapCount = existingAppts.filter((appt: any) => {
-      const apptStart = toMinutes(appt.start_time);
-      const apptEnd = toMinutes(appt.end_time);
-      return slotStart < apptEnd && slotEnd > apptStart;
-    }).length;
-    const maxPerSlot: number = (tenantCheck?.settings as any)?.max_appointments_per_slot || 1;
-    if (overlapCount >= maxPerSlot) {
-      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is fully booked. Please choose another time.' } };
-    }
-  }
-
-  // Validate: check if slot is in the past (1-hour buffer, IST)
-  const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
-  const [todayDate, todayTime] = nowIST.split(', ');
-  if (date === todayDate) {
-    const [nowH, nowM] = todayTime.split(':').map(Number);
-    const [slotH, slotM] = time_slot.split(':').map(Number);
-    if (slotH * 60 + slotM <= nowH * 60 + nowM + 60) {
-      return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This time slot is no longer available. Please select a later time (at least 1 hour from now).' } };
-    }
-  }
-
-  // Get first active employee — capacity is enforced by application logic above,
-  // not by DB constraint (which has been dropped). Same employee can handle
-  // multiple concurrent bookings when max_appointments_per_slot > 1.
-  const { data: firstEmployee } = await admin
-    .from('employees')
-    .select('id')
-    .eq('tenant_id', primaryService.tenant_id)
-    .eq('is_active', true)
-    .limit(1)
-    .single();
-
-  const assignedEmployeeId = firstEmployee?.id ?? customerId!;
-
-  // Create appointment
+  // ── CREATE APPOINTMENT ──
   const { error: apptError } = await (admin.from('appointments').insert({
     tenant_id: primaryService.tenant_id,
     branch_id: primaryService.branch_id,
@@ -540,77 +495,41 @@ async function processBooking(data: any, flowToken: string) {
     return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'This slot is fully booked. Please choose another time.' } };
   }
 
-  // Send confirmation messages
-  const serviceNames = services.map((s: any) => s.name).join(', ');
+  // ── RETURN SUCCESS IMMEDIATELY — send notifications in background ──
   const credentials = getPlatformCredentials();
   if (credentials && (customerPhone || customer_phone)) {
-    const { sendMessage } = await import('@/lib/whatsapp/templates');
+    const serviceNames = services.map((s: any) => s.name).join(', ');
     const dateLabel = new Date(date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel = formatTime12h(time_slot);
     const dateTimeFormatted = `${dateLabel}, ${timeLabel}`;
-    const calendarToken = Buffer.from(
-      [serviceNames + ' at ' + (salonName || 'Salon'), date, time_slot, endTime, salonName || ''].join('|')
-    ).toString('base64url');
+    const calendarToken = Buffer.from([serviceNames + ' at ' + (salonName || 'Salon'), date, time_slot, endTime, salonName || ''].join('|')).toString('base64url');
 
-    if (isReschedule) {
-      await sendMessage(credentials, customerPhone || customer_phone, {
-        type: 'template',
-        template: {
-          name: 'appointment_rescheduled_v1',
-          language: { code: 'en' },
-          components: [
-            {
-              type: 'body',
-              parameters: [
+    // Fire-and-forget: don't await notifications — return SUCCESS to Meta immediately
+    Promise.all([
+      // Customer confirmation
+      import('@/lib/whatsapp/templates').then(({ sendMessage }) =>
+        sendMessage(credentials, customerPhone || customer_phone, {
+          type: 'template',
+          template: {
+            name: isReschedule ? 'appointment_rescheduled_v1' : 'booking_confirmation_v2',
+            language: { code: 'en' },
+            components: [
+              { type: 'body', parameters: [
                 { type: 'text', text: customerName },
                 { type: 'text', text: serviceNames },
                 { type: 'text', text: dateTimeFormatted },
                 { type: 'text', text: salonName || 'Your Salon' },
-              ],
-            },
-            { type: 'button', sub_type: 'url', index: '2', parameters: [{ type: 'text', text: calendarToken }] },
-          ],
-        },
-      });
-    } else {
-      const templateResult = await sendMessage(credentials, customerPhone || customer_phone, {
-        type: 'template',
-        template: {
-          name: 'booking_confirmation_v2',
-          language: { code: 'en' },
-          components: [
-            {
-              type: 'body',
-              parameters: [
-                { type: 'text', text: customerName },
-                { type: 'text', text: serviceNames },
-                { type: 'text', text: dateTimeFormatted },
-                { type: 'text', text: salonName || 'Your Salon' },
-              ],
-            },
-            { type: 'button', sub_type: 'url', index: '2', parameters: [{ type: 'text', text: calendarToken }] },
-          ],
-        },
-      });
-      console.log('[Flow] Template send result:', JSON.stringify(templateResult));
-    }
-
-    // Notify salon owner via approved Utility template (works 24/7)
-    const dateLabel2 = new Date(date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
-    const timeLabel2 = formatTime12h(time_slot);
-    const dateTimeStr = `${dateLabel2}, ${timeLabel2}`;
-
-    if (isReschedule) {
-      await notifyOwnerReschedule(admin, credentials, primaryService.tenant_id,
-        salonName || 'Your Salon', customerName, customerPhone || customer_phone,
-        serviceNames, dateTimeStr
-      );
-    } else {
-      await notifyOwnerNewBooking(admin, credentials, primaryService.tenant_id,
-        salonName || 'Your Salon', customerName, customerPhone || customer_phone,
-        serviceNames, dateTimeStr
-      );
-    }
+              ]},
+              { type: 'button', sub_type: 'url', index: '2', parameters: [{ type: 'text', text: calendarToken }] },
+            ],
+          },
+        })
+      ),
+      // Owner notification
+      isReschedule
+        ? notifyOwnerReschedule(admin, credentials, primaryService.tenant_id, salonName || 'Your Salon', customerName, customerPhone || customer_phone, services.map((s: any) => s.name).join(', '), dateTimeFormatted)
+        : notifyOwnerNewBooking(admin, credentials, primaryService.tenant_id, salonName || 'Your Salon', customerName, customerPhone || customer_phone, services.map((s: any) => s.name).join(', '), dateTimeFormatted),
+    ]).catch(err => console.error('[Flow] Background notification error:', err));
   }
 
   return {
