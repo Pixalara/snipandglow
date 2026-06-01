@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/auth';
 import { WHATSAPP_RATES_INR, type TemplateCategory } from '@/lib/whatsapp/pricing';
+import Link from 'next/link';
 
 // =============================================================================
 // Admin — WhatsApp Cost Report
@@ -17,46 +18,61 @@ const CATEGORY_COLORS: Record<string, string> = {
   unknown: 'text-slate-400',
 };
 
-const CATEGORY_LABELS: Record<string, string> = {
-  marketing: 'Marketing',
-  utility: 'Utility',
-  authentication: 'Auth',
-  authentication_intl: 'Auth-Intl',
-  service: 'Service (free)',
-  unknown: 'Unknown',
-};
-
-function formatINR(amount: number): string {
-  return `₹${amount.toFixed(4)}`;
-}
-
 function formatINRRounded(amount: number): string {
   return `₹${amount.toFixed(2)}`;
 }
 
-export default async function WhatsAppCostsPage() {
-  await requireAdmin();
-  const admin = createAdminClient();
+type Period = 'today' | 'week' | 'month';
 
-  // Get current month range
+function getPeriodRange(period: Period): { start: string; label: string } {
   const now = new Date();
-  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  if (period === 'today') {
+    const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).toISOString();
+    return { start, label: 'Today' };
+  }
+  if (period === 'week') {
+    const day = now.getDay();
+    const diff = day === 0 ? -6 : 1 - day;
+    const monday = new Date(now);
+    monday.setDate(now.getDate() + diff);
+    monday.setHours(0, 0, 0, 0);
+    return { start: monday.toISOString(), label: 'This Week' };
+  }
+  // month (default)
+  const start = new Date(now.getFullYear(), now.getMonth(), 1).toISOString();
+  return { start, label: now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' }) };
+}
+
+export default async function WhatsAppCostsPage({
+  searchParams,
+}: {
+  searchParams: Promise<{ period?: string }>;
+}) {
+  await requireAdmin();
+  const params = await searchParams;
+  const period = (params.period as Period) || 'month';
+  const { start: periodStart, label: periodLabel } = getPeriodRange(period);
+
+  const admin = createAdminClient();
+  const now = new Date();
   const lastMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
   const lastMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59).toISOString();
+  const lastMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+    .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
 
   // Fetch all tenants
   const { data: tenants } = await (admin.from('tenants' as any).select('id, name') as any);
   const tenantMap: Record<string, string> = {};
   for (const t of tenants ?? []) tenantMap[t.id] = t.name;
 
-  // Fetch this month's messages with category
-  const { data: thisMonthMsgs } = await (admin
+  // Fetch selected period messages
+  const { data: periodMsgs } = await (admin
     .from('whatsapp_sessions' as any)
     .select('tenant_id, direction, template_name, template_category')
-    .gte('created_at', monthStart)
+    .gte('created_at', periodStart)
     .eq('direction', 'outbound') as any);
 
-  // Fetch last month's messages
+  // Fetch last month for comparison (only shown in month view)
   const { data: lastMonthMsgs } = await (admin
     .from('whatsapp_sessions' as any)
     .select('tenant_id, direction, template_name, template_category')
@@ -64,53 +80,62 @@ export default async function WhatsAppCostsPage() {
     .lte('created_at', lastMonthEnd)
     .eq('direction', 'outbound') as any);
 
-  // Calculate per-tenant costs
   function calcCosts(msgs: any[]) {
     const byTenant: Record<string, {
       total: number;
       byCategory: Record<string, { count: number; cost: number }>;
     }> = {};
-
     for (const msg of msgs ?? []) {
       const tid = msg.tenant_id;
       if (!byTenant[tid]) byTenant[tid] = { total: 0, byCategory: {} };
-
       const cat = (msg.template_category || 'utility') as TemplateCategory;
       const rate = WHATSAPP_RATES_INR[cat] ?? WHATSAPP_RATES_INR.utility;
-
-      if (!byTenant[tid].byCategory[cat]) {
-        byTenant[tid].byCategory[cat] = { count: 0, cost: 0 };
-      }
+      if (!byTenant[tid].byCategory[cat]) byTenant[tid].byCategory[cat] = { count: 0, cost: 0 };
       byTenant[tid].byCategory[cat].count++;
       byTenant[tid].byCategory[cat].cost += rate;
       byTenant[tid].total += rate;
     }
-
     return byTenant;
   }
 
-  const thisMonth = calcCosts(thisMonthMsgs ?? []);
-  const lastMonth = calcCosts(lastMonthMsgs ?? []);
+  const currentData = calcCosts(periodMsgs ?? []);
+  const lastMonthData = calcCosts(lastMonthMsgs ?? []);
+  const totalCurrent = Object.values(currentData).reduce((s, t) => s + t.total, 0);
+  const totalLastMonth = Object.values(lastMonthData).reduce((s, t) => s + t.total, 0);
+  const totalMsgsCurrent = (periodMsgs ?? []).length;
+  const sortedTenants = Object.entries(currentData).sort(([, a], [, b]) => b.total - a.total);
 
-  const totalThisMonth = Object.values(thisMonth).reduce((s, t) => s + t.total, 0);
-  const totalLastMonth = Object.values(lastMonth).reduce((s, t) => s + t.total, 0);
-  const totalMsgsThisMonth = (thisMonthMsgs ?? []).length;
-
-  // Sort tenants by cost descending
-  const sortedTenants = Object.entries(thisMonth)
-    .sort(([, a], [, b]) => b.total - a.total);
-
-  const monthLabel = now.toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
-  const lastMonthLabel = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-    .toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+  const PERIODS: { key: Period; label: string }[] = [
+    { key: 'today', label: 'Today' },
+    { key: 'week', label: 'This Week' },
+    { key: 'month', label: 'This Month' },
+  ];
 
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-2xl font-bold text-white">WhatsApp Cost Report</h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Per-tenant Meta charges · India pricing effective April 1, 2026
-        </p>
+      <div className="flex items-start justify-between gap-4 flex-wrap">
+        <div>
+          <h1 className="text-2xl font-bold text-white">WhatsApp Cost Report</h1>
+          <p className="text-sm text-slate-400 mt-1">
+            Per-tenant Meta charges · India pricing effective April 1, 2026
+          </p>
+        </div>
+        {/* Period filter */}
+        <div className="flex items-center gap-1 rounded-xl border border-slate-800 bg-slate-900/50 p-1">
+          {PERIODS.map(p => (
+            <Link
+              key={p.key}
+              href={`/admin/whatsapp-costs?period=${p.key}`}
+              className={`px-4 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                period === p.key
+                  ? 'bg-slate-700 text-white'
+                  : 'text-slate-400 hover:text-white'
+              }`}
+            >
+              {p.label}
+            </Link>
+          ))}
+        </div>
       </div>
 
       {/* Rate card */}
@@ -134,9 +159,9 @@ export default async function WhatsAppCostsPage() {
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-3">
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs text-slate-500 uppercase">{monthLabel}</p>
-          <p className="text-2xl font-bold text-emerald-400 mt-1">{formatINRRounded(totalThisMonth)}</p>
-          <p className="text-xs text-slate-500 mt-1">{totalMsgsThisMonth} messages</p>
+          <p className="text-xs text-slate-500 uppercase">{periodLabel}</p>
+          <p className="text-2xl font-bold text-emerald-400 mt-1">{formatINRRounded(totalCurrent)}</p>
+          <p className="text-xs text-slate-500 mt-1">{totalMsgsCurrent} messages</p>
         </div>
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
           <p className="text-xs text-slate-500 uppercase">{lastMonthLabel}</p>
@@ -145,7 +170,7 @@ export default async function WhatsAppCostsPage() {
         <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
           <p className="text-xs text-slate-500 uppercase">Avg per Salon</p>
           <p className="text-2xl font-bold text-blue-400 mt-1">
-            {sortedTenants.length > 0 ? formatINRRounded(totalThisMonth / sortedTenants.length) : '₹0.00'}
+            {sortedTenants.length > 0 ? formatINRRounded(totalCurrent / sortedTenants.length) : '₹0.00'}
           </p>
         </div>
       </div>
@@ -153,7 +178,7 @@ export default async function WhatsAppCostsPage() {
       {/* Per-tenant breakdown */}
       <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
         <div className="px-4 py-3 border-b border-slate-800">
-          <h2 className="text-sm font-semibold text-white">Per-Tenant Breakdown — {monthLabel}</h2>
+          <h2 className="text-sm font-semibold text-white">Per-Tenant Breakdown — {periodLabel}</h2>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
@@ -172,12 +197,12 @@ export default async function WhatsAppCostsPage() {
               {sortedTenants.length === 0 ? (
                 <tr>
                   <td colSpan={7} className="px-4 py-8 text-center text-sm text-slate-500">
-                    No messages sent this month
+                    No messages sent in this period
                   </td>
                 </tr>
               ) : (
                 sortedTenants.map(([tenantId, data]) => {
-                  const lastMonthData = lastMonth[tenantId];
+                  const lmData = lastMonthData[tenantId];
                   const totalMsgs = Object.values(data.byCategory).reduce((s, c) => s + c.count, 0);
                   const marketingCost = data.byCategory.marketing?.cost ?? 0;
                   const utilityCost = data.byCategory.utility?.cost ?? 0;
@@ -208,7 +233,7 @@ export default async function WhatsAppCostsPage() {
                         {formatINRRounded(data.total)}
                       </td>
                       <td className="px-4 py-3 text-right text-xs text-slate-500">
-                        {lastMonthData ? formatINRRounded(lastMonthData.total) : '—'}
+                        {lmData ? formatINRRounded(lmData.total) : '—'}
                       </td>
                     </tr>
                   );
@@ -221,7 +246,7 @@ export default async function WhatsAppCostsPage() {
                   <td className="px-4 py-3 text-xs font-bold text-slate-300">TOTAL</td>
                   <td colSpan={4} />
                   <td className="px-4 py-3 text-right text-sm font-bold text-emerald-400">
-                    {formatINRRounded(totalThisMonth)}
+                    {formatINRRounded(totalCurrent)}
                   </td>
                   <td className="px-4 py-3 text-right text-xs text-slate-500">
                     {formatINRRounded(totalLastMonth)}
