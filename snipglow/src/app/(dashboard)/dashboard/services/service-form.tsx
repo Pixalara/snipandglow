@@ -65,9 +65,8 @@ export function ServiceForm({ service, onClose }: ServiceFormProps) {
       return;
     }
     if (!durationMinutes || Number(durationMinutes) < 1) {
-      setError('Duration must be at least 1 minute.');
-      setIsSubmitting(false);
-      return;
+      // Default to 30 minutes if not set (duration hidden from UI)
+      setDurationMinutes('30');
     }
     if (!price || Number(price) < 0) {
       setError('Price must be a non-negative number.');
@@ -154,21 +153,7 @@ export function ServiceForm({ service, onClose }: ServiceFormProps) {
         )}
       </div>
 
-      {/* Duration */}
-      <div className="space-y-1.5">
-        <label htmlFor="service-duration" className="text-sm font-medium text-foreground">
-          Duration (minutes)
-        </label>
-        <Input
-          id="service-duration"
-          type="number"
-          min={1}
-          value={durationMinutes}
-          onChange={(e) => setDurationMinutes(e.target.value)}
-          placeholder="e.g., 30"
-          required
-        />
-      </div>
+      {/* Duration — hidden, defaults to 30 min (not relevant when multiple bookings per slot allowed) */}
 
       {/* Price */}
       <div className="space-y-1.5">
