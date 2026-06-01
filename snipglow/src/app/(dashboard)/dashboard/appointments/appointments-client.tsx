@@ -263,53 +263,45 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
       header: 'Actions',
       render: (row) => {
         const loading = isPending && actionId === row.id;
-        const canReschedule = row.status === 'booked' || row.status === 'confirmed';
+        const canAct = row.status === 'booked' || row.status === 'confirmed';
         return (
-          <div className="grid grid-cols-2 gap-1.5 w-fit">
-            {canReschedule && (
-              <button
-                onClick={() => setEditTarget(row)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 hover:border-violet-300 dark:bg-violet-900/20 dark:text-violet-400 dark:border-violet-800 dark:hover:bg-violet-900/40 transition-all active:scale-95"
-                title="Edit Services"
-              >
-                <Pencil className="size-3.5" />
-                <span>Edit</span>
-              </button>
-            )}
-            {canReschedule && (
-              <button
-                onClick={() => setRescheduleTarget(row)}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 hover:border-amber-300 dark:bg-amber-900/20 dark:text-amber-400 dark:border-amber-800 dark:hover:bg-amber-900/40 transition-all active:scale-95"
-                title="Reschedule"
-              >
-                <CalendarClock className="size-3.5" />
-                <span>Reschedule</span>
-              </button>
-            )}
-            {canReschedule && (
-              <button
-                onClick={() => setCompleteTarget(row)}
-                disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 hover:bg-blue-100 hover:border-blue-300 dark:bg-blue-900/20 dark:text-blue-400 dark:border-blue-800 dark:hover:bg-blue-900/40 transition-all active:scale-95 disabled:opacity-50"
-                title="Complete & Bill"
-              >
-                <CircleCheck className="size-3.5" />
-                <span>Complete</span>
-              </button>
-            )}
-            {canReschedule && (
-              <button
-                onClick={() => handleStatusChange(row.id, 'cancelled')}
-                disabled={loading}
-                className="inline-flex items-center justify-center gap-2 rounded-xl px-3 py-1.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 hover:border-red-300 dark:bg-red-900/20 dark:text-red-400 dark:border-red-800 dark:hover:bg-red-900/40 transition-all active:scale-95 disabled:opacity-50"
-                title="Cancel"
-              >
-                <XCircle className="size-3.5" />
-                <span>Cancel</span>
-              </button>
+          <div className="flex flex-col gap-1 min-w-[160px]">
+            {canAct && (
+              <div className="grid grid-cols-2 gap-1">
+                <button
+                  onClick={() => setEditTarget(row)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors"
+                >
+                  <Pencil className="size-3" />
+                  Edit
+                </button>
+                <button
+                  onClick={() => setRescheduleTarget(row)}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
+                >
+                  <CalendarClock className="size-3" />
+                  Reschedule
+                </button>
+                <button
+                  onClick={() => setCompleteTarget(row)}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
+                >
+                  <CircleCheck className="size-3" />
+                  Complete
+                </button>
+                <button
+                  onClick={() => handleStatusChange(row.id, 'cancelled')}
+                  disabled={loading}
+                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
+                >
+                  <XCircle className="size-3" />
+                  Cancel
+                </button>
+              </div>
             )}
             {(row.status === 'completed' || row.status === 'cancelled') && (
-              <span className="text-sm text-muted-foreground italic px-2">—</span>
+              <span className="text-xs text-muted-foreground italic">—</span>
             )}
           </div>
         );
