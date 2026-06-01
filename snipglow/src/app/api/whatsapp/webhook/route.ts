@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
+import { notifyOwner } from '@/lib/whatsapp/notify-owner';
 import { resolveTenant, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import crypto from 'crypto';
@@ -710,29 +711,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
         if (!cancelError) {
           // Notify salon owner
-          const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
-          console.log('[Webhook] Cancel - owner phone:', tenantData?.phone);
-          
-          if (tenantData?.phone) {
-            // Ensure phone has country code (India +91)
-            let ownerPhone = tenantData.phone.replace(/\D/g, '');
-            if (ownerPhone.length === 10) {
-              ownerPhone = '91' + ownerPhone; // Add India country code
-            }
-            console.log('[Webhook] Sending cancel notification to owner:', ownerPhone);
-            
-            try {
-              await sendMessage(tenant.credentials, ownerPhone, {
-                type: 'text',
-                text: { body: `⚠️ Appointment Cancelled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\n\nThe customer cancelled their appointment via WhatsApp. Check your dashboard for details.` },
-              });
-              console.log('[Webhook] Cancel notification sent to owner');
-            } catch (err) {
-              console.error('[Webhook] Failed to send cancel notification to owner:', err);
-            }
-          } else {
-            console.log('[Webhook] Cancel notification skipped - no owner phone');
-          }
+          await notifyOwner(admin, tenant.credentials, tenant.tenantId,
+            `⚠️ Appointment Cancelled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\n\nThe customer cancelled their appointment via WhatsApp. Check your dashboard for details.`
+          );
 
           await sendMessage(tenant.credentials, phone, {
             type: 'interactive',
@@ -857,29 +838,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           });
 
           // Notify salon owner
-          const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
-          console.log('[Webhook] Reschedule - owner phone:', tenantData?.phone);
-          
-          if (tenantData?.phone) {
-            // Ensure phone has country code (India +91)
-            let ownerPhone = tenantData.phone.replace(/\D/g, '');
-            if (ownerPhone.length === 10) {
-              ownerPhone = '91' + ownerPhone; // Add India country code
-            }
-            console.log('[Webhook] Sending reschedule notification to owner:', ownerPhone);
-            
-            try {
-              await sendMessage(tenant.credentials, ownerPhone, {
-                type: 'text',
-                text: { body: `📅 Appointment Rescheduled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\nNew Date: ${dateLabel}\nNew Time: ${timeLabel}\n\nCheck your dashboard for details.` },
-              });
-              console.log('[Webhook] Reschedule notification sent to owner');
-            } catch (err) {
-              console.error('[Webhook] Failed to send reschedule notification to owner:', err);
-            }
-          } else {
-            console.log('[Webhook] Reschedule notification skipped - no owner phone');
-          }
+          await notifyOwner(admin, tenant.credentials, tenant.tenantId,
+            `📅 Appointment Rescheduled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\nNew Date: ${dateLabel}\nNew Time: ${timeLabel}\n\nCheck your dashboard for details.`
+          );
         } else {
           await sendMessage(tenant.credentials, phone, {
             type: 'text',
@@ -1071,25 +1032,13 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
 async function notifyOwnerFeedback(admin: any, tenant: TenantContext, customerName: string, customerPhone: string, rating: number) {
   try {
-    const { data: tenantData } = await admin.from('tenants').select('phone').eq('id', tenant.tenantId).single();
-    if (!tenantData?.phone) return;
-
-    // Ensure phone has country code (India +91)
-    let ownerPhone = tenantData.phone.replace(/\D/g, '');
-    if (ownerPhone.length === 10) {
-      ownerPhone = '91' + ownerPhone; // Add India country code
-    }
-    
     const stars = '⭐'.repeat(rating);
     const emoji = rating >= 4 ? '🎉' : rating >= 3 ? '📝' : '⚠️';
     const urgency = rating <= 2 ? '\n\n🔴 *Needs immediate attention!*' : '';
 
-    await sendMessage(tenant.credentials, ownerPhone, {
-      type: 'text',
-      text: {
-        body: `${emoji} *New Feedback Received*\n\nCustomer: ${customerName}\nPhone: +${customerPhone}\nRating: ${stars} (${rating}/5)${urgency}\n\nView all feedback in your SnipandGlow dashboard → Feedback section.`,
-      },
-    });
+    await notifyOwner(admin, tenant.credentials, tenant.tenantId,
+      `${emoji} *New Feedback Received*\n\nCustomer: ${customerName}\nPhone: +${customerPhone}\nRating: ${stars} (${rating}/5)${urgency}\n\nView all feedback in your SnipandGlow dashboard → Feedback section.`
+    );
   } catch (err) {
     console.error('[Webhook] Failed to notify owner about feedback:', err);
   }
