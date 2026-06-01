@@ -960,6 +960,26 @@ async function notifyCustomerBillReceipt(
       status: 'sent',
       metadata: { customer_name: customer.name },
     } as any) as any);
+
+    // CRITICAL: Update customer session to this tenant AFTER sending feedback request.
+    // This ensures when customer taps "Rate Now", the webhook routes to the correct tenant.
+    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(); // 48 hours
+    await (admin
+      .from('whatsapp_customer_sessions' as any)
+      .delete()
+      .eq('customer_phone', phone) as any);
+    await (admin
+      .from('whatsapp_customer_sessions' as any)
+      .insert({
+        tenant_id: tenantId,
+        customer_phone: phone,
+        mode: 'shared',
+        source: 'bill_feedback',
+        current_state: 'awaiting_feedback',
+        booking_slug: '',
+        last_message_at: new Date().toISOString(),
+        expires_at: expiresAt,
+      }) as any);
   } catch (err) {
     console.error('[Actions] Failed to send bill receipt:', err);
   }
