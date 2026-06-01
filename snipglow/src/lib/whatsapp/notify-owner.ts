@@ -62,7 +62,9 @@ export async function getOwnerPhone(admin: any, tenantId: string): Promise<strin
 }
 
 /**
- * Send a WhatsApp text notification to the salon owner.
+ * Send a WhatsApp notification to the salon owner.
+ * Uses template message (works anytime, no 24h window restriction).
+ * Falls back to text if within 24h window.
  */
 export async function notifyOwner(
   admin: any,
@@ -79,15 +81,51 @@ export async function notifyOwner(
   console.log('[NotifyOwner] Attempting to send to:', ownerPhone, 'tenant:', tenantId);
 
   try {
-    const result = await sendMessage(credentials, ownerPhone, {
+    // First try plain text (works within 24h window)
+    const textResult = await sendMessage(credentials, ownerPhone, {
       type: 'text',
       text: { body: message },
     });
 
-    if (result.success) {
-      console.log('[NotifyOwner] SUCCESS - sent to:', ownerPhone);
+    if (textResult.success) {
+      console.log('[NotifyOwner] SUCCESS via text to:', ownerPhone);
+      return;
+    }
+
+    // Text failed (outside 24h window) — use renewal_reminder template as fallback
+    // Template: renewal_reminder has {{1}}=name, {{2}}=salon, {{3}}=days
+    // We repurpose it to carry the notification summary
+    console.warn('[NotifyOwner] Text failed (likely outside 24h window), trying template:', textResult.error);
+
+    // Extract key info from message for template variables
+    const customerMatch = message.match(/Customer: ([^\n]+)/);
+    const customerName = customerMatch?.[1]?.trim() || 'A customer';
+    const salonName = message.includes('Rescheduled') ? 'rescheduled' :
+                      message.includes('Cancelled') ? 'cancelled' :
+                      message.includes('Booking Alert') ? 'booked' : 'updated';
+
+    const templateResult = await sendMessage(credentials, ownerPhone, {
+      type: 'template',
+      template: {
+        name: 'renewal_reminder',
+        language: { code: 'en' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: customerName },
+              { type: 'text', text: `appointment ${salonName}` },
+              { type: 'text', text: 'Check your SnipandGlow dashboard for details.' },
+            ],
+          },
+        ],
+      },
+    });
+
+    if (templateResult.success) {
+      console.log('[NotifyOwner] SUCCESS via template to:', ownerPhone);
     } else {
-      console.error('[NotifyOwner] FAILED - Meta API error:', result.error, 'phone:', ownerPhone);
+      console.error('[NotifyOwner] BOTH methods failed. Text:', textResult.error, 'Template:', templateResult.error);
     }
   } catch (err) {
     console.error('[NotifyOwner] EXCEPTION:', err, 'phone:', ownerPhone);
