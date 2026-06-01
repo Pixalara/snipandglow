@@ -594,13 +594,36 @@ async function processBooking(data: any, flowToken: string) {
       console.log('[Flow] Template send result:', JSON.stringify(templateResult));
     }
 
-    // Notify salon owner
+    // Notify salon owner — try tenants.phone first, then owner employee record
     const { data: tenantOwner } = await admin.from('tenants').select('phone').eq('id', primaryService.tenant_id).single();
     console.log('[Flow] Owner notification - tenant phone:', tenantOwner?.phone);
 
-    if (tenantOwner?.phone && credentials) {
-      let ownerPhone = tenantOwner.phone.replace(/\D/g, '');
-      if (ownerPhone.length === 10) ownerPhone = '91' + ownerPhone;
+    // Fallback: get owner phone from employees table if tenants.phone is missing
+    let ownerPhoneRaw = tenantOwner?.phone || '';
+    if (!ownerPhoneRaw) {
+      const { data: ownerEmployee } = await (admin
+        .from('employees')
+        .select('phone')
+        .eq('tenant_id', primaryService.tenant_id)
+        .eq('role', 'owner')
+        .eq('is_active', true)
+        .limit(1)
+        .single() as any);
+      ownerPhoneRaw = ownerEmployee?.phone || '';
+      console.log('[Flow] Owner phone from employees table:', ownerPhoneRaw);
+    }
+
+    if (ownerPhoneRaw && credentials) {
+      // Normalize phone to E.164 digits only (no +)
+      let ownerPhone = ownerPhoneRaw.replace(/\D/g, '');
+      // Remove leading + if present in the digits
+      if (ownerPhone.startsWith('91') && ownerPhone.length === 12) {
+        // already correct
+      } else if (ownerPhone.length === 10) {
+        ownerPhone = '91' + ownerPhone;
+      } else if (ownerPhone.length === 11 && ownerPhone.startsWith('0')) {
+        ownerPhone = '91' + ownerPhone.slice(1);
+      }
       console.log('[Flow] Sending owner notification to:', ownerPhone);
 
       const dateLabel2 = new Date(date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
@@ -611,12 +634,12 @@ async function processBooking(data: any, flowToken: string) {
 
       try {
         await sendMessage(credentials, ownerPhone, { type: 'text', text: { body: ownerText } });
-        console.log('[Flow] Owner notification sent successfully');
+        console.log('[Flow] Owner notification sent successfully to:', ownerPhone);
       } catch (err) {
         console.error('[Flow] Failed to send owner notification:', err);
       }
     } else {
-      console.log('[Flow] Owner notification skipped - phone:', tenantOwner?.phone, 'credentials:', !!credentials);
+      console.log('[Flow] Owner notification skipped - phone:', ownerPhoneRaw, 'credentials:', !!credentials);
     }
   }
 
