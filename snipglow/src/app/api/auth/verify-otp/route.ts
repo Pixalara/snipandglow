@@ -78,7 +78,11 @@ export async function POST(request: NextRequest) {
       ? phoneNormalized.slice(2)
       : phoneNormalized;
 
-    // 1. Check employees table — try ALL possible formats stored in DB
+    // 1. Check employees table — try ALL possible formats stored in DB.
+    //    A phone can have MULTIPLE employee rows (e.g. owner of more than one salon,
+    //    or leftover rows from a deleted tenant). We must pick a row whose tenant
+    //    STILL EXISTS, preferring the most recently created active record. Picking a
+    //    row tied to a deleted tenant is what caused users to land on the wrong salon.
     let foundEmployee: any = null;
     const phonesToTry = [
       phoneE164,           // +919459086057
@@ -87,21 +91,50 @@ export async function POST(request: NextRequest) {
       phone,               // raw input
       `+${phone}`,         // +raw
     ];
-    
+
     console.log('[VerifyOTP] Looking up employee for phones:', phonesToTry);
-    
+
+    // Collect every candidate employee across all phone formats
+    const candidates: any[] = [];
+    const seenIds = new Set<string>();
     for (const p of phonesToTry) {
-      const { data: emp } = await (admin
+      const { data: emps } = await (admin
         .from('employees')
-        .select('auth_user_id, tenant_id, branch_id, role, name, id')
+        .select('auth_user_id, tenant_id, branch_id, role, name, id, created_at')
         .eq('phone', p)
         .eq('is_active', true)
-        .limit(1)
-        .maybeSingle() as any);
-      if (emp) {  // found by phone — auth_user_id may or may not be set
-        foundEmployee = emp;
-        console.log('[VerifyOTP] Found employee:', emp.name, 'phone match:', p, 'auth_user_id:', emp.auth_user_id);
-        break;
+        .order('created_at', { ascending: false }) as any);
+      for (const emp of emps ?? []) {
+        if (!seenIds.has(emp.id)) {
+          seenIds.add(emp.id);
+          candidates.push(emp);
+        }
+      }
+    }
+
+    if (candidates.length > 0) {
+      // Keep only candidates whose tenant still exists
+      const tenantIds = [...new Set(candidates.map((c) => c.tenant_id).filter(Boolean))];
+      const { data: liveTenants } = await (admin
+        .from('tenants')
+        .select('id')
+        .in('id', tenantIds) as any);
+      const liveTenantIds = new Set((liveTenants ?? []).map((t: any) => t.id));
+
+      const validCandidates = candidates.filter((c) => liveTenantIds.has(c.tenant_id));
+      // Prefer a valid candidate (live tenant). Among valid ones, prefer the most
+      // recently created that already has an auth_user_id, else most recent.
+      const pool = validCandidates.length > 0 ? validCandidates : [];
+
+      if (pool.length > 0) {
+        foundEmployee =
+          pool.find((c) => c.auth_user_id) ?? pool[0];
+        if (validCandidates.length < candidates.length) {
+          console.log('[VerifyOTP] Skipped', candidates.length - validCandidates.length, 'employee row(s) tied to deleted tenants');
+        }
+        console.log('[VerifyOTP] Selected employee:', foundEmployee.name, 'tenant:', foundEmployee.tenant_id, 'auth_user_id:', foundEmployee.auth_user_id);
+      } else {
+        console.log('[VerifyOTP] All employee rows point to deleted tenants — treating as no match');
       }
     }
 
