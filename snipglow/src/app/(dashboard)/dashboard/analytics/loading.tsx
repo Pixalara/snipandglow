@@ -1,14 +1,13 @@
-export default function AnalyticsLoading() {
+export default function Loading() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="rounded-2xl bg-muted/50 h-24" />
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
-        {[1, 2, 3, 4].map((i) => (
-          <div key={i} className="rounded-xl bg-muted/50 h-28" />
+      <div className="h-24 rounded-2xl bg-muted" />
+      <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
+        {Array.from({ length: 6 }).map((_, i) => (
+          <div key={i} className="h-24 rounded-xl bg-muted" />
         ))}
       </div>
-      <div className="rounded-xl bg-muted/50 h-64" />
-      <div className="rounded-xl bg-muted/50 h-64" />
+      <div className="h-64 rounded-xl bg-muted" />
     </div>
   );
 }

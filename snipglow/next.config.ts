@@ -5,6 +5,7 @@ const securityHeaders = [
   { key: 'X-Frame-Options', value: 'DENY' },
   { key: 'Referrer-Policy', value: 'strict-origin-when-cross-origin' },
   { key: 'X-DNS-Prefetch-Control', value: 'on' },
+  { key: 'X-XSS-Protection', value: '1; mode=block' },
 ]
 
 const nextConfig: NextConfig = {
@@ -20,6 +21,7 @@ const nextConfig: NextConfig = {
   },
   images: {
     formats: ['image/avif', 'image/webp'],
+    minimumCacheTTL: 86400,
     remotePatterns: [
       { protocol: 'https', hostname: '*.supabase.co' },
       { protocol: 'https', hostname: 'lh3.googleusercontent.com' },
@@ -37,6 +39,20 @@ const nextConfig: NextConfig = {
         source: '/(.*)\\.(ico|svg|png|jpg|jpeg|gif|webp|woff|woff2|ttf)',
         headers: [
           { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
+        ],
+      },
+      {
+        // Cache landing page for 60 seconds at CDN edge
+        source: '/',
+        headers: [
+          { key: 'Cache-Control', value: 'public, s-maxage=60, stale-while-revalidate=300' },
+        ],
+      },
+      {
+        // Cache API routes that are read-only
+        source: '/api/auth/callback',
+        headers: [
+          { key: 'Cache-Control', value: 'no-store' },
         ],
       },
     ]

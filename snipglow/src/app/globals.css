@@ -494,6 +494,7 @@ a, button {
 .benefit-marquee {
   animation: marqueeScroll 22s linear infinite;
   width: max-content;
+  will-change: transform;
 }
 
 .benefit-marquee:hover {
@@ -805,4 +806,29 @@ a, button {
     outline: none;
     box-shadow: 0 0 0 3px color-mix(in oklch, var(--ring) 15%, transparent);
   }
+}
+
+/* ─── Performance: GPU-accelerated animations ───────────────────────────── */
+.reveal, .reveal-left, .reveal-right, .reveal-scale {
+  will-change: opacity, transform;
+}
+.reveal.visible, .reveal-left.visible, .reveal-right.visible, .reveal-scale.visible {
+  will-change: auto; /* release after animation completes */
+}
+
+/* ─── Performance: content-visibility for below-fold sections ───────────── */
+/* Defers rendering of off-screen content, improving initial load */
+.below-fold {
+  content-visibility: auto;
+  contain-intrinsic-size: 0 500px;
+}
+
+/* ─── Performance: touch optimization for mobile ────────────────────────── */
+button, a, [role="button"] {
+  touch-action: manipulation; /* removes 300ms tap delay on mobile */
+}
+
+/* ─── Performance: smooth scrolling with momentum on iOS ────────────────── */
+.overflow-y-auto, .overflow-y-scroll {
+  -webkit-overflow-scrolling: touch;
 }

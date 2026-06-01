@@ -1,8 +1,12 @@
-export default function BillingLoading() {
+export default function Loading() {
   return (
     <div className="space-y-6 animate-pulse">
-      <div className="rounded-2xl bg-muted/50 h-24" />
-      <div className="rounded-xl bg-muted/50 h-96" />
+      <div className="h-24 rounded-2xl bg-muted" />
+      <div className="space-y-3">
+        {Array.from({ length: 8 }).map((_, i) => (
+          <div key={i} className="h-14 rounded-xl bg-muted" />
+        ))}
+      </div>
     </div>
   );
 }
