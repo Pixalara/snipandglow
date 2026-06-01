@@ -147,6 +147,37 @@ export async function POST(request: NextRequest) {
     // Use foundEmployee for tenant context (more reliable than existingUser.user_metadata)
     const employee = foundEmployee;
 
+    // CRITICAL: If employee found but existingUser not resolved, get user directly by auth_user_id
+    if (foundEmployee?.auth_user_id && !existingUser) {
+      console.log('[VerifyOTP] Employee has auth_user_id but user not resolved — fetching directly');
+      const { data: { user: directUser } } = await admin.auth.admin.getUserById(foundEmployee.auth_user_id);
+      if (directUser) {
+        existingUser = directUser;
+        console.log('[VerifyOTP] Resolved user directly:', directUser.email);
+      }
+    }
+
+    // If employee found but still no existingUser, search by email pattern
+    if (foundEmployee && !existingUser) {
+      console.log('[VerifyOTP] Employee found but no auth user — searching by email');
+      const tempEmail = `${phoneNormalized}@phone.snipandglow.com`;
+      const { data: existingUsers } = await admin.auth.admin.listUsers({ perPage: 1000 });
+      const matched = existingUsers?.users?.find(
+        (u: any) => u.email === tempEmail ||
+          u.user_metadata?.phone === phoneNormalized ||
+          u.user_metadata?.phone === phone10digit ||
+          u.phone === phoneE164
+      );
+      if (matched) {
+        existingUser = matched;
+        // Backfill auth_user_id
+        if (!foundEmployee.auth_user_id) {
+          await (admin.from('employees').update({ auth_user_id: matched.id } as any).eq('id', foundEmployee.id) as any);
+          console.log('[VerifyOTP] Backfilled auth_user_id:', matched.id);
+        }
+      }
+    }
+
     if (existingUser) {
       // User exists — generate a magic link for sign-in
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com';
@@ -180,8 +211,56 @@ export async function POST(request: NextRequest) {
         email: existingUser.email || `${phoneNormalized}@phone.snipandglow.com`,
         redirect: hasTenant ? '/dashboard' : '/onboarding',
       });
+    } else if (foundEmployee) {
+      // Employee exists in DB but no auth account yet — create one with correct tenant context
+      console.log('[VerifyOTP] Employee found but no auth account — creating with tenant context');
+      const tempEmail = `${phoneNormalized}@phone.snipandglow.com`;
+      const { data: newUser, error: createError } = await admin.auth.admin.createUser({
+        email: tempEmail,
+        phone: phoneE164,
+        email_confirm: true,
+        phone_confirm: true,
+        user_metadata: {
+          phone: phoneNormalized,
+          tenant_id: foundEmployee.tenant_id,
+          branch_id: foundEmployee.branch_id,
+          role: foundEmployee.role,
+          name: foundEmployee.name,
+          signup_method: 'phone_otp',
+        },
+      });
+
+      if (createError && !createError.message?.includes('already been registered')) {
+        console.error('[VerifyOTP] Create user error:', createError);
+        return NextResponse.json({ error: 'Sign-in failed. Please try again.' }, { status: 500 });
+      }
+
+      const userId = newUser?.user?.id;
+      if (userId) {
+        await (admin.from('employees').update({ auth_user_id: userId } as any).eq('id', foundEmployee.id) as any);
+        console.log('[VerifyOTP] Created auth account and linked to employee:', userId);
+      }
+
+      const siteUrl2 = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com';
+      const { data: signInData2 } = await admin.auth.admin.generateLink({
+        type: 'magiclink',
+        email: tempEmail,
+        options: { redirectTo: `${siteUrl2}/dashboard` },
+      });
+
+      const actionUrl2 = new URL(signInData2?.properties?.action_link || 'https://x.com');
+      const tokenHash2 = actionUrl2.searchParams.get('token_hash') || signInData2?.properties?.hashed_token;
+
+      return NextResponse.json({
+        success: true,
+        action: 'sign_in',
+        token_hash: tokenHash2,
+        type: 'magiclink',
+        email: tempEmail,
+        redirect: '/dashboard',
+      });
     } else {
-      // New user — create account with phone
+      // Truly new user — no employee record found
       const tempEmail = `${phoneNormalized}@phone.snipandglow.com`;
       const { data: newUser, error: createError } = await admin.auth.admin.createUser({
         email: tempEmail,
