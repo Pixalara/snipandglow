@@ -71,15 +71,25 @@ export async function notifyOwner(
   message: string
 ): Promise<void> {
   const ownerPhone = await getOwnerPhone(admin, tenantId);
-  if (!ownerPhone) return;
+  if (!ownerPhone) {
+    console.error('[NotifyOwner] FAILED - no phone resolved for tenant:', tenantId);
+    return;
+  }
+
+  console.log('[NotifyOwner] Attempting to send to:', ownerPhone, 'tenant:', tenantId);
 
   try {
-    await sendMessage(credentials, ownerPhone, {
+    const result = await sendMessage(credentials, ownerPhone, {
       type: 'text',
       text: { body: message },
     });
-    console.log('[NotifyOwner] Sent to:', ownerPhone);
+
+    if (result.success) {
+      console.log('[NotifyOwner] SUCCESS - sent to:', ownerPhone);
+    } else {
+      console.error('[NotifyOwner] FAILED - Meta API error:', result.error, 'phone:', ownerPhone);
+    }
   } catch (err) {
-    console.error('[NotifyOwner] Failed to send:', err);
+    console.error('[NotifyOwner] EXCEPTION:', err, 'phone:', ownerPhone);
   }
 }
