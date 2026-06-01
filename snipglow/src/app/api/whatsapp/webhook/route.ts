@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
 import { notifyOwner, notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel, notifyOwnerFeedback } from '@/lib/whatsapp/notify-owner';
+import { createNotification } from '@/lib/notifications';
 import { resolveTenant, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import crypto from 'crypto';
@@ -714,6 +715,11 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           await notifyOwnerCancel(admin, tenant.credentials, tenant.tenantId,
             tenant.salonName, name, phone
           );
+          // In-app notification
+          createNotification(tenant.tenantId, 'cancel', 'Appointment Cancelled',
+            `${name} cancelled their appointment via WhatsApp`,
+            { customer_name: name, customer_phone: phone }
+          ).catch(() => {});
 
           await sendMessage(tenant.credentials, phone, {
             type: 'interactive',
@@ -841,6 +847,11 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           await notifyOwnerReschedule(admin, tenant.credentials, tenant.tenantId,
             tenant.salonName, name, phone, 'appointment', `${dateLabel}, ${timeLabel}`
           );
+          // In-app notification
+          createNotification(tenant.tenantId, 'reschedule', 'Appointment Rescheduled',
+            `${name} rescheduled to ${dateLabel}, ${timeLabel}`,
+            { customer_name: name, customer_phone: phone }
+          ).catch(() => {});
         } else {
           await sendMessage(tenant.credentials, phone, {
             type: 'text',
@@ -1035,6 +1046,12 @@ async function notifyOwnerFeedbackLegacy(admin: any, tenant: TenantContext, cust
     await notifyOwnerFeedback(admin, tenant.credentials, tenant.tenantId,
       tenant.salonName, customerName, rating
     );
+    // In-app notification
+    const stars = '⭐'.repeat(rating);
+    createNotification(tenant.tenantId, 'feedback', `New Feedback - ${stars}`,
+      `${customerName} rated ${rating}/5`,
+      { customer_name: customerName, customer_phone: customerPhone }
+    ).catch(() => {});
   } catch (err) {
     console.error('[Webhook] Failed to notify owner about feedback:', err);
   }

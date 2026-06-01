@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { notifyOwnerNewBooking, notifyOwnerReschedule } from '@/lib/whatsapp/notify-owner';
+import { createNotification } from '@/lib/notifications';
 import crypto from 'crypto';
 
 // =============================================================================
@@ -525,10 +526,20 @@ async function processBooking(data: any, flowToken: string) {
           },
         })
       ),
-      // Owner notification
+      // Owner notification + in-app notification (fire-and-forget)
       isReschedule
         ? notifyOwnerReschedule(admin, credentials, primaryService.tenant_id, salonName || 'Your Salon', customerName, customerPhone || customer_phone, services.map((s: any) => s.name).join(', '), dateTimeFormatted)
         : notifyOwnerNewBooking(admin, credentials, primaryService.tenant_id, salonName || 'Your Salon', customerName, customerPhone || customer_phone, services.map((s: any) => s.name).join(', '), dateTimeFormatted),
+      // In-app notification for dashboard bell
+      createNotification(
+        primaryService.tenant_id,
+        isReschedule ? 'reschedule' : 'new_booking',
+        isReschedule ? `Appointment Rescheduled` : `New Booking`,
+        isReschedule
+          ? `${customerName} rescheduled to ${dateTimeFormatted}`
+          : `${customerName} booked ${services.map((s: any) => s.name).join(', ')} on ${dateTimeFormatted}`,
+        { customer_name: customerName, customer_phone: customerPhone || customer_phone }
+      ),
     ]).catch(err => console.error('[Flow] Background notification error:', err));
   }
 

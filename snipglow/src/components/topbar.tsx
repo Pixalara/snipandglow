@@ -7,6 +7,7 @@ import type { UserRole, Branch } from '@/types';
 import { cn } from '@/lib/utils';
 import { Button } from '@/components/ui/button';
 import { BranchSwitcher } from '@/components/branch-switcher';
+import { NotificationBell } from '@/components/notification-bell';
 import { createClient } from '@/lib/supabase/client';
 import { useRouter } from 'next/navigation';
 
@@ -76,6 +77,9 @@ export function Topbar({ role, userName, branches, activeBranchId, onMenuToggle 
           <Sun className="size-4 rotate-0 scale-100 transition-transform dark:-rotate-90 dark:scale-0" />
           <Moon className="absolute size-4 rotate-90 scale-0 transition-transform dark:rotate-0 dark:scale-100" />
         </Button>
+
+        {/* Notification Bell */}
+        <NotificationBell />
 
         {/* User avatar + role badge */}
         <div className="flex items-center gap-2">
