@@ -179,6 +179,36 @@ export async function POST(request: NextRequest) {
     }
 
     if (existingUser) {
+      // CRITICAL: Sync tenant context into user_metadata BEFORE generating the magic link.
+      // The session JWT reads user_metadata at verification time, and middleware uses
+      // user_metadata.tenant_id to decide dashboard vs onboarding. Without this, an
+      // existing salon owner signing in via OTP lands on /onboarding instead of /dashboard.
+      if (foundEmployee?.tenant_id) {
+        const existingMeta = existingUser.user_metadata || {};
+        const needsMetaUpdate =
+          existingMeta.tenant_id !== foundEmployee.tenant_id ||
+          existingMeta.branch_id !== foundEmployee.branch_id ||
+          existingMeta.role !== foundEmployee.role;
+
+        if (needsMetaUpdate) {
+          const { error: updateErr } = await admin.auth.admin.updateUserById(existingUser.id, {
+            user_metadata: {
+              ...existingMeta,
+              phone: phoneNormalized,
+              tenant_id: foundEmployee.tenant_id,
+              branch_id: foundEmployee.branch_id,
+              role: foundEmployee.role,
+              name: foundEmployee.name ?? existingMeta.name,
+            },
+          });
+          if (updateErr) {
+            console.error('[VerifyOTP] Failed to sync tenant metadata:', updateErr);
+          } else {
+            console.log('[VerifyOTP] Synced tenant_id into user_metadata:', foundEmployee.tenant_id);
+          }
+        }
+      }
+
       // User exists — generate a magic link for sign-in
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com';
       const { data: signInData, error: signInError } = await admin.auth.admin.generateLink({
