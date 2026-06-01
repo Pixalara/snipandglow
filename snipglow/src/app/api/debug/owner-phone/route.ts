@@ -11,9 +11,9 @@ export async function GET(request: NextRequest) {
   const admin = createAdminClient();
 
   // Get all tenants with their phone info
-  const { data: tenants } = await admin
+  const { data: tenants } = await (admin
     .from('tenants')
-    .select('id, name, phone, tenant_code');
+    .select('id, name, phone') as any);
 
   const results = [];
   for (const tenant of tenants ?? []) {
@@ -28,7 +28,6 @@ export async function GET(request: NextRequest) {
 
     results.push({
       tenant: tenant.name,
-      code: tenant.tenant_code,
       tenants_phone: tenant.phone,
       resolved_phone: resolvedPhone,
       employees: employees?.map((e: any) => ({ name: e.name, phone: e.phone, role: e.role })),
