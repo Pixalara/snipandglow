@@ -73,9 +73,20 @@ export async function POST(request: NextRequest) {
     const phoneE164 = `+${phoneNormalized}`;
     let existingUser: any = null;
 
-    // 1. Check employees table for this phone — try multiple formats
+    // Extract just the 10-digit number (strip 91 prefix if present)
+    const phone10digit = phoneNormalized.startsWith('91') && phoneNormalized.length === 12
+      ? phoneNormalized.slice(2)
+      : phoneNormalized;
+
+    // 1. Check employees table — try ALL possible formats stored in DB
     let foundEmployee: any = null;
-    const phonesToTry = [phoneE164, phoneNormalized, phone, `+${phone}`];
+    const phonesToTry = [
+      phoneE164,           // +919459086057
+      phoneNormalized,     // 919459086057
+      phone10digit,        // 9459086057  ← this is what's stored in DB
+      phone,               // raw input
+      `+${phone}`,         // +raw
+    ];
     
     console.log('[VerifyOTP] Looking up employee for phones:', phonesToTry);
     
@@ -87,9 +98,9 @@ export async function POST(request: NextRequest) {
         .eq('is_active', true)
         .limit(1)
         .maybeSingle() as any);
-      if (emp) {
+      if (emp) {  // found by phone — auth_user_id may or may not be set
         foundEmployee = emp;
-        console.log('[VerifyOTP] Found employee:', emp.name, 'auth_user_id:', emp.auth_user_id);
+        console.log('[VerifyOTP] Found employee:', emp.name, 'phone match:', p, 'auth_user_id:', emp.auth_user_id);
         break;
       }
     }
