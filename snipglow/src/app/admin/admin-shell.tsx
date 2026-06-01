@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee } from 'lucide-react';
 
 const navItems = [
   { label: 'Overview', href: '/admin', icon: LayoutDashboard },
@@ -11,6 +11,7 @@ const navItems = [
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   { label: 'Support Tickets', href: '/admin/support', icon: Headphones },
   { label: 'WhatsApp Health', href: '/admin/whatsapp', icon: Zap },
+  { label: 'WhatsApp Costs', href: '/admin/whatsapp-costs', icon: IndianRupee },
   { label: 'Automation Logs', href: '/admin/automation-logs', icon: FileText },
   { label: 'Audit Logs', href: '/admin/audit', icon: Shield },
   { label: 'Force Delete', href: '/admin/force-delete', icon: Trash2 },
