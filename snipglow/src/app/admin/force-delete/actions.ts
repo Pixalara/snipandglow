@@ -33,8 +33,16 @@ export async function forceDeleteTenant(tenantId: string): Promise<{ success: bo
   });
 
   try {
-    // Call the delete_tenant_data RPC function (uses session_replication_role = replica)
-    const { data, error } = await (admin as any).rpc('delete_tenant_data', { target_tenant_id: tenantId });
+    // Use the purge_tenant_data RPC (migration 024) which EXPLICITLY deletes
+    // every child table by tenant_id. The older delete_tenant_data (017) relied
+    // on ON DELETE CASCADE while triggers were disabled, which left orphaned
+    // rows behind. Fall back to the old RPC only if the new one isn't present.
+    let { data, error } = await (admin as any).rpc('purge_tenant_data', { target_tenant_id: tenantId });
+
+    if (error && /function .*purge_tenant_data.* does not exist/i.test(error.message || '')) {
+      console.warn('[ForceDelete] purge_tenant_data not found, falling back to delete_tenant_data');
+      ({ data, error } = await (admin as any).rpc('delete_tenant_data', { target_tenant_id: tenantId }));
+    }
 
     if (error) {
       await logAdminAction({
