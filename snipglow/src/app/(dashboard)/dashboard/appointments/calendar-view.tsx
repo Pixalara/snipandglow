@@ -1,21 +1,22 @@
 'use client';
 
-import { useMemo, useState, useTransition } from 'react';
+import { useMemo, useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { formatTimeIST } from '@/lib/utils';
-import { updateAppointmentStatus, completeAndGenerateBill } from './actions';
-import { CalendarClock, CircleCheck, XCircle, X, User, Scissors, Clock, Calendar } from 'lucide-react';
+import Link from 'next/link';
+import { formatTimeIST, formatDateIN } from '@/lib/utils';
+import {
+  updateAppointmentStatus, completeAndGenerateBill,
+  getSlotsForReschedule, rescheduleAppointment,
+  getCustomerMembershipDiscount,
+} from './actions';
+import {
+  CalendarClock, CircleCheck, XCircle, X, User, Scissors,
+  Clock, Calendar, Pencil, CheckCircle2, ArrowRight,
+} from 'lucide-react';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
 import type { AppointmentRow } from './page';
-import type { AppointmentStatus } from '@/types';
-
-// =============================================================================
-// CalendarView - Week view with clickable appointment blocks
-// =============================================================================
-
-interface CalendarViewProps {
-  appointments: AppointmentRow[];
-}
+import type { AppointmentStatus, TimeSlot } from '@/types';
 
 const blockColors: Record<AppointmentStatus, string> = {
   booked: 'border-blue-300 bg-blue-50 dark:border-blue-700 dark:bg-blue-900/20',
@@ -23,26 +24,17 @@ const blockColors: Record<AppointmentStatus, string> = {
   completed: 'border-gray-300 bg-gray-50 dark:border-gray-700 dark:bg-gray-900/20',
   cancelled: 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/20',
 };
-
 const dotColors: Record<AppointmentStatus, string> = {
-  booked: 'bg-blue-500',
-  confirmed: 'bg-emerald-500',
-  completed: 'bg-gray-500',
-  cancelled: 'bg-red-500',
+  booked: 'bg-blue-500', confirmed: 'bg-emerald-500', completed: 'bg-gray-500', cancelled: 'bg-red-500',
 };
-
-const statusLabels: Record<AppointmentStatus, string> = {
-  booked: 'Booked',
-  confirmed: 'Confirmed',
-  completed: 'Completed',
-  cancelled: 'Cancelled',
-};
-
 const statusBadgeColors: Record<AppointmentStatus, string> = {
-  booked: 'bg-blue-100 text-blue-700',
-  confirmed: 'bg-emerald-100 text-emerald-700',
-  completed: 'bg-gray-100 text-gray-700',
-  cancelled: 'bg-red-100 text-red-700',
+  booked: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
+  confirmed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  completed: 'bg-gray-100 text-gray-700 dark:bg-gray-900/30 dark:text-gray-400',
+  cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+};
+const statusLabels: Record<AppointmentStatus, string> = {
+  booked: 'Booked', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled',
 };
 
 function getWeekStart(): Date {
@@ -54,102 +46,69 @@ function getWeekStart(): Date {
   monday.setHours(0, 0, 0, 0);
   return monday;
 }
-
 function getWeekDays(start: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => {
-    const d = new Date(start);
-    d.setDate(start.getDate() + i);
-    return d;
+    const d = new Date(start); d.setDate(start.getDate() + i); return d;
   });
 }
-
 function toDateKey(date: Date): string {
-  const y = date.getFullYear();
-  const m = String(date.getMonth() + 1).padStart(2, '0');
-  const d = String(date.getDate()).padStart(2, '0');
-  return `${y}-${m}-${d}`;
+  return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 }
+const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
 
-const dayNames = ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-
-export function CalendarView({ appointments }: CalendarViewProps) {
+export function CalendarView({ appointments }: { appointments: AppointmentRow[] }) {
   const weekStart = useMemo(() => getWeekStart(), []);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
-  const [selectedAppointment, setSelectedAppointment] = useState<AppointmentRow | null>(null);
+  const [selected, setSelected] = useState<AppointmentRow | null>(null);
+  const [mode, setMode] = useState<'detail' | 'complete' | 'reschedule'>('detail');
 
   const appointmentsByDate = useMemo(() => {
     const map: Record<string, AppointmentRow[]> = {};
     for (const apt of appointments) {
-      const key = apt.appointment_date;
-      if (!map[key]) map[key] = [];
-      map[key].push(apt);
+      if (!map[apt.appointment_date]) map[apt.appointment_date] = [];
+      map[apt.appointment_date].push(apt);
     }
-    for (const key of Object.keys(map)) {
-      map[key].sort((a, b) => a.start_time.localeCompare(b.start_time));
-    }
+    for (const key of Object.keys(map)) map[key].sort((a,b) => a.start_time.localeCompare(b.start_time));
     return map;
   }, [appointments]);
 
   const today = toDateKey(new Date());
 
+  function openDetail(apt: AppointmentRow) { setSelected(apt); setMode('detail'); }
+  function closeAll() { setSelected(null); setMode('detail'); }
+
   return (
     <div className="space-y-3">
-      {/* Legend */}
       <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-        <span className="flex items-center gap-1">
-          <span className={`size-2 rounded-full ${dotColors.booked}`} />
-          Booked
-        </span>
-        <span className="flex items-center gap-1">
-          <span className={`size-2 rounded-full ${dotColors.completed}`} />
-          Completed
-        </span>
-        <span className="flex items-center gap-1">
-          <span className={`size-2 rounded-full ${dotColors.cancelled}`} />
-          Cancelled
-        </span>
+        {(['booked','completed','cancelled'] as AppointmentStatus[]).map(s => (
+          <span key={s} className="flex items-center gap-1">
+            <span className={`size-2 rounded-full ${dotColors[s]}`} />
+            {statusLabels[s]}
+          </span>
+        ))}
       </div>
-
-      {/* Week grid */}
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
         {weekDays.map((day, idx) => {
           const dateKey = toDateKey(day);
           const isToday = dateKey === today;
-          const dayAppointments = appointmentsByDate[dateKey] ?? [];
-
+          const dayApts = appointmentsByDate[dateKey] ?? [];
           return (
-            <div
-              key={dateKey}
-              className={`rounded-lg border p-2 ${
-                isToday ? 'border-primary/50 bg-primary/5' : 'border-border bg-card'
-              }`}
-            >
+            <div key={dateKey} className={`rounded-lg border p-2 ${isToday ? 'border-primary/50 bg-primary/5' : 'border-border bg-card'}`}>
               <div className="mb-2 text-center">
                 <div className="text-xs font-medium text-muted-foreground">{dayNames[idx]}</div>
-                <div className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-foreground'}`}>
-                  {day.getDate()}
-                </div>
+                <div className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-foreground'}`}>{day.getDate()}</div>
               </div>
-
               <div className="space-y-1.5">
-                {dayAppointments.length === 0 && (
-                  <p className="text-center text-[10px] text-muted-foreground/60">No appointments</p>
-                )}
-                {dayAppointments.map((apt) => (
-                  <button
-                    key={apt.id}
-                    type="button"
-                    onClick={() => setSelectedAppointment(apt)}
-                    className={`w-full text-left rounded-md border p-1.5 text-[11px] leading-tight cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all ${blockColors[apt.status]}`}
-                  >
+                {dayApts.length === 0 && <p className="text-center text-[10px] text-muted-foreground/60">No appointments</p>}
+                {dayApts.map(apt => (
+                  <button key={apt.id} type="button" onClick={() => openDetail(apt)}
+                    className={`w-full text-left rounded-md border p-1.5 text-[11px] leading-tight cursor-pointer hover:shadow-md hover:scale-[1.02] transition-all ${blockColors[apt.status]}`}>
                     <div className="flex items-center gap-1">
                       <span className={`size-1.5 shrink-0 rounded-full ${dotColors[apt.status]}`} />
                       <span className="truncate font-medium text-foreground">{apt.customer_name}</span>
                     </div>
                     <div className="mt-0.5 truncate text-muted-foreground">{apt.service_name}</div>
-                    <div className="mt-0.5 text-muted-foreground">
-                      {formatTimeIST(`1970-01-01T${apt.start_time}`)}
-                    </div>
+                    <div className="mt-0.5 text-muted-foreground">{formatTimeIST(`1970-01-01T${apt.start_time}`)}</div>
                   </button>
                 ))}
               </div>
@@ -157,31 +116,31 @@ export function CalendarView({ appointments }: CalendarViewProps) {
           );
         })}
       </div>
-
-      {/* Appointment Detail Popup */}
-      {selectedAppointment && (
-        <AppointmentDetailPopup
-          appointment={selectedAppointment}
-          onClose={() => setSelectedAppointment(null)}
-        />
+      {selected && mode === 'detail' && (
+        <AppointmentDetailPopup appointment={selected} onClose={closeAll}
+          onComplete={() => setMode('complete')} onReschedule={() => setMode('reschedule')} />
+      )}
+      {selected && mode === 'complete' && (
+        <CompleteAndBillModal appointment={selected} onClose={closeAll} />
+      )}
+      {selected && mode === 'reschedule' && (
+        <RescheduleModal appointment={selected} onClose={closeAll} />
       )}
     </div>
   );
 }
 
 // =============================================================================
-// Appointment Detail Popup
+// Detail Popup
 // =============================================================================
-
-function AppointmentDetailPopup({ appointment, onClose }: { appointment: AppointmentRow; onClose: () => void }) {
+function AppointmentDetailPopup({ appointment, onClose, onComplete, onReschedule }:
+  { appointment: AppointmentRow; onClose: () => void; onComplete: () => void; onReschedule: () => void }) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
-
   const canAct = appointment.status === 'booked' || appointment.status === 'confirmed';
-  const dateLabel = new Date(appointment.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', {
-    timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric'
-  });
+  const dateLabel = new Date(appointment.appointment_date + 'T12:00:00+05:30')
+    .toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
   const timeLabel = formatTimeIST(`1970-01-01T${appointment.start_time}`);
   const endTimeLabel = formatTimeIST(`1970-01-01T${appointment.end_time}`);
 
@@ -189,33 +148,14 @@ function AppointmentDetailPopup({ appointment, onClose }: { appointment: Appoint
     setError('');
     startTransition(async () => {
       const result = await updateAppointmentStatus(appointment.id, 'cancelled');
-      if (result.success) {
-        onClose();
-        router.refresh();
-      } else {
-        setError(result.error);
-      }
-    });
-  }
-
-  function handleComplete() {
-    setError('');
-    startTransition(async () => {
-      const result = await completeAndGenerateBill(appointment.id, 'cash');
-      if (result.success) {
-        onClose();
-        router.refresh();
-      } else {
-        setError(result.error);
-      }
+      if (result.success) { onClose(); router.refresh(); } else setError(result.error);
     });
   }
 
   return (
     <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
       <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
-
-      <div className="relative w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl overflow-hidden max-h-[85vh] flex flex-col">
+      <div className="relative w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-muted/30 shrink-0">
           <div className="flex items-center gap-3">
@@ -223,7 +163,7 @@ function AppointmentDetailPopup({ appointment, onClose }: { appointment: Appoint
               <span className={`size-2.5 rounded-full ${dotColors[appointment.status]}`} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-foreground">Appointment Details</h2>
+              <h2 className="text-base font-semibold text-foreground">{appointment.customer_name}</h2>
               <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColors[appointment.status]}`}>
                 {statusLabels[appointment.status]}
               </span>
@@ -233,87 +173,295 @@ function AppointmentDetailPopup({ appointment, onClose }: { appointment: Appoint
             <X className="size-5" />
           </button>
         </div>
-
         {/* Body */}
-        <div className="p-5 space-y-4 overflow-y-auto flex-1">
-          {/* Customer */}
-          <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3">
-            <User className="size-4 text-muted-foreground shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Customer</p>
-              <p className="text-sm font-semibold text-foreground">{appointment.customer_name}</p>
-            </div>
-          </div>
-
-          {/* Service */}
-          <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3">
-            <Scissors className="size-4 text-muted-foreground shrink-0" />
-            <div>
-              <p className="text-xs text-muted-foreground">Service</p>
-              <p className="text-sm font-semibold text-foreground">{appointment.service_name}</p>
-            </div>
-          </div>
-
-          {/* Date & Time */}
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3">
-              <Calendar className="size-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Date</p>
-                <p className="text-sm font-semibold text-foreground">{dateLabel}</p>
-              </div>
-            </div>
-            <div className="flex items-center gap-3 rounded-xl bg-muted/50 px-4 py-3">
-              <Clock className="size-4 text-muted-foreground shrink-0" />
-              <div>
-                <p className="text-xs text-muted-foreground">Time</p>
-                <p className="text-sm font-semibold text-foreground">{timeLabel} - {endTimeLabel}</p>
-              </div>
-            </div>
-          </div>
-
-          {/* Stylist & Source */}
+        <div className="p-5 space-y-3 overflow-y-auto flex-1">
           <div className="grid grid-cols-2 gap-3">
             <div className="rounded-xl bg-muted/50 px-4 py-3">
-              <p className="text-xs text-muted-foreground">Stylist</p>
-              <p className="text-sm font-semibold text-foreground">{appointment.employee_name}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Scissors className="size-3" /> Service</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">{appointment.service_name}</p>
             </div>
             <div className="rounded-xl bg-muted/50 px-4 py-3">
-              <p className="text-xs text-muted-foreground">Booked Via</p>
-              <p className="text-sm font-semibold text-foreground">{appointment.source === 'whatsapp_flow' ? 'WhatsApp' : 'Dashboard'}</p>
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><User className="size-3" /> Stylist</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">{appointment.employee_name}</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 px-4 py-3">
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Calendar className="size-3" /> Date</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">{dateLabel}</p>
+            </div>
+            <div className="rounded-xl bg-muted/50 px-4 py-3">
+              <p className="text-xs text-muted-foreground flex items-center gap-1"><Clock className="size-3" /> Time</p>
+              <p className="text-sm font-semibold text-foreground mt-0.5">{timeLabel} – {endTimeLabel}</p>
             </div>
           </div>
-
-          {error && (
-            <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>
+          {appointment.total_amount > 0 && (
+            <div className="rounded-xl bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-3 flex items-center justify-between">
+              <span className="text-sm text-emerald-700 dark:text-emerald-400">Service Amount</span>
+              <span className="text-lg font-bold text-emerald-700 dark:text-emerald-400">₹{appointment.total_amount.toLocaleString('en-IN')}</span>
+            </div>
           )}
+          {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
         </div>
-
         {/* Actions */}
         {canAct && (
-          <div className="border-t border-border px-5 py-4 bg-muted/20 shrink-0">
+          <div className="border-t border-border px-5 py-4 bg-muted/20 shrink-0 space-y-2">
             <div className="grid grid-cols-2 gap-2">
-              <Button
-                variant="outline"
-                className="rounded-xl gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50"
-                onClick={handleComplete}
-                disabled={isPending}
-              >
-                <CircleCheck className="size-4" />
-                Complete
+              <Button variant="outline" className="rounded-xl gap-1.5 text-violet-700 border-violet-200 hover:bg-violet-50" onClick={onReschedule}>
+                <CalendarClock className="size-4" /> Reschedule
               </Button>
-              <Button
-                variant="outline"
-                className="rounded-xl gap-1.5 text-red-700 border-red-200 hover:bg-red-50"
-                onClick={handleCancel}
-                disabled={isPending}
-              >
-                <XCircle className="size-4" />
-                Cancel
+              <Button variant="outline" className="rounded-xl gap-1.5 text-emerald-700 border-emerald-200 hover:bg-emerald-50" onClick={onComplete}>
+                <CircleCheck className="size-4" /> Complete & Bill
               </Button>
             </div>
+            <Button variant="outline" className="w-full rounded-xl gap-1.5 text-red-700 border-red-200 hover:bg-red-50" onClick={handleCancel} disabled={isPending}>
+              <XCircle className="size-4" /> {isPending ? 'Cancelling...' : 'Cancel Appointment'}
+            </Button>
           </div>
         )}
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Complete & Bill Modal (full billing experience)
+// =============================================================================
+function CompleteAndBillModal({ appointment, onClose }: { appointment: AppointmentRow; onClose: () => void }) {
+  const [isPending, startTransition] = useTransition();
+  const [paymentMethod, setPaymentMethod] = useState<'cash'|'upi'|'card'>('cash');
+  const [additionalDiscountPct, setAdditionalDiscountPct] = useState(0);
+  const [membershipInfo, setMembershipInfo] = useState<{ discountPct: number; membershipName: string } | null>(null);
+  const [loadingMembership, setLoadingMembership] = useState(true);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState<{ invoiceNumber: string } | null>(null);
+
+  useEffect(() => {
+    getCustomerMembershipDiscount(appointment.customer_id).then(info => {
+      if (info && info.discountPct > 0) setMembershipInfo(info);
+      setLoadingMembership(false);
+    });
+  }, [appointment.customer_id]);
+
+  const membershipDiscountPct = membershipInfo?.discountPct ?? 0;
+  const totalDiscountPct = Math.min(100, membershipDiscountPct + additionalDiscountPct);
+  const discountedTotal = appointment.total_amount > 0
+    ? Math.round(appointment.total_amount - (appointment.total_amount * totalDiscountPct / 100)) : 0;
+
+  function handleConfirm() {
+    setError('');
+    startTransition(async () => {
+      const result = await completeAndGenerateBill(appointment.id, paymentMethod, undefined, totalDiscountPct);
+      if (result.success) setSuccess({ invoiceNumber: result.data.invoiceNumber });
+      else setError(result.error);
+    });
+  }
+
+  if (success) return (
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl">
+        <div className="flex flex-col items-center gap-4 text-center">
+          <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-8 text-emerald-600" />
+          </div>
+          <div>
+            <h2 className="text-lg font-bold text-foreground">Bill Generated!</h2>
+            <p className="text-sm text-muted-foreground mt-1">Invoice <span className="font-mono font-medium text-foreground">{success.invoiceNumber}</span></p>
+          </div>
+          <div className="flex gap-2 w-full">
+            <Link href="/dashboard/billing" className="flex-1">
+              <Button variant="outline" className="w-full rounded-xl">View Bills</Button>
+            </Link>
+            <Button className="flex-1 rounded-xl" onClick={onClose}>Done</Button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-muted/30 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/20">
+              <CircleCheck className="size-5 text-emerald-600" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Complete & Generate Bill</h2>
+              <p className="text-xs text-muted-foreground">{appointment.customer_name} · {appointment.service_name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <X className="size-5" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
+          {/* Summary */}
+          <div className="rounded-xl bg-muted/50 p-4 space-y-2">
+            {[['Customer', appointment.customer_name], ['Service', appointment.service_name],
+              ['Stylist', appointment.employee_name],
+              ['Date & Time', `${formatDateIN(appointment.appointment_date)}, ${formatTimeIST(`1970-01-01T${appointment.start_time}`)}`]
+            ].map(([label, value]) => (
+              <div key={label} className="flex items-center justify-between text-sm">
+                <span className="text-muted-foreground">{label}</span>
+                <span className="font-medium text-foreground">{value}</span>
+              </div>
+            ))}
+            {appointment.total_amount > 0 && (
+              <div className="flex items-center justify-between text-sm pt-2 border-t border-border mt-2">
+                <span className="font-medium text-foreground">Total Amount</span>
+                <span className="text-lg font-bold text-foreground">₹{appointment.total_amount.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+          </div>
+          {/* Membership */}
+          {!loadingMembership && membershipInfo && (
+            <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5 flex items-center justify-between">
+              <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                👑 {membershipInfo.membershipName}
+              </span>
+              <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">{membershipInfo.discountPct}% off</span>
+            </div>
+          )}
+          {/* Discount */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">{membershipInfo ? 'Additional Discount' : 'Discount'}</p>
+            <div className="flex items-center gap-2 flex-wrap">
+              {[0,5,10,15,20].map(pct => (
+                <button key={pct} type="button" onClick={() => setAdditionalDiscountPct(pct)}
+                  className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all min-h-[40px] min-w-[48px] ${additionalDiscountPct === pct ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20' : 'border-border text-muted-foreground hover:border-pink-300'}`}>
+                  {pct === 0 ? 'None' : `+${pct}%`}
+                </button>
+              ))}
+              <Input type="number" min={0} max={100} value={additionalDiscountPct || ''} placeholder="Custom %"
+                onChange={e => setAdditionalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value)||0)))}
+                className="w-24 text-center" />
+            </div>
+            {totalDiscountPct > 0 && appointment.total_amount > 0 && (
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 flex items-center justify-between">
+                <span className="text-sm text-emerald-700 dark:text-emerald-400">{totalDiscountPct}% total discount</span>
+                <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">₹{discountedTotal.toLocaleString('en-IN')}</span>
+              </div>
+            )}
+          </div>
+          {/* Payment */}
+          <div className="space-y-2">
+            <p className="text-sm font-medium text-foreground">Payment Method</p>
+            <div className="flex gap-2">
+              {(['cash','upi','card'] as const).map(m => (
+                <label key={m} className={`flex-1 flex items-center justify-center rounded-xl border px-3 py-2.5 text-sm cursor-pointer transition-all ${paymentMethod === m ? 'border-primary bg-primary/5 text-primary font-medium' : 'border-border text-muted-foreground hover:border-foreground/30'}`}>
+                  <input type="radio" name="cal-payment" value={m} checked={paymentMethod === m} onChange={() => setPaymentMethod(m)} className="sr-only" />
+                  {m === 'upi' ? 'UPI' : m.charAt(0).toUpperCase() + m.slice(1)}
+                </label>
+              ))}
+            </div>
+          </div>
+          {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+        </div>
+        <div className="border-t border-border px-5 py-4 bg-muted/20 shrink-0 flex gap-2">
+          <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose} disabled={isPending}>Cancel</Button>
+          <Button className="flex-1 rounded-xl gap-1.5" onClick={handleConfirm} disabled={isPending}>
+            {isPending ? <><span className="h-4 w-4 animate-spin rounded-full border-2 border-primary-foreground border-t-transparent" /> Generating...</> : <><CheckCircle2 className="size-4" /> Complete & Bill</>}
+          </Button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Reschedule Modal
+// =============================================================================
+function RescheduleModal({ appointment, onClose }: { appointment: AppointmentRow; onClose: () => void }) {
+  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
+  const [newDate, setNewDate] = useState('');
+  const [slots, setSlots] = useState<TimeSlot[]>([]);
+  const [loadingSlots, setLoadingSlots] = useState(false);
+  const [selectedSlot, setSelectedSlot] = useState('');
+  const [error, setError] = useState('');
+
+  const today = new Date().toISOString().split('T')[0];
+  const maxDate = (() => { const d = new Date(); d.setDate(d.getDate()+7); return d.toISOString().split('T')[0]; })();
+
+  useEffect(() => {
+    if (!newDate) return;
+    setLoadingSlots(true); setSlots([]); setSelectedSlot('');
+    getSlotsForReschedule(appointment.id, newDate).then(s => { setSlots(s); setLoadingSlots(false); });
+  }, [newDate, appointment.id]);
+
+  function handleReschedule() {
+    if (!newDate || !selectedSlot) return;
+    const [startTime, endTime] = selectedSlot.split('|');
+    setError('');
+    startTransition(async () => {
+      const result = await rescheduleAppointment(appointment.id, { appointment_date: newDate, start_time: startTime, end_time: endTime });
+      if (result.success) { onClose(); router.refresh(); } else setError(result.error);
+    });
+  }
+
+  function formatSlot(t: string) {
+    const [h, m] = t.split(':').map(Number);
+    return `${h%12||12}:${String(m).padStart(2,'0')} ${h>=12?'PM':'AM'}`;
+  }
+
+  return (
+    <div className="fixed inset-0 z-50 flex items-end sm:items-center justify-center p-0 sm:p-4">
+      <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-card shadow-2xl overflow-hidden max-h-[90vh] flex flex-col">
+        <div className="flex items-center justify-between border-b border-border px-5 py-4 bg-muted/30 shrink-0">
+          <div className="flex items-center gap-3">
+            <div className="flex size-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/20">
+              <CalendarClock className="size-5 text-violet-600" />
+            </div>
+            <div>
+              <h2 className="text-base font-semibold text-foreground">Reschedule Appointment</h2>
+              <p className="text-xs text-muted-foreground">{appointment.customer_name} · {appointment.service_name}</p>
+            </div>
+          </div>
+          <button onClick={onClose} className="flex size-9 items-center justify-center rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors">
+            <X className="size-5" />
+          </button>
+        </div>
+        <div className="p-5 space-y-4 overflow-y-auto flex-1">
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">New Date</label>
+            <Input type="date" value={newDate} min={today} max={maxDate} onChange={e => setNewDate(e.target.value)} />
+          </div>
+          {newDate && (
+            <div className="space-y-1.5">
+              <label className="text-sm font-medium text-foreground">Available Slots</label>
+              {loadingSlots ? (
+                <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                  Loading slots...
+                </div>
+              ) : slots.length === 0 ? (
+                <p className="text-sm text-muted-foreground">No available slots for this date.</p>
+              ) : (
+                <div className="grid grid-cols-3 gap-2">
+                  {slots.map(slot => {
+                    const val = `${slot.slot_start}|${slot.slot_end}`;
+                    return (
+                      <button key={val} type="button" onClick={() => setSelectedSlot(val)}
+                        className={`rounded-xl border px-3 py-2 text-sm font-medium transition-all ${selectedSlot === val ? 'border-primary bg-primary/5 text-primary' : 'border-border text-muted-foreground hover:border-primary/50'}`}>
+                        {formatSlot(slot.slot_start)}
+                      </button>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+          {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
+        </div>
+        <div className="border-t border-border px-5 py-4 bg-muted/20 shrink-0 flex gap-2">
+          <Button variant="outline" className="flex-1 rounded-xl" onClick={onClose} disabled={isPending}>Cancel</Button>
+          <Button className="flex-1 rounded-xl gap-1.5" onClick={handleReschedule} disabled={!newDate || !selectedSlot || isPending}>
+            {isPending ? 'Rescheduling...' : <><CalendarClock className="size-4" /> Reschedule</>}
+          </Button>
+        </div>
       </div>
     </div>
   );
