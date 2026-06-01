@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
-import { notifyOwner } from '@/lib/whatsapp/notify-owner';
+import { notifyOwnerNewBooking, notifyOwnerReschedule } from '@/lib/whatsapp/notify-owner';
 import crypto from 'crypto';
 
 // =============================================================================
@@ -595,14 +595,22 @@ async function processBooking(data: any, flowToken: string) {
       console.log('[Flow] Template send result:', JSON.stringify(templateResult));
     }
 
-    // Notify salon owner
+    // Notify salon owner via approved Utility template (works 24/7)
     const dateLabel2 = new Date(date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
     const timeLabel2 = formatTime12h(time_slot);
-    const ownerText = isReschedule
-      ? `📅 Appointment Rescheduled\n\nCustomer: ${customerName}\nPhone: +${customerPhone || customer_phone}\nServices: ${serviceNames}\nNew Date: ${dateLabel2}\nNew Time: ${timeLabel2}\n\nThe customer rescheduled via WhatsApp. Check your dashboard.`
-      : `🆕 New Booking Alert!\n\nCustomer: ${customerName}\nPhone: +${customerPhone || customer_phone}\nServices: ${serviceNames}\nDate: ${dateLabel2}\nTime: ${timeLabel2}\n\nCheck your SnipandGlow dashboard for details.`;
+    const dateTimeStr = `${dateLabel2}, ${timeLabel2}`;
 
-    await notifyOwner(admin, credentials, primaryService.tenant_id, ownerText);
+    if (isReschedule) {
+      await notifyOwnerReschedule(admin, credentials, primaryService.tenant_id,
+        salonName || 'Your Salon', customerName, customerPhone || customer_phone,
+        serviceNames, dateTimeStr
+      );
+    } else {
+      await notifyOwnerNewBooking(admin, credentials, primaryService.tenant_id,
+        salonName || 'Your Salon', customerName, customerPhone || customer_phone,
+        serviceNames, dateTimeStr
+      );
+    }
   }
 
   return {

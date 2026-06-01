@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
-import { notifyOwner } from '@/lib/whatsapp/notify-owner';
+import { notifyOwner, notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel, notifyOwnerFeedback } from '@/lib/whatsapp/notify-owner';
 import { resolveTenant, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import crypto from 'crypto';
@@ -666,7 +666,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       }
 
       // Notify salon owner
-      await notifyOwnerFeedback(admin, tenant, name, phone, rating);
+      await notifyOwnerFeedbackLegacy(admin, tenant, name, phone, rating);
       break;
     }
 
@@ -710,9 +710,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           .in('status', ['booked', 'confirmed']) as any);
 
         if (!cancelError) {
-          // Notify salon owner
-          await notifyOwner(admin, tenant.credentials, tenant.tenantId,
-            `⚠️ Appointment Cancelled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\n\nThe customer cancelled their appointment via WhatsApp. Check your dashboard for details.`
+          // Notify salon owner via approved template (works outside 24h window)
+          await notifyOwnerCancel(admin, tenant.credentials, tenant.tenantId,
+            tenant.salonName, name, phone
           );
 
           await sendMessage(tenant.credentials, phone, {
@@ -837,9 +837,9 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
             },
           });
 
-          // Notify salon owner
-          await notifyOwner(admin, tenant.credentials, tenant.tenantId,
-            `📅 Appointment Rescheduled by Customer\n\nCustomer: ${name}\nPhone: +${phone}\nNew Date: ${dateLabel}\nNew Time: ${timeLabel}\n\nCheck your dashboard for details.`
+          // Notify salon owner via approved template
+          await notifyOwnerReschedule(admin, tenant.credentials, tenant.tenantId,
+            tenant.salonName, name, phone, 'appointment', `${dateLabel}, ${timeLabel}`
           );
         } else {
           await sendMessage(tenant.credentials, phone, {
@@ -1030,14 +1030,10 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 // Notify Salon Owner about Customer Feedback
 // =============================================================================
 
-async function notifyOwnerFeedback(admin: any, tenant: TenantContext, customerName: string, customerPhone: string, rating: number) {
+async function notifyOwnerFeedbackLegacy(admin: any, tenant: TenantContext, customerName: string, customerPhone: string, rating: number) {
   try {
-    const stars = '⭐'.repeat(rating);
-    const emoji = rating >= 4 ? '🎉' : rating >= 3 ? '📝' : '⚠️';
-    const urgency = rating <= 2 ? '\n\n🔴 *Needs immediate attention!*' : '';
-
-    await notifyOwner(admin, tenant.credentials, tenant.tenantId,
-      `${emoji} *New Feedback Received*\n\nCustomer: ${customerName}\nPhone: +${customerPhone}\nRating: ${stars} (${rating}/5)${urgency}\n\nView all feedback in your SnipandGlow dashboard → Feedback section.`
+    await notifyOwnerFeedback(admin, tenant.credentials, tenant.tenantId,
+      tenant.salonName, customerName, rating
     );
   } catch (err) {
     console.error('[Webhook] Failed to notify owner about feedback:', err);
