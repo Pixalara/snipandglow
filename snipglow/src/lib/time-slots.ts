@@ -105,7 +105,7 @@ export async function generateSmartSlots(tenantId: string, branchId: string): Pr
       .eq('tenant_id', tenantId)
       .gte('appointment_date', firstDate)
       .lte('appointment_date', lastDate)
-      .neq('status', 'cancelled') as any);
+      .in('status', ['booked', 'confirmed']) as any);
 
     if (bookedAppts) {
       for (const appt of bookedAppts) {

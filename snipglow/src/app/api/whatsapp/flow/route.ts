@@ -176,7 +176,7 @@ async function handleFlowInit(data: any) {
         .eq('tenant_id', tenantId)
         .gte('appointment_date', firstDate)
         .lte('appointment_date', lastDate)
-        .neq('status', 'cancelled') as any),
+        .in('status', ['booked', 'confirmed']) as any),
     ]);
 
     // Read capacity settings
@@ -285,7 +285,7 @@ async function handleDateSelected(data: any, flowToken: string) {
           .select('start_time, end_time')
           .eq('tenant_id', tenantId)
           .eq('appointment_date', date)
-          .neq('status', 'cancelled') as any)
+          .in('status', ['booked', 'confirmed']) as any)
       : Promise.resolve({ data: [] }),
   ]);
 
@@ -375,7 +375,7 @@ async function processBooking(data: any, flowToken: string) {
   const [servicesRes, tenantRes, existingApptsRes, customerRes] = await Promise.all([
     admin.from('services').select('id, name, price, tenant_id, branch_id').in('id', selectedServiceIds),
     (admin.from('tenants' as any).select('settings').eq('id', tokenData.tenant_id || '').single() as any),
-    tokenData.tenant_id ? (admin.from('appointments').select('start_time, end_time, customer_id').eq('tenant_id', tokenData.tenant_id).eq('appointment_date', date).neq('status', 'cancelled') as any) : Promise.resolve({ data: [] }),
+    tokenData.tenant_id ? (admin.from('appointments').select('start_time, end_time, customer_id').eq('tenant_id', tokenData.tenant_id).eq('appointment_date', date).in('status', ['booked', 'confirmed']) as any) : Promise.resolve({ data: [] }),
     existingCustomerId
       ? Promise.resolve({ data: { id: existingCustomerId } })
       : phoneE164
