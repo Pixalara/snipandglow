@@ -60,7 +60,7 @@ export async function createAppointment(
   }
 
   // Validate: same customer cannot book the same overlapping slot twice
-  // and max 2 active bookings per customer per day. Completed/cancelled
+  // and max 3 active bookings per customer per day. Completed/cancelled
   // appointments free up the slot and don't count toward the daily limit.
   const { data: customerConflicts } = await supabase
     .from('appointments')
@@ -71,9 +71,9 @@ export async function createAppointment(
     .in('status', ['booked', 'confirmed']);
 
   if (customerConflicts && customerConflicts.length > 0) {
-    // Max 2 bookings per customer per day
-    if (customerConflicts.length >= 2) {
-      return { success: false, error: 'This customer already has 2 appointments on this date. Maximum 2 per day allowed.' };
+    // Max 3 bookings per customer per day
+    if (customerConflicts.length >= 3) {
+      return { success: false, error: 'This customer already has 3 appointments on this date. Maximum 3 per day allowed.' };
     }
 
     // Block overlapping time

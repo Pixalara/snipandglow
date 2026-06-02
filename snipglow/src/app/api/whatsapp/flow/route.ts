@@ -455,8 +455,8 @@ async function processBooking(data: any, flowToken: string) {
 
   // Per-customer daily limit check (using already-fetched allAppts)
   const customerAppts = allAppts.filter((a: any) => a.customer_id === customerId);
-  if (customerAppts.length >= 2) {
-    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You can only book up to 2 appointments per day. Please choose a different date.' } };
+  if (customerAppts.length >= 3) {
+    return { version: '3.0', screen: 'BOOKING_SCREEN', data: { error_message: 'You can only book up to 3 appointments per day. Please choose a different date.' } };
   }
   const alreadyBooked = customerAppts.some((appt: any) => {
     const apptStart = toMinutes(appt.start_time);
