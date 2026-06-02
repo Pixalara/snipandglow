@@ -135,7 +135,7 @@ async function handleFlowInit(data: any) {
   // Fetch active services - if no tenant specified, get all (for shared mode)
   let serviceQuery = admin
     .from('services')
-    .select('id, name, price, duration_minutes')
+    .select('id, name, price')
     .eq('is_active', true)
     .order('name')
     .limit(20);
@@ -373,7 +373,7 @@ async function processBooking(data: any, flowToken: string) {
 
   // ── PARALLEL FETCH: services + tenant settings + existing appointments + customer ──
   const [servicesRes, tenantRes, existingApptsRes, customerRes] = await Promise.all([
-    admin.from('services').select('id, name, price, duration_minutes, tenant_id, branch_id').in('id', selectedServiceIds),
+    admin.from('services').select('id, name, price, tenant_id, branch_id').in('id', selectedServiceIds),
     (admin.from('tenants' as any).select('settings').eq('id', tokenData.tenant_id || '').single() as any),
     tokenData.tenant_id ? (admin.from('appointments').select('start_time, end_time, customer_id').eq('tenant_id', tokenData.tenant_id).eq('appointment_date', date).neq('status', 'cancelled') as any) : Promise.resolve({ data: [] }),
     existingCustomerId
@@ -389,13 +389,15 @@ async function processBooking(data: any, flowToken: string) {
   }
 
   const primaryService = services[0];
-  const totalDuration = services.reduce((sum: number, s: any) => sum + s.duration_minutes, 0);
+  // Each booking occupies one fixed slot (tenant's slot duration), NOT the sum
+  // of service durations — multiple bookings are allowed per slot.
+  const tenantSettings = (tenantRes.data?.settings as any) ?? {};
+  const slotDuration: number = tenantSettings.slot_duration_minutes || 30;
   const [startH, startM] = time_slot.split(':').map(Number);
-  const totalMin = startH * 60 + startM + totalDuration;
+  const totalMin = startH * 60 + startM + slotDuration;
   const endTime = `${String(Math.floor(totalMin / 60)).padStart(2, '0')}:${String(totalMin % 60).padStart(2, '0')}:00`;
 
   // ── VALIDATIONS (using already-fetched data, no extra DB calls) ──
-  const tenantSettings = (tenantRes.data?.settings as any) ?? {};
   const blockedSlots: Array<{ date: string; slots: string[] }> = tenantSettings.blocked_slots || [];
   const blockedForDate = blockedSlots.find((b: any) => b.date === date);
   const slotTime = time_slot.substring(0, 5);
@@ -405,7 +407,7 @@ async function processBooking(data: any, flowToken: string) {
 
   const allAppts: any[] = existingApptsRes.data || [];
   const slotStart = toMinutes(time_slot);
-  const slotEnd = slotStart + totalDuration;
+  const slotEnd = slotStart + slotDuration;
   const maxPerSlot: number = tenantSettings.max_appointments_per_slot || 1;
 
   const overlapCount = allAppts.filter((appt: any) => {

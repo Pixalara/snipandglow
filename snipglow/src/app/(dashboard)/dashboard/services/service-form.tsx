@@ -64,10 +64,9 @@ export function ServiceForm({ service, onClose }: ServiceFormProps) {
       setIsSubmitting(false);
       return;
     }
-    if (!durationMinutes || Number(durationMinutes) < 1) {
-      // Default to 30 minutes if not set (duration hidden from UI)
-      setDurationMinutes('30');
-    }
+    // Duration is hidden from the UI (multiple bookings allowed per slot).
+    // Default to 30 minutes when not set — used only as an internal placeholder.
+    const finalDuration = durationMinutes && Number(durationMinutes) >= 1 ? Number(durationMinutes) : 30;
     if (!price || Number(price) < 0) {
       setError('Price must be a non-negative number.');
       setIsSubmitting(false);
@@ -77,7 +76,7 @@ export function ServiceForm({ service, onClose }: ServiceFormProps) {
     const input = {
       name: name.trim(),
       category: finalCategory,
-      duration_minutes: Number(durationMinutes),
+      duration_minutes: finalDuration,
       price: Number(price),
     };
 

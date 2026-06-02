@@ -444,7 +444,7 @@ export async function rescheduleAppointment(
 }
 
 /**
- * Get available slots for rescheduling — resolves employee and duration from the appointment.
+ * Get available slots for rescheduling — resolves employee from the appointment.
  */
 export async function getSlotsForReschedule(
   appointmentId: string,
@@ -452,29 +452,28 @@ export async function getSlotsForReschedule(
 ): Promise<TimeSlot[]> {
   const supabase = await createClient();
 
-  // Get the appointment's employee and service in one query
+  // Get the appointment's employee
   const { data: appointment } = await supabase
     .from('appointments')
-    .select('employee_id, service_id, services(duration_minutes)')
+    .select('employee_id')
     .eq('id', appointmentId)
     .single();
 
   if (!appointment) return [];
 
-  const duration = (appointment.services as any)?.duration_minutes ?? 30;
-
-  return getAvailableSlots(appointment.employee_id, date, duration);
+  return getAvailableSlots(appointment.employee_id, date);
 }
 
 /**
  * Get available time slots for a given employee on a specific date.
  * Generates slots based on branch operating hours and excludes booked appointments
- * and admin-blocked slots from tenant settings.
+ * and admin-blocked slots from tenant settings. Each slot is a fixed length (the
+ * tenant's slot_duration_minutes) — service durations are not used since multiple
+ * bookings are allowed per slot.
  */
 export async function getAvailableSlots(
   employeeId: string,
-  date: string,
-  serviceDuration: number
+  date: string
 ): Promise<TimeSlot[]> {
   const supabase = await createClient();
 
@@ -532,8 +531,10 @@ export async function getAvailableSlots(
 
   // Capacity: how many appointments allowed per slot (default 1)
   const maxPerSlot: number = tenantSettings.max_appointments_per_slot || 1;
+  // Fixed slot length for every booking (default 30 min)
+  const slotDuration: number = tenantSettings.slot_duration_minutes || 30;
 
-  // 5. Generate all possible slots at 30-minute intervals
+  // 5. Generate all possible slots at the configured interval
   const slots: TimeSlot[] = [];
   const [openH, openM] = openTime.split(':').map(Number);
   const [closeH, closeM] = closeTime.split(':').map(Number);
@@ -547,7 +548,7 @@ export async function getAvailableSlots(
   const currentISTMinutes = nowH * 60 + nowM;
   const isToday = date === todayIST;
 
-  for (let start = openMinutes; start + serviceDuration <= closeMinutes; start += 30) {
+  for (let start = openMinutes; start + slotDuration <= closeMinutes; start += slotDuration) {
     if (isToday && start <= currentISTMinutes) continue;
 
     // Skip admin-blocked slots
@@ -555,7 +556,7 @@ export async function getAvailableSlots(
     const slotMM = String(start % 60).padStart(2, '0');
     if (blockedTimes.has(`${slotHH}:${slotMM}`)) continue;
 
-    const end = start + serviceDuration;
+    const end = start + slotDuration;
     const startStr = `${slotHH}:${slotMM}:00`;
     const endStr = `${String(Math.floor(end / 60)).padStart(2, '0')}:${String(end % 60).padStart(2, '0')}:00`;
     slots.push({ slot_start: startStr, slot_end: endStr });

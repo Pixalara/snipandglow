@@ -77,9 +77,8 @@ export default function NewAppointmentPage() {
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
 
-  // Derived — total duration of all selected services
+  // Selected services (duration not used — multiple bookings allowed per fixed slot)
   const selectedServices = services.filter((s) => selectedServiceIds.includes(s.id));
-  const duration = selectedServices.reduce((sum, s) => sum + s.duration_minutes, 0);
 
   // Error/success state
   const [error, setError] = useState('');
@@ -116,19 +115,19 @@ export default function NewAppointmentPage() {
     return () => clearTimeout(timer);
   }, [customerSearch, selectedCustomer]);
 
-  // Fetch available slots when date + service are selected
+  // Fetch available slots when date is selected
   const fetchSlots = useCallback(async () => {
-    if (!appointmentDate || !duration || employees.length === 0) return;
+    if (!appointmentDate || selectedServiceIds.length === 0 || employees.length === 0) return;
 
     setLoadingSlots(true);
     setSlots([]);
     setSelectedSlot('');
 
     // Use first employee for slot calculation
-    const available = await getAvailableSlots(employees[0].id, appointmentDate, duration);
+    const available = await getAvailableSlots(employees[0].id, appointmentDate);
     setSlots(available);
     setLoadingSlots(false);
-  }, [appointmentDate, duration, employees]);
+  }, [appointmentDate, selectedServiceIds, employees]);
 
   useEffect(() => {
     fetchSlots();
