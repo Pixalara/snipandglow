@@ -1,6 +1,6 @@
 'use client';
 
-import { Document, Page, Text, View, StyleSheet } from '@react-pdf/renderer';
+import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { formatINR, formatDateIN, formatTimeIST } from '@/lib/utils';
 import type { InvoiceDocument } from './actions';
 
@@ -10,11 +10,28 @@ import type { InvoiceDocument } from './actions';
 // Mirrors the on-screen preview: white sheet, black body, red accents,
 // brand-gradient header (approximated with solid brand tones), dark item header.
 // Works identically on web, mobile and tablet.
+//
+// Roboto is registered (it includes the ₹ / U+20B9 glyph) so the rupee symbol
+// renders correctly in the PDF on every device.
 // =============================================================================
 
-// react-pdf renders ₹ inconsistently across platforms; use "Rs." for safety.
-function rs(amount: number): string {
-  return formatINR(amount).replace(/₹\s?/g, 'Rs. ');
+let fontsRegistered = false;
+function ensureFonts() {
+  if (fontsRegistered) return;
+  try {
+    Font.register({
+      family: 'Roboto',
+      fonts: [
+        { src: '/fonts/Roboto-Regular.ttf', fontWeight: 'normal' },
+        { src: '/fonts/Roboto-Bold.ttf', fontWeight: 'bold' },
+      ],
+    });
+    // The rupee sign should never be a line-break opportunity.
+    Font.registerHyphenationCallback((word) => [word]);
+    fontsRegistered = true;
+  } catch {
+    // If registration fails we fall back to built-in Helvetica.
+  }
 }
 
 const BRAND = '#a21caf'; // fuchsia/violet brand tone (solid; gradients not supported)
@@ -30,7 +47,7 @@ const styles = StyleSheet.create({
     paddingBottom: 28,
     paddingHorizontal: 28,
     fontSize: 10,
-    fontFamily: 'Helvetica',
+    fontFamily: 'Roboto',
     color: BLACK,
     backgroundColor: '#ffffff',
   },
@@ -47,9 +64,9 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'space-between',
   },
-  salonName: { color: '#ffffff', fontSize: 18, fontFamily: 'Helvetica-Bold' },
+  salonName: { color: '#ffffff', fontSize: 18, fontWeight: 'bold' },
   salonMeta: { color: '#f3e8ff', fontSize: 8, marginTop: 2 },
-  invoiceTitle: { color: '#ffffff', fontSize: 22, fontFamily: 'Helvetica-Bold', textAlign: 'right' },
+  invoiceTitle: { color: '#ffffff', fontSize: 22, fontWeight: 'bold', textAlign: 'right' },
   invoiceNo: { color: '#f3e8ff', fontSize: 9, marginTop: 3, textAlign: 'right' },
   // Meta row
   metaRow: {
@@ -60,8 +77,8 @@ const styles = StyleSheet.create({
     borderBottom: '1pt solid #f0f0f0',
   },
   metaBlock: { flexGrow: 1, flexBasis: 0 },
-  metaLabel: { color: RED, fontSize: 7, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase', letterSpacing: 0.5 },
-  metaValue: { color: BLACK, fontSize: 11, fontFamily: 'Helvetica-Bold', marginTop: 3 },
+  metaLabel: { color: RED, fontSize: 7, fontWeight: 'bold', textTransform: 'uppercase', letterSpacing: 0.5 },
+  metaValue: { color: BLACK, fontSize: 11, fontWeight: 'bold', marginTop: 3 },
   metaSub: { color: GREY, fontSize: 8.5, marginTop: 1 },
   // Items table
   body: { paddingVertical: 18, paddingHorizontal: 24 },
@@ -72,7 +89,7 @@ const styles = StyleSheet.create({
     paddingVertical: 7,
     paddingHorizontal: 12,
   },
-  th: { color: '#ffffff', fontSize: 8, fontFamily: 'Helvetica-Bold', textTransform: 'uppercase' },
+  th: { color: '#ffffff', fontSize: 8, fontWeight: 'bold', textTransform: 'uppercase' },
   tableRow: {
     flexDirection: 'row',
     paddingVertical: 9,
@@ -83,17 +100,17 @@ const styles = StyleSheet.create({
   colQty: { flexGrow: 1, flexBasis: 0, textAlign: 'center' },
   colRate: { flexGrow: 1.4, flexBasis: 0, textAlign: 'right' },
   colAmount: { flexGrow: 1.4, flexBasis: 0, textAlign: 'right' },
-  tdName: { color: BLACK, fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  tdName: { color: BLACK, fontSize: 10, fontWeight: 'bold' },
   td: { color: GREY, fontSize: 10 },
-  tdAmount: { color: BLACK, fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  tdAmount: { color: BLACK, fontSize: 10, fontWeight: 'bold' },
   // Totals
   totalsWrap: { flexDirection: 'row', justifyContent: 'flex-end', marginTop: 18 },
   totals: { width: '48%' },
   totalLine: { flexDirection: 'row', justifyContent: 'space-between', paddingVertical: 2 },
   totalLabel: { color: GREY, fontSize: 10 },
-  totalValue: { color: BLACK, fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  totalValue: { color: BLACK, fontSize: 10, fontWeight: 'bold' },
   discountLabel: { color: RED, fontSize: 10 },
-  discountValue: { color: RED, fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  discountValue: { color: RED, fontSize: 10, fontWeight: 'bold' },
   divider: { height: 1, backgroundColor: '#e5e5e5', marginVertical: 6 },
   grandTotal: {
     flexDirection: 'row',
@@ -103,7 +120,7 @@ const styles = StyleSheet.create({
     paddingVertical: 9,
     paddingHorizontal: 12,
   },
-  grandTotalText: { color: '#ffffff', fontSize: 13, fontFamily: 'Helvetica-Bold' },
+  grandTotalText: { color: '#ffffff', fontSize: 13, fontWeight: 'bold' },
   // Footer
   footer: {
     borderTop: '1pt solid #f0f0f0',
@@ -111,12 +128,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 24,
     alignItems: 'center',
   },
-  footerThanks: { color: BLACK, fontSize: 10, fontFamily: 'Helvetica-Bold' },
+  footerThanks: { color: BLACK, fontSize: 10, fontWeight: 'bold' },
   footerNote: { color: GREY, fontSize: 8.5, marginTop: 3 },
   footerBrand: { color: RED, fontSize: 7, marginTop: 6, textTransform: 'uppercase', letterSpacing: 1.5 },
 });
 
 export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
+  ensureFonts();
   const date = new Date(doc.created_at);
   const statusColor =
     doc.payment_status === 'paid' ? '#059669'
@@ -177,8 +195,8 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
               <View style={styles.tableRow} key={i}>
                 <Text style={[styles.tdName, styles.colService]}>{it.service_name}</Text>
                 <Text style={[styles.td, styles.colQty]}>{it.quantity}</Text>
-                <Text style={[styles.td, styles.colRate]}>{rs(it.unit_price)}</Text>
-                <Text style={[styles.tdAmount, styles.colAmount]}>{rs(it.line_total)}</Text>
+                <Text style={[styles.td, styles.colRate]}>{formatINR(it.unit_price)}</Text>
+                <Text style={[styles.tdAmount, styles.colAmount]}>{formatINR(it.line_total)}</Text>
               </View>
             ))}
 
@@ -187,26 +205,26 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
               <View style={styles.totals}>
                 <View style={styles.totalLine}>
                   <Text style={styles.totalLabel}>Subtotal</Text>
-                  <Text style={styles.totalValue}>{rs(doc.subtotal)}</Text>
+                  <Text style={styles.totalValue}>{formatINR(doc.subtotal)}</Text>
                 </View>
                 {doc.discount_amount > 0 ? (
                   <View style={styles.totalLine}>
                     <Text style={styles.discountLabel}>
                       Discount{doc.discount_pct > 0 ? ` (${doc.discount_pct}%)` : ''}
                     </Text>
-                    <Text style={styles.discountValue}>- {rs(doc.discount_amount)}</Text>
+                    <Text style={styles.discountValue}>- {formatINR(doc.discount_amount)}</Text>
                   </View>
                 ) : null}
                 {doc.gst_amount > 0 ? (
                   <View style={styles.totalLine}>
                     <Text style={styles.totalLabel}>GST{doc.gst_rate > 0 ? ` (${doc.gst_rate}%)` : ''}</Text>
-                    <Text style={styles.totalValue}>{rs(doc.gst_amount)}</Text>
+                    <Text style={styles.totalValue}>{formatINR(doc.gst_amount)}</Text>
                   </View>
                 ) : null}
                 <View style={styles.divider} />
                 <View style={styles.grandTotal}>
                   <Text style={styles.grandTotalText}>Total</Text>
-                  <Text style={styles.grandTotalText}>{rs(doc.total)}</Text>
+                  <Text style={styles.grandTotalText}>{formatINR(doc.total)}</Text>
                 </View>
               </View>
             </View>
