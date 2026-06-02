@@ -81,9 +81,9 @@ export default async function WhatsAppCostsPage({
     <div className="space-y-6">
       {/* Header */}
       <div>
-        <h1 className="text-2xl font-bold text-white">WhatsApp Cost Report</h1>
-        <p className="text-sm text-slate-400 mt-1">
-          Per-tenant Meta charges · India pricing effective April 1, 2026
+        <h1 className="text-2xl font-bold text-foreground">WhatsApp Cost Report</h1>
+        <p className="text-sm text-muted-foreground mt-1">
+          Per-tenant Meta charges · India pricing effective April 1, 2026 · dates in IST
         </p>
       </div>
 
@@ -91,17 +91,17 @@ export default async function WhatsAppCostsPage({
       <CostFilter currentFrom={fromDate} currentTo={toDate} currentPreset={preset} />
 
       {/* Rate card */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-        <p className="text-xs text-slate-500 uppercase tracking-wide mb-3">Meta India Rates (per message)</p>
+      <div className="rounded-xl border border-border bg-card p-4">
+        <p className="text-xs text-muted-foreground uppercase tracking-wide mb-3">Meta India Rates (per message)</p>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           {[
-            { label: 'Marketing', rate: WHATSAPP_RATES_INR.marketing, color: 'text-orange-400' },
-            { label: 'Utility', rate: WHATSAPP_RATES_INR.utility, color: 'text-blue-400' },
-            { label: 'Authentication', rate: WHATSAPP_RATES_INR.authentication, color: 'text-violet-400' },
-            { label: 'Auth-International', rate: WHATSAPP_RATES_INR.authentication_intl, color: 'text-pink-400' },
+            { label: 'Marketing', rate: WHATSAPP_RATES_INR.marketing, color: 'text-orange-500' },
+            { label: 'Utility', rate: WHATSAPP_RATES_INR.utility, color: 'text-blue-500' },
+            { label: 'Authentication', rate: WHATSAPP_RATES_INR.authentication, color: 'text-violet-500' },
+            { label: 'Auth-International', rate: WHATSAPP_RATES_INR.authentication_intl, color: 'text-pink-500' },
           ].map(({ label, rate, color }) => (
-            <div key={label} className="rounded-lg border border-slate-800 bg-slate-800/50 p-3">
-              <p className="text-xs text-slate-500">{label}</p>
+            <div key={label} className="rounded-lg border border-border bg-muted/40 p-3">
+              <p className="text-xs text-muted-foreground">{label}</p>
               <p className={`text-lg font-bold mt-1 ${color}`}>₹{rate}</p>
             </div>
           ))}
@@ -110,43 +110,43 @@ export default async function WhatsAppCostsPage({
 
       {/* Summary stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs text-slate-500 uppercase truncate">{rangeLabel}</p>
-          <p className="text-2xl font-bold text-emerald-400 mt-1">{formatINRRounded(totalCost)}</p>
-          <p className="text-xs text-slate-500 mt-1">{totalMsgs} messages</p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase truncate">{rangeLabel}</p>
+          <p className="text-2xl font-bold text-emerald-500 mt-1">{formatINRRounded(totalCost)}</p>
+          <p className="text-xs text-muted-foreground mt-1">{totalMsgs} messages</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs text-slate-500 uppercase">Salons Active</p>
-          <p className="text-2xl font-bold text-blue-400 mt-1">{sortedTenants.length}</p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase">Salons Active</p>
+          <p className="text-2xl font-bold text-blue-500 mt-1">{sortedTenants.length}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs text-slate-500 uppercase">Avg per Salon</p>
-          <p className="text-2xl font-bold text-violet-400 mt-1">{formatINRRounded(avgPerSalon)}</p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase">Avg per Salon</p>
+          <p className="text-2xl font-bold text-violet-500 mt-1">{formatINRRounded(avgPerSalon)}</p>
         </div>
       </div>
 
       {/* Per-tenant breakdown */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
-        <div className="px-4 py-3 border-b border-slate-800 flex items-center justify-between">
-          <h2 className="text-sm font-semibold text-white">Per-Tenant Breakdown</h2>
-          <span className="text-xs text-slate-500">{rangeLabel}</span>
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="px-4 py-3 border-b border-border flex items-center justify-between">
+          <h2 className="text-sm font-semibold text-foreground">Per-Tenant Breakdown</h2>
+          <span className="text-xs text-muted-foreground">{rangeLabel}</span>
         </div>
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-800">
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Salon</th>
+              <tr className="border-b border-border">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Salon</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-orange-500">Marketing</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-blue-500">Utility</th>
                 <th className="px-4 py-3 text-right text-xs font-medium text-violet-500">Auth</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Total Msgs</th>
-                <th className="px-4 py-3 text-right text-xs font-medium text-slate-500">Total Cost</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Total Msgs</th>
+                <th className="px-4 py-3 text-right text-xs font-medium text-muted-foreground">Total Cost</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-border">
               {sortedTenants.length === 0 ? (
                 <tr>
-                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-slate-500">
+                  <td colSpan={6} className="px-4 py-10 text-center text-sm text-muted-foreground">
                     No messages sent in this period
                   </td>
                 </tr>
@@ -159,29 +159,29 @@ export default async function WhatsAppCostsPage({
                   const pct = totalCost > 0 ? (data.total / totalCost * 100).toFixed(1) : '0';
 
                   return (
-                    <tr key={tenantId} className="hover:bg-slate-800/20">
+                    <tr key={tenantId} className="hover:bg-accent/40">
                       <td className="px-4 py-3">
-                        <p className="text-sm text-white font-medium">{tenantMap[tenantId] || tenantId.slice(0, 8)}</p>
-                        <p className="text-[10px] text-slate-500 mt-0.5">{pct}% of total</p>
+                        <p className="text-sm text-foreground font-medium">{tenantMap[tenantId] || tenantId.slice(0, 8)}</p>
+                        <p className="text-[10px] text-muted-foreground mt-0.5">{pct}% of total</p>
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-orange-400">
+                      <td className="px-4 py-3 text-right text-xs text-orange-500">
                         {marketingCost > 0 ? (
-                          <><span className="text-slate-400">{data.byCategory.marketing?.count ?? 0}×</span><br />{formatINRRounded(marketingCost)}</>
-                        ) : <span className="text-slate-700">—</span>}
+                          <><span className="text-muted-foreground">{data.byCategory.marketing?.count ?? 0}×</span><br />{formatINRRounded(marketingCost)}</>
+                        ) : <span className="text-muted-foreground/40">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-blue-400">
+                      <td className="px-4 py-3 text-right text-xs text-blue-500">
                         {utilityCost > 0 ? (
-                          <><span className="text-slate-400">{data.byCategory.utility?.count ?? 0}×</span><br />{formatINRRounded(utilityCost)}</>
-                        ) : <span className="text-slate-700">—</span>}
+                          <><span className="text-muted-foreground">{data.byCategory.utility?.count ?? 0}×</span><br />{formatINRRounded(utilityCost)}</>
+                        ) : <span className="text-muted-foreground/40">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-violet-400">
+                      <td className="px-4 py-3 text-right text-xs text-violet-500">
                         {authCost > 0 ? (
-                          <><span className="text-slate-400">{(data.byCategory.authentication?.count ?? 0) + (data.byCategory.authentication_intl?.count ?? 0)}×</span><br />{formatINRRounded(authCost)}</>
-                        ) : <span className="text-slate-700">—</span>}
+                          <><span className="text-muted-foreground">{(data.byCategory.authentication?.count ?? 0) + (data.byCategory.authentication_intl?.count ?? 0)}×</span><br />{formatINRRounded(authCost)}</>
+                        ) : <span className="text-muted-foreground/40">—</span>}
                       </td>
-                      <td className="px-4 py-3 text-right text-xs text-slate-300 font-medium">{totalMsgsTenant}</td>
+                      <td className="px-4 py-3 text-right text-xs text-foreground/80 font-medium">{totalMsgsTenant}</td>
                       <td className="px-4 py-3 text-right">
-                        <span className="text-sm font-bold text-emerald-400">{formatINRRounded(data.total)}</span>
+                        <span className="text-sm font-bold text-emerald-500">{formatINRRounded(data.total)}</span>
                       </td>
                     </tr>
                   );
@@ -190,10 +190,10 @@ export default async function WhatsAppCostsPage({
             </tbody>
             {sortedTenants.length > 0 && (
               <tfoot>
-                <tr className="border-t-2 border-slate-700">
-                  <td className="px-4 py-3 text-xs font-bold text-slate-300">TOTAL</td>
+                <tr className="border-t-2 border-border">
+                  <td className="px-4 py-3 text-xs font-bold text-foreground/80">TOTAL</td>
                   <td colSpan={4} />
-                  <td className="px-4 py-3 text-right text-base font-bold text-emerald-400">
+                  <td className="px-4 py-3 text-right text-base font-bold text-emerald-500">
                     {formatINRRounded(totalCost)}
                   </td>
                 </tr>
@@ -204,9 +204,9 @@ export default async function WhatsAppCostsPage({
       </div>
 
       {/* Note */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/30 px-4 py-3">
-        <p className="text-xs text-slate-500">
-          <span className="text-slate-400 font-medium">Note:</span> Costs are estimated based on template category.
+      <div className="rounded-xl border border-border bg-card/50 px-4 py-3">
+        <p className="text-xs text-muted-foreground">
+          <span className="text-foreground/80 font-medium">Note:</span> Costs are estimated based on template category.
           Actual Meta billing may vary. Inbound messages are free.
           Rates: Marketing ₹{WHATSAPP_RATES_INR.marketing} · Utility ₹{WHATSAPP_RATES_INR.utility} · Auth ₹{WHATSAPP_RATES_INR.authentication} · Auth-Intl ₹{WHATSAPP_RATES_INR.authentication_intl}
         </p>

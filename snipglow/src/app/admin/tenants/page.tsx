@@ -1,5 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
+import { formatISTDate } from '@/lib/datetime';
 import Link from 'next/link';
 
 // =============================================================================
@@ -47,57 +48,57 @@ export default async function AdminTenantsPage() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white">Tenants</h1>
-          <p className="text-sm text-slate-400 mt-1">{(tenants ?? []).length} registered salons</p>
+          <h1 className="text-2xl font-bold text-foreground">Tenants</h1>
+          <p className="text-sm text-muted-foreground mt-1">{(tenants ?? []).length} registered salons</p>
         </div>
       </div>
 
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-800 text-left">
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Code</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Salon</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Owner</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Phone</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Plan</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Status</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Customers</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Appts</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Services</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Staff</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Joined</th>
-                <th className="px-4 py-3 text-xs font-medium text-slate-500 uppercase">Actions</th>
+              <tr className="border-b border-border text-left">
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Code</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Salon</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Owner</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Phone</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Plan</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Status</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Customers</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Appts</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Services</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Staff</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Joined</th>
+                <th className="px-4 py-3 text-xs font-medium text-muted-foreground uppercase">Actions</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800">
+            <tbody className="divide-y divide-border">
               {(tenants ?? []).map((t: any) => (
-                <tr key={t.id} className="hover:bg-slate-800/30 transition-colors">
-                  <td className="px-4 py-3 font-mono text-xs text-slate-400">{t.tenant_code}</td>
-                  <td className="px-4 py-3 font-medium text-white">{t.name}</td>
-                  <td className="px-4 py-3 text-slate-300">{t.owner_name || '—'}</td>
-                  <td className="px-4 py-3 text-slate-400">{t.phone || '—'}</td>
+                <tr key={t.id} className="hover:bg-accent/40 transition-colors">
+                  <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{t.tenant_code}</td>
+                  <td className="px-4 py-3 font-medium text-foreground">{t.name}</td>
+                  <td className="px-4 py-3 text-foreground/80">{t.owner_name || '—'}</td>
+                  <td className="px-4 py-3 text-muted-foreground">{t.phone || '—'}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 rounded bg-slate-800 text-slate-300">{t.plan_tier || 'starter'}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-muted text-foreground/80">{t.plan_tier || 'starter'}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      t.subscription_status === 'active' ? 'bg-emerald-900/30 text-emerald-400' :
-                      t.subscription_status === 'trial' ? 'bg-amber-900/30 text-amber-400' :
-                      t.subscription_status === 'expired' ? 'bg-red-900/30 text-red-400' :
-                      'bg-slate-800 text-slate-400'
+                      t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                      t.subscription_status === 'trial' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                      t.subscription_status === 'expired' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                      'bg-muted text-muted-foreground'
                     }`}>
                       {t.subscription_status}
                     </span>
                   </td>
-                  <td className="px-4 py-3 text-slate-300">{customerCounts[t.id] || 0}</td>
-                  <td className="px-4 py-3 text-slate-300">{appointmentCounts[t.id] || 0}</td>
-                  <td className="px-4 py-3 text-slate-300">{serviceCounts[t.id] || 0}</td>
-                  <td className="px-4 py-3 text-slate-300">{staffCounts[t.id] || 0}</td>
-                  <td className="px-4 py-3 text-xs text-slate-500">{new Date(t.created_at).toLocaleDateString('en-IN')}</td>
+                  <td className="px-4 py-3 text-foreground/80">{customerCounts[t.id] || 0}</td>
+                  <td className="px-4 py-3 text-foreground/80">{appointmentCounts[t.id] || 0}</td>
+                  <td className="px-4 py-3 text-foreground/80">{serviceCounts[t.id] || 0}</td>
+                  <td className="px-4 py-3 text-foreground/80">{staffCounts[t.id] || 0}</td>
+                  <td className="px-4 py-3 text-xs text-muted-foreground">{formatISTDate(t.created_at)}</td>
                   <td className="px-4 py-3">
-                    <Link href={`/admin/tenants/${t.id}`} className="text-xs text-blue-400 hover:text-blue-300 font-medium">
+                    <Link href={`/admin/tenants/${t.id}`} className="text-xs text-blue-500 hover:text-blue-400 font-medium">
                       View
                     </Link>
                   </td>

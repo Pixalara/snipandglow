@@ -4,6 +4,7 @@ import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { Headphones, Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { updateTicketStatus } from './actions';
+import { formatISTDate } from '@/lib/datetime';
 
 interface Ticket {
   id: string;
@@ -20,18 +21,18 @@ interface Ticket {
 }
 
 const statusOptions = [
-  { value: 'open', label: 'Open', color: 'bg-blue-900/30 text-blue-400' },
-  { value: 'acknowledged', label: 'Acknowledged', color: 'bg-amber-900/30 text-amber-400' },
-  { value: 'in_progress', label: 'In Progress', color: 'bg-violet-900/30 text-violet-400' },
-  { value: 'resolved', label: 'Resolved', color: 'bg-emerald-900/30 text-emerald-400' },
-  { value: 'closed', label: 'Closed', color: 'bg-slate-800 text-slate-400' },
+  { value: 'open', label: 'Open', color: 'bg-blue-500/15 text-blue-600 dark:text-blue-400' },
+  { value: 'acknowledged', label: 'Acknowledged', color: 'bg-amber-500/15 text-amber-600 dark:text-amber-400' },
+  { value: 'in_progress', label: 'In Progress', color: 'bg-violet-500/15 text-violet-600 dark:text-violet-400' },
+  { value: 'resolved', label: 'Resolved', color: 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' },
+  { value: 'closed', label: 'Closed', color: 'bg-muted text-muted-foreground' },
 ];
 
 const priorityColors: Record<string, string> = {
-  low: 'text-slate-400',
-  medium: 'text-amber-400',
-  high: 'text-orange-400',
-  urgent: 'text-red-400',
+  low: 'text-muted-foreground',
+  medium: 'text-amber-500',
+  high: 'text-orange-500',
+  urgent: 'text-red-500',
 };
 
 export function AdminSupportClient({ tickets }: { tickets: Ticket[] }) {
@@ -50,11 +51,11 @@ export function AdminSupportClient({ tickets }: { tickets: Ticket[] }) {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-2xl font-bold text-white flex items-center gap-2">
-            <Headphones className="size-6 text-blue-400" />
+          <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
+            <Headphones className="size-6 text-blue-500" />
             Support Tickets
           </h1>
-          <p className="text-sm text-slate-400 mt-1">{tickets.length} total tickets from tenants</p>
+          <p className="text-sm text-muted-foreground mt-1">{tickets.length} total tickets from tenants</p>
         </div>
       </div>
 
@@ -72,8 +73,8 @@ export function AdminSupportClient({ tickets }: { tickets: Ticket[] }) {
             onClick={() => setFilter(tab.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
               filter === tab.key
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                ? 'bg-accent text-foreground'
+                : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
             }`}
           >
             {tab.label}
@@ -83,8 +84,8 @@ export function AdminSupportClient({ tickets }: { tickets: Ticket[] }) {
 
       {/* Tickets list */}
       {filtered.length === 0 ? (
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-12 text-center">
-          <p className="text-slate-500">No tickets found</p>
+        <div className="rounded-xl border border-border bg-card p-12 text-center">
+          <p className="text-muted-foreground">No tickets found</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -112,68 +113,68 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
   const currentStatus = statusOptions.find((s) => s.value === ticket.status);
 
   return (
-    <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
       {/* Header */}
       <div
-        className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-slate-800/30 transition-colors"
+        className="px-4 py-3 flex items-center justify-between cursor-pointer hover:bg-accent/40 transition-colors"
         onClick={() => setExpanded(!expanded)}
       >
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap">
-            <span className="text-[10px] font-mono text-slate-500 bg-slate-800 px-1.5 py-0.5 rounded">{ticket.ticket_number || ticket.id.substring(0, 8)}</span>
-            <p className="text-sm font-medium text-white truncate">{ticket.subject}</p>
-            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${currentStatus?.color || 'bg-slate-800 text-slate-400'}`}>
+            <span className="text-[10px] font-mono text-muted-foreground bg-muted px-1.5 py-0.5 rounded">{ticket.ticket_number || ticket.id.substring(0, 8)}</span>
+            <p className="text-sm font-medium text-foreground truncate">{ticket.subject}</p>
+            <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${currentStatus?.color || 'bg-muted text-muted-foreground'}`}>
               {currentStatus?.label || ticket.status}
             </span>
-            <span className={`text-[10px] font-medium ${priorityColors[ticket.priority] || 'text-slate-400'}`}>
+            <span className={`text-[10px] font-medium ${priorityColors[ticket.priority] || 'text-muted-foreground'}`}>
               {ticket.priority}
             </span>
           </div>
-          <div className="flex items-center gap-3 mt-1 text-xs text-slate-500">
+          <div className="flex items-center gap-3 mt-1 text-xs text-muted-foreground">
             <span>{ticket.salon_name}</span>
             <span>&middot;</span>
             <span>{ticket.user_name}</span>
             <span>&middot;</span>
-            <span>{new Date(ticket.created_at).toLocaleDateString('en-IN', { day: 'numeric', month: 'short', year: 'numeric' })}</span>
+            <span>{formatISTDate(ticket.created_at)}</span>
           </div>
         </div>
-        <svg className={`w-4 h-4 text-slate-500 transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
+        <svg className={`w-4 h-4 text-muted-foreground transition-transform ${expanded ? 'rotate-180' : ''}`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" />
         </svg>
       </div>
 
       {/* Expanded content */}
       {expanded && (
-        <div className="px-4 pb-4 border-t border-slate-800 pt-3 space-y-4">
+        <div className="px-4 pb-4 border-t border-border pt-3 space-y-4">
           {/* Description */}
           <div>
-            <p className="text-xs text-slate-500 uppercase tracking-wider mb-1">Description</p>
-            <p className="text-sm text-slate-300 whitespace-pre-wrap leading-relaxed">{ticket.description}</p>
+            <p className="text-xs text-muted-foreground uppercase tracking-wider mb-1">Description</p>
+            <p className="text-sm text-foreground/80 whitespace-pre-wrap leading-relaxed">{ticket.description}</p>
           </div>
 
           {/* Details */}
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 text-xs">
             <div>
-              <p className="text-slate-500">Category</p>
-              <p className="text-slate-300 font-medium mt-0.5">{ticket.category}</p>
+              <p className="text-muted-foreground">Category</p>
+              <p className="text-foreground/80 font-medium mt-0.5">{ticket.category}</p>
             </div>
             <div>
-              <p className="text-slate-500">Phone</p>
-              <p className="text-slate-300 font-medium mt-0.5">{ticket.user_phone || '—'}</p>
+              <p className="text-muted-foreground">Phone</p>
+              <p className="text-foreground/80 font-medium mt-0.5">{ticket.user_phone || '—'}</p>
             </div>
             <div>
-              <p className="text-slate-500">Salon</p>
-              <p className="text-slate-300 font-medium mt-0.5">{ticket.salon_name}</p>
+              <p className="text-muted-foreground">Salon</p>
+              <p className="text-foreground/80 font-medium mt-0.5">{ticket.salon_name}</p>
             </div>
             <div>
-              <p className="text-slate-500">Ticket ID</p>
-              <p className="text-slate-300 font-mono mt-0.5">{ticket.ticket_number || ticket.id.substring(0, 8)}</p>
+              <p className="text-muted-foreground">Ticket ID</p>
+              <p className="text-foreground/80 font-mono mt-0.5">{ticket.ticket_number || ticket.id.substring(0, 8)}</p>
             </div>
           </div>
 
           {/* Status update buttons */}
-          <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-slate-800">
-            <p className="text-xs text-slate-500 mr-2">Update status:</p>
+          <div className="flex items-center gap-2 flex-wrap pt-2 border-t border-border">
+            <p className="text-xs text-muted-foreground mr-2">Update status:</p>
             {statusOptions.map((opt) => (
               <button
                 key={opt.value}
@@ -181,8 +182,8 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
                 disabled={isPending || ticket.status === opt.value}
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
                   ticket.status === opt.value
-                    ? 'bg-slate-700 text-white ring-1 ring-white/20'
-                    : 'bg-slate-800/50 text-slate-400 hover:text-white hover:bg-slate-700'
+                    ? 'bg-accent text-foreground ring-1 ring-border'
+                    : 'bg-muted/50 text-muted-foreground hover:text-foreground hover:bg-accent'
                 } disabled:opacity-40 disabled:cursor-not-allowed`}
               >
                 {isPending ? '...' : opt.label}

@@ -96,15 +96,15 @@ export function CostFilter({ currentFrom, currentTo, currentPreset }: Props) {
   return (
     <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">
       {/* Preset buttons */}
-      <div className="flex flex-wrap items-center gap-1 rounded-xl border border-slate-800 bg-slate-900/50 p-1">
+      <div className="flex flex-wrap items-center gap-1 rounded-xl border border-border bg-card p-1">
         {PRESETS.map(p => (
           <button
             key={p.key}
             onClick={() => applyPreset(p.key)}
             className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors whitespace-nowrap ${
               preset === p.key
-                ? 'bg-slate-700 text-white'
-                : 'text-slate-400 hover:text-white'
+                ? 'bg-accent text-foreground'
+                : 'text-muted-foreground hover:text-foreground'
             }`}
           >
             {p.label}
@@ -115,23 +115,23 @@ export function CostFilter({ currentFrom, currentTo, currentPreset }: Props) {
       {/* Custom date range */}
       {showCustom && (
         <div className="flex items-center gap-2">
-          <div className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5">
-            <Calendar className="size-3.5 text-slate-400" />
+          <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5">
+            <Calendar className="size-3.5 text-muted-foreground" />
             <input
               type="date"
               value={from}
               onChange={e => setFrom(e.target.value)}
-              className="bg-transparent text-xs text-white outline-none w-28"
+              className="bg-transparent text-xs text-foreground outline-none w-28"
             />
           </div>
-          <span className="text-slate-500 text-xs">to</span>
-          <div className="flex items-center gap-1.5 rounded-xl border border-slate-700 bg-slate-900 px-3 py-1.5">
-            <Calendar className="size-3.5 text-slate-400" />
+          <span className="text-muted-foreground text-xs">to</span>
+          <div className="flex items-center gap-1.5 rounded-xl border border-border bg-card px-3 py-1.5">
+            <Calendar className="size-3.5 text-muted-foreground" />
             <input
               type="date"
               value={to}
               onChange={e => setTo(e.target.value)}
-              className="bg-transparent text-xs text-white outline-none w-28"
+              className="bg-transparent text-xs text-foreground outline-none w-28"
             />
           </div>
           <button

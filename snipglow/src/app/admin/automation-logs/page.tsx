@@ -1,15 +1,16 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/auth';
+import { formatISTShort } from '@/lib/datetime';
 
 // =============================================================================
 // Admin — Automation Logs (all tenants)
 // =============================================================================
 
 const statusColors: Record<string, string> = {
-  sent: 'text-emerald-400',
-  delivered: 'text-blue-400',
-  read: 'text-blue-300',
-  failed: 'text-red-400',
+  sent: 'text-emerald-500',
+  delivered: 'text-blue-500',
+  read: 'text-blue-400',
+  failed: 'text-red-500',
 };
 
 function getDescription(log: any): string {
@@ -92,65 +93,65 @@ export default async function AdminAutomationLogsPage() {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-2xl font-bold text-white">Automation Logs</h1>
-        <p className="text-sm text-slate-400 mt-1">All WhatsApp activity across all tenants</p>
+        <h1 className="text-2xl font-bold text-foreground">Automation Logs</h1>
+        <p className="text-sm text-muted-foreground mt-1">All WhatsApp activity across all tenants · times in IST</p>
       </div>
 
       {/* Stats */}
       <div className="grid grid-cols-3 gap-3">
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs text-slate-500 uppercase">Sent</p>
-          <p className="text-2xl font-bold text-emerald-400 mt-1">{outboundCount}</p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase">Sent</p>
+          <p className="text-2xl font-bold text-emerald-500 mt-1">{outboundCount}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs text-slate-500 uppercase">Received</p>
-          <p className="text-2xl font-bold text-blue-400 mt-1">{inboundCount}</p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase">Received</p>
+          <p className="text-2xl font-bold text-blue-500 mt-1">{inboundCount}</p>
         </div>
-        <div className="rounded-xl border border-slate-800 bg-slate-900/50 p-4">
-          <p className="text-xs text-slate-500 uppercase">Failed</p>
-          <p className="text-2xl font-bold text-red-400 mt-1">{failedCount}</p>
+        <div className="rounded-xl border border-border bg-card p-4">
+          <p className="text-xs text-muted-foreground uppercase">Failed</p>
+          <p className="text-2xl font-bold text-red-500 mt-1">{failedCount}</p>
         </div>
       </div>
 
       {/* Logs table */}
-      <div className="rounded-xl border border-slate-800 bg-slate-900/50 overflow-hidden">
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-slate-800">
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Time</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Tenant</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Phone</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Activity</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Direction</th>
-                <th className="px-4 py-3 text-left text-xs font-medium text-slate-500">Status</th>
+              <tr className="border-b border-border">
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Time (IST)</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Tenant</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Phone</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Activity</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Direction</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground">Status</th>
               </tr>
             </thead>
-            <tbody className="divide-y divide-slate-800/50">
+            <tbody className="divide-y divide-border">
               {(logs ?? []).map((log: any) => (
-                <tr key={log.id} className="hover:bg-slate-800/20">
-                  <td className="px-4 py-2.5 text-xs text-slate-400 whitespace-nowrap">
-                    {new Date(log.created_at).toLocaleString('en-IN', { day: 'numeric', month: 'short', hour: 'numeric', minute: '2-digit', hour12: true })}
+                <tr key={log.id} className="hover:bg-accent/40">
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground whitespace-nowrap">
+                    {formatISTShort(log.created_at)}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-400">
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground">
                     {tenantMap[log.tenant_id]?.code || '—'}
                   </td>
-                  <td className="px-4 py-2.5 text-xs text-slate-400">{log.phone || '—'}</td>
-                  <td className="px-4 py-2.5 text-xs text-slate-300 max-w-xs">{getDescription(log)}</td>
+                  <td className="px-4 py-2.5 text-xs text-muted-foreground">{log.phone || '—'}</td>
+                  <td className="px-4 py-2.5 text-xs text-foreground/80 max-w-xs">{getDescription(log)}</td>
                   <td className="px-4 py-2.5">
-                    <span className={`text-xs px-1.5 py-0.5 rounded ${log.direction === 'outbound' ? 'bg-emerald-900/30 text-emerald-400' : 'bg-blue-900/30 text-blue-400'}`}>
+                    <span className={`text-xs px-1.5 py-0.5 rounded ${log.direction === 'outbound' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-blue-500/15 text-blue-600 dark:text-blue-400'}`}>
                       {log.direction === 'outbound' ? '↑ sent' : '↓ received'}
                     </span>
                   </td>
                   <td className="px-4 py-2.5">
-                    <span className={`text-xs ${statusColors[log.status] || 'text-slate-400'}`}>
+                    <span className={`text-xs ${statusColors[log.status] || 'text-muted-foreground'}`}>
                       {log.status}
                     </span>
                   </td>
                 </tr>
               ))}
               {(!logs || logs.length === 0) && (
-                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-slate-500">No logs yet</td></tr>
+                <tr><td colSpan={6} className="px-4 py-8 text-center text-sm text-muted-foreground">No logs yet</td></tr>
               )}
             </tbody>
           </table>

@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee } from 'lucide-react';
+import { AdminThemeToggle } from './admin-theme-toggle';
+import { AdminClock } from './admin-clock';
 
 const navItems = [
   { label: 'Overview', href: '/admin', icon: LayoutDashboard },
@@ -19,14 +21,17 @@ const navItems = [
 
 export function AdminShell({ adminEmail, children }: { adminEmail: string; children: React.ReactNode }) {
   const pathname = usePathname();
+  const activeLabel = navItems.find(
+    (item) => pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
+  )?.label ?? 'Admin';
 
   return (
-    <div className="flex h-screen bg-slate-950 text-slate-100">
+    <div className="flex h-screen bg-background text-foreground">
       {/* Sidebar */}
-      <aside className="w-56 shrink-0 border-r border-slate-800 bg-slate-900 flex flex-col">
-        <div className="px-4 py-4 border-b border-slate-800">
-          <p className="text-xs text-slate-500 uppercase tracking-wider font-semibold">Platform Admin</p>
-          <p className="text-sm font-bold text-white mt-1">SnipandGlow</p>
+      <aside className="w-56 shrink-0 border-r border-border bg-card flex flex-col">
+        <div className="px-4 py-4 border-b border-border">
+          <p className="text-xs text-muted-foreground uppercase tracking-wider font-semibold">Platform Admin</p>
+          <p className="text-sm font-bold text-foreground mt-1">SnipandGlow</p>
         </div>
         <nav className="flex-1 px-2 py-3 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
@@ -38,8 +43,8 @@ export function AdminShell({ adminEmail, children }: { adminEmail: string; child
                 href={item.href}
                 className={`flex items-center gap-2.5 px-3 py-2 rounded-lg text-sm transition-colors ${
                   isActive
-                    ? 'bg-slate-800 text-white font-medium'
-                    : 'text-slate-400 hover:text-white hover:bg-slate-800/50'
+                    ? 'bg-accent text-foreground font-medium'
+                    : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                 }`}
               >
                 <Icon className="size-4" />
@@ -48,18 +53,30 @@ export function AdminShell({ adminEmail, children }: { adminEmail: string; child
             );
           })}
         </nav>
-        <div className="px-4 py-3 border-t border-slate-800">
+        <div className="px-4 py-3 border-t border-border">
           <div className="flex items-center gap-2">
-            <Shield className="size-3.5 text-emerald-400" />
-            <p className="text-xs text-slate-400 truncate">{adminEmail}</p>
+            <Shield className="size-3.5 text-emerald-500" />
+            <p className="text-xs text-muted-foreground truncate">{adminEmail}</p>
           </div>
         </div>
       </aside>
 
-      {/* Main content */}
-      <main className="flex-1 overflow-y-auto p-6">
-        {children}
-      </main>
+      {/* Main column */}
+      <div className="flex-1 flex flex-col min-w-0">
+        {/* Top bar */}
+        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-6">
+          <p className="text-sm font-semibold text-foreground">{activeLabel}</p>
+          <div className="flex items-center gap-3">
+            <AdminClock />
+            <AdminThemeToggle />
+          </div>
+        </header>
+
+        {/* Content */}
+        <main className="flex-1 overflow-y-auto p-6">
+          {children}
+        </main>
+      </div>
     </div>
   );
 }
