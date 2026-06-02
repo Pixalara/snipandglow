@@ -6,6 +6,7 @@ import { formatINR, formatDateIN } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { Button } from '@/components/ui/button';
 import { updateInvoicePayment } from './actions';
+import { InvoiceDocumentModal } from './invoice-document';
 import {
   Receipt,
   Plus,
@@ -14,6 +15,7 @@ import {
   Smartphone,
   Pencil,
   CheckCircle2,
+  FileText,
 } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus } from '@/types';
 
@@ -41,6 +43,7 @@ const paymentIcons: Record<string, typeof CreditCard> = {
 
 export function InvoicesTable({ invoices }: InvoicesTableProps) {
   const [editTarget, setEditTarget] = useState<InvoiceRow | null>(null);
+  const [viewTarget, setViewTarget] = useState<InvoiceRow | null>(null);
 
   const columns: Column<InvoiceRow>[] = [
     {
@@ -98,14 +101,24 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       key: 'actions',
       header: '',
       render: (row) => (
-        <button
-          onClick={() => setEditTarget(row)}
-          className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-          title="Edit invoice"
-        >
-          <Pencil className="size-3.5" />
-          Edit
-        </button>
+        <div className="flex items-center justify-end gap-1">
+          <button
+            onClick={() => setViewTarget(row)}
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-rose-600 hover:bg-rose-50 dark:hover:bg-rose-900/20 transition-colors"
+            title="View & print invoice"
+          >
+            <FileText className="size-3.5" />
+            Invoice
+          </button>
+          <button
+            onClick={() => setEditTarget(row)}
+            className="inline-flex items-center gap-1 rounded-lg px-2 py-1 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
+            title="Edit invoice"
+          >
+            <Pencil className="size-3.5" />
+            Edit
+          </button>
+        </div>
       ),
     },
   ];
@@ -143,6 +156,10 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
 
       {editTarget && (
         <EditInvoiceModal invoice={editTarget} onClose={() => setEditTarget(null)} />
+      )}
+
+      {viewTarget && (
+        <InvoiceDocumentModal invoiceId={viewTarget.id} onClose={() => setViewTarget(null)} />
       )}
     </>
   );

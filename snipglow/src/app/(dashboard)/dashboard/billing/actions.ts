@@ -391,3 +391,116 @@ async function sendBillReceiptWhatsApp(
     console.error('[Billing] Failed to send bill receipt via WhatsApp:', err);
   }
 }
+
+// =============================================================================
+// Invoice Document Data (for premium print / download)
+// =============================================================================
+
+export interface InvoiceDocumentItem {
+  service_name: string;
+  unit_price: number;
+  quantity: number;
+  line_total: number;
+}
+
+export interface InvoiceDocument {
+  invoice_number: string;
+  created_at: string;
+  payment_method: string;
+  payment_status: string;
+  subtotal: number;
+  discount_pct: number;
+  discount_amount: number;
+  gst_rate: number;
+  gst_amount: number;
+  total: number;
+  items: InvoiceDocumentItem[];
+  customer: { name: string; phone: string | null; email: string | null };
+  salon: {
+    name: string;
+    address: string | null;
+    phone: string | null;
+    email: string | null;
+    gst_number: string | null;
+  };
+}
+
+/**
+ * Fetch the full invoice document (invoice + items + customer + salon)
+ * for rendering a premium printable/downloadable receipt.
+ * RLS scopes the invoice to the current tenant.
+ */
+export async function getInvoiceDocument(
+  invoiceId: string
+): Promise<ActionResult<InvoiceDocument>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id as string | undefined;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  // Fetch invoice (RLS-scoped)
+  const { data: invoice, error: invErr } = await supabase
+    .from('invoices')
+    .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id')
+    .eq('id', invoiceId)
+    .single();
+
+  if (invErr || !invoice) {
+    return { success: false, error: 'Invoice not found.' };
+  }
+
+  // Fetch line items, customer, tenant, and branch in parallel
+  const [itemsRes, customerRes, tenantRes, branchRes] = await Promise.all([
+    supabase
+      .from('invoice_items')
+      .select('service_name, unit_price, quantity, line_total')
+      .eq('invoice_id', invoiceId),
+    invoice.customer_id
+      ? supabase.from('customers').select('name, phone, email').eq('id', invoice.customer_id).single()
+      : Promise.resolve({ data: null }),
+    supabase.from('tenants').select('name, phone, settings').eq('id', tenantId).single(),
+    invoice.branch_id
+      ? supabase.from('branches').select('name, address, phone').eq('id', invoice.branch_id).single()
+      : Promise.resolve({ data: null }),
+  ]);
+
+  const settings = ((tenantRes.data?.settings as Record<string, unknown>) ?? {});
+  const customer = (customerRes.data as { name: string; phone: string | null; email: string | null } | null);
+  const branch = (branchRes.data as { name: string; address: string | null; phone: string | null } | null);
+
+  const doc: InvoiceDocument = {
+    invoice_number: invoice.invoice_number,
+    created_at: invoice.created_at ?? new Date().toISOString(),
+    payment_method: invoice.payment_method ?? 'cash',
+    payment_status: invoice.payment_status ?? 'paid',
+    subtotal: invoice.subtotal ?? 0,
+    discount_pct: invoice.discount_pct ?? 0,
+    discount_amount: invoice.discount_amount ?? 0,
+    gst_rate: invoice.gst_rate ?? 0,
+    gst_amount: invoice.gst_amount ?? 0,
+    total: invoice.total ?? 0,
+    items: (itemsRes.data ?? []).map((it: any) => ({
+      service_name: it.service_name,
+      unit_price: it.unit_price,
+      quantity: it.quantity,
+      line_total: it.line_total ?? it.unit_price * it.quantity,
+    })),
+    customer: {
+      name: customer?.name ?? '—',
+      phone: customer?.phone ?? null,
+      email: customer?.email ?? null,
+    },
+    salon: {
+      name: (tenantRes.data?.name as string) ?? 'Salon',
+      address: branch?.address ?? null,
+      phone: branch?.phone ?? (tenantRes.data?.phone as string) ?? null,
+      email: (settings.email as string) ?? null,
+      gst_number: (settings.gst_number as string) ?? null,
+    },
+  };
+
+  return { success: true, data: doc };
+}
