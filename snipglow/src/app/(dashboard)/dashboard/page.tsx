@@ -112,8 +112,9 @@ export default async function DashboardPage() {
     recentFeedback = (feedback ?? []) as { customer_name: string; rating: number; created_at: string }[];
   }
 
-  // Get greeting based on time
-  const hour = new Date().getHours();
+  // Get greeting based on time (IST — server runs in UTC on Vercel)
+  const istHourStr = new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata', hour: '2-digit', hour12: false });
+  const hour = parseInt(istHourStr, 10) % 24;
   const greeting = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   // Get daily motivational quote (changes every day)
