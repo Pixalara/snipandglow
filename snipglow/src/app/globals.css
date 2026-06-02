@@ -466,23 +466,31 @@ a, button {
 
 /* ─── Premium Scrollbar ─────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
-  width: 5px;
+  width: 8px;
+  height: 8px;
 }
 ::-webkit-scrollbar-track {
   background: transparent;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.1);
+  background: color-mix(in oklch, var(--muted-foreground) 28%, transparent);
   border-radius: 10px;
+  border: 2px solid transparent;
+  background-clip: padding-box;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(0, 208, 132, 0.3);
+  background: color-mix(in oklch, var(--primary) 55%, transparent);
+  background-clip: padding-box;
+}
+* {
+  scrollbar-width: thin;
+  scrollbar-color: color-mix(in oklch, var(--muted-foreground) 28%, transparent) transparent;
 }
 
 /* ─── Selection color ───────────────────────────────────────────────────── */
 ::selection {
-  background: rgba(0, 208, 132, 0.2);
-  color: #fff;
+  background: color-mix(in oklch, var(--primary) 22%, transparent);
+  color: var(--foreground);
 }
 
 /* ─── Benefit Cards Marquee ─────────────────────────────────────────────── */
@@ -831,4 +839,75 @@ button, a, [role="button"] {
 /* ─── Performance: smooth scrolling with momentum on iOS ────────────────── */
 .overflow-y-auto, .overflow-y-scroll {
   -webkit-overflow-scrolling: touch;
+}
+
+/* ─── Dashboard Premium Polish ──────────────────────────────────────────── */
+
+/* Staggered entrance for grids of cards */
+@keyframes cardRise {
+  from {
+    opacity: 0;
+    transform: translateY(12px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-card-rise {
+  opacity: 0;
+  animation: cardRise 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Stagger helpers — apply alongside .animate-card-rise */
+.stagger-1 { animation-delay: 0.04s; }
+.stagger-2 { animation-delay: 0.08s; }
+.stagger-3 { animation-delay: 0.12s; }
+.stagger-4 { animation-delay: 0.16s; }
+.stagger-5 { animation-delay: 0.20s; }
+.stagger-6 { animation-delay: 0.24s; }
+
+/* Soft shimmer for skeletons */
+@keyframes shimmer {
+  100% { transform: translateX(100%); }
+}
+.skeleton-shimmer {
+  position: relative;
+  overflow: hidden;
+}
+.skeleton-shimmer::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  transform: translateX(-100%);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in oklch, var(--foreground) 6%, transparent),
+    transparent
+  );
+  animation: shimmer 1.6s infinite;
+}
+
+/* Subtle lift used by interactive cards (respects reduced motion below) */
+.card-lift {
+  transition: transform 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              box-shadow 0.25s cubic-bezier(0.22, 1, 0.36, 1),
+              border-color 0.25s ease;
+  will-change: transform;
+}
+.card-lift:hover {
+  transform: translateY(-3px);
+}
+
+/* Respect users who prefer reduced motion */
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-rise,
+  .skeleton-shimmer::after {
+    animation: none;
+  }
+  .animate-card-rise { opacity: 1; }
+  .card-lift:hover { transform: none; }
+  html { scroll-behavior: auto; }
 }

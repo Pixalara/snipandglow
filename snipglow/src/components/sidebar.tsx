@@ -110,7 +110,10 @@ export function Sidebar({ role, planTier, isOpen, onClose }: SidebarProps) {
       >
         {/* Logo header */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
-          <Link href="/dashboard" className="flex items-center gap-2">
+          <Link href="/dashboard" className="flex items-center gap-2 group">
+            <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 via-fuchsia-500 to-violet-500 text-white shadow-sm transition-transform duration-300 group-hover:scale-105">
+              <Scissors className="size-4" />
+            </span>
             <span className="font-bold tracking-tight text-lg">
               <span className="text-sidebar-foreground">snipand</span>
               <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
@@ -161,19 +164,27 @@ export function Sidebar({ role, planTier, isOpen, onClose }: SidebarProps) {
                             onClick={onClose}
                             prefetch={true}
                             className={cn(
-                              'group flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
+                              'group relative flex items-center gap-3 rounded-lg px-3 py-2 text-sm font-medium transition-all duration-200',
                               isActive
                                 ? 'bg-sidebar-accent text-sidebar-primary shadow-sm'
-                                : 'text-sidebar-foreground hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground hover:translate-x-0.5'
+                                : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50 hover:text-sidebar-accent-foreground'
                             )}
                           >
+                            {/* Active indicator bar */}
+                            <span
+                              className={cn(
+                                'absolute left-0 top-1/2 -translate-y-1/2 h-5 w-0.5 rounded-r-full bg-sidebar-primary transition-all duration-300',
+                                isActive ? 'opacity-100' : 'opacity-0 -translate-x-1'
+                              )}
+                              aria-hidden="true"
+                            />
                             <Icon className={cn(
                               'size-4 shrink-0 transition-transform duration-200',
-                              isActive ? 'scale-110' : 'group-hover:scale-105'
+                              isActive ? 'scale-110' : 'group-hover:scale-110'
                             )} />
                             {item.label}
                             {isActive && (
-                              <span className="ml-auto size-1.5 rounded-full bg-sidebar-primary" />
+                              <span className="ml-auto size-1.5 rounded-full bg-sidebar-primary animate-pulse" />
                             )}
                           </Link>
                         </li>
@@ -185,6 +196,13 @@ export function Sidebar({ role, planTier, isOpen, onClose }: SidebarProps) {
             })}
           </div>
         </nav>
+
+        {/* Footer */}
+        <div className="border-t border-sidebar-border px-4 py-3">
+          <p className="text-[10px] text-sidebar-foreground/40 text-center select-none">
+            © {new Date().getFullYear()} SnipandGlow
+          </p>
+        </div>
       </aside>
     </>
   );

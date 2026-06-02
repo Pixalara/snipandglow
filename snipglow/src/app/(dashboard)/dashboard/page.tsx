@@ -122,19 +122,22 @@ export default async function DashboardPage() {
   return (
     <div className="space-y-8">
       {/* Hero Welcome Section */}
-      <div className="relative overflow-hidden rounded-2xl border border-transparent p-4 sm:p-6 md:p-8" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%)' }}>
-        <div className="absolute inset-0 bg-black/30" />
+      <div className="relative overflow-hidden rounded-3xl p-5 sm:p-7 md:p-9 shadow-lg animate-card-rise" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%)' }}>
+        {/* Decorative blurred orbs */}
+        <div className="pointer-events-none absolute -top-16 -right-10 size-48 rounded-full bg-white/20 blur-3xl" />
+        <div className="pointer-events-none absolute -bottom-20 left-1/3 size-56 rounded-full bg-black/10 blur-3xl" />
+        <div className="absolute inset-0 bg-black/25" />
         <div className="relative z-10 flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
           <div>
             <p className="text-sm font-medium text-white/80">{greeting}</p>
-            <h1 className="text-2xl md:text-3xl font-bold text-white mt-1">
-              {userName.split(' ')[0]}
+            <h1 className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mt-1 tracking-tight">
+              {userName.split(' ')[0]} 👋
             </h1>
-            <p className="text-white/70 mt-2 max-w-md text-sm">
+            <p className="text-white/75 mt-2 max-w-md text-sm leading-relaxed">
               Here&apos;s your salon overview. Manage appointments, customers, and grow your business.
             </p>
           </div>
-          <div className="hidden md:block max-w-xs text-right">
+          <div className="hidden md:block max-w-xs rounded-2xl bg-white/10 p-4 backdrop-blur-sm ring-1 ring-white/15">
             <p className="text-white/90 text-sm italic leading-relaxed">
               &ldquo;{dailyQuote.text}&rdquo;
             </p>
@@ -153,6 +156,7 @@ export default async function DashboardPage() {
           href="/dashboard/appointments"
           gradient="from-blue-500/10 to-blue-600/5"
           iconColor="text-blue-600 dark:text-blue-400"
+          delay="stagger-1"
         />
         <StatCard
           icon={<Users className="size-5" />}
@@ -162,6 +166,7 @@ export default async function DashboardPage() {
           href="/dashboard/customers"
           gradient="from-emerald-500/10 to-emerald-600/5"
           iconColor="text-emerald-600 dark:text-emerald-400"
+          delay="stagger-2"
         />
         <StatCard
           icon={<Calendar className="size-5" />}
@@ -171,6 +176,7 @@ export default async function DashboardPage() {
           href="/dashboard/appointments"
           gradient="from-violet-500/10 to-violet-600/5"
           iconColor="text-violet-600 dark:text-violet-400"
+          delay="stagger-3"
         />
         <StatCard
           icon={<Scissors className="size-5" />}
@@ -180,6 +186,7 @@ export default async function DashboardPage() {
           href="/dashboard/services"
           gradient="from-amber-500/10 to-amber-600/5"
           iconColor="text-amber-600 dark:text-amber-400"
+          delay="stagger-4"
         />
       </div>
 
@@ -223,7 +230,7 @@ export default async function DashboardPage() {
                 View all →
               </Link>
             </div>
-            <div className="rounded-xl border border-border bg-card overflow-hidden">
+            <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
               {recentFeedback.length === 0 ? (
                 <div className="flex flex-col items-center justify-center p-8 text-center">
                   <div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
@@ -268,7 +275,7 @@ export default async function DashboardPage() {
               View all →
             </Link>
           </div>
-          <div className="rounded-xl border border-border bg-card overflow-hidden">
+          <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
             {recentCustomers.length === 0 ? (
               <div className="flex flex-col items-center justify-center p-8 text-center">
                 <div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
@@ -319,6 +326,7 @@ function StatCard({
   href,
   gradient,
   iconColor,
+  delay,
 }: {
   icon: React.ReactNode;
   title: string;
@@ -327,20 +335,21 @@ function StatCard({
   href: string;
   gradient: string;
   iconColor: string;
+  delay?: string;
 }) {
   return (
     <Link
       href={href}
-      className="group relative overflow-hidden rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md hover:border-border/80 hover:-translate-y-0.5"
+      className={`group card-lift animate-card-rise ${delay ?? ''} relative overflow-hidden rounded-2xl border border-border bg-card p-4 shadow-sm hover:shadow-lg hover:border-primary/30`}
     >
-      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-50`} />
+      <div className={`absolute inset-0 bg-gradient-to-br ${gradient} opacity-60 transition-opacity group-hover:opacity-100`} />
       <div className="relative">
-        <div className={`flex size-9 items-center justify-center rounded-lg bg-background/80 shadow-sm ${iconColor}`}>
+        <div className={`flex size-10 items-center justify-center rounded-xl bg-background/80 shadow-sm ring-1 ring-border/50 ${iconColor}`}>
           {icon}
         </div>
-        <p className="text-2xl font-bold text-foreground mt-3">{value}</p>
+        <p className="text-2xl sm:text-3xl font-bold text-foreground mt-3 tracking-tight">{value}</p>
         <p className="text-xs text-muted-foreground mt-0.5">
-          <span className="font-medium">{title}</span> · {subtitle}
+          <span className="font-medium text-foreground/80">{title}</span> · {subtitle}
         </p>
       </div>
     </Link>
@@ -367,17 +376,18 @@ function QuickActionCard({
   return (
     <Link
       href={href}
-      className="group flex items-center gap-3 rounded-xl border border-border bg-card p-4 transition-all hover:shadow-md hover:border-border/80 hover:-translate-y-0.5"
+      className="group card-lift flex items-center gap-3 rounded-2xl border border-border bg-card p-4 shadow-sm hover:shadow-lg hover:border-primary/30"
     >
-      <div className={`flex size-10 shrink-0 items-center justify-center rounded-lg ${color}`}>
+      <div className={`flex size-11 shrink-0 items-center justify-center rounded-xl transition-transform duration-200 group-hover:scale-105 ${color}`}>
         {icon}
       </div>
-      <div>
+      <div className="min-w-0">
         <p className="text-sm font-semibold text-foreground group-hover:text-salon-rose transition-colors">
           {title}
         </p>
-        <p className="text-xs text-muted-foreground">{description}</p>
+        <p className="text-xs text-muted-foreground truncate">{description}</p>
       </div>
+      <span className="ml-auto text-muted-foreground/40 transition-all duration-200 group-hover:translate-x-0.5 group-hover:text-salon-rose">→</span>
     </Link>
   );
 }
