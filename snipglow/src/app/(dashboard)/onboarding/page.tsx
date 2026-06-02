@@ -190,7 +190,7 @@ export default function OnboardingPage() {
                 <ul className="space-y-2">
                   {services.map((svc, i) => (
                     <li key={i} className="flex items-center justify-between rounded-md border p-2 text-sm">
-                      <span>{svc.name} — {svc.category} — {svc.duration_minutes}min — ₹{svc.price}</span>
+                      <span>{svc.name} — {svc.category} — ₹{svc.price}</span>
                       <Button variant="ghost" size="sm" onClick={() => removeService(i)}>
                         ✕
                       </Button>
@@ -214,12 +214,6 @@ export default function OnboardingPage() {
                   <option value="Nails">Nails</option>
                   <option value="Spa">Spa</option>
                 </select>
-                <Input
-                  type="number"
-                  placeholder="Duration (min)"
-                  value={newService.duration_minutes}
-                  onChange={(e) => setNewService((s) => ({ ...s, duration_minutes: Number(e.target.value) }))}
-                />
                 <Input
                   type="number"
                   placeholder="Price (₹)"

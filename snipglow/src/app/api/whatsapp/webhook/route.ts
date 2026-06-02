@@ -280,7 +280,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
       const services = (svcList ?? []).map((s: any) => ({
         id: s.id,
-        title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+        title: `${s.name} - Rs.${s.price}`,
       }));
 
       // Check if customer already exists (returning customer)
@@ -352,7 +352,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         .limit(10);
 
       if (services && services.length > 0) {
-        const list = services.map((s: any) => `• ${s.name} — ₹${s.price} (${s.duration_minutes} min)`).join('\n');
+        const list = services.map((s: any) => `• ${s.name} — ₹${s.price}`).join('\n');
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
           interactive: {
@@ -421,7 +421,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
         const services = (svcList ?? []).map((s: any) => ({
           id: s.id,
-          title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+          title: `${s.name} - Rs.${s.price}`,
         }));
 
         // Generate smart dates and time slots

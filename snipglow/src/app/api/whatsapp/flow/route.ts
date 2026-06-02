@@ -238,7 +238,7 @@ async function handleFlowInit(data: any) {
       services: (services && services.length > 0)
         ? services.map((s: any) => ({
             id: s.id,
-            title: `${s.name} - Rs.${s.price} (${s.duration_minutes} min)`,
+            title: `${s.name} - Rs.${s.price}`,
           }))
         : [{ id: 'none', title: 'No services available' }],
       dates: dates.length > 0 ? dates : [{ id: 'none', title: 'No dates available' }],

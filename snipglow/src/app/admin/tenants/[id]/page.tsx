@@ -104,8 +104,8 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       {/* Services */}
       <Section title={`Services (${services.length})`}>
         <SimpleTable
-          headers={['Name', 'Category', 'Price', 'Duration', 'Active']}
-          rows={services.map((s: any) => [s.name, s.category || '—', `₹${s.price}`, `${s.duration_minutes}m`, s.is_active ? '✓' : '✗'])}
+          headers={['Name', 'Category', 'Price', 'Active']}
+          rows={services.map((s: any) => [s.name, s.category || '—', `₹${s.price}`, s.is_active ? '✓' : '✗'])}
         />
       </Section>
 

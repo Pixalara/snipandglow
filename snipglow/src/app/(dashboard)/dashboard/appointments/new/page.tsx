@@ -299,7 +299,7 @@ export default function NewAppointmentPage() {
                       key={svc.id}
                       className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 px-3 py-1 text-xs font-medium text-pink-700 dark:text-pink-300"
                     >
-                      {svc.name} ({svc.duration_minutes}min)
+                      {svc.name}
                       <button
                         type="button"
                         onClick={() => {
@@ -331,13 +331,13 @@ export default function NewAppointmentPage() {
                 <option value="">{selectedServiceIds.length === 0 ? 'Select services...' : '+ Add another service'}</option>
                 {services.filter((svc) => !selectedServiceIds.includes(svc.id)).map((svc) => (
                   <option key={svc.id} value={svc.id}>
-                    {svc.name} — {svc.duration_minutes} min — ₹{svc.price}
+                    {svc.name} — ₹{svc.price}
                   </option>
                 ))}
               </select>
-              {duration > 0 && (
+              {selectedServices.length > 0 && (
                 <p className="text-xs text-muted-foreground">
-                  Total duration: {duration} minutes ({selectedServices.length} service{selectedServices.length !== 1 ? 's' : ''})
+                  {selectedServices.length} service{selectedServices.length !== 1 ? 's' : ''} selected
                 </p>
               )}
             </div>
