@@ -2,15 +2,23 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { isAdminEmail } from '@/lib/admin/auth';
 import type { ActionResult } from '@/types';
 
 /**
  * Update tenant GST settings.
+ *
+ * GST details are LOCKED once saved (gst_locked = true): a tenant cannot edit
+ * them afterwards because they're legally binding tax registration details.
+ * Only a platform admin (PLATFORM_ADMIN_EMAILS) may edit a locked GST profile.
+ * India: hair salons & beauty spas attract 5% GST on services by default.
  */
 export async function updateGstSettings(input: {
   gst_number: string | null;
   gst_rate: number;
   gst_enabled: boolean;
+  legal_name?: string | null;
+  trade_name?: string | null;
 }): Promise<ActionResult<void>> {
   const supabase = await createClient();
 
@@ -20,6 +28,8 @@ export async function updateGstSettings(input: {
   const tenantId = user.user_metadata?.tenant_id;
   if (!tenantId) return { success: false, error: 'No tenant context found.' };
 
+  const isPlatformAdmin = isAdminEmail(user.email);
+
   // Get current settings
   const { data: tenant } = await supabase
     .from('tenants')
@@ -28,6 +38,21 @@ export async function updateGstSettings(input: {
     .single();
 
   const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
+  const alreadyLocked = (currentSettings.gst_locked as boolean) ?? false;
+
+  // Once locked, only a platform admin can change GST details.
+  if (alreadyLocked && !isPlatformAdmin) {
+    return {
+      success: false,
+      error: 'GST details are locked and can only be changed by SnipandGlow support. Please contact us to update them.',
+    };
+  }
+
+  const hasGst = !!(input.gst_number && input.gst_number.trim());
+
+  // When a tenant (non-admin) saves valid GST details for the first time, lock them.
+  // Admins can save without locking further (they retain edit ability anyway).
+  const shouldLock = hasGst && (alreadyLocked || !isPlatformAdmin);
 
   // Merge GST settings
   const updatedSettings = {
@@ -35,6 +60,9 @@ export async function updateGstSettings(input: {
     gst_enabled: input.gst_enabled,
     gst_rate: input.gst_rate,
     gst_number: input.gst_number,
+    legal_name: input.legal_name ?? (currentSettings.legal_name as string) ?? null,
+    trade_name: input.trade_name ?? (currentSettings.trade_name as string) ?? null,
+    gst_locked: shouldLock,
   };
 
   const { error } = await supabase

@@ -3,6 +3,7 @@ import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { formatISTDate } from '@/lib/datetime';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
+import { AdminGstEditor } from './gst-editor';
 
 // =============================================================================
 // Admin — Tenant Detail Page
@@ -85,6 +86,16 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <p className="text-sm text-muted-foreground">No WhatsApp settings configured</p>
         )}
       </Section>
+
+      {/* GST Details — admin can edit even when locked for the tenant */}
+      <AdminGstEditor
+        tenantId={tenantId}
+        gstNumber={((tenant.settings as any)?.gst_number as string) ?? ''}
+        gstRate={((tenant.settings as any)?.gst_rate as number) ?? 5}
+        legalName={((tenant.settings as any)?.legal_name as string) ?? ''}
+        tradeName={((tenant.settings as any)?.trade_name as string) ?? ''}
+        locked={((tenant.settings as any)?.gst_locked as boolean) ?? false}
+      />
 
       {/* Branches */}
       <Section title={`Branches (${branches.length})`}>

@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateGstSettings, updateSalonProfile, updateDiscountSettings } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle } from 'lucide-react';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck } from 'lucide-react';
 
 // =============================================================================
 // Salon Profile Card
@@ -178,6 +178,10 @@ interface GstSettingsProps {
   currentGstNumber: string;
   currentGstRate: number;
   gstEnabled: boolean;
+  currentLegalName?: string;
+  currentTradeName?: string;
+  locked?: boolean;
+  isPlatformAdmin?: boolean;
 }
 
 /** Validate Indian GSTIN format: 2-digit state code + 10-char PAN + 1 entity + 1 Z + 1 check */
@@ -187,12 +191,26 @@ function isValidGSTIN(gstin: string): boolean {
   return pattern.test(gstin.trim().toUpperCase());
 }
 
-export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }: GstSettingsProps) {
+export function GstSettingsCard({
+  currentGstNumber,
+  currentGstRate,
+  gstEnabled,
+  currentLegalName = '',
+  currentTradeName = '',
+  locked = false,
+  isPlatformAdmin = false,
+}: GstSettingsProps) {
   const [isPending, startTransition] = useTransition();
   const [gstNumber, setGstNumber] = useState(currentGstNumber);
-  const [gstRate, setGstRate] = useState(currentGstRate || 18);
+  const [legalName, setLegalName] = useState(currentLegalName);
+  const [tradeName, setTradeName] = useState(currentTradeName);
+  // India: hair salons & beauty spas attract 5% GST on services — default to 5%.
+  const [gstRate, setGstRate] = useState(currentGstRate || 5);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Read-only when locked, unless the viewer is a platform admin.
+  const readOnly = locked && !isPlatformAdmin;
 
   const hasGst = gstNumber.trim().length > 0;
   const isValid = isValidGSTIN(gstNumber);
@@ -201,9 +219,24 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
     setError('');
     setSuccess(false);
 
-    if (gstNumber.trim() && !isValidGSTIN(gstNumber)) {
-      setError('Please enter a valid 15-character GSTIN (e.g., 29ABCDE1234F1Z5)');
+    if (readOnly) {
+      setError('GST details are locked. Contact SnipandGlow support to make changes.');
       return;
+    }
+
+    if (gstNumber.trim()) {
+      if (!isValidGSTIN(gstNumber)) {
+        setError('Please enter a valid 15-character GSTIN (e.g., 29ABCDE1234F1Z5)');
+        return;
+      }
+      if (!legalName.trim()) {
+        setError('Legal Name (as per GST registration) is required.');
+        return;
+      }
+      if (!tradeName.trim()) {
+        setError('Trade Name is required.');
+        return;
+      }
     }
 
     startTransition(async () => {
@@ -211,11 +244,17 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
         gst_number: gstNumber.trim().toUpperCase() || null,
         gst_rate: gstNumber.trim() ? gstRate : 0,
         gst_enabled: !!gstNumber.trim(),
+        legal_name: legalName.trim() || null,
+        trade_name: tradeName.trim() || null,
       });
 
       if (result.success) {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
+        // Locked profiles refresh to read-only on next load.
+        if (gstNumber.trim() && !isPlatformAdmin) {
+          setTimeout(() => window.location.reload(), 1200);
+        }
       } else {
         setError(result.error);
       }
@@ -223,14 +262,17 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
   }
 
   function handleClear() {
+    if (readOnly) return;
     setGstNumber('');
-    setGstRate(18);
+    setLegalName('');
+    setTradeName('');
+    setGstRate(5);
   }
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
       <div className="border-b border-border px-6 py-4 bg-muted/30">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2 flex-wrap">
           <Receipt className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold text-foreground">GST Configuration</h2>
           {gstEnabled && (
@@ -239,12 +281,66 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
               Active
             </span>
           )}
+          {readOnly && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+              <Lock className="size-3" />
+              Locked
+            </span>
+          )}
+          {isPlatformAdmin && locked && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-violet-100 dark:bg-violet-900/30 px-2 py-0.5 text-xs font-medium text-violet-700 dark:text-violet-400">
+              <ShieldCheck className="size-3" />
+              Admin edit
+            </span>
+          )}
         </div>
       </div>
       <div className="p-6 space-y-5">
-        <p className="text-sm text-muted-foreground">
-          Add your GSTIN to automatically apply GST on all invoices. Leave empty to disable GST.
-        </p>
+        {readOnly ? (
+          <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-3">
+            <div className="flex items-start gap-2">
+              <Lock className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+              <p className="text-sm text-amber-800 dark:text-amber-200">
+                Your GST details are saved and locked for compliance. To correct any detail,
+                please contact SnipandGlow support — only our team can edit a locked GST profile.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Add your GST registration details to automatically apply GST on all invoices.
+            <span className="font-medium text-foreground"> Once saved, these details are locked</span> and
+            can only be changed by SnipandGlow support. Please enter them carefully.
+          </p>
+        )}
+
+        {/* Legal Name */}
+        <div className="space-y-2">
+          <label htmlFor="legal-name" className="text-sm font-medium text-foreground">
+            Legal Name <span className="text-xs font-normal text-muted-foreground">(as per GST registration)</span>
+          </label>
+          <Input
+            id="legal-name"
+            value={legalName}
+            onChange={(e) => { setLegalName(e.target.value); setError(''); setSuccess(false); }}
+            placeholder="e.g., Royal Salon Private Limited"
+            disabled={readOnly}
+          />
+        </div>
+
+        {/* Trade Name */}
+        <div className="space-y-2">
+          <label htmlFor="trade-name" className="text-sm font-medium text-foreground">
+            Trade Name <span className="text-xs font-normal text-muted-foreground">(business / brand name)</span>
+          </label>
+          <Input
+            id="trade-name"
+            value={tradeName}
+            onChange={(e) => { setTradeName(e.target.value); setError(''); setSuccess(false); }}
+            placeholder="e.g., Royal Salon"
+            disabled={readOnly}
+          />
+        </div>
 
         {/* GST Number */}
         <div className="space-y-2">
@@ -262,6 +358,7 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
             placeholder="e.g., 29ABCDE1234F1Z5"
             maxLength={15}
             className="font-mono uppercase"
+            disabled={readOnly}
           />
           <p className="text-xs text-muted-foreground">
             15-character Indian GST Identification Number. Leave empty to disable GST on invoices.
@@ -278,13 +375,17 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
               id="gst-rate"
               value={gstRate}
               onChange={(e) => setGstRate(Number(e.target.value))}
-              className="h-9 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              disabled={readOnly}
+              className="h-9 w-full rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-60 disabled:cursor-not-allowed"
             >
-              <option value={5}>5%</option>
+              <option value={5}>5% (Salon & Spa services — standard)</option>
               <option value={12}>12%</option>
-              <option value={18}>18% (Standard)</option>
+              <option value={18}>18%</option>
               <option value={28}>28%</option>
             </select>
+            <p className="text-xs text-muted-foreground">
+              Hair salons and beauty spas in India attract 5% GST on services.
+            </p>
           </div>
         )}
 
@@ -294,13 +395,13 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
             <div className="flex items-center gap-2">
               <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
               <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                GST at {gstRate}% will be applied to all new invoices.
+                GST at {gstRate}% will be applied automatically to all new invoices.
               </p>
             </div>
           </div>
         )}
 
-        {!hasGst && (
+        {!hasGst && !readOnly && (
           <div className="rounded-lg bg-muted/50 px-4 py-3">
             <p className="text-sm text-muted-foreground">
               No GSTIN configured. Invoices will be generated without GST.
@@ -323,16 +424,18 @@ export function GstSettingsCard({ currentGstNumber, currentGstRate, gstEnabled }
         )}
 
         {/* Actions */}
-        <div className="flex items-center gap-2 pt-2">
-          <Button className="rounded-xl" onClick={handleSave} disabled={isPending || (hasGst && !isValid)}>
-            {isPending ? 'Saving...' : 'Save GST Settings'}
-          </Button>
-          {hasGst && (
-            <Button variant="outline" className="rounded-xl" onClick={handleClear} disabled={isPending}>
-              Remove GSTIN
+        {!readOnly && (
+          <div className="flex items-center gap-2 pt-2">
+            <Button className="rounded-xl" onClick={handleSave} disabled={isPending || (hasGst && !isValid)}>
+              {isPending ? 'Saving...' : 'Save GST Settings'}
             </Button>
-          )}
-        </div>
+            {hasGst && (
+              <Button variant="outline" className="rounded-xl" onClick={handleClear} disabled={isPending}>
+                Clear
+              </Button>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
+import { isAdminEmail } from '@/lib/admin/auth';
 import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard } from './settings-client';
 import {
   Settings,
@@ -69,8 +70,12 @@ export default async function SettingsPage() {
   // GST settings
   const settings = (tenant.settings as Record<string, unknown>) ?? {};
   const gstNumber = (settings.gst_number as string) ?? '';
-  const gstRate = (settings.gst_rate as number) ?? 18;
+  const gstRate = (settings.gst_rate as number) ?? 5;
   const gstEnabled = (settings.gst_enabled as boolean) ?? false;
+  const gstLegalName = (settings.legal_name as string) ?? '';
+  const gstTradeName = (settings.trade_name as string) ?? '';
+  const gstLocked = (settings.gst_locked as boolean) ?? false;
+  const isPlatformAdmin = isAdminEmail(user.email);
 
   // Discount settings
   const discountEnabled = (settings.discount_enabled as boolean) ?? false;
@@ -266,6 +271,10 @@ export default async function SettingsPage() {
         currentGstNumber={gstNumber}
         currentGstRate={gstRate}
         gstEnabled={gstEnabled}
+        currentLegalName={gstLegalName}
+        currentTradeName={gstTradeName}
+        locked={gstLocked}
+        isPlatformAdmin={isPlatformAdmin}
       />
 
       {/* WhatsApp Booking Link */}

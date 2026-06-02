@@ -232,9 +232,13 @@ export async function getTenantGstSettings(): Promise<{ gst_enabled: boolean; gs
   if (!tenant) return { gst_enabled: false, gst_rate: 0, gst_number: null, discount_enabled: false, discount_value: 0 };
 
   const settings = (tenant.settings as Record<string, unknown>) ?? {};
+  const gstEnabled = (settings.gst_enabled as boolean) ?? false;
+  // India: hair salons & beauty spas attract 5% GST on services. Default to 5%
+  // when GST is enabled but no explicit rate has been stored.
+  const storedRate = (settings.gst_rate as number) ?? 0;
   return {
-    gst_enabled: (settings.gst_enabled as boolean) ?? false,
-    gst_rate: (settings.gst_rate as number) ?? 18,
+    gst_enabled: gstEnabled,
+    gst_rate: gstEnabled ? (storedRate > 0 ? storedRate : 5) : 0,
     gst_number: (settings.gst_number as string) ?? null,
     discount_enabled: (settings.discount_enabled as boolean) ?? false,
     discount_value: (settings.discount_value as number) ?? 0,
@@ -418,6 +422,8 @@ export interface InvoiceDocument {
   customer: { name: string; phone: string | null; email: string | null };
   salon: {
     name: string;
+    legal_name: string | null;
+    trade_name: string | null;
     address: string | null;
     phone: string | null;
     email: string | null;
@@ -495,6 +501,8 @@ export async function getInvoiceDocument(
     },
     salon: {
       name: (tenantRes.data?.name as string) ?? 'Salon',
+      legal_name: (settings.legal_name as string) ?? null,
+      trade_name: (settings.trade_name as string) ?? null,
       address: branch?.address ?? null,
       phone: branch?.phone ?? (tenantRes.data?.phone as string) ?? null,
       email: (settings.email as string) ?? null,

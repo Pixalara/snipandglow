@@ -75,7 +75,8 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
     <div style="background:linear-gradient(135deg,#7c3aed 0%,#db2777 55%,#f5576c 100%);color:#ffffff;padding:28px 32px;">
       <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;">
         <div>
-          <div style="font-size:24px;font-weight:800;letter-spacing:-0.02em;">${escapeHtml(salon.name)}</div>
+          <div style="font-size:24px;font-weight:800;letter-spacing:-0.02em;">${escapeHtml(salon.trade_name || salon.name)}</div>
+          ${salon.legal_name ? `<div style="margin-top:2px;font-size:12px;color:rgba(255,255,255,0.82);">${escapeHtml(salon.legal_name)}</div>` : ''}
           ${salon.address ? `<div style="margin-top:4px;max-width:280px;font-size:13px;line-height:1.4;color:rgba(255,255,255,0.85);">${escapeHtml(salon.address)}</div>` : ''}
           <div style="margin-top:8px;font-size:11px;color:rgba(255,255,255,0.82);line-height:1.7;">
             ${salon.phone ? `<div>Phone: ${escapeHtml(salon.phone)}</div>` : ''}

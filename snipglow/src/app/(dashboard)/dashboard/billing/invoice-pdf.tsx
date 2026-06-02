@@ -148,7 +148,8 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
           {/* Header */}
           <View style={styles.header}>
             <View>
-              <Text style={styles.salonName}>{doc.salon.name}</Text>
+              <Text style={styles.salonName}>{doc.salon.trade_name || doc.salon.name}</Text>
+              {doc.salon.legal_name ? <Text style={styles.salonMeta}>{doc.salon.legal_name}</Text> : null}
               {doc.salon.address ? <Text style={styles.salonMeta}>{doc.salon.address}</Text> : null}
               {doc.salon.phone ? <Text style={styles.salonMeta}>Phone: {doc.salon.phone}</Text> : null}
               {doc.salon.email ? <Text style={styles.salonMeta}>Email: {doc.salon.email}</Text> : null}
