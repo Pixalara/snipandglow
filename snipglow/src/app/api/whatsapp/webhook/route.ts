@@ -94,14 +94,56 @@ async function handleStatuses(statuses: any[]) {
 // Message Handler — Routes to correct tenant
 // =============================================================================
 
+/**
+ * Whether a name is a real, usable customer name (not junk from a WhatsApp
+ * profile). Rejects empty, "Customer", single punctuation like ".", names with
+ * no letters/digits, and bare phone numbers.
+ */
+function isUsableName(name: string | null | undefined): boolean {
+  if (!name) return false;
+  const trimmed = name.trim();
+  if (trimmed.length < 2) return false;
+  if (trimmed.toLowerCase() === 'customer') return false;
+  // Must contain at least one letter (any script) — rejects ".", "...", emoji-only.
+  if (!/\p{L}/u.test(trimmed)) return false;
+  // Reject bare phone numbers (digits / + / spaces only).
+  if (/^[\d+\s-]+$/.test(trimmed)) return false;
+  return true;
+}
+
+/**
+ * Look up the salon's stored customer name for a phone, scoped to the tenant.
+ * Tries E.164 (+91…) and raw formats. Returns null if not found.
+ */
+async function lookupCustomerName(admin: any, tenantId: string, phone: string): Promise<string | null> {
+  const digits = phone.replace(/\D/g, '');
+  const candidates = [`+${digits}`, digits];
+  for (const p of candidates) {
+    const { data } = await (admin
+      .from('customers')
+      .select('name')
+      .eq('tenant_id', tenantId)
+      .eq('phone', p)
+      .order('created_at', { ascending: false })
+      .limit(1)
+      .maybeSingle() as any);
+    if (data?.name && isUsableName(data.name)) return data.name as string;
+  }
+  return null;
+}
+
 async function handleMessages(messages: any[], contacts: any[], metadata: any) {
   const admin = createAdminClient();
   const phoneNumberId = metadata?.phone_number_id ?? '';
 
   for (const message of messages) {
     const contact = contacts?.find((c: any) => c.wa_id === message.from);
-    const customerName = contact?.profile?.name ?? 'Customer';
+    const profileName = contact?.profile?.name ?? '';
     const customerPhone = message.from;
+    // Start with the WhatsApp profile name, but it can be junk (e.g. ".", emojis,
+    // a phone number). We override it with the real DB customer name after we
+    // resolve the tenant (see below).
+    let customerName = isUsableName(profileName) ? profileName : 'Customer';
 
     // Extract message content
     let messageText = '';
@@ -183,6 +225,26 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
       try {
         await (admin.from('whatsapp_sessions').update({ tenant_id: tenant.tenantId } as any).eq('id', inboundLogId) as any);
       } catch {}
+    }
+
+    // ─── RESOLVE REAL CUSTOMER NAME ──────────────────────────────────────────
+    // Prefer the salon's stored customer name over the WhatsApp profile name,
+    // which is often junk (".", emoji, blank). Scope the lookup to the resolved
+    // tenant so we never pull a name from another salon's records.
+    if (tenant) {
+      const dbName = await lookupCustomerName(admin, tenant.tenantId, customerPhone);
+      if (isUsableName(dbName)) {
+        customerName = dbName!;
+      }
+      // Keep the corrected name on the inbound activity log too.
+      if (inboundLogId) {
+        try {
+          await (admin
+            .from('whatsapp_sessions')
+            .update({ metadata: { customer_name: customerName, message_text: messageText, button_reply_id: buttonReplyId, phone_number_id: phoneNumberId } } as any)
+            .eq('id', inboundLogId) as any);
+        } catch {}
+      }
     }
 
     if (!tenant) {
