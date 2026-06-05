@@ -1148,11 +1148,11 @@ export default function HomePage() {
               Choose your plan
             </h2>
             <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Start with Essentials. Scale to Growth when you're ready for your own branded WhatsApp API.
+              Start with Essentials. Step up to Pro for your own WhatsApp API. Scale to Growth for multi-branch mastery.
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 lg:gap-8 max-w-5xl mx-auto reveal">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
 
             {/* ESSENTIALS PLAN */}
             <div className="relative rounded-3xl border border-slate-200 bg-white p-8 sm:p-10 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
@@ -1269,6 +1269,121 @@ export default function HomePage() {
               </div>
             </div>
 
+            {/* PRO PLAN */}
+            <div className="relative rounded-3xl bg-gradient-to-br from-violet-900 via-violet-800 to-slate-900 p-8 sm:p-10 shadow-2xl shadow-violet-900/50 flex flex-col group overflow-hidden">
+              {/* Gradient overlay */}
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-400/10 via-transparent to-pink-500/10 pointer-events-none" />
+
+              {/* Best Value badge */}
+              <div className="absolute -top-1 -right-1">
+                <div className="relative">
+                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 blur-xl opacity-50" />
+                  <div className="relative bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-6 py-2 rounded-bl-2xl rounded-tr-3xl shadow-lg">
+                    BEST VALUE
+                  </div>
+                </div>
+              </div>
+
+              <div className="relative mb-6">
+                <div className="flex items-center gap-3 mb-4">
+                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
+                    <MessageCircle className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h3 className="text-2xl font-bold text-white">Pro</h3>
+                    <p className="text-sm text-violet-300">For single-branch growth</p>
+                  </div>
+                </div>
+                <p className="text-slate-300 leading-relaxed">
+                  Everything in Essentials, plus your own WhatsApp Business API — single branch, full branding control, and marketing broadcasts.
+                </p>
+              </div>
+
+              <div className="relative mb-8">
+                <p className="text-lg text-slate-500 line-through">₹1,499/month</p>
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-5xl font-bold text-white">₹999</span>
+                  <span className="text-lg text-slate-400">/month</span>
+                </div>
+                <p className="text-sm text-slate-400">₹11,988/year • Single branch • Billed yearly</p>
+              </div>
+
+              <button
+                onClick={() => setShowDemoModal(true)}
+                className="relative flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-white text-slate-900 font-semibold text-base hover:bg-slate-50 transition-all shadow-xl shadow-white/10 hover:shadow-2xl hover:shadow-white/20 mb-8 group-hover:scale-[1.02] duration-300"
+              >
+                Contact Sales
+                <ArrowRight className="h-4 w-4" />
+              </button>
+
+              <div className="relative space-y-4 flex-1">
+                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Everything in Essentials, plus</p>
+
+                <div className="space-y-3">
+                  <div className="flex items-start gap-3">
+                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">Free WhatsApp API Setup (₹5,500 value)</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Complete setup: Meta verification, number registration & template approvals</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">Own WhatsApp Business API</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Your own phone number, your branding, full control</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">WhatsApp Marketing Broadcasts</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Festival offers, birthday wishes, flash sales & win-back campaigns</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">50+ Marketing Templates</p>
+                      <p className="text-xs text-slate-400 mt-0.5">Pre-approved templates for every occasion, ready to use</p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-start gap-3">
+                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
+                      <CheckCircle2 className="h-3 w-3 text-white" />
+                    </div>
+                    <div>
+                      <p className="text-sm font-semibold text-white">Priority Support</p>
+                      <p className="text-xs text-slate-400 mt-0.5">WhatsApp & call support with &lt;4hr response time</p>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="pt-6 mt-6 border-t border-violet-700/50">
+                  <div className="bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 rounded-xl p-4">
+                    <p className="text-xs font-semibold text-white mb-2">🎯 Perfect for:</p>
+                    <ul className="text-xs text-slate-300 space-y-1">
+                      <li>• Single-branch salons wanting own WhatsApp branding</li>
+                      <li>• Salons running marketing campaigns</li>
+                      <li>• Independent owners ready to go professional</li>
+                    </ul>
+                  </div>
+                </div>
+              </div>
+            </div>
+
             {/* GROWTH PLAN */}
             <div className="relative rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 sm:p-10 shadow-2xl shadow-slate-900/50 flex flex-col group overflow-hidden">
               {/* Gradient overlay */}
@@ -1305,7 +1420,7 @@ export default function HomePage() {
                   <span className="text-5xl font-bold text-white">₹1,499</span>
                   <span className="text-lg text-slate-400">/month</span>
                 </div>
-                <p className="text-sm text-slate-400">Includes 2 branches • +₹499/month per additional branch • Billed yearly</p>
+                <p className="text-sm text-slate-400">₹17,988/year • Includes 2 branches • +₹499/month per additional branch • Billed yearly</p>
               </div>
 
               <button 
@@ -1414,7 +1529,7 @@ export default function HomePage() {
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">No hidden charges</p>
-              <p className="text-xs text-slate-500 mt-1">&#8377;799 or &#8377;1,499 is exactly what you pay. No surprises.</p>
+              <p className="text-xs text-slate-500 mt-1">₹799, ₹999, or ₹1,499 is exactly what you pay. No surprises.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">15-day full refund</p>
@@ -1570,7 +1685,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is built specifically for Indian salons - with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense: Essentials at ₹799/mo and Growth at ₹1,499/mo (includes 2 branches + free WhatsApp API setup worth ₹5,500)."
+              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is built specifically for Indian salons - with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense: Essentials at ₹799/mo, Pro at ₹999/mo (own WhatsApp API, single branch), and Growth at ₹1,499/mo (includes 2 branches + free WhatsApp API setup worth ₹5,500)."
             />
             <FaqItem
               question="Do you offer customer support?"
