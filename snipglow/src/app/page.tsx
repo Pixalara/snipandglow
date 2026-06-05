@@ -228,7 +228,7 @@ export default function HomePage() {
       </nav>
 
       {/* ===== HERO ===== */}
-      <section className="relative min-h-screen flex items-center pt-20 sm:pt-24 pb-12 sm:pb-16 bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20 overflow-hidden">
+      <section className="relative flex items-center pt-20 sm:pt-24 pb-10 sm:pb-14 bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20 overflow-hidden">
         {/* Colorful floating orbs */}
         <div className="absolute top-1/4 left-1/6 w-96 h-96 bg-pink-200/30 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 right-1/6 w-80 h-80 bg-pink-200/25 rounded-full blur-3xl pointer-events-none" />
