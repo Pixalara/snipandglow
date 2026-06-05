@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
 import { notifyOwner, notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel, notifyOwnerFeedback } from '@/lib/whatsapp/notify-owner';
 import { createNotification } from '@/lib/notifications';
-import { resolveTenant, type TenantContext } from '@/lib/whatsapp/tenant-router';
+import { resolveTenant, resolveTenantById, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import crypto from 'crypto';
 
@@ -145,8 +145,38 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
       inboundLogId = logRow?.id ?? null;
     } catch {}
 
+    // ─── DETECT FEEDBACK INTENT (for deterministic, isolated routing) ────────
+    // Feedback interactions must route to the exact salon that requested them.
+    // The rating rows carry the tenant id as `feedback_N__<tenantId>`, which is
+    // authoritative. "rate_now"/"rate_us" use the awaiting_feedback session.
+    let forcedTenantId: string | null = null;
+    let normalizedButtonId = buttonReplyId;
+    const ratingMatch = /^feedback_([1-5])__(.+)$/.exec(buttonReplyId);
+    if (ratingMatch) {
+      normalizedButtonId = `feedback_${ratingMatch[1]}`;
+      forcedTenantId = ratingMatch[2];
+    }
+    const isFeedbackIntent =
+      !!forcedTenantId ||
+      buttonReplyId === 'rate_now' ||
+      buttonReplyId === 'rate_us' ||
+      /^feedback_[1-5]$/.test(buttonReplyId);
+
     // ─── RESOLVE TENANT ─────────────────────────────────────────────────────
-    const tenant = await resolveTenant(phoneNumberId, customerPhone, messageText);
+    let tenant: TenantContext | null = null;
+    if (forcedTenantId) {
+      // Authoritative: tenant encoded in the rating row id.
+      tenant = await resolveTenantById(forcedTenantId);
+    }
+    if (!tenant) {
+      tenant = await resolveTenant(
+        phoneNumberId,
+        customerPhone,
+        messageText,
+        isFeedbackIntent ? 'feedback' : 'general'
+      );
+    }
+    buttonReplyId = normalizedButtonId;
 
     // Update inbound log with tenant_id now that we know it
     if (tenant && inboundLogId) {
@@ -543,8 +573,11 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
     case 'rate_us':
     case 'rate_now': {
-      // Customer tapped "Rate Us" on bill_receipt_v1 or "Rate Now" on feedback_request_v1
-      // Send the 5-option feedback list
+      // Customer tapped "Rate Us" on bill_receipt_v1 or "Rate Now" on feedback_request_v1.
+      // Embed the tenant_id into each rating row ID so the submitted rating is
+      // self-describing and can never be misattributed to another salon — even
+      // for customers who belong to multiple salons.
+      const t = tenant.tenantId;
       await sendMessage(tenant.credentials, phone, {
         type: 'interactive',
         interactive: {
@@ -558,11 +591,11 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
               {
                 title: 'Select Your Rating',
                 rows: [
-                  { id: 'feedback_5', title: '⭐⭐⭐⭐⭐ Excellent!', description: 'Absolutely loved it' },
-                  { id: 'feedback_4', title: '⭐⭐⭐⭐ Very Good', description: 'Great experience' },
-                  { id: 'feedback_3', title: '⭐⭐⭐ Good', description: 'It was okay' },
-                  { id: 'feedback_2', title: '⭐⭐ Fair', description: 'Could be better' },
-                  { id: 'feedback_1', title: '⭐ Poor', description: 'Not satisfied' },
+                  { id: `feedback_5__${t}`, title: '⭐⭐⭐⭐⭐ Excellent!', description: 'Absolutely loved it' },
+                  { id: `feedback_4__${t}`, title: '⭐⭐⭐⭐ Very Good', description: 'Great experience' },
+                  { id: `feedback_3__${t}`, title: '⭐⭐⭐ Good', description: 'It was okay' },
+                  { id: `feedback_2__${t}`, title: '⭐⭐ Fair', description: 'Could be better' },
+                  { id: `feedback_1__${t}`, title: '⭐ Poor', description: 'Not satisfied' },
                 ],
               },
             ],

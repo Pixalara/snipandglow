@@ -20,11 +20,21 @@ export interface TenantContext {
 /**
  * Resolve tenant from incoming webhook message.
  * Returns tenant context or null if cannot be resolved.
+ *
+ * `intent`:
+ *  - 'feedback' → routing MUST be deterministic. We only trust an explicit
+ *    `awaiting_feedback` session (created by the salon that billed the
+ *    customer). We never fall back to the customers table, because a customer
+ *    who belongs to multiple salons would otherwise be misattributed to an
+ *    arbitrary (most-recent) tenant. This is the multi-tenant isolation fix.
+ *  - 'general' (default) → booking/menu flow, may use slug + session + customer
+ *    lookup fallback.
  */
 export async function resolveTenant(
   phoneNumberId: string,
   customerPhone: string,
-  messageText: string
+  messageText: string,
+  intent: 'feedback' | 'general' = 'general'
 ): Promise<TenantContext | null> {
   const admin = createAdminClient();
 
@@ -74,6 +84,32 @@ export async function resolveTenant(
   // ─── SHARED MODE ────────────────────────────────────────────────────────────
   const credentials = getPlatformCredentials();
   if (!credentials) return null;
+
+  // ─── FEEDBACK INTENT: deterministic routing only ─────────────────────────────
+  // A customer can belong to multiple salons. For feedback we ONLY trust the
+  // explicit `awaiting_feedback` session created by the salon that just billed
+  // them. No slug parsing, no customer-table fallback — those could misroute.
+  if (intent === 'feedback') {
+    const { data: fbSession } = await (admin
+      .from('whatsapp_customer_sessions' as any)
+      .select('tenant_id, current_state, last_message_at')
+      .eq('customer_phone', customerPhone)
+      .eq('current_state', 'awaiting_feedback')
+      .gt('expires_at', new Date().toISOString())
+      .order('last_message_at', { ascending: false })
+      .limit(1)
+      .maybeSingle() as any);
+
+    if (fbSession) {
+      const tenant = await getTenantDetails(admin, fbSession.tenant_id);
+      if (tenant) {
+        await refreshSession(admin, customerPhone, fbSession.tenant_id);
+        return { ...tenant, mode: 'shared', credentials };
+      }
+    }
+    // No valid feedback session — do NOT guess. Caller handles the null.
+    return null;
+  }
 
   // 1. Try to detect tenant from booking slug in message text
   const slug = parseBookingSlug(messageText);
@@ -196,6 +232,20 @@ export async function resolveTenant(
 
   // 4. Cannot resolve tenant — return null (webhook will send fallback)
   return null;
+}
+
+/**
+ * Resolve a tenant context directly by tenant id (authoritative).
+ * Used for feedback ratings where the tenant id is embedded in the row id.
+ */
+export async function resolveTenantById(tenantId: string): Promise<TenantContext | null> {
+  if (!tenantId) return null;
+  const admin = createAdminClient();
+  const credentials = getPlatformCredentials();
+  if (!credentials) return null;
+  const tenant = await getTenantDetails(admin, tenantId);
+  if (!tenant) return null;
+  return { ...tenant, mode: 'shared', credentials };
 }
 
 /**
