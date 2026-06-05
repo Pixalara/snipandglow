@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { StructuredData } from './structured-data';
 import {
   Scissors,
+  Sparkles,
   MessageCircle,
   ArrowRight,
   Bell,
@@ -1152,116 +1153,75 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal items-stretch">
 
-            {/* ESSENTIALS PLAN */}
-            <div className="relative rounded-3xl border border-slate-200 bg-white p-8 sm:p-10 shadow-sm hover:shadow-xl transition-all duration-300 flex flex-col group">
-              <div className="mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-slate-100 to-slate-50 flex items-center justify-center border border-slate-200">
-                    <Zap className="h-6 w-6 text-slate-700" />
+            {/* ── ESSENTIALS ─────────────────────────────────── */}
+            <div className="relative flex flex-col rounded-3xl overflow-hidden border border-pink-200 bg-gradient-to-b from-pink-50 to-white shadow-md hover:shadow-xl transition-shadow duration-300">
+              {/* Top colour band */}
+              <div className="h-1.5 w-full bg-gradient-to-r from-pink-400 to-rose-400" />
+
+              <div className="flex flex-col flex-1 p-8 sm:p-10">
+                {/* Header */}
+                <div className="mb-8">
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-400 shadow-lg shadow-pink-400/30 mb-4">
+                    <Scissors className="h-5 w-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-slate-900">Essentials</h3>
-                    <p className="text-sm text-slate-500">For single-location salons</p>
-                  </div>
-                </div>
-                <p className="text-slate-600 leading-relaxed">
-                  Complete salon management with WhatsApp automation. Perfect for independent salons getting started with digital operations.
-                </p>
-              </div>
-
-              <div className="mb-8">
-                <p className="text-lg text-slate-400 line-through">₹999/month</p>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-5xl font-bold text-slate-900">₹799</span>
-                  <span className="text-lg text-slate-500">/month</span>
-                </div>
-                <p className="text-sm text-slate-500">₹9,588/year • Cancel anytime • 15-day free trial</p>
-              </div>
-
-              <Link 
-                href="/signup" 
-                className="flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-slate-900 text-white font-semibold text-base hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/10 hover:shadow-xl hover:shadow-slate-900/20 mb-8 group-hover:scale-[1.02] duration-300"
-              >
-                Start Free Trial
-                <ArrowRight className="h-4 w-4" />
-              </Link>
-
-              <div className="space-y-4 flex-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Everything you need</p>
-                
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Core Operations</p>
-                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Appointments, billing, staff, inventory, expenses & payroll</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Customer Management</p>
-                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Full history, loyalty tiers, memberships & visit tracking</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">WhatsApp Automation</p>
-                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Booking confirmations, reminders, receipts & feedback (shared number)</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Analytics & Reports</p>
-                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">Revenue dashboard, customer insights & staff performance</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Online Booking</p>
-                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">QR code, booking link & Google Calendar sync</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-emerald-100 flex items-center justify-center shrink-0 mt-0.5">
-                      <CheckCircle2 className="h-3 w-3 text-emerald-600" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-slate-900">Support & Security</p>
-                      <p className="text-xs sm:text-sm text-slate-500 mt-0.5">In-app tickets, audit logs & 24hr response time</p>
-                    </div>
-                  </div>
+                  <h3 className="text-2xl font-bold text-slate-900 mb-1">Essentials</h3>
+                  <p className="text-sm text-slate-500 font-medium">For single-location salons</p>
+                  <p className="text-slate-600 text-sm leading-relaxed mt-3">
+                    Complete salon management with WhatsApp automation. Perfect for independent salons getting started digitally.
+                  </p>
                 </div>
 
-                <div className="pt-6 mt-6 border-t border-slate-100">
-                  <p className="text-xs font-semibold text-slate-400 mb-3">Not included</p>
-                  <div className="space-y-2">
-                    {['Own WhatsApp Business API', 'WhatsApp marketing broadcasts', 'Multi-branch management'].map((f) => (
-                      <div key={f} className="flex items-center gap-2">
-                        <div className="h-4 w-4 rounded-full bg-slate-100 flex items-center justify-center shrink-0">
-                          <span className="text-slate-400 text-xs">✕</span>
-                        </div>
-                        <span className="text-xs sm:text-sm text-slate-400">{f}</span>
+                {/* Pricing */}
+                <div className="mb-8 pb-8 border-b border-pink-100">
+                  <p className="text-sm text-slate-400 line-through mb-1">₹999/month</p>
+                  <div className="flex items-baseline gap-1.5 mb-2">
+                    <span className="text-5xl font-extrabold text-slate-900 tracking-tight">₹799</span>
+                    <span className="text-base text-slate-500 font-medium">/month</span>
+                  </div>
+                  <p className="text-xs text-slate-500 font-medium">₹9,588/year &nbsp;·&nbsp; 15-day free trial &nbsp;·&nbsp; Cancel anytime</p>
+                </div>
+
+                {/* CTA */}
+                <Link
+                  href="/signup"
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 active:scale-[0.98] transition-all shadow-md hover:shadow-lg mb-8"
+                >
+                  Start Free Trial
+                  <ArrowRight className="h-4 w-4" />
+                </Link>
+
+                {/* Features */}
+                <div className="flex-1 space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-pink-500 mb-3">Everything you need</p>
+                  {[
+                    { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
+                    { title: 'Customer Management', desc: 'Loyalty tiers, memberships & visit history' },
+                    { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback (shared number)' },
+                    { title: 'Analytics & Reports', desc: 'Revenue, insights & staff performance dashboard' },
+                    { title: 'Online Booking', desc: 'QR code, booking link & Google Calendar sync' },
+                    { title: 'Support & Security', desc: 'In-app tickets, audit logs & 24hr response' },
+                  ].map(({ title, desc }) => (
+                    <div key={title} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100">
+                        <CheckCircle2 className="h-3 w-3 text-pink-600" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-800">{title}</p>
+                        <p className="text-xs text-slate-500">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="pt-5 mt-5 border-t border-pink-100 space-y-2">
+                    <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Not included</p>
+                    {['Own WhatsApp Business API', 'Marketing broadcasts', 'Multi-branch management'].map((f) => (
+                      <div key={f} className="flex items-center gap-2.5">
+                        <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-100">
+                          <span className="text-slate-400 text-[10px] font-bold">✕</span>
+                        </span>
+                        <span className="text-xs text-slate-400">{f}</span>
                       </div>
                     ))}
                   </div>
@@ -1269,258 +1229,165 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* PRO PLAN */}
-            <div className="relative rounded-3xl bg-gradient-to-br from-violet-900 via-violet-800 to-slate-900 p-8 sm:p-10 shadow-2xl shadow-violet-900/50 flex flex-col group overflow-hidden">
-              {/* Gradient overlay */}
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-400/10 via-transparent to-pink-500/10 pointer-events-none" />
+            {/* ── PRO ────────────────────────────────────────── */}
+            <div className="relative flex flex-col rounded-3xl overflow-hidden shadow-2xl shadow-violet-900/40">
+              {/* Solid dark background */}
+              <div className="absolute inset-0 bg-gradient-to-b from-violet-950 via-violet-900 to-slate-900" />
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/15 via-transparent to-pink-500/10 pointer-events-none" />
 
-              {/* Best Value badge */}
-              <div className="absolute -top-1 -right-1">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 blur-xl opacity-50" />
-                  <div className="relative bg-gradient-to-r from-violet-500 to-pink-500 text-white text-xs font-bold px-6 py-2 rounded-bl-2xl rounded-tr-3xl shadow-lg">
-                    BEST VALUE
-                  </div>
+              {/* Top badge */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 blur-lg opacity-60" />
+                <div className="relative bg-gradient-to-r from-violet-500 to-pink-500 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
+                  BEST VALUE
                 </div>
               </div>
 
-              <div className="relative mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shadow-lg shadow-violet-500/30">
-                    <MessageCircle className="h-6 w-6 text-white" />
+              <div className="relative flex flex-col flex-1 p-8 sm:p-10">
+                {/* Header */}
+                <div className="mb-8">
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-400 to-pink-500 shadow-lg shadow-violet-500/40 mb-4">
+                    <Sparkles className="h-5 w-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">Pro</h3>
-                    <p className="text-sm text-violet-300">For single-branch growth</p>
-                  </div>
-                </div>
-                <p className="text-slate-300 leading-relaxed">
-                  Everything in Essentials, plus your own WhatsApp Business API — single branch, full branding control, and marketing broadcasts.
-                </p>
-              </div>
-
-              <div className="relative mb-8">
-                <p className="text-lg text-slate-500 line-through">₹1,499/month</p>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-5xl font-bold text-white">₹999</span>
-                  <span className="text-lg text-slate-400">/month</span>
-                </div>
-                <p className="text-sm text-slate-400">₹11,988/year • Single branch • Billed yearly</p>
-              </div>
-
-              <button
-                onClick={() => setShowDemoModal(true)}
-                className="relative flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-white text-slate-900 font-semibold text-base hover:bg-slate-50 transition-all shadow-xl shadow-white/10 hover:shadow-2xl hover:shadow-white/20 mb-8 group-hover:scale-[1.02] duration-300"
-              >
-                Contact Sales
-                <ArrowRight className="h-4 w-4" />
-              </button>
-
-              <div className="relative space-y-4 flex-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Everything in Essentials, plus</p>
-
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Free WhatsApp API Setup (₹5,500 value)</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Complete setup: Meta verification, number registration & template approvals</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Own WhatsApp Business API</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Your own phone number, your branding, full control</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">WhatsApp Marketing Broadcasts</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Festival offers, birthday wishes, flash sales & win-back campaigns</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">50+ Marketing Templates</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Pre-approved templates for every occasion, ready to use</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-violet-500 to-pink-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-violet-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Priority Support</p>
-                      <p className="text-xs text-slate-400 mt-0.5">WhatsApp & call support with &lt;4hr response time</p>
-                    </div>
-                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-1">Pro</h3>
+                  <p className="text-sm text-violet-300 font-medium">For single-branch growth</p>
+                  <p className="text-slate-300 text-sm leading-relaxed mt-3">
+                    Everything in Essentials, plus your own WhatsApp Business API — single branch, full branding and marketing broadcasts.
+                  </p>
                 </div>
 
-                <div className="pt-6 mt-6 border-t border-violet-700/50">
-                  <div className="bg-gradient-to-r from-violet-500/10 to-pink-500/10 border border-violet-500/20 rounded-xl p-4">
+                {/* Pricing */}
+                <div className="mb-8 pb-8 border-b border-violet-700/50">
+                  <p className="text-sm text-violet-400 line-through mb-1">₹1,499/month</p>
+                  <div className="flex items-baseline gap-1.5 mb-2">
+                    <span className="text-5xl font-extrabold text-white tracking-tight">₹999</span>
+                    <span className="text-base text-slate-400 font-medium">/month</span>
+                  </div>
+                  <p className="text-xs text-slate-400 font-medium">₹11,988/year &nbsp;·&nbsp; Single branch &nbsp;·&nbsp; Billed yearly</p>
+                </div>
+
+                {/* CTA */}
+                <button
+                  onClick={() => setShowDemoModal(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-violet-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
+                >
+                  Contact Sales
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+
+                {/* Features */}
+                <div className="flex-1 space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">Everything in Essentials, plus</p>
+                  {[
+                    { title: 'Free WhatsApp API Setup (₹5,500 value)', desc: 'Meta verification, number registration & template approvals' },
+                    { title: 'Own WhatsApp Business API', desc: 'Your phone number, your branding, full control' },
+                    { title: 'WhatsApp Marketing Broadcasts', desc: 'Festival offers, birthdays, flash sales & win-back campaigns' },
+                    { title: '50+ Marketing Templates', desc: 'Pre-approved for every occasion, ready to use' },
+                    { title: 'Priority Support', desc: 'WhatsApp & call support with <4hr response time' },
+                  ].map(({ title, desc }) => (
+                    <div key={title} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500">
+                        <CheckCircle2 className="h-3 w-3 text-white" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{title}</p>
+                        <p className="text-xs text-slate-400">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="pt-5 mt-5 border-t border-violet-800/60 rounded-xl bg-violet-500/10 border border-violet-500/20 p-4">
                     <p className="text-xs font-semibold text-white mb-2">🎯 Perfect for:</p>
                     <ul className="text-xs text-slate-300 space-y-1">
                       <li>• Single-branch salons wanting own WhatsApp branding</li>
                       <li>• Salons running marketing campaigns</li>
-                      <li>• Independent owners ready to go professional</li>
+                      <li>• Independent owners going professional</li>
                     </ul>
                   </div>
                 </div>
               </div>
             </div>
 
-            {/* GROWTH PLAN */}
-            <div className="relative rounded-3xl bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-8 sm:p-10 shadow-2xl shadow-slate-900/50 flex flex-col group overflow-hidden">
-              {/* Gradient overlay */}
+            {/* ── GROWTH ─────────────────────────────────────── */}
+            <div className="relative flex flex-col rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/50">
+              {/* Solid dark background */}
+              <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900" />
               <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-transparent to-violet-500/10 pointer-events-none" />
-              
-              {/* Popular badge */}
-              <div className="absolute -top-1 -right-1">
-                <div className="relative">
-                  <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 blur-xl opacity-50" />
-                  <div className="relative bg-gradient-to-r from-pink-500 to-violet-500 text-white text-xs font-bold px-6 py-2 rounded-bl-2xl rounded-tr-3xl shadow-lg">
-                    MOST POPULAR
-                  </div>
+
+              {/* Top badge */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 blur-lg opacity-60" />
+                <div className="relative bg-gradient-to-r from-pink-500 to-violet-500 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
+                  MOST POPULAR
                 </div>
               </div>
 
-              <div className="relative mb-6">
-                <div className="flex items-center gap-3 mb-4">
-                  <div className="h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shadow-lg shadow-pink-500/30">
-                    <TrendingUp className="h-6 w-6 text-white" />
+              <div className="relative flex flex-col flex-1 p-8 sm:p-10">
+                {/* Header */}
+                <div className="mb-8">
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-500/30 mb-4">
+                    <BarChart3 className="h-5 w-5 text-white" />
                   </div>
-                  <div>
-                    <h3 className="text-2xl font-bold text-white">Growth</h3>
-                    <p className="text-sm text-slate-300">For scaling salon brands</p>
-                  </div>
-                </div>
-                <p className="text-slate-300 leading-relaxed">
-                  Everything in Essentials, plus your own WhatsApp Business API, full branding control, marketing broadcasts, and multi-branch support.
-                </p>
-              </div>
-
-              <div className="relative mb-8">
-                <p className="text-lg text-slate-500 line-through">₹1,999/month</p>
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-5xl font-bold text-white">₹1,499</span>
-                  <span className="text-lg text-slate-400">/month</span>
-                </div>
-                <p className="text-sm text-slate-400">₹17,988/year • Includes 2 branches • +₹499/month per additional branch • Billed yearly</p>
-              </div>
-
-              <button 
-                onClick={() => setShowDemoModal(true)}
-                className="relative flex items-center justify-center gap-2 w-full py-4 rounded-xl bg-white text-slate-900 font-semibold text-base hover:bg-slate-50 transition-all shadow-xl shadow-white/10 hover:shadow-2xl hover:shadow-white/20 mb-8 group-hover:scale-[1.02] duration-300"
-              >
-                Contact Sales
-                <ArrowRight className="h-4 w-4" />
-              </button>
-
-              <div className="relative space-y-4 flex-1">
-                <p className="text-xs font-bold uppercase tracking-wider text-slate-400 mb-4">Everything in Essentials, plus</p>
-                
-                <div className="space-y-3">
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-pink-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Free WhatsApp API Setup (₹5,500 value)</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Complete setup: Meta verification, number registration & template approvals</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-pink-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Own WhatsApp Business API</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Your own phone number, your branding, full control</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-pink-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">WhatsApp Marketing Broadcasts</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Festival offers, birthday wishes, flash sales & win-back campaigns</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-pink-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Multi-Branch Management</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Centralized dashboard, branch-level reports & inter-branch transfers</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-pink-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">50+ Marketing Templates</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Pre-approved templates for every occasion, ready to use</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-pink-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">Dedicated Support Specialist</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Priority WhatsApp & call support with &lt;4hr response time</p>
-                    </div>
-                  </div>
-
-                  <div className="flex items-start gap-3">
-                    <div className="h-5 w-5 rounded-full bg-gradient-to-br from-pink-500 to-violet-500 flex items-center justify-center shrink-0 mt-0.5 shadow-lg shadow-pink-500/30">
-                      <CheckCircle2 className="h-3 w-3 text-white" />
-                    </div>
-                    <div>
-                      <p className="text-sm font-semibold text-white">White-Label Onboarding</p>
-                      <p className="text-xs text-slate-400 mt-0.5">Dedicated onboarding specialist & custom setup assistance</p>
-                    </div>
-                  </div>
+                  <h3 className="text-2xl font-bold text-white mb-1">Growth</h3>
+                  <p className="text-sm text-slate-300 font-medium">For scaling salon brands</p>
+                  <p className="text-slate-300 text-sm leading-relaxed mt-3">
+                    Everything in Pro, plus multi-branch management, dedicated support, and white-label onboarding for growing brands.
+                  </p>
                 </div>
 
-                <div className="pt-6 mt-6 border-t border-slate-700/50">
-                  <div className="bg-gradient-to-r from-pink-500/10 to-violet-500/10 border border-pink-500/20 rounded-xl p-4">
+                {/* Pricing */}
+                <div className="mb-8 pb-8 border-b border-slate-700/60">
+                  <p className="text-sm text-slate-500 line-through mb-1">₹1,999/month</p>
+                  <div className="flex items-baseline gap-1.5 mb-2">
+                    <span className="text-5xl font-extrabold text-white tracking-tight">₹1,499</span>
+                    <span className="text-base text-slate-400 font-medium">/month</span>
+                  </div>
+                  <p className="text-xs text-slate-400 font-medium">₹17,988/year &nbsp;·&nbsp; 2 branches incl. &nbsp;·&nbsp; +₹499/branch &nbsp;·&nbsp; Billed yearly</p>
+                </div>
+
+                {/* CTA */}
+                <button
+                  onClick={() => setShowDemoModal(true)}
+                  className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-slate-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
+                >
+                  Contact Sales
+                  <ArrowRight className="h-4 w-4" />
+                </button>
+
+                {/* Features */}
+                <div className="flex-1 space-y-3">
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-pink-400 mb-3">Everything in Pro, plus</p>
+                  {[
+                    { title: 'Multi-Branch Management', desc: 'Centralized dashboard, branch reports & inter-branch transfers' },
+                    { title: 'Dedicated Support Specialist', desc: 'Priority WhatsApp & call support with <4hr response time' },
+                    { title: 'White-Label Onboarding', desc: 'Dedicated onboarding specialist & custom setup assistance' },
+                    { title: 'Advanced Analytics', desc: 'Cross-branch revenue, staff performance & trend reports' },
+                    { title: 'Free WhatsApp API Setup (₹5,500 value)', desc: 'Full setup: Meta verification, number & template approvals' },
+                  ].map(({ title, desc }) => (
+                    <div key={title} className="flex items-start gap-3">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500">
+                        <CheckCircle2 className="h-3 w-3 text-white" />
+                      </span>
+                      <div>
+                        <p className="text-sm font-semibold text-white">{title}</p>
+                        <p className="text-xs text-slate-400">{desc}</p>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className="pt-5 mt-5 border-t border-slate-700/50 rounded-xl bg-pink-500/10 border border-pink-500/20 p-4">
                     <p className="text-xs font-semibold text-white mb-2">🚀 Perfect for:</p>
                     <ul className="text-xs text-slate-300 space-y-1">
-                      <li>• Multi-location salon chains (₹499/month per branch after 2)</li>
-                      <li>• Salons wanting their own branded WhatsApp</li>
-                      <li>• Businesses running marketing campaigns</li>
-                      <li>• Growing salon brands with 2+ locations</li>
+                      <li>• Multi-location salon chains</li>
+                      <li>• Salon brands wanting full marketing control</li>
+                      <li>• Growing businesses with 2+ locations</li>
                     </ul>
                   </div>
                 </div>
               </div>
             </div>
-          </div>
 
+          </div>
           {/* Trust badges */}
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-12 reveal">
             <div className="text-center rounded-xl border border-slate-200 p-4">
