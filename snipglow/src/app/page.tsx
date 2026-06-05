@@ -1153,27 +1153,27 @@ export default function HomePage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal items-stretch">
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
 
             {/* ── ESSENTIALS ─────────────────────────────────── */}
             <div className="relative flex flex-col rounded-3xl overflow-hidden border border-pink-200 bg-gradient-to-b from-pink-50 to-white shadow-md hover:shadow-xl transition-shadow duration-300">
               {/* Top colour band */}
               <div className="h-1.5 w-full bg-gradient-to-r from-pink-400 to-rose-400" />
 
-              <div className="flex flex-col flex-1 p-8 sm:p-10">
-                {/* Header */}
-                <div className="mb-8">
+              <div className="grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
+                {/* Row 1 — Header (description grows) */}
+                <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-400 shadow-lg shadow-pink-400/30 mb-4">
                     <Scissors className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-1">Essentials</h3>
                   <p className="text-sm text-slate-500 font-medium">For single-location salons</p>
-                  <p className="text-slate-600 text-sm leading-relaxed mt-3">
+                  <p className="text-slate-600 text-sm leading-relaxed mt-3 flex-1">
                     Complete salon management with WhatsApp automation. Perfect for independent salons getting started digitally.
                   </p>
                 </div>
 
-                {/* Pricing */}
+                {/* Row 2 — Pricing */}
                 <div className="mb-8 pb-8 border-b border-pink-100">
                   <p className="text-sm text-slate-400 line-through mb-1">₹999/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
@@ -1183,7 +1183,7 @@ export default function HomePage() {
                   <p className="text-xs text-slate-500 font-medium">₹9,588/year &nbsp;·&nbsp; 15-day free trial &nbsp;·&nbsp; Cancel anytime</p>
                 </div>
 
-                {/* CTA */}
+                {/* Row 3 — CTA */}
                 <Link
                   href="/signup"
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 active:scale-[0.98] transition-all shadow-md hover:shadow-lg mb-8"
@@ -1192,8 +1192,8 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                {/* Features */}
-                <div className="flex-1 space-y-3">
+                {/* Row 4 — Features */}
+                <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-pink-500 mb-3">Everything you need</p>
                   {[
                     { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
@@ -1243,20 +1243,20 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="relative flex flex-col flex-1 p-8 sm:p-10">
-                {/* Header */}
-                <div className="mb-8">
+              <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
+                {/* Row 1 — Header */}
+                <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-400 to-pink-500 shadow-lg shadow-violet-500/40 mb-4">
                     <Sparkles className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-1">Pro</h3>
                   <p className="text-sm text-violet-300 font-medium">For single-branch growth</p>
-                  <p className="text-slate-300 text-sm leading-relaxed mt-3">
+                  <p className="text-slate-300 text-sm leading-relaxed mt-3 flex-1">
                     Everything in Essentials, plus your own WhatsApp Business API — single branch, full branding and marketing broadcasts.
                   </p>
                 </div>
 
-                {/* Pricing */}
+                {/* Row 2 — Pricing */}
                 <div className="mb-8 pb-8 border-b border-violet-700/50">
                   <p className="text-sm text-violet-400 line-through mb-1">₹1,499/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
@@ -1266,7 +1266,7 @@ export default function HomePage() {
                   <p className="text-xs text-slate-400 font-medium">₹11,988/year &nbsp;·&nbsp; Single branch &nbsp;·&nbsp; Billed yearly</p>
                 </div>
 
-                {/* CTA */}
+                {/* Row 3 — CTA */}
                 <button
                   onClick={() => setShowDemoModal(true)}
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-violet-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
@@ -1275,8 +1275,8 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
 
-                {/* Features */}
-                <div className="flex-1 space-y-3">
+                {/* Row 4 — Features */}
+                <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">Everything in Essentials, plus</p>
                   {[
                     { title: 'Free WhatsApp API Setup (₹5,500 value)', desc: 'Meta verification, number registration & template approvals' },
@@ -1322,20 +1322,20 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="relative flex flex-col flex-1 p-8 sm:p-10">
-                {/* Header */}
-                <div className="mb-8">
+              <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
+                {/* Row 1 — Header */}
+                <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-500/30 mb-4">
                     <BarChart3 className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-1">Growth</h3>
                   <p className="text-sm text-slate-300 font-medium">For scaling salon brands</p>
-                  <p className="text-slate-300 text-sm leading-relaxed mt-3">
+                  <p className="text-slate-300 text-sm leading-relaxed mt-3 flex-1">
                     Everything in Pro, plus multi-branch management, dedicated support, and white-label onboarding for growing brands.
                   </p>
                 </div>
 
-                {/* Pricing */}
+                {/* Row 2 — Pricing */}
                 <div className="mb-8 pb-8 border-b border-slate-700/60">
                   <p className="text-sm text-slate-500 line-through mb-1">₹1,999/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
@@ -1345,7 +1345,7 @@ export default function HomePage() {
                   <p className="text-xs text-slate-400 font-medium">₹17,988/year &nbsp;·&nbsp; 2 branches incl. &nbsp;·&nbsp; +₹499/branch &nbsp;·&nbsp; Billed yearly</p>
                 </div>
 
-                {/* CTA */}
+                {/* Row 3 — CTA */}
                 <button
                   onClick={() => setShowDemoModal(true)}
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-slate-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
@@ -1354,8 +1354,8 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
 
-                {/* Features */}
-                <div className="flex-1 space-y-3">
+                {/* Row 4 — Features */}
+                <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-pink-400 mb-3">Everything in Pro, plus</p>
                   {[
                     { title: 'Multi-Branch Management', desc: 'Centralized dashboard, branch reports & inter-branch transfers' },
