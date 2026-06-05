@@ -5,7 +5,6 @@ import Link from 'next/link';
 import { StructuredData } from './structured-data';
 import {
   Scissors,
-  Sparkles,
   MessageCircle,
   ArrowRight,
   Bell,
@@ -28,6 +27,7 @@ import {
   Star,
   Headphones,
   Megaphone,
+  Smartphone,
 } from 'lucide-react';
 
 // Animated counter that counts up when scrolled into view
@@ -1247,7 +1247,7 @@ export default function HomePage() {
                 {/* Row 1 — Header */}
                 <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-400 to-pink-500 shadow-lg shadow-violet-500/40 mb-4">
-                    <Sparkles className="h-5 w-5 text-white" />
+                    <Smartphone className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-1">Pro</h3>
                   <p className="text-sm text-violet-300 font-medium">For single-branch growth</p>
