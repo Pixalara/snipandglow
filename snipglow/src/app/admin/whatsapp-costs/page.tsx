@@ -1,6 +1,6 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/auth';
-import { WHATSAPP_RATES_INR, type TemplateCategory } from '@/lib/whatsapp/pricing';
+import { WHATSAPP_RATES_INR, getTemplateCategory, type TemplateCategory } from '@/lib/whatsapp/pricing';
 import { CostFilter } from './cost-filter';
 
 // =============================================================================
@@ -64,7 +64,11 @@ export default async function WhatsAppCostsPage({
   for (const msg of msgs ?? []) {
     const tid = msg.tenant_id;
     if (!byTenant[tid]) byTenant[tid] = { total: 0, byCategory: {} };
-    const cat = (msg.template_category || 'utility') as TemplateCategory;
+    // Derive category from the template name (authoritative + handles historical
+    // rows where template_category was never stored). Fall back to the stored
+    // column only if present and the name yields nothing useful.
+    const derived = getTemplateCategory(msg.template_name ?? null, 'outbound');
+    const cat = (derived || msg.template_category || 'utility') as TemplateCategory;
     const rate = WHATSAPP_RATES_INR[cat] ?? WHATSAPP_RATES_INR.utility;
     if (!byTenant[tid].byCategory[cat]) byTenant[tid].byCategory[cat] = { count: 0, cost: 0 };
     byTenant[tid].byCategory[cat].count++;

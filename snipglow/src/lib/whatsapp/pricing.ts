@@ -27,16 +27,23 @@ export const TEMPLATE_CATEGORY_MAP: Record<string, TemplateCategory> = {
   // Marketing templates
   renewal_reminder: 'marketing',
   winback_60_day: 'marketing',
+  winback_30_day: 'marketing',
 
   // Authentication templates
   otp_verification: 'authentication',
 
   // Utility templates (transactional)
   booking_confirmation_v2: 'utility',
+  booking_confirmation: 'utility',
   appointment_rescheduled_v1: 'utility',
+  appointment_rescheduled: 'utility',
   appointment_reminder_v1: 'utility',
+  appointment_reminder: 'utility',
+  appointment_cancelled: 'utility',
   bill_receipt_v1: 'utility',
+  bill_receipt: 'utility',
   feedback_request_v1: 'utility',
+  feedback_request: 'utility',
   owner_booking_alert: 'utility',
   owner_reschedule_alert: 'utility',
   owner_cancel_alert: 'utility',
@@ -47,11 +54,30 @@ export const TEMPLATE_CATEGORY_MAP: Record<string, TemplateCategory> = {
 
 /**
  * Get the billing category for a template name.
+ * Falls back to prefix-based detection so logged variants (e.g. reminder_24h_*)
+ * and OTP templates are categorised correctly even if not in the explicit map.
  */
 export function getTemplateCategory(templateName: string | null, direction: 'inbound' | 'outbound'): TemplateCategory {
   if (direction === 'inbound') return 'service';
   if (!templateName) return 'utility';
-  return TEMPLATE_CATEGORY_MAP[templateName] ?? 'utility';
+
+  const name = templateName.toLowerCase().trim();
+
+  // Exact map match first
+  if (TEMPLATE_CATEGORY_MAP[name]) return TEMPLATE_CATEGORY_MAP[name];
+
+  // Authentication (OTP)
+  if (name.includes('otp') || name.includes('verification') || name.includes('auth')) {
+    return 'authentication';
+  }
+
+  // Marketing (promotional / win-back / renewal)
+  if (name.includes('winback') || name.includes('win_back') || name.includes('renewal') || name.includes('promo') || name.includes('offer')) {
+    return 'marketing';
+  }
+
+  // Everything else transactional
+  return 'utility';
 }
 
 /**
