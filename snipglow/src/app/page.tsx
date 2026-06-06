@@ -1516,51 +1516,63 @@ export default function HomePage() {
           <div className="space-y-4 reveal">
             <FaqItem
               question="What is SnipandGlow?"
-              answer="SnipandGlow is an all-in-one salon and spa management software built for Indian businesses. It handles appointments, billing, customer management, staff scheduling, WhatsApp notifications, analytics, and more - all from one dashboard."
+              answer="SnipandGlow is an all-in-one salon and spa management platform built for Indian businesses. It handles appointments, WhatsApp automation, billing, customer CRM, staff scheduling, payroll, memberships, analytics, and more — all from one dashboard. Available on three plans: Essentials (₹799/mo), Pro (₹999/mo), and Growth (multi-branch)."
             />
             <FaqItem
               question="How long is the free trial?"
-              answer="You get a full 15-day free trial with access to all features. No credit card required to start. If it doesn't work for you, you pay nothing."
+              answer="You get a full 15-day free trial with access to all features — no credit card required. If SnipandGlow doesn't work for you within those 15 days, you get a full refund, no questions asked."
             />
             <FaqItem
-              question="Do I need any technical knowledge to use it?"
-              answer="Not at all. SnipandGlow is designed for salon owners, not tech experts. We handle the complete setup for you, and the dashboard is as simple as using WhatsApp. Plus, we provide free training and onboarding support."
+              question="What is the difference between Essentials, Pro, and Growth plans?"
+              answer="Essentials (₹799/mo) covers all core operations — appointments, billing, WhatsApp automation, CRM, analytics, memberships, payroll — for a single branch, using the shared SnipandGlow WhatsApp number. Pro (₹999/mo) adds your own WhatsApp Business API (messages from your salon's own number), WhatsApp marketing broadcasts, 50+ pre-approved templates, and priority support — still single branch. Growth adds multi-branch management on top of everything in Pro, ideal for salon chains."
             />
             <FaqItem
-              question="Can my staff use it too?"
-              answer="Yes! You can add unlimited staff members with role-based access. Stylists can view their appointments, managers can access reports, and you as the owner have full control over everything."
+              question="How does WhatsApp work on each plan?"
+              answer="On Essentials, booking confirmations, appointment reminders, bills, and feedback requests are sent automatically from the shared SnipandGlow WhatsApp number — zero setup needed. On Pro and Growth, you connect your own WhatsApp Business number so all messages come from your salon's brand. Pro and Growth also unlock broadcast campaigns (birthday offers, festival deals, win-back messages) to all your customers at once."
             />
             <FaqItem
-              question="How does WhatsApp integration work?"
-              answer="By default, appointment reminders and invoices are sent from the SnipandGlow WhatsApp number. If you want messages to come from your own salon's WhatsApp Business number (your branding), upgrade to the Growth plan which includes free WhatsApp API setup."
+              question="What do I need to connect my own WhatsApp Business API (Pro / Growth)?"
+              answer="You need: (1) a Facebook/Meta account, (2) a Facebook Business Page or Instagram account for your salon, (3) a phone number that can receive an OTP and is not currently active on the WhatsApp app, and (4) a business document such as a GST certificate, shop licence, or Udyam registration. A website or domain-based email is not required — a Facebook Business Page is sufficient for most salons."
             />
             <FaqItem
-              question="Is my data safe and secure?"
-              answer="Absolutely. We use enterprise-grade encryption, your data is hosted on secure cloud servers, and each salon's data is completely isolated. We never share or sell your customer data."
+              question="Do I need to do any technical setup for the WhatsApp API?"
+              answer="No. On Pro and Growth plans, our team handles the complete WhatsApp API setup for free — Meta Business verification, number registration, and template approvals. This is included in the plan (worth ₹5,500 if done externally). You just provide the required documents."
+            />
+            <FaqItem
+              question="Will connecting my own WhatsApp API affect my existing WhatsApp Business app?"
+              answer="Yes — once a number is registered with the WhatsApp Cloud API, it cannot simultaneously run the WhatsApp Business app on a phone. You will need a dedicated number for the API (separate from your day-to-day WhatsApp). Most salons use their main business number for the API and keep a personal number for the app."
             />
             <FaqItem
               question="Can I manage multiple branches?"
-              answer="Yes, multi-branch support is included in the Growth plan. You can manage all your salon locations from a single dashboard with branch-level reporting and staff management."
+              answer="Yes. Multi-branch management is included in the Growth plan. You can manage all locations from a single dashboard with branch-level reporting, independent staff management, and consolidated analytics across branches."
             />
             <FaqItem
-              question="What payment methods do my customers need?"
-              answer="SnipandGlow tracks payments - it doesn't process them. Your customers pay you directly via cash, UPI, or card as usual. We just help you record and track all transactions digitally."
+              question="Can my staff use it too?"
+              answer="Yes. You can add staff members with role-based access — stylists view their own appointments, managers access reports, and owners have full control. There is no per-staff charge."
             />
             <FaqItem
-              question="Can I cancel anytime?"
-              answer="Yes, there are no lock-in contracts. You can cancel your subscription anytime. If you cancel within the first 15 days, you get a full refund - no questions asked."
+              question="Do I need any technical knowledge?"
+              answer="None. SnipandGlow is built for salon owners, not developers. We handle the full setup — services, staff, WhatsApp flow, booking link, and data import. The dashboard is as intuitive as using WhatsApp itself."
             />
             <FaqItem
-              question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is built specifically for Indian salons - with WhatsApp-first communication, GST billing, UPI tracking, and pricing that makes sense: Essentials at ₹799/mo, Pro at ₹999/mo (own WhatsApp API, single branch), and Growth at ₹1,499/mo (includes 2 branches + free WhatsApp API setup worth ₹5,500)."
+              question="What payment methods do customers need to use?"
+              answer="SnipandGlow tracks payments but does not process them. Customers pay you directly via cash, UPI, card, or any method you prefer. We record every transaction digitally and generate GST-ready invoices automatically."
             />
             <FaqItem
-              question="Do you offer customer support?"
-              answer="Yes! We provide priority WhatsApp support for all users. You can reach our team directly on WhatsApp for any questions, issues, or feature requests. We typically respond within minutes during business hours."
+              question="Is my data safe?"
+              answer="Yes. All data is encrypted at rest and in transit, hosted on secure cloud servers, and each salon's data is completely isolated. We never share or sell customer data. Access tokens for connected WhatsApp numbers are stored with AES-256 encryption."
             />
             <FaqItem
               question="Can I import my existing customer data?"
-              answer="Yes, we help you import your existing customer database during onboarding - whether it's from Excel sheets, another software, or even paper records. Our team handles the migration for free."
+              answer="Yes. Our team migrates your existing customer database during onboarding — from Excel sheets, another software, or paper records — at no additional cost."
+            />
+            <FaqItem
+              question="Can I cancel anytime?"
+              answer="Yes, no lock-in contracts. Cancel anytime from the dashboard. Cancellations within the first 15 days qualify for a full refund."
+            />
+            <FaqItem
+              question="How is SnipandGlow different from other salon software?"
+              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is purpose-built for Indian salons — WhatsApp-first, GST billing, UPI tracking, free setup, and honest pricing. Essentials at ₹799/mo covers everything a single salon needs. Pro at ₹999/mo adds your own WhatsApp API and broadcast marketing. Growth adds multi-branch for expanding chains."
             />
           </div>
         </div>
