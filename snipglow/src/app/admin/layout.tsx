@@ -1,5 +1,5 @@
 import { checkAdmin } from '@/lib/admin/auth';
-import { redirect } from 'next/navigation';
+import { createAdminClient } from '@/lib/supabase/admin';
 import { AdminShell } from './admin-shell';
 
 export const metadata = {
@@ -16,8 +16,21 @@ export default async function AdminLayout({ children }: { children: React.ReactN
     return <>{children}</>;
   }
 
+  // Count of open WhatsApp setup requests for the sidebar badge (best-effort).
+  let pendingSetupRequests = 0;
+  try {
+    const admin = createAdminClient();
+    const { count } = await (admin
+      .from('whatsapp_setup_requests' as any)
+      .select('id', { count: 'exact', head: true })
+      .in('status', ['pending', 'in_progress']) as any);
+    pendingSetupRequests = count ?? 0;
+  } catch {
+    pendingSetupRequests = 0;
+  }
+
   return (
-    <AdminShell adminEmail={user?.email || ''}>
+    <AdminShell adminEmail={user?.email || ''} pendingSetupRequests={pendingSetupRequests}>
       {children}
     </AdminShell>
   );

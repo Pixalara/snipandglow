@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { formatISTDate, todayIST } from '@/lib/datetime';
+import Link from 'next/link';
 
 // =============================================================================
 // Admin Overview — Platform metrics at a glance
@@ -50,6 +51,36 @@ export default async function AdminOverviewPage() {
     .order('created_at', { ascending: false })
     .limit(5) as any);
 
+  // Open WhatsApp setup requests (manual dedicated onboarding queue).
+  const { data: pendingSetupData } = await (admin
+    .from('whatsapp_setup_requests' as any)
+    .select('id, tenant_id, contact_phone, contact_name, status, created_at')
+    .in('status', ['pending', 'in_progress'])
+    .order('created_at', { ascending: true })
+    .limit(10) as any);
+
+  const pendingSetup = (pendingSetupData as {
+    id: string;
+    tenant_id: string;
+    contact_phone: string;
+    contact_name: string | null;
+    status: string;
+    created_at: string;
+  }[] | null) ?? [];
+
+  // Resolve tenant names for the pending requests.
+  const setupTenantNames = new Map<string, string>();
+  if (pendingSetup.length > 0) {
+    const ids = Array.from(new Set(pendingSetup.map((r) => r.tenant_id)));
+    const { data: setupTenants } = await (admin
+      .from('tenants' as any)
+      .select('id, name')
+      .in('id', ids) as any);
+    for (const t of (setupTenants as { id: string; name: string }[] | null) ?? []) {
+      setupTenantNames.set(t.id, t.name);
+    }
+  }
+
   await logAdminAction({
     adminUserId: user.id,
     adminEmail: user.email || '',
@@ -87,6 +118,42 @@ export default async function AdminOverviewPage() {
           </div>
         ))}
       </div>
+
+      {/* WhatsApp Setup Requests — needs admin action */}
+      {pendingSetup.length > 0 && (
+        <div className="rounded-xl border border-amber-500/40 bg-amber-500/5 overflow-hidden">
+          <div className="px-4 py-3 border-b border-amber-500/30 flex items-center justify-between">
+            <h2 className="text-sm font-semibold text-foreground">
+              ⏳ WhatsApp Setup Requests
+              <span className="ml-2 inline-flex items-center justify-center rounded-full bg-amber-500 px-2 h-5 text-[11px] font-bold text-white">
+                {pendingSetup.length}
+              </span>
+            </h2>
+            <Link href="/admin/whatsapp-setup" className="text-xs font-medium text-amber-600 dark:text-amber-400 hover:underline">
+              View all →
+            </Link>
+          </div>
+          <div className="divide-y divide-amber-500/15">
+            {pendingSetup.map((r) => (
+              <div key={r.id} className="px-4 py-3 flex items-center justify-between">
+                <div>
+                  <p className="text-sm font-medium text-foreground">{setupTenantNames.get(r.tenant_id) ?? r.tenant_id}</p>
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-mono">{r.contact_phone}</span>
+                    {r.contact_name ? ` · ${r.contact_name}` : ''} · {formatISTDate(r.created_at)}
+                  </p>
+                </div>
+                <Link
+                  href={`/admin/tenants/${r.tenant_id}`}
+                  className="text-xs font-medium text-emerald-600 dark:text-emerald-400 hover:underline shrink-0"
+                >
+                  Activate →
+                </Link>
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
 
       {/* Recent Tenants */}
       <div className="rounded-xl border border-border bg-card overflow-hidden">

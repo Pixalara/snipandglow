@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee, MessageCircle } from 'lucide-react';
 import { AdminThemeToggle } from './admin-theme-toggle';
 import { AdminClock } from './admin-clock';
 
@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   { label: 'Support Tickets', href: '/admin/support', icon: Headphones },
+  { label: 'WhatsApp Setup', href: '/admin/whatsapp-setup', icon: MessageCircle, badgeKey: 'pendingSetupRequests' as const },
   { label: 'WhatsApp Health', href: '/admin/whatsapp', icon: Zap },
   { label: 'WhatsApp Costs', href: '/admin/whatsapp-costs', icon: IndianRupee },
   { label: 'Automation Logs', href: '/admin/automation-logs', icon: FileText },
@@ -19,7 +20,15 @@ const navItems = [
   { label: 'Force Delete', href: '/admin/force-delete', icon: Trash2 },
 ];
 
-export function AdminShell({ adminEmail, children }: { adminEmail: string; children: React.ReactNode }) {
+export function AdminShell({
+  adminEmail,
+  pendingSetupRequests = 0,
+  children,
+}: {
+  adminEmail: string;
+  pendingSetupRequests?: number;
+  children: React.ReactNode;
+}) {
   const pathname = usePathname();
   const activeLabel = navItems.find(
     (item) => pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href))
@@ -37,6 +46,7 @@ export function AdminShell({ adminEmail, children }: { adminEmail: string; child
           {navItems.map((item) => {
             const Icon = item.icon;
             const isActive = pathname === item.href || (item.href !== '/admin' && pathname.startsWith(item.href));
+            const badgeCount = item.badgeKey === 'pendingSetupRequests' ? pendingSetupRequests : 0;
             return (
               <Link
                 key={item.href}
@@ -48,7 +58,12 @@ export function AdminShell({ adminEmail, children }: { adminEmail: string; child
                 }`}
               >
                 <Icon className="size-4" />
-                {item.label}
+                <span className="flex-1">{item.label}</span>
+                {badgeCount > 0 && (
+                  <span className="inline-flex items-center justify-center rounded-full bg-amber-500 px-1.5 min-w-[18px] h-[18px] text-[10px] font-bold text-white">
+                    {badgeCount}
+                  </span>
+                )}
               </Link>
             );
           })}
