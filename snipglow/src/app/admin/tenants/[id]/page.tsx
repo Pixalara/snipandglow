@@ -4,6 +4,7 @@ import { formatISTDate } from '@/lib/datetime';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AdminGstEditor } from './gst-editor';
+import { AdminWhatsAppActivator } from './whatsapp-activator';
 import { toAdminWhatsAppView } from '@/lib/whatsapp/redaction';
 
 // =============================================================================
@@ -21,13 +22,14 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   if (!tenant) notFound();
 
   // Fetch related data in parallel
-  const [branchesRes, staffRes, servicesRes, customersRes, appointmentsRes, waSettingsRes] = await Promise.all([
+  const [branchesRes, staffRes, servicesRes, customersRes, appointmentsRes, waSettingsRes, setupReqRes] = await Promise.all([
     admin.from('branches').select('id, name, address, is_default, is_active').eq('tenant_id', tenantId),
     admin.from('employees').select('id, name, phone, email, role, is_active').eq('tenant_id', tenantId),
     admin.from('services').select('id, name, category, price, duration_minutes, is_active').eq('tenant_id', tenantId),
     admin.from('customers').select('id, name, phone, email, total_visits, total_spent, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(50),
     admin.from('appointments').select('id, appointment_date, start_time, status, source, created_at').eq('tenant_id', tenantId).order('appointment_date', { ascending: false }).limit(20),
     (admin.from('tenant_whatsapp_settings' as any).select('*').eq('tenant_id', tenantId).maybeSingle() as any),
+    (admin.from('whatsapp_setup_requests' as any).select('contact_phone, contact_name, notes, status, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(1).maybeSingle() as any),
   ]);
 
   await logAdminAction({
@@ -45,6 +47,22 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   const customers = customersRes.data ?? [];
   const appointments = appointmentsRes.data ?? [];
   const waView = toAdminWhatsAppView(waSettingsRes.data);
+  const setupReqData = (setupReqRes?.data as {
+    contact_phone: string;
+    contact_name: string | null;
+    notes: string | null;
+    status: string;
+    created_at: string;
+  } | null) ?? null;
+  const setupRequest = setupReqData
+    ? {
+        contactPhone: setupReqData.contact_phone,
+        contactName: setupReqData.contact_name,
+        notes: setupReqData.notes,
+        status: setupReqData.status,
+        createdAt: setupReqData.created_at,
+      }
+    : null;
 
   return (
     <div className="space-y-6">
@@ -92,6 +110,13 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <p className="text-sm text-muted-foreground">Dedicated WhatsApp not configured</p>
         )}
       </Section>
+
+      {/* Manual WhatsApp activation — interim flow while Embedded Signup is pending */}
+      <AdminWhatsAppActivator
+        tenantId={tenantId}
+        onboardingStatus={waView?.onboardingStatus ?? null}
+        setupRequest={setupRequest}
+      />
 
       {/* GST Details — admin can edit even when locked for the tenant */}
       <AdminGstEditor

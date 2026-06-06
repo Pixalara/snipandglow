@@ -5,6 +5,9 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import {
   getSettings,
   upsertDedicatedCredentials,
+  createSetupRequest,
+  getLatestSetupRequest,
+  type SetupRequestRow,
 } from '@/lib/whatsapp/credential-store';
 import {
   toOnboardingStateResponse,
@@ -455,6 +458,102 @@ export async function disconnectDedicated(): Promise<DisconnectResult> {
   await recordOnboardingEvent(tenantId, 'disconnected');
 
   return { ok: true, state: await readState(tenantId) };
+}
+
+// =============================================================================
+// Dedicated WhatsApp Onboarding — manual setup request (interim flow)
+//
+// While self-serve Embedded Signup is unavailable (pending Meta Tech Provider
+// approval), a Pro/Growth owner can request a manual WhatsApp API setup. The
+// platform team provisions the number and activates the tenant from the admin
+// panel. These actions are Pro+owner gated, same as the rest of onboarding.
+// =============================================================================
+
+/** Redacted view of a setup request returned to the owner. */
+export interface SetupRequestView {
+  id: string;
+  contactPhone: string;
+  contactName: string | null;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  createdAt: string;
+}
+
+/** Discriminated outcome of {@link requestWhatsAppSetup}. */
+export type RequestSetupResult =
+  | { ok: true; request: SetupRequestView }
+  | { ok: false; reason: string };
+
+function toSetupRequestView(row: SetupRequestRow): SetupRequestView {
+  return {
+    id: row.id,
+    contactPhone: row.contact_phone,
+    contactName: row.contact_name,
+    status: row.status,
+    createdAt: row.created_at,
+  };
+}
+
+/** Basic phone validation: digits, spaces, +, -, parentheses; 8–15 digits. */
+function isValidPhone(raw: string): boolean {
+  const digits = raw.replace(/\D/g, '');
+  return digits.length >= 8 && digits.length <= 15;
+}
+
+/**
+ * Read the latest manual setup request for the requesting owner's tenant.
+ * Returns `null` when none exists. Pro+owner gated.
+ */
+export async function getSetupRequest(): Promise<SetupRequestView | null> {
+  const { tenantId } = await assertProOwner();
+  const row = await getLatestSetupRequest(tenantId);
+  return row ? toSetupRequestView(row) : null;
+}
+
+/**
+ * Create a manual WhatsApp setup request for the requesting owner's tenant.
+ *
+ * Guarded by {@link assertProOwner}. Validates the contact phone, then records a
+ * `pending` request the platform team works through. If an open request
+ * (`pending` / `in_progress`) already exists, it is returned as-is to avoid
+ * duplicates. Never initiates any Graph API call.
+ */
+export async function requestWhatsAppSetup(input: {
+  contactPhone: string;
+  contactName?: string | null;
+  notes?: string | null;
+}): Promise<RequestSetupResult> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, reason };
+  }
+
+  const contactPhone = (input.contactPhone ?? '').trim();
+  if (!isValidPhone(contactPhone)) {
+    return { ok: false, reason: 'Please enter a valid WhatsApp phone number.' };
+  }
+
+  // Avoid duplicate open requests — return the existing one if still active.
+  const existing = await getLatestSetupRequest(tenantId);
+  if (existing && (existing.status === 'pending' || existing.status === 'in_progress')) {
+    return { ok: true, request: toSetupRequestView(existing) };
+  }
+
+  try {
+    const row = await createSetupRequest(tenantId, {
+      contactPhone,
+      contactName: (input.contactName ?? '').trim() || null,
+      notes: (input.notes ?? '').trim() || null,
+    });
+    await recordOnboardingEvent(tenantId, 'in_progress', 'manual_setup_requested');
+    return { ok: true, request: toSetupRequestView(row) };
+  } catch (err) {
+    const reason =
+      err instanceof Error ? `Failed to submit request: ${err.message}` : 'Failed to submit request';
+    return { ok: false, reason };
+  }
 }
 
 // =============================================================================

@@ -3,6 +3,9 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { revalidatePath } from 'next/cache';
+import { encryptToken } from '@/lib/crypto/token-encryption';
+import { upsertDedicatedCredentials } from '@/lib/whatsapp/credential-store';
+import { recordOnboardingEvent } from '@/lib/whatsapp/onboarding-log';
 
 // =============================================================================
 // Admin — edit a tenant's GST details (even when locked).
@@ -66,6 +69,124 @@ export async function adminUpdateTenantGst(
       gst_number: input.gst_number,
       gst_rate: input.gst_rate,
       locked: hasGst ? input.locked : false,
+    },
+  });
+
+  revalidatePath(`/admin/tenants/${tenantId}`);
+  return { success: true };
+}
+
+// =============================================================================
+// Admin — manually activate a tenant's dedicated WhatsApp connection.
+//
+// Interim flow while self-serve Embedded Signup is unavailable (pending Meta
+// Tech Provider approval). The platform team provisions the WhatsApp Cloud API
+// number for a Pro/Growth tenant, then enters the resulting credentials here.
+// The access token is encrypted at rest before storage; the plaintext token is
+// never persisted, logged, or returned.
+// =============================================================================
+
+export async function adminActivateDedicatedWhatsApp(
+  tenantId: string,
+  input: {
+    accessToken: string;
+    wabaId: string;
+    phoneNumberId: string;
+    displayPhoneNumber: string;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  const user = await requireAdmin();
+
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  const accessToken = (input.accessToken ?? '').trim();
+  const wabaId = (input.wabaId ?? '').trim();
+  const phoneNumberId = (input.phoneNumberId ?? '').trim();
+  const displayPhoneNumber = (input.displayPhoneNumber ?? '').trim();
+
+  if (!accessToken || !wabaId || !phoneNumberId || !displayPhoneNumber) {
+    return {
+      success: false,
+      error: 'Access token, WABA ID, phone number ID, and display phone number are all required.',
+    };
+  }
+
+  const admin = createAdminClient();
+
+  // Confirm the tenant exists (and capture name for the audit log).
+  const { data: tenant } = await (admin
+    .from('tenants' as any)
+    .select('name')
+    .eq('id', tenantId)
+    .single() as any);
+
+  if (!tenant) return { success: false, error: 'Tenant not found.' };
+
+  // Encrypt the access token before it ever touches the database (Req 4.1, 4.7).
+  let accessTokenEncrypted: string;
+  try {
+    accessTokenEncrypted = encryptToken(accessToken);
+  } catch {
+    return {
+      success: false,
+      error: 'Server is not configured for token encryption (missing TOKEN_ENCRYPTION_KEY).',
+    };
+  }
+
+  // Persist the encrypted token + WABA fields (one row per tenant).
+  try {
+    await upsertDedicatedCredentials(tenantId, {
+      accessTokenEncrypted,
+      wabaId,
+      phoneNumberId,
+      displayPhoneNumber,
+    });
+  } catch (err) {
+    const message = err instanceof Error ? err.message : 'unknown error';
+    return { success: false, error: `Failed to store credentials: ${message}` };
+  }
+
+  // Flip the tenant to a fully connected dedicated state in a single update.
+  const { error: statusError } = await (admin
+    .from('tenant_whatsapp_settings' as any)
+    .update({
+      mode: 'dedicated',
+      onboarding_status: 'connected',
+      webhook_status: 'active',
+      onboarding_error: null,
+      onboarding_updated_at: new Date().toISOString(),
+    })
+    .eq('tenant_id', tenantId) as any);
+
+  if (statusError) {
+    return { success: false, error: `Failed to activate: ${statusError.message}` };
+  }
+
+  // Mark any open manual setup request as completed (best-effort).
+  try {
+    await (admin
+      .from('whatsapp_setup_requests' as any)
+      .update({ status: 'completed', updated_at: new Date().toISOString() })
+      .eq('tenant_id', tenantId)
+      .in('status', ['pending', 'in_progress']) as any);
+  } catch (err) {
+    console.error('[adminActivateDedicatedWhatsApp] Failed to close setup request:', err);
+  }
+
+  await recordOnboardingEvent(tenantId, 'connected', 'admin_manual_activation');
+
+  // Audit log — never include the access token (token-free metadata only).
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'activate_dedicated_whatsapp',
+    targetType: 'tenant',
+    targetId: tenantId,
+    metadata: {
+      tenant_name: tenant.name,
+      waba_id: wabaId,
+      phone_number_id: phoneNumberId,
+      display_phone_number: displayPhoneNumber,
     },
   });
 

@@ -29,6 +29,7 @@ import {
   Unplug,
   AlertTriangle,
   Lock,
+  Hourglass,
 } from 'lucide-react';
 import type { PlanTier } from '@/types';
 import {
@@ -654,6 +655,19 @@ function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
   // Transient UI notice (cancellation / SDK-not-ready); not a persisted state.
   const [notice, setNotice] = useState<string | null>(null);
 
+  // Interim manual-setup flow (while Embedded Signup / Tech Provider approval is
+  // pending). When no Facebook config id is configured, self-serve Embedded
+  // Signup cannot complete, so we offer a "Request Setup" flow instead.
+  const embeddedSignupAvailable = Boolean(process.env.NEXT_PUBLIC_FB_CONFIG_ID);
+  const [setupRequest, setSetupRequest] = useState<{
+    status: string;
+    contactPhone: string;
+  } | null>(null);
+  const [requestPhone, setRequestPhone] = useState('');
+  const [requestName, setRequestName] = useState('');
+  const [submittingRequest, setSubmittingRequest] = useState(false);
+  const [requestError, setRequestError] = useState<string | null>(null);
+
   // Plan gating: connect enabled iff Pro, else upgrade prompt (Req 1.1–1.4).
   const gate = planGate(planTier);
   // Derived control flags for the current status (Req 7.2, 7.3, 7.6, 8.1).
@@ -706,12 +720,26 @@ function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
       } finally {
         if (!cancelled) setLoading(false);
       }
+
+      // In interim mode, also load any existing manual setup request so a
+      // returning owner sees their pending status instead of a fresh form.
+      if (!embeddedSignupAvailable && gate.connectEnabled) {
+        try {
+          const { getSetupRequest } = await import('./actions');
+          const req = await getSetupRequest();
+          if (!cancelled && req) {
+            setSetupRequest({ status: req.status, contactPhone: req.contactPhone });
+          }
+        } catch (err) {
+          console.error('[WhatsAppConnect] Failed to load setup request:', err);
+        }
+      }
     }
     loadState();
     return () => {
       cancelled = true;
     };
-  }, []);
+  }, [embeddedSignupAvailable, gate.connectEnabled]);
 
   // Apply a server action result's returned state to local rendering (Req 7.1).
   function applyState(state: {
@@ -804,6 +832,35 @@ function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
       setNotice('Could not disconnect. Please try again.');
     } finally {
       setConnecting(false);
+    }
+  }
+
+  // Submit a manual WhatsApp setup request (interim flow while Embedded Signup
+  // is unavailable). Our team provisions the number and activates it.
+  async function handleRequestSetup() {
+    setRequestError(null);
+    const digits = requestPhone.replace(/\D/g, '');
+    if (digits.length < 8 || digits.length > 15) {
+      setRequestError('Please enter a valid WhatsApp phone number.');
+      return;
+    }
+    setSubmittingRequest(true);
+    try {
+      const { requestWhatsAppSetup } = await import('./actions');
+      const result = await requestWhatsAppSetup({
+        contactPhone: requestPhone.trim(),
+        contactName: requestName.trim() || null,
+      });
+      if (result.ok) {
+        setSetupRequest({ status: result.request.status, contactPhone: result.request.contactPhone });
+      } else {
+        setRequestError(result.reason || 'Could not submit your request. Please try again.');
+      }
+    } catch (err) {
+      console.error('[WhatsAppConnect] requestWhatsAppSetup failed:', err);
+      setRequestError('Something went wrong. Please try again.');
+    } finally {
+      setSubmittingRequest(false);
     }
   }
 
@@ -949,29 +1006,98 @@ function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
               </div>
 
               {controls.showConnect && (
-                <div className="space-y-3">
-                  <Button
-                    className="w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
-                    size="lg"
-                    onClick={handleConnectWhatsApp}
-                    disabled={connecting}
-                  >
-                    {connecting ? (
-                      <>
-                        <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                        Connecting...
-                      </>
-                    ) : (
-                      <>
-                        <MessageCircle className="size-4" />
-                        Connect WhatsApp
-                      </>
+                embeddedSignupAvailable ? (
+                  <div className="space-y-3">
+                    <Button
+                      className="w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+                      size="lg"
+                      onClick={handleConnectWhatsApp}
+                      disabled={connecting}
+                    >
+                      {connecting ? (
+                        <>
+                          <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          Connecting...
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="size-4" />
+                          Connect WhatsApp
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Or continue using the default SnipandGlow number
+                    </p>
+                  </div>
+                ) : setupRequest && (setupRequest.status === 'pending' || setupRequest.status === 'in_progress') ? (
+                  // Interim: a manual setup request is already in progress.
+                  <div className="flex flex-col items-center gap-3 rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-900/10 px-4 py-5 text-center">
+                    <div className="flex size-12 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                      <Hourglass className="size-6 text-amber-600 dark:text-amber-400" />
+                    </div>
+                    <div>
+                      <h3 className="text-sm font-bold text-foreground">Setup in progress</h3>
+                      <p className="mt-1 text-xs text-muted-foreground max-w-sm">
+                        We&apos;ve received your request for <span className="font-medium">{setupRequest.contactPhone}</span>.
+                        Our team will set up your WhatsApp Business number and contact you within 24 hours.
+                        Until then, messages continue from the SnipandGlow number.
+                      </p>
+                    </div>
+                  </div>
+                ) : (
+                  // Interim: collect a manual setup request.
+                  <div className="space-y-3">
+                    <div className="rounded-lg bg-muted/50 px-4 py-3">
+                      <p className="text-xs text-muted-foreground">
+                        Self-serve connection is rolling out soon. Request setup and our team will connect
+                        your WhatsApp Business number for you — usually within 24 hours.
+                      </p>
+                    </div>
+                    <div className="space-y-2">
+                      <input
+                        type="tel"
+                        value={requestPhone}
+                        onChange={(e) => setRequestPhone(e.target.value)}
+                        placeholder="Your WhatsApp number (e.g. +91 98765 43210)"
+                        className="w-full h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                      <input
+                        type="text"
+                        value={requestName}
+                        onChange={(e) => setRequestName(e.target.value)}
+                        placeholder="Contact name (optional)"
+                        className="w-full h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                      />
+                    </div>
+                    {requestError && (
+                      <div className="flex items-center gap-2 rounded-lg border border-red-200 bg-red-50 dark:border-red-800/30 dark:bg-red-900/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+                        <AlertTriangle className="size-3.5 shrink-0" /> {requestError}
+                      </div>
                     )}
-                  </Button>
-                  <p className="text-center text-xs text-muted-foreground">
-                    Or continue using the default SnipandGlow number
-                  </p>
-                </div>
+                    <Button
+                      className="w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+                      size="lg"
+                      onClick={handleRequestSetup}
+                      disabled={submittingRequest}
+                    >
+                      {submittingRequest ? (
+                        <>
+                          <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                          Submitting...
+                        </>
+                      ) : (
+                        <>
+                          <MessageCircle className="size-4" />
+                          Request WhatsApp Setup
+                        </>
+                      )}
+                    </Button>
+                    <p className="text-center text-xs text-muted-foreground">
+                      Or continue using the default SnipandGlow number
+                    </p>
+                  </div>
+                )
               )}
             </>
           )}
@@ -988,12 +1114,21 @@ function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
       {/* How it works */}
       <div className="rounded-xl border border-border bg-card p-6">
         <h3 className="text-sm font-semibold text-foreground mb-3">How it works</h3>
-        <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-          <li>Click &quot;Connect WhatsApp&quot; to start Meta&apos;s Embedded Signup</li>
-          <li>Log in with your Facebook account and select your Business</li>
-          <li>Verify your WhatsApp Business number</li>
-          <li>Once connected, all messages will be sent from your own number</li>
-        </ol>
+        {embeddedSignupAvailable ? (
+          <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+            <li>Click &quot;Connect WhatsApp&quot; to start Meta&apos;s Embedded Signup</li>
+            <li>Log in with your Facebook account and select your Business</li>
+            <li>Verify your WhatsApp Business number</li>
+            <li>Once connected, all messages will be sent from your own number</li>
+          </ol>
+        ) : (
+          <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
+            <li>Request setup with your WhatsApp number</li>
+            <li>Keep a business document handy (GST certificate, shop licence, or Udyam) and a Facebook Business Page</li>
+            <li>Our team verifies and registers your number with Meta — usually within 24 hours</li>
+            <li>Once activated, all messages are sent from your own number</li>
+          </ol>
+        )}
       </div>
     </div>
   );

@@ -18,6 +18,8 @@ vi.mock('./actions', () => ({
   retryOnboarding: vi.fn(),
   disconnectDedicated: vi.fn(),
   getWhatsAppLogs: vi.fn(),
+  getSetupRequest: vi.fn(),
+  requestWhatsAppSetup: vi.fn(),
 }));
 
 import * as actions from './actions';
@@ -27,6 +29,8 @@ const mockSubmitAuthCode = vi.mocked(actions.submitAuthCode);
 const mockRetryOnboarding = vi.mocked(actions.retryOnboarding);
 const mockDisconnectDedicated = vi.mocked(actions.disconnectDedicated);
 const mockGetWhatsAppLogs = vi.mocked(actions.getWhatsAppLogs);
+const mockGetSetupRequest = vi.mocked(actions.getSetupRequest);
+const mockRequestWhatsAppSetup = vi.mocked(actions.requestWhatsAppSetup);
 
 // -----------------------------------------------------------------------------
 // Helpers
@@ -58,10 +62,15 @@ beforeEach(() => {
   // Default: a fresh, not-started onboarding state and no logs.
   mockGetOnboardingState.mockResolvedValue(makeState() as any);
   mockGetWhatsAppLogs.mockResolvedValue([] as any);
+  mockGetSetupRequest.mockResolvedValue(null as any);
+  // Default: Embedded Signup is available (config id present) so the self-serve
+  // "Connect WhatsApp" button renders. Interim-mode tests override this.
+  vi.stubEnv('NEXT_PUBLIC_FB_CONFIG_ID', 'test-config-id');
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
+  vi.unstubAllEnvs();
 });
 
 // =============================================================================
@@ -193,5 +202,63 @@ describe('WhatsAppClient — render by onboarding status', () => {
     expect(await screen.findByText('Token exchange failed')).toBeInTheDocument();
     expect(screen.getByText(/Connection Failed/i)).toBeInTheDocument();
     expect(screen.getByRole('button', { name: /Retry/i })).toBeInTheDocument();
+  });
+});
+
+// =============================================================================
+// Interim manual-setup flow (when Embedded Signup config id is absent)
+// =============================================================================
+describe('WhatsAppClient — interim manual setup', () => {
+  it('shows the Request WhatsApp Setup form (not the connect button) when no config id is present', async () => {
+    vi.stubEnv('NEXT_PUBLIC_FB_CONFIG_ID', '');
+    vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
+
+    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+
+    expect(await screen.findByRole('button', { name: /Request WhatsApp Setup/i })).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Connect WhatsApp/i })).not.toBeInTheDocument();
+  });
+
+  it('submits a manual setup request and then shows the in-progress state', async () => {
+    vi.stubEnv('NEXT_PUBLIC_FB_CONFIG_ID', '');
+    vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
+    mockRequestWhatsAppSetup.mockResolvedValue({
+      ok: true,
+      request: { id: 'r1', contactPhone: '+91 98765 43210', contactName: null, status: 'pending', createdAt: 'now' },
+    } as any);
+
+    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+
+    const phoneInput = await screen.findByPlaceholderText(/Your WhatsApp number/i);
+    fireEvent.change(phoneInput, { target: { value: '+91 98765 43210' } });
+
+    const submitBtn = screen.getByRole('button', { name: /Request WhatsApp Setup/i });
+    fireEvent.click(submitBtn);
+
+    await waitFor(() => {
+      expect(mockRequestWhatsAppSetup).toHaveBeenCalledWith({
+        contactPhone: '+91 98765 43210',
+        contactName: null,
+      });
+    });
+    expect(await screen.findByText(/Setup in progress/i)).toBeInTheDocument();
+  });
+
+  it('shows the in-progress state on mount when a pending request already exists', async () => {
+    vi.stubEnv('NEXT_PUBLIC_FB_CONFIG_ID', '');
+    vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
+    mockGetSetupRequest.mockResolvedValue({
+      id: 'r1',
+      contactPhone: '+91 90000 11111',
+      contactName: null,
+      status: 'pending',
+      createdAt: 'now',
+    } as any);
+
+    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+
+    expect(await screen.findByText(/Setup in progress/i)).toBeInTheDocument();
+    expect(screen.getByText('+91 90000 11111')).toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: /Request WhatsApp Setup/i })).not.toBeInTheDocument();
   });
 });

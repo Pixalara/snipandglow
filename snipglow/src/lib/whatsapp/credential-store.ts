@@ -128,6 +128,74 @@ export async function upsertDedicatedCredentials(
 }
 
 /**
+ * A WhatsApp manual-setup request row (interim flow while Embedded Signup /
+ * Tech Provider approval is pending).
+ */
+export interface SetupRequestRow {
+  id: string;
+  tenant_id: string;
+  contact_phone: string;
+  contact_name: string | null;
+  notes: string | null;
+  status: 'pending' | 'in_progress' | 'completed' | 'cancelled';
+  created_at: string;
+  updated_at: string;
+}
+
+const SETUP_REQUESTS_TABLE = 'whatsapp_setup_requests';
+
+/**
+ * Create a manual WhatsApp setup request for a tenant. Used by the owner-facing
+ * "Request Setup" flow when self-serve Embedded Signup is not yet available.
+ */
+export async function createSetupRequest(
+  tenantId: string,
+  input: { contactPhone: string; contactName?: string | null; notes?: string | null }
+): Promise<SetupRequestRow> {
+  if (!tenantId) {
+    throw new Error('createSetupRequest: tenantId is required');
+  }
+
+  const admin = createAdminClient();
+  const { data, error } = await (admin
+    .from(SETUP_REQUESTS_TABLE as any)
+    .insert({
+      tenant_id: tenantId,
+      contact_phone: input.contactPhone,
+      contact_name: input.contactName ?? null,
+      notes: input.notes ?? null,
+      status: 'pending',
+    })
+    .select('id, tenant_id, contact_phone, contact_name, notes, status, created_at, updated_at')
+    .single() as any);
+
+  if (error) {
+    throw new Error(`createSetupRequest: failed to create request: ${error.message}`);
+  }
+  return data as SetupRequestRow;
+}
+
+/**
+ * Read the most recent setup request for a tenant, or `null` when none exists.
+ */
+export async function getLatestSetupRequest(
+  tenantId: string
+): Promise<SetupRequestRow | null> {
+  if (!tenantId) return null;
+
+  const admin = createAdminClient();
+  const { data } = await (admin
+    .from(SETUP_REQUESTS_TABLE as any)
+    .select('id, tenant_id, contact_phone, contact_name, notes, status, created_at, updated_at')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle() as any);
+
+  return (data as SetupRequestRow) ?? null;
+}
+
+/**
  * Clear a tenant's stored dedicated credentials (Req 8.4).
  *
  * Nulls out `access_token_encrypted`, `phone_number_id`, and
