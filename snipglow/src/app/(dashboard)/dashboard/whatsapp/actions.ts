@@ -27,6 +27,7 @@ import {
 import { encryptToken } from '@/lib/crypto/token-encryption';
 import { subscribeWaba } from '@/lib/whatsapp/webhook-subscription';
 import { recordOnboardingEvent } from '@/lib/whatsapp/onboarding-log';
+import { notifyAdminOfSetupRequest } from '@/lib/whatsapp/setup-request-alert';
 
 // =============================================================================
 // Dedicated WhatsApp Onboarding — auth guard + state read
@@ -548,6 +549,27 @@ export async function requestWhatsAppSetup(input: {
       notes: (input.notes ?? '').trim() || null,
     });
     await recordOnboardingEvent(tenantId, 'in_progress', 'manual_setup_requested');
+
+    // Best-effort admin alert (email via Web3Forms). Never blocks the request.
+    try {
+      const admin = createAdminClient();
+      const { data: tenant } = await (admin
+        .from('tenants' as any)
+        .select('name, tenant_code')
+        .eq('id', tenantId)
+        .single() as any);
+      await notifyAdminOfSetupRequest({
+        salonName: (tenant as any)?.name ?? 'Unknown salon',
+        tenantCode: (tenant as any)?.tenant_code ?? null,
+        tenantId,
+        contactPhone: row.contact_phone,
+        contactName: row.contact_name,
+        notes: row.notes,
+      });
+    } catch (err) {
+      console.error('[requestWhatsAppSetup] admin alert failed:', err);
+    }
+
     return { ok: true, request: toSetupRequestView(row) };
   } catch (err) {
     const reason =
