@@ -4,6 +4,7 @@ import { formatISTDate } from '@/lib/datetime';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AdminGstEditor } from './gst-editor';
+import { toAdminWhatsAppView } from '@/lib/whatsapp/redaction';
 
 // =============================================================================
 // Admin — Tenant Detail Page
@@ -43,7 +44,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   const services = servicesRes.data ?? [];
   const customers = customersRes.data ?? [];
   const appointments = appointmentsRes.data ?? [];
-  const waSettings = waSettingsRes.data;
+  const waView = toAdminWhatsAppView(waSettingsRes.data);
 
   return (
     <div className="space-y-6">
@@ -75,15 +76,20 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         </Grid>
       </Section>
 
-      {/* WhatsApp Settings */}
+      {/* WhatsApp Settings — redaction-safe; never renders any access token */}
       <Section title="WhatsApp Settings">
-        {waSettings ? (
+        {waView ? (
           <Grid>
-            <Field label="Mode" value={waSettings.mode} />
-            <Field label="Booking Slug" value={waSettings.booking_slug || '—'} />
+            <Field label="Mode" value={waView.mode} />
+            <Field label="Onboarding Status" value={waView.onboardingStatus} />
+            <Field label="Display Phone Number" value={waView.displayPhoneNumber || '—'} />
+            <Field label="Webhook Status" value={waView.webhookStatus || '—'} />
+            <Field label="Booking Slug" value={waView.bookingSlug || '—'} />
+            <Field label="Onboarding Error" value={waView.onboardingError || '—'} />
+            <Field label="Last Updated" value={waView.onboardingUpdatedAt ? formatISTDate(waView.onboardingUpdatedAt) : '—'} />
           </Grid>
         ) : (
-          <p className="text-sm text-muted-foreground">No WhatsApp settings configured</p>
+          <p className="text-sm text-muted-foreground">Dedicated WhatsApp not configured</p>
         )}
       </Section>
 

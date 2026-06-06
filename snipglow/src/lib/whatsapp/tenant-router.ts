@@ -1,6 +1,69 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { isSharedNumber, parseBookingSlug, getPlatformCredentials } from './config';
 import type { WhatsAppCredentials } from './config';
+import { decryptToken } from '@/lib/crypto/token-encryption';
+import type { OnboardingStatus } from './onboarding-status';
+
+/**
+ * The subset of `tenant_whatsapp_settings` fields the router needs to decide
+ * whether a tenant's outbound messages should use dedicated credentials.
+ */
+interface DedicatedSettings {
+  mode: 'shared' | 'dedicated' | null;
+  onboarding_status: OnboardingStatus | null;
+  phone_number_id: string | null;
+  waba_id: string | null;
+  access_token_encrypted: string | null;
+}
+
+/**
+ * Select the credentials a tenant's outbound messages should use.
+ *
+ * Returns the tenant's decrypted **dedicated** credentials only when the tenant
+ * is fully connected — that is, `mode === 'dedicated'` AND
+ * `onboarding_status === 'connected'` AND the stored token decrypts and all
+ * required fields are present. In every other case it **fails closed** and falls
+ * back to the platform (shared) credentials, recording a descriptive error reason
+ * whenever a connected dedicated row could not yield usable credentials
+ * (decryption failure or missing field). Returns `null` only when the platform
+ * credentials are also unavailable.
+ *
+ * The error reason never contains a token (Req 6.4, 10.3).
+ *
+ * Validates: Requirements 5.5, 6.1, 6.2, 6.4, 6.5, 8.5
+ */
+function resolveCredentials(
+  settings: DedicatedSettings | null,
+  platform: WhatsAppCredentials | null,
+  recordError: (reason: string) => void,
+): WhatsAppCredentials | null {
+  const isFullyConnected =
+    settings?.mode === 'dedicated' && settings?.onboarding_status === 'connected';
+
+  if (isFullyConnected) {
+    if (!settings.access_token_encrypted || !settings.phone_number_id || !settings.waba_id) {
+      recordError('dedicated credentials incomplete; falling back to shared');
+    } else {
+      try {
+        const accessToken = decryptToken(settings.access_token_encrypted);
+        return {
+          accessToken,
+          phoneNumberId: settings.phone_number_id,
+          businessAccountId: settings.waba_id,
+        };
+      } catch {
+        recordError('dedicated token decryption failed; falling back to shared');
+      }
+    }
+  }
+
+  // Fail closed: fall back to shared/platform credentials.
+  if (!platform) {
+    recordError('shared credentials unavailable');
+    return null;
+  }
+  return platform;
+}
 
 // =============================================================================
 // WhatsApp Tenant Router
@@ -40,10 +103,12 @@ export async function resolveTenant(
 
   // ─── DEDICATED MODE ─────────────────────────────────────────────────────────
   if (!isSharedNumber(phoneNumberId)) {
-    // Look up tenant by their dedicated phone_number_id
+    // Look up tenant by their dedicated phone_number_id. Inbound routing matches
+    // on phone_number_id (Req 6.3); we additionally require the row to be
+    // `connected` before treating it as dedicated for outbound credentials.
     const { data: settings } = await (admin
       .from('tenant_whatsapp_settings' as any)
-      .select('tenant_id, access_token_encrypted, phone_number_id, waba_id')
+      .select('tenant_id, mode, onboarding_status, access_token_encrypted, phone_number_id, waba_id')
       .eq('phone_number_id', phoneNumberId)
       .eq('mode', 'dedicated')
       .single() as any);
@@ -67,15 +132,27 @@ export async function resolveTenant(
       .eq('is_default', true)
       .single();
 
-    // TODO: Decrypt access_token_encrypted for dedicated mode
-    // For now, dedicated mode uses platform credentials as placeholder
-    const credentials = getPlatformCredentials();
+    // Select credentials via the shared resolver: decrypted dedicated credentials
+    // only when fully connected and decryptable, otherwise fall back to shared.
+    const platform = getPlatformCredentials();
+    const credentials = resolveCredentials(
+      settings as DedicatedSettings,
+      platform,
+      (reason) => console.error(`[Router] dedicated routing for tenant ${tenant.id}: ${reason}`),
+    );
     if (!credentials) return null;
+
+    // The tenant is treated as dedicated only when fully connected; otherwise it
+    // resolves to the tenant but uses shared credentials (Req 5.5, 6.5, 8.5).
+    const isDedicated =
+      settings.mode === 'dedicated' &&
+      settings.onboarding_status === 'connected' &&
+      credentials !== platform;
 
     return {
       tenantId: tenant.id,
       branchId: branch?.id ?? '',
-      mode: 'dedicated',
+      mode: isDedicated ? 'dedicated' : 'shared',
       salonName: tenant.name,
       credentials,
     };
@@ -322,22 +399,23 @@ async function refreshSession(admin: any, customerPhone: string, tenantId: strin
 
 /**
  * Get credentials for a specific tenant.
- * Dedicated mode: uses tenant's own token. Shared mode: uses platform token.
+ * Dedicated mode: uses tenant's own decrypted token when fully connected.
+ * Shared mode (or any not-connected / undecryptable dedicated state): uses
+ * platform credentials, failing closed.
  */
 export async function getCredentialsForTenant(tenantId: string): Promise<WhatsAppCredentials | null> {
   const admin = createAdminClient();
 
   const { data: settings } = await (admin
     .from('tenant_whatsapp_settings' as any)
-    .select('mode, phone_number_id, waba_id, access_token_encrypted')
+    .select('mode, onboarding_status, phone_number_id, waba_id, access_token_encrypted')
     .eq('tenant_id', tenantId)
     .single() as any);
 
-  if (settings?.mode === 'dedicated' && settings.access_token_encrypted) {
-    // TODO: Decrypt token
-    // return { accessToken: decrypt(settings.access_token_encrypted), phoneNumberId: settings.phone_number_id, businessAccountId: settings.waba_id };
-  }
-
-  // Default: use platform credentials
-  return getPlatformCredentials();
+  const platform = getPlatformCredentials();
+  return resolveCredentials(
+    (settings as DedicatedSettings) ?? null,
+    platform,
+    (reason) => console.error(`[Router] credentials for tenant ${tenantId}: ${reason}`),
+  );
 }

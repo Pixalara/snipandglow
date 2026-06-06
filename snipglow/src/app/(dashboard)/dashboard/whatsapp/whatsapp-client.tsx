@@ -1,7 +1,8 @@
 ﻿'use client';
 
 import { useEffect, useState } from 'react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
+import { cn } from '@/lib/utils';
 import {
   MessageCircle,
   CheckCircle2,
@@ -24,8 +25,17 @@ import {
   ArrowDownLeft,
   XCircle,
   Filter,
+  RefreshCw,
+  Unplug,
+  AlertTriangle,
+  Lock,
 } from 'lucide-react';
 import type { PlanTier } from '@/types';
+import {
+  controlsFor,
+  planGate,
+  type OnboardingStatus,
+} from '@/lib/whatsapp/onboarding-status';
 
 // =============================================================================
 // Global type declarations for Facebook SDK
@@ -78,6 +88,8 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
         </div>
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-500/5" />
       </div>
+
+      <WhatsAppConnectCard planTier={planTier} />
 
       <WhatsAppLogsSection />
     </div>
@@ -630,11 +642,24 @@ function TemplatePreviewModal({ template, onClose }: { template: Template; onClo
 // WhatsApp Connect Card
 // =============================================================================
 
-function WhatsAppConnectCard() {
+function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [connecting, setConnecting] = useState(false);
-  const [connected, setConnected] = useState(false);
+  const [loading, setLoading] = useState(true);
 
+  // Server-driven onboarding state (Req 7.1).
+  const [status, setStatus] = useState<OnboardingStatus>('not_started');
+  const [displayPhoneNumber, setDisplayPhoneNumber] = useState<string | null>(null);
+  const [errorReason, setErrorReason] = useState<string | null>(null);
+  // Transient UI notice (cancellation / SDK-not-ready); not a persisted state.
+  const [notice, setNotice] = useState<string | null>(null);
+
+  // Plan gating: connect enabled iff Pro, else upgrade prompt (Req 1.1–1.4).
+  const gate = planGate(planTier);
+  // Derived control flags for the current status (Req 7.2, 7.3, 7.6, 8.1).
+  const controls = controlsFor(status);
+
+  // Load the Facebook SDK for Embedded Signup (Req 2.1).
   useEffect(() => {
     if (typeof window !== 'undefined' && typeof FB !== 'undefined') {
       setSdkLoaded(true);
@@ -665,9 +690,47 @@ function WhatsAppConnectCard() {
     };
   }, []);
 
+  // On mount, read the server-driven onboarding state (Req 7.1).
+  useEffect(() => {
+    let cancelled = false;
+    async function loadState() {
+      try {
+        const { getOnboardingState } = await import('./actions');
+        const state = await getOnboardingState();
+        if (cancelled) return;
+        setStatus(state.status as OnboardingStatus);
+        setDisplayPhoneNumber(state.displayPhoneNumber);
+        setErrorReason(state.errorReason);
+      } catch (err) {
+        console.error('[WhatsAppConnect] Failed to load onboarding state:', err);
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+    loadState();
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  // Apply a server action result's returned state to local rendering (Req 7.1).
+  function applyState(state: {
+    status: string;
+    displayPhoneNumber: string | null;
+    errorReason: string | null;
+  }) {
+    setStatus(state.status as OnboardingStatus);
+    setDisplayPhoneNumber(state.displayPhoneNumber);
+    setErrorReason(state.errorReason);
+  }
+
+  // Embedded Signup → submit the returned authorization code to the server (Req 2.1, 2.2).
   function handleConnectWhatsApp() {
+    setNotice(null);
+
+    // SDK not ready: show a message and submit nothing (Req 2.5).
     if (!sdkLoaded || typeof FB === 'undefined') {
-      alert('Facebook SDK is still loading. Please try again in a moment.');
+      setNotice('The connect flow is not ready yet. Please wait a moment and try again.');
       return;
     }
 
@@ -675,12 +738,29 @@ function WhatsAppConnectCard() {
 
     FB.login(
       function (response) {
-        if (response.authResponse) {
-          const code = response.authResponse.code;
-          console.log('Auth code received:', code);
-          setConnected(true);
+        // Cancel / close: no authResponse or no code — submit nothing (Req 2.3).
+        if (!response.authResponse || !response.authResponse.code) {
+          setNotice('Connection cancelled. Your WhatsApp setup was not changed.');
+          setConnecting(false);
+          return;
         }
-        setConnecting(false);
+
+        const code = response.authResponse.code;
+        void (async () => {
+          try {
+            const { submitAuthCode } = await import('./actions');
+            const result = await submitAuthCode(code);
+            applyState(result.state);
+            if (!result.ok) {
+              setNotice(null);
+            }
+          } catch (err) {
+            console.error('[WhatsAppConnect] submitAuthCode failed:', err);
+            setNotice('Something went wrong while connecting. Please try again.');
+          } finally {
+            setConnecting(false);
+          }
+        })();
       },
       {
         config_id: process.env.NEXT_PUBLIC_FB_CONFIG_ID || 'YOUR_CONFIG_ID',
@@ -693,6 +773,38 @@ function WhatsAppConnectCard() {
         },
       }
     );
+  }
+
+  // Retry a failed onboarding attempt (Req 7.5).
+  async function handleRetry() {
+    setNotice(null);
+    setConnecting(true);
+    try {
+      const { retryOnboarding } = await import('./actions');
+      const result = await retryOnboarding();
+      applyState(result.state);
+    } catch (err) {
+      console.error('[WhatsAppConnect] retryOnboarding failed:', err);
+      setNotice('Could not start retry. Please try again.');
+    } finally {
+      setConnecting(false);
+    }
+  }
+
+  // Disconnect the dedicated number, reverting to the shared number (Req 8.1).
+  async function handleDisconnect() {
+    setNotice(null);
+    setConnecting(true);
+    try {
+      const { disconnectDedicated } = await import('./actions');
+      const result = await disconnectDedicated();
+      applyState(result.state);
+    } catch (err) {
+      console.error('[WhatsAppConnect] disconnectDedicated failed:', err);
+      setNotice('Could not disconnect. Please try again.');
+    } finally {
+      setConnecting(false);
+    }
   }
 
   const features = [
@@ -715,19 +827,106 @@ function WhatsAppConnectCard() {
         </div>
 
         <div className="p-6 space-y-6">
-          {connected ? (
+          {loading ? (
+            <div className="flex items-center justify-center py-8">
+              <div className="h-6 w-6 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+            </div>
+          ) : gate.showUpgradePrompt ? (
+            // Non-Pro: upgrade prompt instead of the connect action (Req 1.3).
+            <div className="flex flex-col items-center gap-4 py-4 text-center">
+              <div className="flex size-16 items-center justify-center rounded-full bg-amber-100 dark:bg-amber-900/30">
+                <Lock className="size-8 text-amber-600 dark:text-amber-400" />
+              </div>
+              <div>
+                <h3 className="text-lg font-bold text-foreground">Available on the Pro plan</h3>
+                <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                  Connecting your own WhatsApp Business number is a Pro plan feature. Upgrade to Pro to
+                  send messages from your own number.
+                </p>
+              </div>
+              <a
+                href="/dashboard/billing"
+                className={cn(
+                  buttonVariants({ size: 'lg' }),
+                  'rounded-xl bg-emerald-600 text-white hover:bg-emerald-700'
+                )}
+              >
+                Upgrade to Pro
+              </a>
+            </div>
+          ) : status === 'connected' ? (
+            // Connected: show display number + confirmation + Disconnect (Req 7.2, 8.1).
             <div className="flex flex-col items-center gap-4 py-4">
               <div className="flex size-16 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
                 <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
               </div>
               <div className="text-center">
                 <h3 className="text-lg font-bold text-foreground">Connected Successfully</h3>
+                {displayPhoneNumber && (
+                  <p className="mt-1 text-base font-semibold text-emerald-700 dark:text-emerald-300">
+                    {displayPhoneNumber}
+                  </p>
+                )}
                 <p className="mt-1 text-sm text-muted-foreground">
-                  Your WhatsApp Business number is now linked. Messages will be sent from your own number.
+                  Your WhatsApp Business number is now linked. Messages are sent from your own number.
+                </p>
+              </div>
+              {controls.showDisconnect && (
+                <Button
+                  variant="outline"
+                  className="rounded-xl gap-1.5"
+                  onClick={handleDisconnect}
+                  disabled={connecting}
+                >
+                  {connecting ? (
+                    <span className="size-4 animate-spin rounded-full border-2 border-current border-t-transparent" />
+                  ) : (
+                    <Unplug className="size-4" />
+                  )}
+                  Disconnect
+                </Button>
+              )}
+            </div>
+          ) : status === 'failed' ? (
+            // Failed: show error reason + Retry action (Req 7.3).
+            <div className="flex flex-col items-center gap-4 py-4">
+              <div className="flex size-16 items-center justify-center rounded-full bg-red-100 dark:bg-red-900/30">
+                <AlertTriangle className="size-8 text-red-600 dark:text-red-400" />
+              </div>
+              <div className="text-center">
+                <h3 className="text-lg font-bold text-foreground">Connection Failed</h3>
+                <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                  {errorReason || 'Something went wrong while connecting your number.'}
+                </p>
+              </div>
+              {controls.showRetry && (
+                <Button
+                  className="rounded-xl bg-emerald-600 text-white hover:bg-emerald-700 gap-1.5"
+                  onClick={handleRetry}
+                  disabled={connecting}
+                >
+                  {connecting ? (
+                    <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                  ) : (
+                    <RefreshCw className="size-4" />
+                  )}
+                  Retry
+                </Button>
+              )}
+            </div>
+          ) : status === 'in_progress' ? (
+            // In progress: progress indicator, connect hidden (Req 7.6).
+            <div className="flex flex-col items-center gap-4 py-6 text-center">
+              <div className="h-10 w-10 animate-spin rounded-full border-2 border-emerald-500 border-t-transparent" />
+              <div>
+                <h3 className="text-base font-semibold text-foreground">Connecting your number…</h3>
+                <p className="mt-1 text-sm text-muted-foreground max-w-sm">
+                  We&apos;re setting up your WhatsApp Business number. This can take a few moments.
                 </p>
               </div>
             </div>
           ) : (
+            // not_started / disconnected: show the connect action (Req 1.2, 1.4).
             <>
               <div>
                 <p className="text-sm font-medium text-foreground">
@@ -749,30 +948,39 @@ function WhatsAppConnectCard() {
                 })}
               </div>
 
-              <div className="space-y-3">
-                <Button
-                  className="w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
-                  size="lg"
-                  onClick={handleConnectWhatsApp}
-                  disabled={connecting}
-                >
-                  {connecting ? (
-                    <>
-                      <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
-                      Connecting...
-                    </>
-                  ) : (
-                    <>
-                      <MessageCircle className="size-4" />
-                      Connect WhatsApp
-                    </>
-                  )}
-                </Button>
-                <p className="text-center text-xs text-muted-foreground">
-                  Or continue using the default SnipandGlow number
-                </p>
-              </div>
+              {controls.showConnect && (
+                <div className="space-y-3">
+                  <Button
+                    className="w-full rounded-xl bg-emerald-600 text-white hover:bg-emerald-700"
+                    size="lg"
+                    onClick={handleConnectWhatsApp}
+                    disabled={connecting}
+                  >
+                    {connecting ? (
+                      <>
+                        <span className="size-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                        Connecting...
+                      </>
+                    ) : (
+                      <>
+                        <MessageCircle className="size-4" />
+                        Connect WhatsApp
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-center text-xs text-muted-foreground">
+                    Or continue using the default SnipandGlow number
+                  </p>
+                </div>
+              )}
             </>
+          )}
+
+          {/* Transient notice for cancel / SDK-not-ready (Req 2.3, 2.5). */}
+          {notice && (
+            <div className="rounded-lg border border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-900/10 px-4 py-3">
+              <p className="text-sm text-amber-800 dark:text-amber-200">{notice}</p>
+            </div>
           )}
         </div>
       </div>
