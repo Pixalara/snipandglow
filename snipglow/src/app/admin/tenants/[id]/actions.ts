@@ -193,3 +193,64 @@ export async function adminActivateDedicatedWhatsApp(
   revalidatePath(`/admin/tenants/${tenantId}`);
   return { success: true };
 }
+
+// =============================================================================
+// Admin — change a tenant's subscription plan tier.
+//
+// The DB CHECK constraint on tenants.plan_tier allows only 'starter', 'pro',
+// and 'enterprise' (migration 001). Marketing names map as:
+//   Essentials → starter · Pro → pro · Growth → enterprise
+// =============================================================================
+
+const ALLOWED_PLAN_TIERS = ['starter', 'pro', 'enterprise'] as const;
+type AllowedPlanTier = (typeof ALLOWED_PLAN_TIERS)[number];
+
+export async function adminUpdateTenantPlan(
+  tenantId: string,
+  planTier: string
+): Promise<{ success: boolean; error?: string }> {
+  const user = await requireAdmin();
+
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  if (!ALLOWED_PLAN_TIERS.includes(planTier as AllowedPlanTier)) {
+    return { success: false, error: 'Invalid plan tier.' };
+  }
+
+  const admin = createAdminClient();
+
+  const { data: tenant } = await (admin
+    .from('tenants' as any)
+    .select('name, plan_tier')
+    .eq('id', tenantId)
+    .single() as any);
+
+  if (!tenant) return { success: false, error: 'Tenant not found.' };
+
+  const previousPlan = (tenant as any).plan_tier ?? 'starter';
+
+  const { error } = await (admin
+    .from('tenants' as any)
+    .update({ plan_tier: planTier })
+    .eq('id', tenantId) as any);
+
+  if (error) {
+    return { success: false, error: `Failed to update plan: ${error.message}` };
+  }
+
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'update_tenant_plan',
+    targetType: 'tenant',
+    targetId: tenantId,
+    metadata: {
+      tenant_name: (tenant as any).name,
+      previous_plan: previousPlan,
+      new_plan: planTier,
+    },
+  });
+
+  revalidatePath(`/admin/tenants/${tenantId}`);
+  return { success: true };
+}

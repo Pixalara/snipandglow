@@ -5,6 +5,7 @@ import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AdminGstEditor } from './gst-editor';
 import { AdminWhatsAppActivator } from './whatsapp-activator';
+import { AdminPlanEditor } from './plan-editor';
 import { toAdminWhatsAppView } from '@/lib/whatsapp/redaction';
 
 // =============================================================================
@@ -93,6 +94,9 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <Field label="Subscription End" value={formatISTDate(tenant.subscription_end)} />
         </Grid>
       </Section>
+
+      {/* Subscription plan — admin can change the tenant's plan tier */}
+      <AdminPlanEditor tenantId={tenantId} currentPlan={tenant.plan_tier || 'starter'} />
 
       {/* WhatsApp Settings — redaction-safe; never renders any access token */}
       <Section title="WhatsApp Settings">
