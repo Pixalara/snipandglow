@@ -1066,9 +1066,17 @@ export function BlockCalendarCard({ blockedDates: initialDates }: BlockCalendarP
   function handleSave() {
     setError('');
     setSuccess(false);
+    // Include a date that's been picked but not yet added via "Add Date".
+    // Users often pick a date and hit Save directly, expecting it to persist.
+    let datesToSave = dates;
+    if (newDate && !dates.includes(newDate)) {
+      datesToSave = [...dates, newDate].sort();
+      setDates(datesToSave);
+      setNewDate('');
+    }
     startTransition(async () => {
       const { updateBlockedDates } = await import('./actions');
-      const result = await updateBlockedDates(dates);
+      const result = await updateBlockedDates(datesToSave);
       if (result.success) {
         setSuccess(true);
         setTimeout(() => setSuccess(false), 3000);
