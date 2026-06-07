@@ -1534,36 +1534,16 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 reveal">
             {[
-              {
-                href: '/salon-whatsapp-marketing',
-                title: 'WhatsApp Marketing for Salons',
-                desc: 'Automate bookings, reminders and repeat-visit campaigns.',
-                emoji: '💬',
-              },
-              {
-                href: '/spa-whatsapp-marketing',
-                title: 'WhatsApp Marketing for Spas',
-                desc: 'Manage treatment bookings, renewals and follow-ups.',
-                emoji: '🌿',
-              },
-              {
-                href: '/salon-staff-scheduling',
-                title: 'Salon Staff Scheduling',
-                desc: 'Manage availability, services and automated reminders.',
-                emoji: '📅',
-              },
-              {
-                href: '/salon-membership-program',
-                title: 'Salon Membership Program',
-                desc: 'Create plans, track renewals and reduce churn.',
-                emoji: '👑',
-              },
-              {
-                href: '/beauty-parlour-software-india',
-                title: 'Beauty Parlour Software India',
-                desc: 'WhatsApp bookings, GST billing and CRM for Indian parlours.',
-                emoji: '🇮🇳',
-              },
+              { href: '/salon-whatsapp-marketing', title: 'WhatsApp Marketing for Salons', desc: 'Automate bookings, reminders and repeat-visit campaigns.', emoji: '💬' },
+              { href: '/spa-whatsapp-marketing', title: 'WhatsApp Marketing for Spas', desc: 'Manage treatment bookings, renewals and follow-ups.', emoji: '🌿' },
+              { href: '/salon-staff-scheduling', title: 'Salon Staff Scheduling', desc: 'Manage availability, services and automated reminders.', emoji: '📅' },
+              { href: '/salon-membership-program', title: 'Salon Membership Program', desc: 'Create plans, track renewals and reduce churn.', emoji: '👑' },
+              { href: '/beauty-parlour-software-india', title: 'Beauty Parlour Software India', desc: 'WhatsApp bookings, GST billing and CRM for Indian parlours.', emoji: '🇮🇳' },
+              { href: '/best-salon-software-india', title: 'Best Salon Software India', desc: 'What to look for in salon software for Indian beauty businesses.', emoji: '⭐' },
+              { href: '/salon-software-pricing-india', title: 'Salon Software Pricing India', desc: 'Understand plans, features and WhatsApp costs before you buy.', emoji: '💰' },
+              { href: '/whatsapp-appointment-booking-for-salons', title: 'WhatsApp Appointment Booking', desc: 'How customers book appointments directly through WhatsApp.', emoji: '📲' },
+              { href: '/salon-crm-software-india', title: 'Salon CRM Software India', desc: 'Customer retention, visit history and WhatsApp follow-ups.', emoji: '🤝' },
+              { href: '/salon-reminder-software', title: 'Salon Reminder Software', desc: 'Appointment, renewal and no-show reminders on WhatsApp.', emoji: '🔔' },
             ].map(({ href, title, desc, emoji }) => (
               <a
                 key={href}
@@ -1729,6 +1709,11 @@ export default function HomePage() {
             <Link href="/salon-staff-scheduling" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Salon Staff Scheduling</Link>
             <Link href="/salon-membership-program" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Salon Membership Program</Link>
             <Link href="/beauty-parlour-software-india" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Beauty Parlour Software India</Link>
+            <Link href="/best-salon-software-india" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Best Salon Software India</Link>
+            <Link href="/salon-software-pricing-india" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Salon Software Pricing India</Link>
+            <Link href="/whatsapp-appointment-booking-for-salons" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">WhatsApp Appointment Booking</Link>
+            <Link href="/salon-crm-software-india" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Salon CRM Software India</Link>
+            <Link href="/salon-reminder-software" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Salon Reminder Software</Link>
           </div>
         </div>
       </footer>

@@ -16,13 +16,22 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/refund`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ]
 
-  // SEO landing pages
-  const seoPages: MetadataRoute.Sitemap = [
+  // SEO landing pages - batch 1
+  const seoPages1: MetadataRoute.Sitemap = [
     { url: `${baseUrl}/salon-whatsapp-marketing`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/spa-whatsapp-marketing`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/salon-staff-scheduling`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/salon-membership-program`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
     { url: `${baseUrl}/beauty-parlour-software-india`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+  ]
+
+  // SEO resource pages - batch 2
+  const seoPages2: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/best-salon-software-india`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/salon-software-pricing-india`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/whatsapp-appointment-booking-for-salons`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/salon-crm-software-india`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/salon-reminder-software`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
   ]
 
   // Blog posts
@@ -33,5 +42,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }))
 
-  return [...staticPages, ...seoPages, ...blogPages]
+  return [...staticPages, ...seoPages1, ...seoPages2, ...blogPages]
 }

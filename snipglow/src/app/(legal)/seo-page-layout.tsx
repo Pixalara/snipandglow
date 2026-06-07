@@ -6,6 +6,11 @@ const SEO_LINKS = [
   { href: '/salon-staff-scheduling', label: 'Salon Staff Scheduling' },
   { href: '/salon-membership-program', label: 'Salon Membership Program' },
   { href: '/beauty-parlour-software-india', label: 'Beauty Parlour Software India' },
+  { href: '/best-salon-software-india', label: 'Best Salon Software India' },
+  { href: '/salon-software-pricing-india', label: 'Salon Software Pricing India' },
+  { href: '/whatsapp-appointment-booking-for-salons', label: 'WhatsApp Appointment Booking' },
+  { href: '/salon-crm-software-india', label: 'Salon CRM Software India' },
+  { href: '/salon-reminder-software', label: 'Salon Reminder Software' },
 ];
 
 export function SeoPageLayout({
@@ -39,7 +44,7 @@ export function SeoPageLayout({
               href="/"
               className="text-sm text-slate-500 hover:text-slate-900 transition-colors"
             >
-              ← Home
+              Home
             </Link>
           </div>
         </div>
@@ -83,7 +88,7 @@ export function SeoPageLayout({
             </div>
           </div>
           {/* SEO footer links */}
-          <div className="flex flex-wrap gap-x-6 gap-y-2 text-xs text-slate-400 pt-4 border-t border-slate-50">
+          <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-slate-400 pt-4 border-t border-slate-50">
             {SEO_LINKS.map((link) => (
               <Link key={link.href} href={link.href} className="hover:text-slate-600 transition-colors">
                 {link.label}
