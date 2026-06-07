@@ -249,6 +249,15 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
     } as any) as any);
 
     // Feedback request (single rating ask).
+    // The bill above carries a PDF document header — WhatsApp must fetch and
+    // process that media before delivering it, whereas this feedback template is
+    // plain text and delivers instantly. Without a pause the feedback message
+    // lands BEFORE the bill, which looks wrong to the customer. A short delay
+    // lets the media bill arrive first.
+    if (pdfDownloadUrl && !v2Error) {
+      await new Promise((resolve) => setTimeout(resolve, 4000));
+    }
+
     await sendMessage(credentials, phone, {
       type: 'template',
       template: {
