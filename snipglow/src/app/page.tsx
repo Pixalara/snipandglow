@@ -1994,7 +1994,7 @@ function ContactSalesModal({ onClose }: { onClose: () => void }) {
           subject: `Pro/Growth Plan Inquiry - ${businessName || name}`,
           name,
           phone,
-          email: email || 'Not provided',
+          contact_email: email.trim() || 'Not provided',
           business_name: businessName,
           message: message || 'Interested in Pro/Growth plan',
           from_name: 'SnipandGlow Contact Sales',
