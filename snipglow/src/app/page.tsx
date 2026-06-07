@@ -114,6 +114,7 @@ function RollingText({ items }: { items: typeof ROLLING_ITEMS }) {
 
 export default function HomePage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
+  const [showContactModal, setShowContactModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   useEffect(() => {
@@ -1269,7 +1270,7 @@ export default function HomePage() {
 
                 {/* Row 3 - CTA */}
                 <button
-                  onClick={() => setShowDemoModal(true)}
+                  onClick={() => setShowContactModal(true)}
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-violet-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
                 >
                   Contact Sales
@@ -1349,7 +1350,7 @@ export default function HomePage() {
 
                 {/* Row 3 - CTA */}
                 <button
-                  onClick={() => setShowDemoModal(true)}
+                  onClick={() => setShowContactModal(true)}
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-slate-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
                 >
                   Contact Sales
@@ -1506,6 +1507,9 @@ export default function HomePage() {
 
       {/* Demo Booking Modal */}
       {showDemoModal && <DemoBookingModal onClose={() => setShowDemoModal(false)} />}
+
+      {/* Contact Sales Modal */}
+      {showContactModal && <ContactSalesModal onClose={() => setShowContactModal(false)} />}
 
       {/* ===== FAQ SECTION ===== */}
       <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
@@ -1960,3 +1964,141 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
   );
 }
 
+
+// =============================================================================
+// Contact Sales Modal - simple form for Pro/Growth plan inquiries
+// =============================================================================
+
+function ContactSalesModal({ onClose }: { onClose: () => void }) {
+  const [name, setName] = useState('');
+  const [phone, setPhone] = useState('');
+  const [salonName, setSalonName] = useState('');
+  const [message, setMessage] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [success, setSuccess] = useState(false);
+
+  const isFormValid = name.trim() && phone.trim();
+
+  async function handleSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    if (!isFormValid) return;
+    setSubmitting(true);
+
+    try {
+      const response = await fetch('https://api.web3forms.com/submit', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          access_key: '75debe40-e347-41ce-a203-93266c993232',
+          subject: `Pro/Growth Plan Inquiry - ${salonName || name}`,
+          name,
+          phone,
+          salon_name: salonName || 'Not provided',
+          message: message || 'Interested in Pro/Growth plan',
+          from_name: 'SnipandGlow Contact Sales',
+        }),
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        setSuccess(true);
+      } else {
+        alert('Something went wrong. Please try again.');
+      }
+    } catch {
+      alert('Network error. Please try again.');
+    }
+
+    setSubmitting(false);
+  }
+
+  if (success) {
+    return (
+      <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+        <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+        <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white p-8 shadow-2xl text-center">
+          <div className="flex size-14 items-center justify-center rounded-full bg-emerald-100 mx-auto mb-4">
+            <CheckCircle2 className="size-7 text-emerald-600" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-900 mb-2">We&apos;ll be in touch!</h3>
+          <p className="text-sm text-slate-500 mb-6">
+            Our team will reach out on WhatsApp within a few hours.
+          </p>
+          <button
+            onClick={onClose}
+            className="w-full py-3 rounded-xl bg-slate-900 text-white font-semibold text-sm hover:bg-slate-800 transition-colors"
+          >
+            Done
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
+      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden">
+        {/* Header */}
+        <div className="px-6 py-5 bg-gradient-to-r from-violet-600 to-pink-500">
+          <button
+            onClick={onClose}
+            className="absolute top-4 right-4 flex size-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
+            aria-label="Close"
+          >
+            <svg className="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+            </svg>
+          </button>
+          <h2 className="text-lg font-bold text-white">Get in touch</h2>
+          <p className="text-white/80 text-xs mt-1">We&apos;ll help you pick the right plan</p>
+        </div>
+
+        {/* Form */}
+        <form onSubmit={handleSubmit} className="p-6 space-y-3">
+          <input
+            type="text"
+            placeholder="Your name *"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+            required
+          />
+          <input
+            type="tel"
+            placeholder="WhatsApp number *"
+            value={phone}
+            onChange={(e) => setPhone(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+            required
+          />
+          <input
+            type="text"
+            placeholder="Salon name (optional)"
+            value={salonName}
+            onChange={(e) => setSalonName(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+          />
+          <textarea
+            placeholder="Any questions? (optional)"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            rows={2}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:outline-none resize-none"
+          />
+          <button
+            type="submit"
+            disabled={submitting || !isFormValid}
+            className="w-full py-3 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-50"
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}
+          >
+            {submitting ? 'Sending...' : 'Send'}
+          </button>
+          <p className="text-center text-[11px] text-slate-400">
+            We reply on WhatsApp within a few hours
+          </p>
+        </form>
+      </div>
+    </div>
+  );
+}
