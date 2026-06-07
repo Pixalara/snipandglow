@@ -1656,7 +1656,7 @@ export default function HomePage() {
 
       {/* Floating WhatsApp Button with pulse glow ring */}
       <a
-        href="https://wa.me/919988688654?text=Hi%2C%20I%27m%20interested%20in%20SnipandGlow%20for%20my%20salon"
+        href="https://wa.me/919449602995?text=Hi%2C%20I%27m%20interested%20in%20SnipandGlow%20for%20my%20salon"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-6 right-6 z-50 group"
