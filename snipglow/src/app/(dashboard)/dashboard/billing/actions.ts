@@ -4,10 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { calculateInvoiceTotal } from '@/lib/utils';
-import { getPlatformCredentials } from '@/lib/whatsapp/config';
-import { sendMessage } from '@/lib/whatsapp/templates';
-import { generateInvoicePdfBuffer } from '@/lib/invoice/generate-pdf';
-import { uploadInvoicePdf } from '@/lib/invoice/upload-invoice';
+import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
 import type {
   ActionResult,
   Invoice,
@@ -253,6 +250,8 @@ export async function getTenantGstSettings(): Promise<{ gst_enabled: boolean; gs
 
 /**
  * Send bill receipt to customer via WhatsApp after creating an invoice.
+ * Delegates to the shared sender so this path and the appointment-completion
+ * path stay identical (PDF attached via bill_receipt_v2 + feedback request).
  */
 async function sendBillReceiptWhatsApp(
   tenantId: string,
@@ -265,270 +264,14 @@ async function sendBillReceiptWhatsApp(
   total: number,
   paymentMethod: string
 ) {
-  try {
-    console.log('[BillReceipt] Starting for customer:', customerId, 'tenant:', tenantId);
-    const admin = createAdminClient();
-    const credentials = getPlatformCredentials();
-    if (!credentials) {
-      console.log('[BillReceipt] No credentials found');
-      return;
-    }
-
-    // Get customer phone and name
-    const { data: customer, error: custErr } = await admin
-      .from('customers')
-      .select('name, phone')
-      .eq('id', customerId)
-      .single();
-
-    console.log('[BillReceipt] Customer:', customer?.name, customer?.phone, 'Error:', custErr?.message);
-
-    if (!customer?.phone) return;
-
-    // Get salon name and tenant code for booking link
-    const { data: tenant } = await (admin.from('tenants' as any).select('name, tenant_code').eq('id', tenantId).single() as any);
-    const salonName = ((tenant?.name as string) || 'the salon').trim();
-
-    // ── Generate and upload the invoice PDF ──────────────────────────────────
-    // Fetch the full invoice document needed to render the PDF.
-    let pdfDownloadUrl: string | null = null;
-    try {
-      const adminSupabase = createAdminClient();
-      const { data: invoice } = await (adminSupabase
-        .from('invoices' as any)
-        .select('id')
-        .eq('invoice_number', invoiceNumber)
-        .eq('tenant_id', tenantId)
-        .maybeSingle() as any);
-
-      if (invoice?.id) {
-        // Build the InvoiceDocument manually (reuse getInvoiceDocument logic but
-        // with admin client so we bypass RLS without needing a session).
-        const { data: invFull } = await (adminSupabase
-          .from('invoices' as any)
-          .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id')
-          .eq('id', invoice.id)
-          .single() as any);
-
-        if (invFull) {
-          const [itemsRes, custRes, tenantRes, branchRes] = await Promise.all([
-            adminSupabase.from('invoice_items').select('service_name, unit_price, quantity, line_total').eq('invoice_id', invoice.id),
-            adminSupabase.from('customers').select('name, phone, email').eq('id', invFull.customer_id).single(),
-            adminSupabase.from('tenants').select('name, phone, settings').eq('id', tenantId).single(),
-            invFull.branch_id
-              ? adminSupabase.from('branches').select('name, address, phone').eq('id', invFull.branch_id).single()
-              : Promise.resolve({ data: null }),
-          ]);
-
-          const settings = ((tenantRes.data?.settings as Record<string, unknown>) ?? {});
-          const custData = (custRes.data as { name: string; phone: string | null; email: string | null } | null);
-          const branchData = (branchRes.data as { name: string; address: string | null; phone: string | null } | null);
-
-          const invoiceDoc = {
-            invoice_number: invFull.invoice_number,
-            created_at: invFull.created_at ?? new Date().toISOString(),
-            payment_method: invFull.payment_method ?? 'cash',
-            payment_status: invFull.payment_status ?? 'paid',
-            subtotal: invFull.subtotal ?? 0,
-            discount_pct: invFull.discount_pct ?? 0,
-            discount_amount: invFull.discount_amount ?? 0,
-            gst_rate: invFull.gst_rate ?? 0,
-            gst_amount: invFull.gst_amount ?? 0,
-            total: invFull.total ?? 0,
-            items: (itemsRes.data ?? []).map((it: any) => ({
-              service_name: it.service_name,
-              unit_price: it.unit_price,
-              quantity: it.quantity,
-              line_total: it.line_total ?? it.unit_price * it.quantity,
-            })),
-            customer: {
-              name: custData?.name ?? '—',
-              phone: custData?.phone ?? null,
-              email: custData?.email ?? null,
-            },
-            salon: {
-              name: (tenantRes.data?.name as string) ?? 'Salon',
-              legal_name: (settings.legal_name as string) ?? null,
-              trade_name: (settings.trade_name as string) ?? null,
-              address: branchData?.address ?? null,
-              phone: branchData?.phone ?? (tenantRes.data?.phone as string) ?? null,
-              email: (settings.email as string) ?? null,
-              gst_number: (settings.gst_number as string) ?? null,
-            },
-          };
-
-          // Bound PDF generation + upload so a slow render can never consume the
-          // whole server-action time budget and starve the feedback flow below.
-          const PDF_TIMEOUT_MS = 8000;
-          const pdfWork = (async () => {
-            const pdfBuffer = await generateInvoicePdfBuffer(invoiceDoc);
-            return uploadInvoicePdf(tenantId, invoiceNumber, pdfBuffer);
-          })();
-          const timeout = new Promise<{ ok: false; error: string }>((resolve) =>
-            setTimeout(() => resolve({ ok: false, error: 'PDF generation timed out' }), PDF_TIMEOUT_MS)
-          );
-          const uploadResult = await Promise.race([pdfWork, timeout]);
-          if (uploadResult.ok) {
-            pdfDownloadUrl = uploadResult.url;
-            console.log('[BillReceipt] PDF uploaded:', pdfDownloadUrl);
-          } else {
-            console.error('[BillReceipt] PDF upload failed:', uploadResult.error);
-          }
-        }
-      }
-    } catch (pdfErr) {
-      // PDF generation/upload is best-effort — don't block the bill message
-      console.error('[BillReceipt] PDF generation error (non-fatal):', pdfErr);
-    }
-
-    const phone = customer.phone.replace(/\D/g, '');
-    console.log('[BillReceipt] Sending to phone:', phone);
-
-    // Use approved template (works outside 24-hour window).
-    const serviceList = items.map((s) => s.service_name).join(', ');
-    const bodyParameters = [
-      { type: 'text', text: customer.name },
-      { type: 'text', text: salonName },
-      { type: 'text', text: invoiceNumber },
-      { type: 'text', text: serviceList },
-      { type: 'text', text: String(total) },
-      { type: 'text', text: paymentMethod.toUpperCase() },
-    ];
-
-    let sendResult: { success: boolean; error?: string; messageId?: string };
-    let v2Error: string | null = null;
-
-    if (pdfDownloadUrl) {
-      // Preferred path: bill_receipt_v2 carries the invoice PDF as a DOCUMENT
-      // HEADER so the actual file rides along in the SAME message — no separate
-      // follow-up text (which would fail outside the 24-hour service window).
-      // The header document link is supplied per-message as a parameter.
-      // The rating ask is handled separately by feedback_request_v1 below, so
-      // the bill template has no rate-us button (avoids asking twice).
-      sendResult = await sendMessage(credentials, phone, {
-        type: 'template',
-        template: {
-          name: 'bill_receipt_v2',
-          language: { code: 'en' },
-          components: [
-            {
-              type: 'header',
-              parameters: [
-                {
-                  type: 'document',
-                  document: {
-                    link: pdfDownloadUrl,
-                    filename: `Invoice-${invoiceNumber}.pdf`,
-                  },
-                },
-              ],
-            },
-            {
-              type: 'body',
-              parameters: bodyParameters,
-            },
-          ],
-        },
-      });
-      console.log('[BillReceipt] v2 (with PDF) send result:', JSON.stringify(sendResult));
-
-      // If v2 isn't approved yet (or any send error), fall back to the plain
-      // v1 template so the customer still gets their bill.
-      if (!sendResult.success) {
-        v2Error = sendResult.error ?? 'unknown v2 error';
-        console.warn('[BillReceipt] v2 failed, falling back to bill_receipt_v1:', v2Error);
-        sendResult = await sendMessage(credentials, phone, {
-          type: 'template',
-          template: {
-            name: 'bill_receipt_v1',
-            language: { code: 'en' },
-            components: [{ type: 'body', parameters: bodyParameters }],
-          },
-        });
-        console.log('[BillReceipt] v1 fallback send result:', JSON.stringify(sendResult));
-      }
-    } else {
-      // No PDF available — send the plain bill template.
-      v2Error = 'no PDF URL (generation/upload failed)';
-      sendResult = await sendMessage(credentials, phone, {
-        type: 'template',
-        template: {
-          name: 'bill_receipt_v1',
-          language: { code: 'en' },
-          components: [{ type: 'body', parameters: bodyParameters }],
-        },
-      });
-      console.log('[BillReceipt] v1 (no PDF) send result:', JSON.stringify(sendResult));
-    }
-
-    // Log bill receipt to whatsapp_sessions (capture which template + any v2
-    // failure reason so we can debug PDF-attach issues from the DB directly).
-    await (admin.from('whatsapp_sessions').insert({
-      tenant_id: tenantId,
-      message_id: `bill_${Date.now()}`,
-      phone,
-      direction: 'outbound',
-      template_name: v2Error ? 'bill_receipt_v1' : 'bill_receipt_v2',
-      status: 'sent',
-      metadata: {
-        customer_name: customer.name,
-        pdf_url: pdfDownloadUrl,
-        v2_error: v2Error,
-        send_error: sendResult.error ?? null,
-      },
-    } as any) as any);
-
-    // Send feedback request using approved template (works outside 24h window)
-    await sendMessage(credentials, phone, {
-      type: 'template',
-      template: {
-        name: 'feedback_request_v1',
-        language: { code: 'en' },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: customer.name },
-              { type: 'text', text: salonName },
-            ],
-          },
-        ],
-      },
-    });
-
-    // CRITICAL: Update customer session to this tenant AFTER sending feedback request.
-    // This ensures when customer taps "Rate Now", the webhook routes to the correct tenant.
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(); // 48 hours
-    await (admin
-      .from('whatsapp_customer_sessions' as any)
-      .delete()
-      .eq('customer_phone', phone) as any);
-    await (admin
-      .from('whatsapp_customer_sessions' as any)
-      .insert({
-        tenant_id: tenantId,
-        customer_phone: phone,
-        mode: 'shared',
-        source: 'bill_feedback',
-        current_state: 'awaiting_feedback',
-        booking_slug: tenant?.tenant_code || '',
-        last_message_at: new Date().toISOString(),
-        expires_at: expiresAt,
-      }) as any);
-
-    // Log feedback request to whatsapp_sessions
-    await (admin.from('whatsapp_sessions').insert({
-      tenant_id: tenantId,
-      message_id: `feedback_req_${Date.now()}`,
-      phone,
-      direction: 'outbound',
-      template_name: 'feedback_request',
-      status: 'sent',
-      metadata: { customer_name: customer.name },
-    } as any) as any);
-  } catch (err) {
-    console.error('[Billing] Failed to send bill receipt via WhatsApp:', err);
-  }
+  await sendBillReceiptWithPdf({
+    tenantId,
+    customerId,
+    items,
+    invoiceNumber,
+    total,
+    paymentMethod,
+  });
 }
 
 // =============================================================================

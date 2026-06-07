@@ -5,6 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { sendMessage } from '@/lib/whatsapp/templates';
+import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
 import type {
   ActionResult,
   Appointment,
@@ -878,111 +879,15 @@ async function notifyCustomerBillReceipt(
   total: number,
   paymentMethod: string
 ) {
-  try {
-    const admin = createAdminClient();
-    const credentials = getPlatformCredentials();
-    if (!credentials) return;
-
-    // Get customer phone and name
-    const { data: customer } = await admin
-      .from('customers')
-      .select('name, phone')
-      .eq('id', customerId)
-      .single();
-
-    if (!customer?.phone) return;
-
-    // Get salon name and tenant code for booking link
-    const { data: tenant } = await (admin.from('tenants' as any).select('name, tenant_code').eq('id', tenantId).single() as any);
-    const salonName = ((tenant?.name as string) || 'the salon').trim();
-
-    const phone = customer.phone.replace(/\D/g, '');
-
-    // Build service list for template
-    const serviceList = services.map((s) => s.name).join(', ');
-
-    // Send bill_receipt_v1 template (works outside 24-hour window)
-    await sendMessage(credentials, phone, {
-      type: 'template',
-      template: {
-        name: 'bill_receipt_v1',
-        language: { code: 'en' },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: customer.name },
-              { type: 'text', text: salonName },
-              { type: 'text', text: invoiceNumber },
-              { type: 'text', text: serviceList },
-              { type: 'text', text: String(total) },
-              { type: 'text', text: paymentMethod.toUpperCase() },
-            ],
-          },
-        ],
-      },
-    });
-
-    // Log bill receipt to whatsapp_sessions
-    await (admin.from('whatsapp_sessions').insert({
-      tenant_id: tenantId,
-      message_id: `bill_${Date.now()}`,
-      phone,
-      direction: 'outbound',
-      template_name: 'bill_receipt_v1',
-      status: 'sent',
-      metadata: { customer_name: customer.name },
-    } as any) as any);
-
-    // Send feedback_request_v1 template (works outside 24-hour window)
-    await sendMessage(credentials, phone, {
-      type: 'template',
-      template: {
-        name: 'feedback_request_v1',
-        language: { code: 'en' },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: customer.name },
-              { type: 'text', text: salonName },
-            ],
-          },
-        ],
-      },
-    });
-
-    // Log feedback request to whatsapp_sessions
-    await (admin.from('whatsapp_sessions').insert({
-      tenant_id: tenantId,
-      message_id: `feedback_req_${Date.now()}`,
-      phone,
-      direction: 'outbound',
-      template_name: 'feedback_request_v1',
-      status: 'sent',
-      metadata: { customer_name: customer.name },
-    } as any) as any);
-
-    // CRITICAL: Update customer session to this tenant AFTER sending feedback request.
-    // This ensures when customer taps "Rate Now", the webhook routes to the correct tenant.
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(); // 48 hours
-    await (admin
-      .from('whatsapp_customer_sessions' as any)
-      .delete()
-      .eq('customer_phone', phone) as any);
-    await (admin
-      .from('whatsapp_customer_sessions' as any)
-      .insert({
-        tenant_id: tenantId,
-        customer_phone: phone,
-        mode: 'shared',
-        source: 'bill_feedback',
-        current_state: 'awaiting_feedback',
-        booking_slug: '',
-        last_message_at: new Date().toISOString(),
-        expires_at: expiresAt,
-      }) as any);
-  } catch (err) {
-    console.error('[Actions] Failed to send bill receipt:', err);
-  }
+  // Delegate to the shared bill-receipt sender so this path stays in lockstep
+  // with the billing-page path (PDF attached via bill_receipt_v2, feedback
+  // request, and awaiting_feedback session — all in one place).
+  await sendBillReceiptWithPdf({
+    tenantId,
+    customerId,
+    items: services.map((s) => ({ service_name: s.name, unit_price: s.price, quantity: 1 })),
+    invoiceNumber,
+    total,
+    paymentMethod,
+  });
 }
