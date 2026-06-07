@@ -396,6 +396,7 @@ async function sendBillReceiptWhatsApp(
     ];
 
     let sendResult: { success: boolean; error?: string; messageId?: string };
+    let v2Error: string | null = null;
 
     if (pdfDownloadUrl) {
       // Preferred path: bill_receipt_v2 carries the invoice PDF as a DOCUMENT
@@ -434,7 +435,8 @@ async function sendBillReceiptWhatsApp(
       // If v2 isn't approved yet (or any send error), fall back to the plain
       // v1 template so the customer still gets their bill.
       if (!sendResult.success) {
-        console.warn('[BillReceipt] v2 failed, falling back to bill_receipt_v1');
+        v2Error = sendResult.error ?? 'unknown v2 error';
+        console.warn('[BillReceipt] v2 failed, falling back to bill_receipt_v1:', v2Error);
         sendResult = await sendMessage(credentials, phone, {
           type: 'template',
           template: {
@@ -447,6 +449,7 @@ async function sendBillReceiptWhatsApp(
       }
     } else {
       // No PDF available — send the plain bill template.
+      v2Error = 'no PDF URL (generation/upload failed)';
       sendResult = await sendMessage(credentials, phone, {
         type: 'template',
         template: {
@@ -458,15 +461,21 @@ async function sendBillReceiptWhatsApp(
       console.log('[BillReceipt] v1 (no PDF) send result:', JSON.stringify(sendResult));
     }
 
-    // Log bill receipt to whatsapp_sessions
+    // Log bill receipt to whatsapp_sessions (capture which template + any v2
+    // failure reason so we can debug PDF-attach issues from the DB directly).
     await (admin.from('whatsapp_sessions').insert({
       tenant_id: tenantId,
       message_id: `bill_${Date.now()}`,
       phone,
       direction: 'outbound',
-      template_name: 'bill_receipt',
+      template_name: v2Error ? 'bill_receipt_v1' : 'bill_receipt_v2',
       status: 'sent',
-      metadata: { customer_name: customer.name },
+      metadata: {
+        customer_name: customer.name,
+        pdf_url: pdfDownloadUrl,
+        v2_error: v2Error,
+        send_error: sendResult.error ?? null,
+      },
     } as any) as any);
 
     // Send feedback request using approved template (works outside 24h window)
