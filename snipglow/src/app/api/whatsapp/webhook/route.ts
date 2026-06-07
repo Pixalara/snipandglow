@@ -167,6 +167,7 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
         'Rate Us': 'rate_us',
         'Rate Now': 'rate_now',
         'Book Now': 'book_appointment',
+        'Book Again': 'book_appointment',
         'View Services': 'services_prices',
       };
       buttonReplyId = templateButtonMap[payload] || payload;

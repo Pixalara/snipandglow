@@ -402,6 +402,8 @@ async function sendBillReceiptWhatsApp(
       // HEADER so the actual file rides along in the SAME message — no separate
       // follow-up text (which would fail outside the 24-hour service window).
       // The header document link is supplied per-message as a parameter.
+      // The rating ask is handled separately by feedback_request_v1 below, so
+      // the bill template has no rate-us button (avoids asking twice).
       sendResult = await sendMessage(credentials, phone, {
         type: 'template',
         template: {
