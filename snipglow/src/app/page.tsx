@@ -230,7 +230,7 @@ export default function HomePage() {
       </nav>
 
       {/* ===== HERO ===== */}
-      <section className="relative flex items-center pt-20 sm:pt-24 pb-10 sm:pb-14 bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20 overflow-hidden">
+      <section className="relative flex items-center pt-20 sm:pt-24 pb-4 sm:pb-6 bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20 overflow-hidden">
         {/* Colorful floating orbs */}
         <div className="absolute top-1/4 left-1/6 w-96 h-96 bg-pink-200/30 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute top-1/2 right-1/6 w-80 h-80 bg-pink-200/25 rounded-full blur-3xl pointer-events-none" />
@@ -681,7 +681,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
-      <section className="py-10 sm:py-16 bg-white overflow-hidden">
+      <section className="pt-6 pb-8 sm:pt-8 sm:pb-12 bg-gradient-to-b from-fuchsia-50/10 to-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -760,7 +760,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BUILD UNBREAKABLE LOYALTY ===== */}
-      <section className="py-10 sm:py-16 bg-white overflow-hidden">
+      <section className="py-8 sm:py-12 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -845,7 +845,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ANALYTICS & DASHBOARD ===== */}
-      <section className="py-10 sm:py-16 bg-white overflow-hidden">
+      <section className="py-8 sm:py-12 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -909,7 +909,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
-      <section id="how-it-works" className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
+      <section id="how-it-works" className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 sm:mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">How It Works</p>
@@ -1000,7 +1000,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ROI SECTION ===== */}
-      <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
+      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Real Results</p>
@@ -1028,7 +1028,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BEFORE VS AFTER ===== */}
-      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 6%, #0f172a 94%, #ffffff 100%)' }}>
+      <section className="py-12 sm:py-16 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 6%, #0f172a 94%, #ffffff 100%)' }}>
         {/* Background glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[800px] h-[400px] rounded-full blur-3xl opacity-20" style={{ background: 'radial-gradient(ellipse, #ec4899 0%, #8b5cf6 50%, transparent 70%)' }} />
@@ -1101,7 +1101,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== FEATURES GRID ===== */}
-      <section id="features" className="pt-16 pb-8 sm:pt-24 sm:pb-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
+      <section id="features" className="pt-12 pb-6 sm:pt-16 sm:pb-10 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Features</p>
@@ -1137,7 +1137,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== PRICING ===== */}
-      <section id="pricing" className="pt-12 pb-16 sm:pt-20 sm:pb-24 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fafafa 100%)' }}>
+      <section id="pricing" className="pt-10 pb-12 sm:pt-16 sm:pb-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fafafa 100%)' }}>
         {/* Subtle background pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0 0 0) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
         
@@ -1412,7 +1412,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== CTA BANNER ===== */}
-      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 8%, #1e1b4b 50%, #0f172a 92%, #ffffff 100%)' }}>
+      <section className="relative py-14 sm:py-20 overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 8%, #1e1b4b 50%, #0f172a 92%, #ffffff 100%)' }}>
         {/* Subtle radial glow */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-[600px] h-[400px] rounded-full bg-gradient-to-r from-violet-600/20 via-pink-500/10 to-orange-500/20 blur-3xl" />
@@ -1486,7 +1486,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BOOK A DEMO SECTION ===== */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #e9d5ff 20%, #fce7f3 50%, #e9d5ff 80%, #f8fafc 100%)' }}>
+      <section className="py-8 sm:py-12 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #e9d5ff 20%, #fce7f3 50%, #e9d5ff 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-4xl rounded-3xl px-5 py-10 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to run your salon like this?
@@ -1512,7 +1512,7 @@ export default function HomePage() {
       {showContactModal && <ContactSalesModal onClose={() => setShowContactModal(false)} />}
 
       {/* ===== FAQ SECTION ===== */}
-      <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
+      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">FAQ</p>
