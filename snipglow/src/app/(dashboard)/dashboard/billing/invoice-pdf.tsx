@@ -19,11 +19,22 @@ let fontsRegistered = false;
 function ensureFonts() {
   if (fontsRegistered) return;
   try {
+    // Server-side (renderToBuffer in Node) has no request origin, and on Vercel
+    // the `public/` folder is NOT on the serverless function's filesystem — it's
+    // only served via the CDN. So we register an ABSOLUTE HTTPS url that
+    // react-pdf fetches from the deployed site. In the browser, a relative path
+    // resolves against the page origin.
+    const fontBase =
+      typeof window === 'undefined'
+        ? (process.env.NEXT_PUBLIC_SITE_URL ||
+           process.env.NEXT_PUBLIC_APP_URL ||
+           'https://www.snipandglow.com').replace(/\/$/, '')
+        : '';
     Font.register({
       family: 'Roboto',
       fonts: [
-        { src: '/fonts/Roboto-Regular.ttf', fontWeight: 'normal' },
-        { src: '/fonts/Roboto-Bold.ttf', fontWeight: 'bold' },
+        { src: `${fontBase}/fonts/Roboto-Regular.ttf`, fontWeight: 'normal' },
+        { src: `${fontBase}/fonts/Roboto-Bold.ttf`, fontWeight: 'bold' },
       ],
     });
     // The rupee sign should never be a line-break opportunity.
