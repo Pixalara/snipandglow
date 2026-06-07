@@ -754,12 +754,16 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
+              <p className="mt-6 text-sm text-slate-500">
+                Read our full guide on{' '}
+                <a href="/salon-whatsapp-marketing" className="text-emerald-600 hover:underline font-medium">WhatsApp marketing for salons</a>
+                {' '}and{' '}
+                <a href="/spa-whatsapp-marketing" className="text-emerald-600 hover:underline font-medium">WhatsApp marketing for spas</a>.
+              </p>
             </div>
           </div>
         </div>
       </section>
-
-      {/* ===== BUILD UNBREAKABLE LOYALTY ===== */}
       <section className="py-10 sm:py-16 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
@@ -809,6 +813,13 @@ export default function HomePage() {
                   </div>
                 ))}
               </div>
+              <p className="mt-6 text-sm text-slate-500">
+                Learn how to set up a{' '}
+                <a href="/salon-membership-program" className="text-violet-600 hover:underline font-medium">salon membership program with WhatsApp renewal reminders</a>
+                {' '}and see how{' '}
+                <a href="/salon-staff-scheduling" className="text-violet-600 hover:underline font-medium">salon staff scheduling</a>
+                {' '}keeps your team organised.
+              </p>
             </div>
 
             {/* Right - Image grid */}
@@ -1510,6 +1521,65 @@ export default function HomePage() {
 
       {/* Contact Sales Modal */}
       {showContactModal && <ContactSalesModal onClose={() => setShowContactModal(false)} />}
+
+      {/* ===== RESOURCES SECTION ===== */}
+      <section className="py-8 sm:py-12 bg-white">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <div className="text-center mb-6 reveal">
+            <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-2">Resources</p>
+            <h2 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Resources for beauty business growth</h2>
+            <p className="text-slate-500 text-sm max-w-xl mx-auto">
+              Practical guides for salon and spa WhatsApp marketing, staff scheduling, memberships and beauty parlour software in India.
+            </p>
+          </div>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3 reveal">
+            {[
+              {
+                href: '/salon-whatsapp-marketing',
+                title: 'WhatsApp Marketing for Salons',
+                desc: 'Automate bookings, reminders and repeat-visit campaigns.',
+                emoji: '💬',
+              },
+              {
+                href: '/spa-whatsapp-marketing',
+                title: 'WhatsApp Marketing for Spas',
+                desc: 'Manage treatment bookings, renewals and follow-ups.',
+                emoji: '🌿',
+              },
+              {
+                href: '/salon-staff-scheduling',
+                title: 'Salon Staff Scheduling',
+                desc: 'Manage availability, services and automated reminders.',
+                emoji: '📅',
+              },
+              {
+                href: '/salon-membership-program',
+                title: 'Salon Membership Program',
+                desc: 'Create plans, track renewals and reduce churn.',
+                emoji: '👑',
+              },
+              {
+                href: '/beauty-parlour-software-india',
+                title: 'Beauty Parlour Software India',
+                desc: 'WhatsApp bookings, GST billing and CRM for Indian parlours.',
+                emoji: '🇮🇳',
+              },
+            ].map(({ href, title, desc, emoji }) => (
+              <a
+                key={href}
+                href={href}
+                className="flex items-start gap-3 rounded-xl border border-slate-100 bg-slate-50 px-4 py-4 hover:border-emerald-200 hover:bg-emerald-50/40 transition-all group"
+              >
+                <span className="text-xl shrink-0 mt-0.5">{emoji}</span>
+                <div>
+                  <p className="text-sm font-semibold text-slate-900 group-hover:text-emerald-700 leading-snug">{title}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 leading-snug">{desc}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
 
       {/* ===== FAQ SECTION ===== */}
       <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
