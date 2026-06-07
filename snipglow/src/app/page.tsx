@@ -284,7 +284,7 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Benefit cards — infinite horizontal scroll marquee */}
+            {/* Benefit cards - infinite horizontal scroll marquee */}
             <div className="relative overflow-hidden">
               {/* Fade edges */}
               <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(255,255,255,1), transparent)' }} />
@@ -337,7 +337,7 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Pain calculator — alert style */}
+            {/* Pain calculator - alert style */}
             <div className="rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 to-orange-50/60 px-4 py-4 sm:px-5 shadow-sm">
               <div className="flex items-start gap-3 mb-3">
                 <span className="text-xl shrink-0 mt-0.5">⚠️</span>
@@ -1161,7 +1161,7 @@ export default function HomePage() {
               <div className="h-1.5 w-full bg-gradient-to-r from-pink-400 to-rose-400" />
 
               <div className="grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
-                {/* Row 1 — Header (description grows) */}
+                {/* Row 1 - Header (description grows) */}
                 <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-400 shadow-lg shadow-pink-400/30 mb-4">
                     <Scissors className="h-5 w-5 text-white" />
@@ -1173,7 +1173,7 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* Row 2 — Pricing */}
+                {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-pink-100">
                   <p className="text-sm text-slate-400 line-through mb-1">₹999/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
@@ -1183,7 +1183,7 @@ export default function HomePage() {
                   <p className="text-xs text-slate-500 font-medium">₹9,588/year &nbsp;·&nbsp; 15-day free trial &nbsp;·&nbsp; Cancel anytime</p>
                 </div>
 
-                {/* Row 3 — CTA */}
+                {/* Row 3 - CTA */}
                 <Link
                   href="/signup"
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-slate-900 text-white text-sm font-semibold hover:bg-slate-800 active:scale-[0.98] transition-all shadow-md hover:shadow-lg mb-8"
@@ -1192,14 +1192,14 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </Link>
 
-                {/* Row 4 — Features */}
+                {/* Row 4 - Features */}
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-pink-500 mb-3">Everything you need</p>
                   {[
                     { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
                     { title: 'Customer Management', desc: 'Loyalty tiers, memberships & visit history' },
                     { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback (shared number)' },
-                    { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow — you pay nothing extra' },
+                    { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow - you pay nothing extra' },
                     { title: 'Analytics & Reports', desc: 'Revenue, insights & staff performance dashboard' },
                     { title: 'Online Booking', desc: 'QR code, booking link & Google Calendar sync' },
                     { title: 'Support & Security', desc: 'In-app tickets, audit logs & 24hr response' },
@@ -1245,7 +1245,7 @@ export default function HomePage() {
               </div>
 
               <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
-                {/* Row 1 — Header */}
+                {/* Row 1 - Header */}
                 <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-400 to-pink-500 shadow-lg shadow-violet-500/40 mb-4">
                     <Smartphone className="h-5 w-5 text-white" />
@@ -1253,11 +1253,11 @@ export default function HomePage() {
                   <h3 className="text-2xl font-bold text-white mb-1">Pro</h3>
                   <p className="text-sm text-violet-300 font-medium">For single-branch growth</p>
                   <p className="text-slate-300 text-sm leading-relaxed mt-3 flex-1">
-                    Everything in Essentials, plus your own WhatsApp Business API — single branch, full branding and marketing broadcasts.
+                    Everything in Essentials, plus your own WhatsApp Business API - single branch, full branding and marketing broadcasts.
                   </p>
                 </div>
 
-                {/* Row 2 — Pricing */}
+                {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-violet-700/50">
                   <p className="text-sm text-violet-400 line-through mb-1">₹1,499/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
@@ -1267,7 +1267,7 @@ export default function HomePage() {
                   <p className="text-xs text-slate-400 font-medium">₹11,988/year &nbsp;·&nbsp; Single branch &nbsp;·&nbsp; Billed yearly</p>
                 </div>
 
-                {/* Row 3 — CTA */}
+                {/* Row 3 - CTA */}
                 <button
                   onClick={() => setShowDemoModal(true)}
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-violet-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
@@ -1276,15 +1276,15 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
 
-                {/* Row 4 — Features */}
+                {/* Row 4 - Features */}
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">Everything in Essentials, plus</p>
                   {[
-                    { title: 'WhatsApp API Setup — one-time fee ₹3,500', desc: 'Meta verification, number registration & template approvals' },
+                    { title: 'WhatsApp API Setup - one-time fee ₹3,500', desc: 'Meta verification, number registration & template approvals' },
                     { title: 'Own WhatsApp Business API', desc: 'Your phone number, your branding, full control' },
                     { title: 'WhatsApp Marketing Broadcasts', desc: 'Festival offers, birthdays, flash sales & win-back campaigns' },
                     { title: '50+ Marketing Templates', desc: 'Pre-approved for every occasion, ready to use' },
-                    { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA — transparent, no markup' },
+                    { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
                     { title: 'Priority Support', desc: 'WhatsApp & call support with <4hr response time' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
@@ -1325,7 +1325,7 @@ export default function HomePage() {
               </div>
 
               <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
-                {/* Row 1 — Header */}
+                {/* Row 1 - Header */}
                 <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-500/30 mb-4">
                     <BarChart3 className="h-5 w-5 text-white" />
@@ -1337,7 +1337,7 @@ export default function HomePage() {
                   </p>
                 </div>
 
-                {/* Row 2 — Pricing */}
+                {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-slate-700/60">
                   <p className="text-sm text-slate-500 line-through mb-1">₹1,999/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
@@ -1347,7 +1347,7 @@ export default function HomePage() {
                   <p className="text-xs text-slate-400 font-medium">₹17,988/year &nbsp;·&nbsp; 2 branches incl. &nbsp;·&nbsp; +₹499/branch &nbsp;·&nbsp; Billed yearly</p>
                 </div>
 
-                {/* Row 3 — CTA */}
+                {/* Row 3 - CTA */}
                 <button
                   onClick={() => setShowDemoModal(true)}
                   className="flex items-center justify-center gap-2 w-full py-3.5 rounded-xl bg-white text-slate-900 text-sm font-semibold hover:bg-slate-50 active:scale-[0.98] transition-all shadow-lg hover:shadow-xl mb-8"
@@ -1356,7 +1356,7 @@ export default function HomePage() {
                   <ArrowRight className="h-4 w-4" />
                 </button>
 
-                {/* Row 4 — Features */}
+                {/* Row 4 - Features */}
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-pink-400 mb-3">Everything in Pro, plus</p>
                   {[
@@ -1365,7 +1365,7 @@ export default function HomePage() {
                     { title: 'White-Label Onboarding', desc: 'Dedicated onboarding specialist & custom setup assistance' },
                     { title: 'Advanced Analytics', desc: 'Cross-branch revenue, staff performance & trend reports' },
                     { title: 'Free WhatsApp API Setup (₹3,500 value)', desc: 'Full setup: Meta verification, number & template approvals' },
-                    { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA — transparent, no markup' },
+                    { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500">
@@ -1519,31 +1519,31 @@ export default function HomePage() {
           <div className="space-y-4 reveal">
             <FaqItem
               question="What is SnipandGlow?"
-              answer="SnipandGlow is an all-in-one salon and spa management platform built for Indian businesses. It handles appointments, WhatsApp automation, billing, customer CRM, staff scheduling, payroll, memberships, analytics, and more — all from one dashboard. Available on three plans: Essentials (₹799/mo), Pro (₹999/mo), and Growth (multi-branch)."
+              answer="SnipandGlow is an all-in-one salon and spa management platform built for Indian businesses. It handles appointments, WhatsApp automation, billing, customer CRM, staff scheduling, payroll, memberships, analytics, and more - all from one dashboard. Available on three plans: Essentials (₹799/mo), Pro (₹999/mo), and Growth (multi-branch)."
             />
             <FaqItem
               question="How long is the free trial?"
-              answer="You get a full 15-day free trial with access to all features — no credit card required. If SnipandGlow doesn't work for you within those 15 days, you get a full refund, no questions asked."
+              answer="You get a full 15-day free trial with access to all features - no credit card required. If SnipandGlow doesn't work for you within those 15 days, you get a full refund, no questions asked."
             />
             <FaqItem
               question="What is the difference between Essentials, Pro, and Growth plans?"
-              answer="Essentials (₹799/mo) covers all core operations — appointments, billing, WhatsApp automation, CRM, analytics, memberships, payroll — for a single branch, using the shared SnipandGlow WhatsApp number. Pro (₹999/mo) adds your own WhatsApp Business API (messages from your salon's own number), WhatsApp marketing broadcasts, 50+ pre-approved templates, and priority support — still single branch. Growth adds multi-branch management on top of everything in Pro, ideal for salon chains."
+              answer="Essentials (₹799/mo) covers all core operations - appointments, billing, WhatsApp automation, CRM, analytics, memberships, payroll - for a single branch, using the shared SnipandGlow WhatsApp number. Pro (₹999/mo) adds your own WhatsApp Business API (messages from your salon's own number), WhatsApp marketing broadcasts, 50+ pre-approved templates, and priority support - still single branch. Growth adds multi-branch management on top of everything in Pro, ideal for salon chains."
             />
             <FaqItem
               question="How does WhatsApp work on each plan?"
-              answer="On Essentials, booking confirmations, appointment reminders, bills, and feedback requests are sent automatically from the shared SnipandGlow WhatsApp number — zero setup needed. On Pro and Growth, you connect your own WhatsApp Business number so all messages come from your salon's brand. Pro includes a one-time WhatsApp API setup fee of ₹3,500 (our team handles everything). Growth includes the same setup for free. Pro and Growth also unlock broadcast campaigns (birthday offers, festival deals, win-back messages) to all your customers at once."
+              answer="On Essentials, booking confirmations, appointment reminders, bills, and feedback requests are sent automatically from the shared SnipandGlow WhatsApp number - zero setup needed. On Pro and Growth, you connect your own WhatsApp Business number so all messages come from your salon's brand. Pro includes a one-time WhatsApp API setup fee of ₹3,500 (our team handles everything). Growth includes the same setup for free. Pro and Growth also unlock broadcast campaigns (birthday offers, festival deals, win-back messages) to all your customers at once."
             />
             <FaqItem
               question="What do I need to connect my own WhatsApp Business API (Pro / Growth)?"
-              answer="You need: (1) a Facebook/Meta account, (2) a Facebook Business Page or Instagram account for your salon, (3) a phone number that can receive an OTP and is not currently active on the WhatsApp app, and (4) a business document such as a GST certificate, shop licence, or Udyam registration. A website or domain-based email is not required — a Facebook Business Page is sufficient for most salons."
+              answer="You need: (1) a Facebook/Meta account, (2) a Facebook Business Page or Instagram account for your salon, (3) a phone number that can receive an OTP and is not currently active on the WhatsApp app, and (4) a business document such as a GST certificate, shop licence, or Udyam registration. A website or domain-based email is not required - a Facebook Business Page is sufficient for most salons."
             />
             <FaqItem
               question="Do I need to do any technical setup for the WhatsApp API?"
-              answer="No. On Pro and Growth plans, our team handles the complete WhatsApp API setup — Meta Business verification, number registration, and template approvals. On the Growth plan this is included free (₹3,500 value). On the Pro plan it is a one-time setup fee of ₹3,500. You just provide the required documents."
+              answer="No. On Pro and Growth plans, our team handles the complete WhatsApp API setup - Meta Business verification, number registration, and template approvals. On the Growth plan this is included free (₹3,500 value). On the Pro plan it is a one-time setup fee of ₹3,500. You just provide the required documents."
             />
             <FaqItem
               question="Will connecting my own WhatsApp API affect my existing WhatsApp Business app?"
-              answer="Yes — once a number is registered with the WhatsApp Cloud API, it cannot simultaneously run the WhatsApp Business app on a phone. You will need a dedicated number for the API (separate from your day-to-day WhatsApp). Most salons use their main business number for the API and keep a personal number for the app."
+              answer="Yes - once a number is registered with the WhatsApp Cloud API, it cannot simultaneously run the WhatsApp Business app on a phone. You will need a dedicated number for the API (separate from your day-to-day WhatsApp). Most salons use their main business number for the API and keep a personal number for the app."
             />
             <FaqItem
               question="Can I manage multiple branches?"
@@ -1551,11 +1551,11 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can my staff use it too?"
-              answer="Yes. You can add staff members with role-based access — stylists view their own appointments, managers access reports, and owners have full control. There is no per-staff charge."
+              answer="Yes. You can add staff members with role-based access - stylists view their own appointments, managers access reports, and owners have full control. There is no per-staff charge."
             />
             <FaqItem
               question="Do I need any technical knowledge?"
-              answer="None. SnipandGlow is built for salon owners, not developers. We handle the full setup — services, staff, WhatsApp flow, booking link, and data import. The dashboard is as intuitive as using WhatsApp itself."
+              answer="None. SnipandGlow is built for salon owners, not developers. We handle the full setup - services, staff, WhatsApp flow, booking link, and data import. The dashboard is as intuitive as using WhatsApp itself."
             />
             <FaqItem
               question="What payment methods do customers need to use?"
@@ -1567,7 +1567,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can I import my existing customer data?"
-              answer="Yes. Our team migrates your existing customer database during onboarding — from Excel sheets, another software, or paper records — at no additional cost."
+              answer="Yes. Our team migrates your existing customer database during onboarding - from Excel sheets, another software, or paper records - at no additional cost."
             />
             <FaqItem
               question="Can I cancel anytime?"
@@ -1575,7 +1575,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is purpose-built for Indian salons — WhatsApp-first, GST billing, UPI tracking, free setup, and honest pricing. Essentials at ₹799/mo covers everything a single salon needs. Pro at ₹999/mo adds your own WhatsApp API and broadcast marketing. Growth adds multi-branch for expanding chains."
+              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is purpose-built for Indian salons - WhatsApp-first, GST billing, UPI tracking, free setup, and honest pricing. Essentials at ₹799/mo covers everything a single salon needs. Pro at ₹999/mo adds your own WhatsApp API and broadcast marketing. Growth adds multi-branch for expanding chains."
             />
           </div>
         </div>
