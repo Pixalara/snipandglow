@@ -6,6 +6,8 @@ import { revalidatePath } from 'next/cache';
 import { calculateInvoiceTotal } from '@/lib/utils';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { sendMessage } from '@/lib/whatsapp/templates';
+import { generateInvoicePdfBuffer } from '@/lib/invoice/generate-pdf';
+import { uploadInvoicePdf } from '@/lib/invoice/upload-invoice';
 import type {
   ActionResult,
   Invoice,
@@ -287,23 +289,88 @@ async function sendBillReceiptWhatsApp(
     const { data: tenant } = await (admin.from('tenants' as any).select('name, tenant_code').eq('id', tenantId).single() as any);
     const salonName = ((tenant?.name as string) || 'the salon').trim();
 
-    // Build service list
-    const serviceLines = items.map((s) => `  • ${s.service_name} — ₹${s.unit_price.toLocaleString('en-IN')}${s.quantity > 1 ? ` x${s.quantity}` : ''}`).join('\n');
+    // ── Generate and upload the invoice PDF ──────────────────────────────────
+    // Fetch the full invoice document needed to render the PDF.
+    let pdfDownloadUrl: string | null = null;
+    try {
+      const adminSupabase = createAdminClient();
+      const { data: invoice } = await (adminSupabase
+        .from('invoices' as any)
+        .select('id')
+        .eq('invoice_number', invoiceNumber)
+        .eq('tenant_id', tenantId)
+        .maybeSingle() as any);
 
-    // Build bill message
-    let billText = `🧾 *Bill Receipt*\n\n`;
-    billText += `Hi ${customer.name}, thank you for visiting *${salonName}*! Here's your bill:\n\n`;
-    billText += `📋 *Invoice:* ${invoiceNumber}\n\n`;
-    billText += `*Services:*\n${serviceLines}\n\n`;
-    billText += `━━━━━━━━━━━━━━━\n`;
-    if (discountPct > 0) {
-      billText += `Subtotal: ₹${subtotal.toLocaleString('en-IN')}\n`;
-      billText += `Discount (${discountPct}%): -₹${discountAmount.toLocaleString('en-IN')}\n`;
+      if (invoice?.id) {
+        // Build the InvoiceDocument manually (reuse getInvoiceDocument logic but
+        // with admin client so we bypass RLS without needing a session).
+        const { data: invFull } = await (adminSupabase
+          .from('invoices' as any)
+          .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id')
+          .eq('id', invoice.id)
+          .single() as any);
+
+        if (invFull) {
+          const [itemsRes, custRes, tenantRes, branchRes] = await Promise.all([
+            adminSupabase.from('invoice_items').select('service_name, unit_price, quantity, line_total').eq('invoice_id', invoice.id),
+            adminSupabase.from('customers').select('name, phone, email').eq('id', invFull.customer_id).single(),
+            adminSupabase.from('tenants').select('name, phone, settings').eq('id', tenantId).single(),
+            invFull.branch_id
+              ? adminSupabase.from('branches').select('name, address, phone').eq('id', invFull.branch_id).single()
+              : Promise.resolve({ data: null }),
+          ]);
+
+          const settings = ((tenantRes.data?.settings as Record<string, unknown>) ?? {});
+          const custData = (custRes.data as { name: string; phone: string | null; email: string | null } | null);
+          const branchData = (branchRes.data as { name: string; address: string | null; phone: string | null } | null);
+
+          const invoiceDoc = {
+            invoice_number: invFull.invoice_number,
+            created_at: invFull.created_at ?? new Date().toISOString(),
+            payment_method: invFull.payment_method ?? 'cash',
+            payment_status: invFull.payment_status ?? 'paid',
+            subtotal: invFull.subtotal ?? 0,
+            discount_pct: invFull.discount_pct ?? 0,
+            discount_amount: invFull.discount_amount ?? 0,
+            gst_rate: invFull.gst_rate ?? 0,
+            gst_amount: invFull.gst_amount ?? 0,
+            total: invFull.total ?? 0,
+            items: (itemsRes.data ?? []).map((it: any) => ({
+              service_name: it.service_name,
+              unit_price: it.unit_price,
+              quantity: it.quantity,
+              line_total: it.line_total ?? it.unit_price * it.quantity,
+            })),
+            customer: {
+              name: custData?.name ?? '—',
+              phone: custData?.phone ?? null,
+              email: custData?.email ?? null,
+            },
+            salon: {
+              name: (tenantRes.data?.name as string) ?? 'Salon',
+              legal_name: (settings.legal_name as string) ?? null,
+              trade_name: (settings.trade_name as string) ?? null,
+              address: branchData?.address ?? null,
+              phone: branchData?.phone ?? (tenantRes.data?.phone as string) ?? null,
+              email: (settings.email as string) ?? null,
+              gst_number: (settings.gst_number as string) ?? null,
+            },
+          };
+
+          const pdfBuffer = await generateInvoicePdfBuffer(invoiceDoc);
+          const uploadResult = await uploadInvoicePdf(tenantId, invoiceNumber, pdfBuffer);
+          if (uploadResult.ok) {
+            pdfDownloadUrl = uploadResult.url;
+            console.log('[BillReceipt] PDF uploaded:', pdfDownloadUrl);
+          } else {
+            console.error('[BillReceipt] PDF upload failed:', uploadResult.error);
+          }
+        }
+      }
+    } catch (pdfErr) {
+      // PDF generation/upload is best-effort — don't block the bill message
+      console.error('[BillReceipt] PDF generation error (non-fatal):', pdfErr);
     }
-    billText += `*Total: ₹${total.toLocaleString('en-IN')}*\n`;
-    billText += `Payment: ${paymentMethod.toUpperCase()}\n`;
-    billText += `━━━━━━━━━━━━━━━\n\n`;
-    billText += `Thank you for choosing us! 😊`;
 
     const phone = customer.phone.replace(/\D/g, '');
     console.log('[BillReceipt] Sending to phone:', phone);
@@ -331,6 +398,21 @@ async function sendBillReceiptWhatsApp(
       },
     });
     console.log('[BillReceipt] Send result:', JSON.stringify(sendResult));
+
+    // ── Send the PDF download link as a follow-up text message ───────────────
+    // Since the bill was just raised (customer is in an active session context),
+    // we can send a free-form text message with the PDF link immediately after
+    // the template. This avoids needing a document template approval.
+    if (pdfDownloadUrl) {
+      await sendMessage(credentials, phone, {
+        type: 'text',
+        text: {
+          body: `📄 *Invoice PDF — ${invoiceNumber}*\n\nDownload your invoice here:\n${pdfDownloadUrl}\n\n_(Link valid for 30 days)_`,
+          preview_url: false,
+        },
+      });
+      console.log('[BillReceipt] PDF link message sent');
+    }
 
     // Log bill receipt to whatsapp_sessions
     await (admin.from('whatsapp_sessions').insert({
