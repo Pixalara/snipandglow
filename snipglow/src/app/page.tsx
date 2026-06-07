@@ -1199,6 +1199,7 @@ export default function HomePage() {
                     { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
                     { title: 'Customer Management', desc: 'Loyalty tiers, memberships & visit history' },
                     { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback (shared number)' },
+                    { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow — you pay nothing extra' },
                     { title: 'Analytics & Reports', desc: 'Revenue, insights & staff performance dashboard' },
                     { title: 'Online Booking', desc: 'QR code, booking link & Google Calendar sync' },
                     { title: 'Support & Security', desc: 'In-app tickets, audit logs & 24hr response' },
@@ -1281,7 +1282,9 @@ export default function HomePage() {
                   {[
                     { title: 'WhatsApp API Setup — one-time fee ₹3,500', desc: 'Meta verification, number registration & template approvals' },
                     { title: 'Own WhatsApp Business API', desc: 'Your phone number, your branding, full control' },
+                    { title: 'WhatsApp Marketing Broadcasts', desc: 'Festival offers, birthdays, flash sales & win-back campaigns' },
                     { title: '50+ Marketing Templates', desc: 'Pre-approved for every occasion, ready to use' },
+                    { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA — transparent, no markup' },
                     { title: 'Priority Support', desc: 'WhatsApp & call support with <4hr response time' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
@@ -1362,6 +1365,7 @@ export default function HomePage() {
                     { title: 'White-Label Onboarding', desc: 'Dedicated onboarding specialist & custom setup assistance' },
                     { title: 'Advanced Analytics', desc: 'Cross-branch revenue, staff performance & trend reports' },
                     { title: 'Free WhatsApp API Setup (₹3,500 value)', desc: 'Full setup: Meta verification, number & template approvals' },
+                    { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA — transparent, no markup' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500">
