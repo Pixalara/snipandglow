@@ -678,11 +678,9 @@ export default function HomePage() {
             </div>
           </div>
         </div>
-      </section>
 
-      {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
-      <section className="pt-6 pb-8 sm:pt-8 sm:pb-12 bg-gradient-to-b from-fuchsia-50/10 to-white overflow-hidden">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+        {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP (same section, no gap) ===== */}
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 mt-8 sm:mt-12 pb-8 sm:pb-12">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center">
 
             {/* Left - Image */}
