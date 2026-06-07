@@ -3,7 +3,7 @@ import blogPosts from '@/data/blog-posts.json'
 
 export default function sitemap(): MetadataRoute.Sitemap {
   const baseUrl = 'https://snipandglow.com'
-  const now = new Date('2026-05-14')
+  const now = new Date('2026-06-07')
 
   // Static pages
   const staticPages: MetadataRoute.Sitemap = [
@@ -16,6 +16,15 @@ export default function sitemap(): MetadataRoute.Sitemap {
     { url: `${baseUrl}/refund`, lastModified: now, changeFrequency: 'yearly', priority: 0.3 },
   ]
 
+  // SEO landing pages
+  const seoPages: MetadataRoute.Sitemap = [
+    { url: `${baseUrl}/salon-whatsapp-marketing`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/spa-whatsapp-marketing`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/salon-staff-scheduling`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/salon-membership-program`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+    { url: `${baseUrl}/beauty-parlour-software-india`, lastModified: now, changeFrequency: 'monthly', priority: 0.9 },
+  ]
+
   // Blog posts
   const blogPages: MetadataRoute.Sitemap = blogPosts.map((post) => ({
     url: `${baseUrl}/blog/${post.slug}`,
@@ -24,5 +33,5 @@ export default function sitemap(): MetadataRoute.Sitemap {
     priority: 0.7,
   }))
 
-  return [...staticPages, ...blogPages]
+  return [...staticPages, ...seoPages, ...blogPages]
 }

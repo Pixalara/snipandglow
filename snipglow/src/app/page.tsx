@@ -1651,6 +1651,15 @@ export default function HomePage() {
             <Link href="/refund" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Refund Policy</Link>
             <a href="mailto:dileep.cloudops@gmail.com" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Contact</a>
           </div>
+
+          {/* SEO resources - crawlable internal links */}
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-5 pt-4 mt-1">
+            <Link href="/salon-whatsapp-marketing" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">WhatsApp Marketing for Salons</Link>
+            <Link href="/spa-whatsapp-marketing" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">WhatsApp Marketing for Spas</Link>
+            <Link href="/salon-staff-scheduling" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Salon Staff Scheduling</Link>
+            <Link href="/salon-membership-program" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Salon Membership Program</Link>
+            <Link href="/beauty-parlour-software-india" className="text-[11px] text-slate-600 hover:text-slate-400 transition-colors">Beauty Parlour Software India</Link>
+          </div>
         </div>
       </footer>
 
