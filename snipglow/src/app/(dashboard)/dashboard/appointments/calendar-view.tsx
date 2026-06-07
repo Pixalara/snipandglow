@@ -37,14 +37,10 @@ const statusLabels: Record<AppointmentStatus, string> = {
   booked: 'Booked', confirmed: 'Confirmed', completed: 'Completed', cancelled: 'Cancelled',
 };
 
-function getWeekStart(): Date {
-  const now = new Date();
-  const day = now.getDay();
-  const diff = day === 0 ? -6 : 1 - day;
-  const monday = new Date(now);
-  monday.setDate(now.getDate() + diff);
-  monday.setHours(0, 0, 0, 0);
-  return monday;
+function startOfToday(): Date {
+  const d = new Date();
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 function getWeekDays(start: Date): Date[] {
   return Array.from({ length: 7 }, (_, i) => {
@@ -54,10 +50,15 @@ function getWeekDays(start: Date): Date[] {
 function toDateKey(date: Date): string {
   return `${date.getFullYear()}-${String(date.getMonth()+1).padStart(2,'0')}-${String(date.getDate()).padStart(2,'0')}`;
 }
-const dayNames = ['Mon','Tue','Wed','Thu','Fri','Sat','Sun'];
+const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
 export function CalendarView({ appointments }: { appointments: AppointmentRow[] }) {
-  const weekStart = useMemo(() => getWeekStart(), []);
+  const todayDate = useMemo(() => startOfToday(), []);
+  const today = toDateKey(todayDate);
+  // Rolling window: starts today by default; the date filter lets the owner
+  // jump the 7-day window to any start date.
+  const [startKey, setStartKey] = useState<string>(today);
+  const weekStart = useMemo(() => new Date(startKey + 'T00:00:00'), [startKey]);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
   const [selected, setSelected] = useState<AppointmentRow | null>(null);
   const [mode, setMode] = useState<'detail' | 'complete' | 'reschedule'>('detail');
@@ -72,30 +73,52 @@ export function CalendarView({ appointments }: { appointments: AppointmentRow[] 
     return map;
   }, [appointments]);
 
-  const today = toDateKey(new Date());
-
   function openDetail(apt: AppointmentRow) { setSelected(apt); setMode('detail'); }
   function closeAll() { setSelected(null); setMode('detail'); }
 
+  const rangeLabel = `${weekDays[0].toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })} – ${weekDays[6].toLocaleDateString('en-IN', { day: 'numeric', month: 'short' })}`;
+
   return (
     <div className="space-y-3">
-      <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
-        {(['booked','completed','cancelled'] as AppointmentStatus[]).map(s => (
-          <span key={s} className="flex items-center gap-1">
-            <span className={`size-2 rounded-full ${dotColors[s]}`} />
-            {statusLabels[s]}
-          </span>
-        ))}
+      {/* Date filter + legend */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div className="flex flex-wrap items-center gap-2">
+          <label className="text-xs font-medium text-muted-foreground">From</label>
+          <input
+            type="date"
+            value={startKey}
+            onChange={(e) => setStartKey(e.target.value || today)}
+            className="rounded-lg border border-border bg-background px-2.5 py-1.5 text-xs text-foreground focus:outline-none focus:ring-2 focus:ring-primary/40"
+          />
+          <span className="text-xs text-muted-foreground">{rangeLabel}</span>
+          {startKey !== today && (
+            <button
+              type="button"
+              onClick={() => setStartKey(today)}
+              className="rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              Today
+            </button>
+          )}
+        </div>
+        <div className="flex flex-wrap items-center gap-3 text-xs text-muted-foreground">
+          {(['booked','completed','cancelled'] as AppointmentStatus[]).map(s => (
+            <span key={s} className="flex items-center gap-1">
+              <span className={`size-2 rounded-full ${dotColors[s]}`} />
+              {statusLabels[s]}
+            </span>
+          ))}
+        </div>
       </div>
       <div className="grid grid-cols-1 gap-2 sm:grid-cols-7">
-        {weekDays.map((day, idx) => {
+        {weekDays.map((day) => {
           const dateKey = toDateKey(day);
           const isToday = dateKey === today;
           const dayApts = appointmentsByDate[dateKey] ?? [];
           return (
             <div key={dateKey} className={`rounded-lg border p-2 ${isToday ? 'border-primary/50 bg-primary/5' : 'border-border bg-card'}`}>
               <div className="mb-2 text-center">
-                <div className="text-xs font-medium text-muted-foreground">{dayNames[idx]}</div>
+                <div className="text-xs font-medium text-muted-foreground">{dayNames[day.getDay()]}</div>
                 <div className={`text-sm font-semibold ${isToday ? 'text-primary' : 'text-foreground'}`}>{day.getDate()}</div>
               </div>
               <div className="space-y-1.5">
