@@ -1972,12 +1972,13 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
 function ContactSalesModal({ onClose }: { onClose: () => void }) {
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
-  const [salonName, setSalonName] = useState('');
+  const [email, setEmail] = useState('');
+  const [businessName, setBusinessName] = useState('');
   const [message, setMessage] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [success, setSuccess] = useState(false);
 
-  const isFormValid = name.trim() && phone.trim();
+  const isFormValid = name.trim() && phone.trim() && businessName.trim();
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -1990,10 +1991,11 @@ function ContactSalesModal({ onClose }: { onClose: () => void }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           access_key: '75debe40-e347-41ce-a203-93266c993232',
-          subject: `Pro/Growth Plan Inquiry - ${salonName || name}`,
+          subject: `Pro/Growth Plan Inquiry - ${businessName || name}`,
           name,
           phone,
-          salon_name: salonName || 'Not provided',
+          email: email || 'Not provided',
+          business_name: businessName,
           message: message || 'Interested in Pro/Growth plan',
           from_name: 'SnipandGlow Contact Sales',
         }),
@@ -2073,11 +2075,19 @@ function ContactSalesModal({ onClose }: { onClose: () => void }) {
             required
           />
           <input
-            type="text"
-            placeholder="Salon name (optional)"
-            value={salonName}
-            onChange={(e) => setSalonName(e.target.value)}
+            type="email"
+            placeholder="Email (optional)"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
             className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+          />
+          <input
+            type="text"
+            placeholder="Business name *"
+            value={businessName}
+            onChange={(e) => setBusinessName(e.target.value)}
+            className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-violet-400 focus:ring-2 focus:ring-violet-100 focus:outline-none"
+            required
           />
           <textarea
             placeholder="Any questions? (optional)"
