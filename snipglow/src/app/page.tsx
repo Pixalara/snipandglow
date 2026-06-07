@@ -1201,7 +1201,7 @@ export default function HomePage() {
                     { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback (shared number)' },
                     { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow - you pay nothing extra' },
                     { title: 'Analytics & Reports', desc: 'Revenue, insights & staff performance dashboard' },
-                    { title: 'Online Booking', desc: 'QR code, booking link & Google Calendar sync' },
+                    { title: 'WhatsApp Booking', desc: 'Clients book via WhatsApp, QR code or booking link - no app download needed' },
                     { title: 'Support & Security', desc: 'In-app tickets, audit logs & 24hr response' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
