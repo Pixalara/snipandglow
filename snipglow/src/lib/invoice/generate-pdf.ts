@@ -10,6 +10,7 @@
 // client bundling, not server-side imports.
 // =============================================================================
 
+import React from 'react';
 import type { InvoiceDocument } from '@/app/(dashboard)/dashboard/billing/actions';
 
 /**
@@ -25,13 +26,12 @@ export async function generateInvoicePdfBuffer(
     import('@/app/(dashboard)/dashboard/billing/invoice-pdf'),
   ]);
 
-  // IMPORTANT: react-pdf v4's reconciler throws "Cannot read properties of null
-  // (reading 'props')" under React 19 when it's handed a *function component*
-  // to reconcile. Calling InvoicePDF({ doc }) ourselves returns the underlying
-  // <Document> element tree directly, which renderToBuffer renders reliably.
-  const element = InvoicePDF({ doc });
-
-  const pdfBuffer = await renderToBuffer(element as any);
+  // InvoicePDF is now a plain (non-'use client') @react-pdf component, so the
+  // server can render it normally. renderToBuffer accepts a React element whose
+  // root is a @react-pdf Document.
+  const pdfBuffer = await renderToBuffer(
+    React.createElement(InvoicePDF, { doc }) as any
+  );
 
   return Buffer.from(pdfBuffer);
 }

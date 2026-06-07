@@ -1,5 +1,3 @@
-'use client';
-
 import { Document, Page, Text, View, StyleSheet, Font } from '@react-pdf/renderer';
 import { formatINR, formatDateIN, formatTimeIST } from '@/lib/utils';
 import type { InvoiceDocument } from './actions';
@@ -7,12 +5,14 @@ import type { InvoiceDocument } from './actions';
 // =============================================================================
 // Invoice PDF — built with @react-pdf/renderer so the downloaded file is a real
 // vector PDF (single page, no browser print dialog, no headers/footers).
-// Mirrors the on-screen preview: white sheet, black body, red accents,
-// brand-gradient header (approximated with solid brand tones), dark item header.
-// Works identically on web, mobile and tablet.
 //
-// Roboto is registered (it includes the ₹ / U+20B9 glyph) so the rupee symbol
-// renders correctly in the PDF on every device.
+// NOTE: this file intentionally has NO 'use client' directive. It is a plain
+// @react-pdf document component (no React client hooks), so it can be imported
+// and rendered from BOTH the server (renderToBuffer, for the WhatsApp invoice
+// PDF) and the client (pdf().toBlob(), for the in-app download button). Marking
+// it 'use client' turns it into a client reference that the server can only
+// receive as an opaque proxy — which made server-side renderToBuffer throw
+// ("Attempted to call InvoicePDF() from the server").
 // =============================================================================
 
 let fontsRegistered = false;
