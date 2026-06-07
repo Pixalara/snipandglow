@@ -1,17 +1,18 @@
 // =============================================================================
-// Upload a generated invoice PDF to Supabase Storage and return a signed URL.
+// Upload a generated invoice PDF to Supabase Storage and return a public URL.
 //
-// Bucket: invoices (private, RLS off for service-role)
+// Bucket: invoices (PUBLIC)
 // Path:   {tenantId}/{invoiceNumber}.pdf
 //
-// The signed URL is valid for 30 days (2_592_000 seconds), which is plenty of
-// time for the customer to download it from the WhatsApp message link.
+// The bucket is public, so we return a permanent public URL. This is simpler
+// and more reliable than signed URLs (no expiry, no signing round-trip), and
+// WhatsApp's media servers can fetch it directly when used as a document
+// header link.
 // =============================================================================
 
 import { createAdminClient } from '@/lib/supabase/admin';
 
 const BUCKET = 'invoices';
-const SIGNED_URL_EXPIRY_SECONDS = 30 * 24 * 60 * 60; // 30 days
 
 export type UploadResult =
   | { ok: true; url: string; path: string }
@@ -29,12 +30,12 @@ export async function uploadInvoicePdf(
   const admin = createAdminClient();
   const storagePath = `${tenantId}/${invoiceNumber}.pdf`;
 
-  // Ensure the bucket exists (idempotent — no-op if already created).
+  // Ensure the bucket exists as PUBLIC (idempotent — no-op if already created).
   const { error: bucketErr } = await admin.storage.createBucket(BUCKET, {
-    public: false,
+    public: true,
     fileSizeLimit: 5 * 1024 * 1024, // 5 MB
   });
-  // PGRST error code 'BucketAlreadyExists' is expected and safe to ignore.
+  // 'BucketAlreadyExists' is expected and safe to ignore.
   if (bucketErr && !bucketErr.message?.includes('already')) {
     console.error('[uploadInvoicePdf] Bucket create error:', bucketErr.message);
     // Non-fatal: proceed — the bucket may already exist.
@@ -53,15 +54,13 @@ export async function uploadInvoicePdf(
     return { ok: false, error: `PDF upload failed: ${uploadErr.message}` };
   }
 
-  // Generate a signed URL valid for 30 days.
-  const { data: signedData, error: signErr } = await admin.storage
-    .from(BUCKET)
-    .createSignedUrl(storagePath, SIGNED_URL_EXPIRY_SECONDS);
+  // Bucket is public — return the permanent public URL.
+  const { data: publicData } = admin.storage.from(BUCKET).getPublicUrl(storagePath);
 
-  if (signErr || !signedData?.signedUrl) {
-    console.error('[uploadInvoicePdf] Signed URL error:', signErr?.message);
+  if (!publicData?.publicUrl) {
+    console.error('[uploadInvoicePdf] Could not resolve public URL');
     return { ok: false, error: 'Could not generate download URL' };
   }
 
-  return { ok: true, url: signedData.signedUrl, path: storagePath };
+  return { ok: true, url: publicData.publicUrl, path: storagePath };
 }
