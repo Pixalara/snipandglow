@@ -360,7 +360,7 @@ export default function HomePage() {
           </div>
 
           {/* Right - WhatsApp Phone Mockup */}
-          <div className="flex justify-center items-center reveal-right mt-8 lg:mt-0">
+          <div className="flex justify-center items-center reveal-right mt-4 lg:mt-0">
             <div className="relative">
               {/* Layered ambient glow */}
               <div className="absolute inset-0 rounded-[52px] blur-3xl scale-110" style={{ background: 'radial-gradient(ellipse, rgba(37,211,102,0.25) 0%, rgba(18,140,126,0.15) 40%, transparent 70%)' }} />
@@ -683,7 +683,7 @@ export default function HomePage() {
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
       <section className="pt-6 pb-8 sm:pt-8 sm:pb-12 bg-gradient-to-b from-fuchsia-50/10 to-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-6 sm:gap-8 lg:gap-16 items-center">
 
             {/* Left - Image */}
             <div className="relative reveal-left">
