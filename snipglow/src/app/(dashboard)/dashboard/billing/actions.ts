@@ -357,8 +357,17 @@ async function sendBillReceiptWhatsApp(
             },
           };
 
-          const pdfBuffer = await generateInvoicePdfBuffer(invoiceDoc);
-          const uploadResult = await uploadInvoicePdf(tenantId, invoiceNumber, pdfBuffer);
+          // Bound PDF generation + upload so a slow render can never consume the
+          // whole server-action time budget and starve the feedback flow below.
+          const PDF_TIMEOUT_MS = 8000;
+          const pdfWork = (async () => {
+            const pdfBuffer = await generateInvoicePdfBuffer(invoiceDoc);
+            return uploadInvoicePdf(tenantId, invoiceNumber, pdfBuffer);
+          })();
+          const timeout = new Promise<{ ok: false; error: string }>((resolve) =>
+            setTimeout(() => resolve({ ok: false, error: 'PDF generation timed out' }), PDF_TIMEOUT_MS)
+          );
+          const uploadResult = await Promise.race([pdfWork, timeout]);
           if (uploadResult.ok) {
             pdfDownloadUrl = uploadResult.url;
             console.log('[BillReceipt] PDF uploaded:', pdfDownloadUrl);
@@ -375,43 +384,76 @@ async function sendBillReceiptWhatsApp(
     const phone = customer.phone.replace(/\D/g, '');
     console.log('[BillReceipt] Sending to phone:', phone);
 
-    // Use approved template (works outside 24-hour window)
+    // Use approved template (works outside 24-hour window).
     const serviceList = items.map((s) => s.service_name).join(', ');
-    const sendResult = await sendMessage(credentials, phone, {
-      type: 'template',
-      template: {
-        name: 'bill_receipt_v1',
-        language: { code: 'en' },
-        components: [
-          {
-            type: 'body',
-            parameters: [
-              { type: 'text', text: customer.name },
-              { type: 'text', text: salonName },
-              { type: 'text', text: invoiceNumber },
-              { type: 'text', text: serviceList },
-              { type: 'text', text: String(total) },
-              { type: 'text', text: paymentMethod.toUpperCase() },
-            ],
-          },
-        ],
-      },
-    });
-    console.log('[BillReceipt] Send result:', JSON.stringify(sendResult));
+    const bodyParameters = [
+      { type: 'text', text: customer.name },
+      { type: 'text', text: salonName },
+      { type: 'text', text: invoiceNumber },
+      { type: 'text', text: serviceList },
+      { type: 'text', text: String(total) },
+      { type: 'text', text: paymentMethod.toUpperCase() },
+    ];
 
-    // ── Send the PDF download link as a follow-up text message ───────────────
-    // Since the bill was just raised (customer is in an active session context),
-    // we can send a free-form text message with the PDF link immediately after
-    // the template. This avoids needing a document template approval.
+    let sendResult: { success: boolean; error?: string; messageId?: string };
+
     if (pdfDownloadUrl) {
-      await sendMessage(credentials, phone, {
-        type: 'text',
-        text: {
-          body: `📄 *Invoice PDF — ${invoiceNumber}*\n\nDownload your invoice here:\n${pdfDownloadUrl}\n\n_(Link valid for 30 days)_`,
-          preview_url: false,
+      // Preferred path: bill_receipt_v2 carries the invoice PDF as a DOCUMENT
+      // HEADER so the actual file rides along in the SAME message — no separate
+      // follow-up text (which would fail outside the 24-hour service window).
+      // The header document link is supplied per-message as a parameter.
+      sendResult = await sendMessage(credentials, phone, {
+        type: 'template',
+        template: {
+          name: 'bill_receipt_v2',
+          language: { code: 'en' },
+          components: [
+            {
+              type: 'header',
+              parameters: [
+                {
+                  type: 'document',
+                  document: {
+                    link: pdfDownloadUrl,
+                    filename: `Invoice-${invoiceNumber}.pdf`,
+                  },
+                },
+              ],
+            },
+            {
+              type: 'body',
+              parameters: bodyParameters,
+            },
+          ],
         },
       });
-      console.log('[BillReceipt] PDF link message sent');
+      console.log('[BillReceipt] v2 (with PDF) send result:', JSON.stringify(sendResult));
+
+      // If v2 isn't approved yet (or any send error), fall back to the plain
+      // v1 template so the customer still gets their bill.
+      if (!sendResult.success) {
+        console.warn('[BillReceipt] v2 failed, falling back to bill_receipt_v1');
+        sendResult = await sendMessage(credentials, phone, {
+          type: 'template',
+          template: {
+            name: 'bill_receipt_v1',
+            language: { code: 'en' },
+            components: [{ type: 'body', parameters: bodyParameters }],
+          },
+        });
+        console.log('[BillReceipt] v1 fallback send result:', JSON.stringify(sendResult));
+      }
+    } else {
+      // No PDF available — send the plain bill template.
+      sendResult = await sendMessage(credentials, phone, {
+        type: 'template',
+        template: {
+          name: 'bill_receipt_v1',
+          language: { code: 'en' },
+          components: [{ type: 'body', parameters: bodyParameters }],
+        },
+      });
+      console.log('[BillReceipt] v1 (no PDF) send result:', JSON.stringify(sendResult));
     }
 
     // Log bill receipt to whatsapp_sessions
