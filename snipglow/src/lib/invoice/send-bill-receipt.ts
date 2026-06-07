@@ -269,7 +269,7 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
     // awaiting_feedback session so "Rate Now" routes back to this tenant.
     const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString();
     await (admin.from('whatsapp_customer_sessions' as any).delete().eq('customer_phone', phone) as any);
-    await (admin.from('whatsapp_customer_sessions' as any).insert({
+    const { error: sessionErr } = await (admin.from('whatsapp_customer_sessions' as any).insert({
       tenant_id: tenantId,
       customer_phone: phone,
       mode: 'shared',
@@ -279,6 +279,11 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
       last_message_at: new Date().toISOString(),
       expires_at: expiresAt,
     }) as any);
+    if (sessionErr) {
+      // A failed insert here silently breaks the "Rate Now" flow (no session to
+      // route the feedback tap). Surface it loudly.
+      console.error('[BillReceipt] awaiting_feedback session insert FAILED:', sessionErr.message);
+    }
 
     await (admin.from('whatsapp_sessions').insert({
       tenant_id: tenantId,
