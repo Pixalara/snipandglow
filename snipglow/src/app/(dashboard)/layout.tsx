@@ -2,6 +2,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { SubscriptionGuard } from '@/components/subscription-guard';
+import { getSubscriptionState } from '@/lib/subscription';
 import type { UserRole, Branch } from '@/types';
 
 export default async function DashboardLayout({
@@ -27,6 +28,8 @@ export default async function DashboardLayout({
   let branches: Branch[] = [];
   let subscriptionStatus = 'active';
   let planTier = 'starter';
+  let isExpired = false;
+  let trialEndedAt: string | null = null;
 
   if (tenantId) {
     const [branchRes, tenantRes] = await Promise.all([
@@ -46,7 +49,7 @@ export default async function DashboardLayout({
           : Promise.resolve({ data: [] }),
       supabase
         .from('tenants')
-        .select('subscription_status, plan_tier')
+        .select('subscription_status, subscription_start, subscription_end, plan_tier, created_at')
         .eq('id', tenantId)
         .single(),
     ]);
@@ -57,6 +60,9 @@ export default async function DashboardLayout({
     if (tenantRes.data) {
       subscriptionStatus = tenantRes.data.subscription_status ?? 'active';
       planTier = (tenantRes.data as any).plan_tier ?? 'starter';
+      const state = getSubscriptionState(tenantRes.data as any);
+      isExpired = state.isExpired;
+      trialEndedAt = state.endDate ? state.endDate.toISOString() : null;
     }
   }
 
@@ -70,7 +76,11 @@ export default async function DashboardLayout({
       activeBranchId={activeBranchId}
       planTier={planTier}
     >
-      <SubscriptionGuard subscriptionStatus={subscriptionStatus}>
+      <SubscriptionGuard
+        subscriptionStatus={subscriptionStatus}
+        isExpired={isExpired}
+        trialEndedAt={trialEndedAt}
+      >
         {children}
       </SubscriptionGuard>
     </AppShell>

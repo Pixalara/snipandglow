@@ -14,6 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
+import { getSubscriptionState } from '@/lib/subscription';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -56,16 +57,13 @@ export default async function SettingsPage() {
   const subscriptionEnd = tenant.subscription_end ? new Date(tenant.subscription_end) : null;
   const subscriptionStart = tenant.subscription_start ? new Date(tenant.subscription_start) : null;
 
-  const now = new Date();
-  const isExpired = subscriptionStatus === 'expired' || subscriptionStatus === 'cancelled';
-  const isTrial = subscriptionStatus === 'trial';
-  const isActive = subscriptionStatus === 'active';
-
-  // Calculate days remaining
-  let daysRemaining = 0;
-  if (subscriptionEnd) {
-    daysRemaining = Math.max(0, Math.ceil((subscriptionEnd.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
-  }
+  // Computed expiry — a trial past its end date counts as expired even if the
+  // stored status still says 'trial'.
+  const subState = getSubscriptionState(tenant as any);
+  const isExpired = subState.isExpired;
+  const isTrial = !isExpired && subscriptionStatus === 'trial';
+  const isActive = !isExpired && subscriptionStatus === 'active';
+  const daysRemaining = subState.daysRemaining;
 
   // GST settings
   const settings = (tenant.settings as Record<string, unknown>) ?? {};

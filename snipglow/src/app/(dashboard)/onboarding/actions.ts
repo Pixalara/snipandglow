@@ -34,6 +34,11 @@ export async function completeOnboarding(data: {
     }
 
     // Create tenant (using admin client to bypass RLS — new user has no tenant_id yet)
+    // 15-day free trial: stamp the trial window so expiry can be enforced.
+    const trialStart = new Date();
+    const trialEnd = new Date(trialStart);
+    trialEnd.setDate(trialEnd.getDate() + 15);
+
     const { data: tenant, error: tenantError } = await admin
       .from('tenants')
       .insert({
@@ -41,6 +46,8 @@ export async function completeOnboarding(data: {
         owner_name: data.ownerName,
         phone: data.phone,
         subscription_status: 'trial',
+        subscription_start: trialStart.toISOString(),
+        subscription_end: trialEnd.toISOString(),
         plan_tier: 'starter',
         settings: {},
       })
