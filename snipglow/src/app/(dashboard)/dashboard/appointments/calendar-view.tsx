@@ -186,8 +186,17 @@ function AppointmentDetailPopup({ appointment, onClose, onComplete, onReschedule
               <span className={`size-2.5 rounded-full ${dotColors[appointment.status]}`} />
             </div>
             <div>
-              <h2 className="text-base font-semibold text-foreground">{appointment.customer_name}</h2>
-              <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColors[appointment.status]}`}>
+              {appointment.customer_id ? (
+                <Link
+                  href={`/dashboard/customers/${appointment.customer_id}`}
+                  className="text-base font-semibold text-foreground hover:text-salon-rose hover:underline transition-colors"
+                >
+                  {appointment.customer_name}
+                </Link>
+              ) : (
+                <h2 className="text-base font-semibold text-foreground">{appointment.customer_name}</h2>
+              )}
+              <span className={`block w-fit mt-0.5 inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${statusBadgeColors[appointment.status]}`}>
                 {statusLabels[appointment.status]}
               </span>
             </div>

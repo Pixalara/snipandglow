@@ -85,6 +85,7 @@ export default async function BillingPage() {
     id: inv.id,
     invoice_number: inv.invoice_number,
     customer_name: customerNameMap[inv.customer_id ?? ''] ?? '—',
+    customer_id: inv.customer_id ?? '',
     created_at: inv.created_at ?? '',
     total: inv.total,
     payment_method: inv.payment_method as PaymentMethod,

@@ -24,6 +24,7 @@ export interface InvoiceRow {
   id: string;
   invoice_number: string;
   customer_name: string;
+  customer_id: string;
   created_at: string;
   total: number;
   payment_method: PaymentMethod;
@@ -59,12 +60,21 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       key: 'customer_name',
       header: 'Customer',
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-salon-rose/20 to-salon-gold/20 text-xs font-bold text-salon-rose">
-            {row.customer_name.charAt(0).toUpperCase()}
+        row.customer_id ? (
+          <Link href={`/dashboard/customers/${row.customer_id}`} className="group flex items-center gap-2">
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-salon-rose/20 to-salon-gold/20 text-xs font-bold text-salon-rose">
+              {row.customer_name.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-foreground font-medium group-hover:text-salon-rose group-hover:underline transition-colors">{row.customer_name}</span>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="flex size-6 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-salon-rose/20 to-salon-gold/20 text-xs font-bold text-salon-rose">
+              {row.customer_name.charAt(0).toUpperCase()}
+            </div>
+            <span className="text-foreground font-medium">{row.customer_name}</span>
           </div>
-          <span className="text-foreground font-medium">{row.customer_name}</span>
-        </div>
+        )
       ),
     },
     {

@@ -117,23 +117,18 @@ export function BillingHistoryTable({ invoices }: { invoices: BillingHistoryRow[
 }
 
 function DeliveryStatusBadge({ status }: { status: string }) {
+  const completed = {
+    label: 'Completed',
+    className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+  };
   const config: Record<string, { label: string; className: string }> = {
-    pending: {
-      label: 'Pending',
-      className: 'bg-yellow-100 text-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-400',
-    },
-    sent: {
-      label: 'Sent',
-      className: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400',
-    },
-    delivered: {
-      label: 'Delivered',
-      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    },
-    read: {
-      label: 'Read',
-      className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
-    },
+    // A generated bill is sent to the customer over WhatsApp at creation time,
+    // so any non-failed delivery state is shown as "Completed".
+    pending: completed,
+    sent: completed,
+    delivered: completed,
+    read: completed,
+    completed: completed,
     failed: {
       label: 'Failed',
       className: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
