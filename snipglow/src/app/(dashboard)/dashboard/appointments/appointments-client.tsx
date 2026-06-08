@@ -88,10 +88,15 @@ function getMaxDate(): string {
 export function AppointmentsClient({ appointments, role }: AppointmentsClientProps) {
   const [view, setView] = useState<ViewMode>('list');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
+  // List-view date filter (calendar has its own rolling window).
+  const [dateFilter, setDateFilter] = useState<string>('');
 
-  const filtered = statusFilter === 'all'
-    ? appointments
-    : appointments.filter((apt) => apt.status === statusFilter);
+  const filtered = appointments.filter((apt) => {
+    if (statusFilter !== 'all' && apt.status !== statusFilter) return false;
+    // Date filter only applies to the list view.
+    if (view === 'list' && dateFilter && apt.appointment_date !== dateFilter) return false;
+    return true;
+  });
 
   return (
     <div className="space-y-6">
@@ -111,6 +116,28 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
+            {/* Date filter — list view only */}
+            {view === 'list' && (
+              <div className="flex items-center gap-1.5">
+                <input
+                  type="date"
+                  value={dateFilter}
+                  onChange={(e) => setDateFilter(e.target.value)}
+                  className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  aria-label="Filter by date"
+                />
+                {dateFilter && (
+                  <button
+                    type="button"
+                    onClick={() => setDateFilter('')}
+                    className="h-10 rounded-xl border border-border px-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+            )}
+
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
               <select
