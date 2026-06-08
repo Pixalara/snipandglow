@@ -147,19 +147,21 @@ function VerifyOtpContent() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-emerald-100 to-green-100 border border-emerald-200 mx-auto mb-2">
-          <MessageCircle className="h-6 w-6 text-emerald-600" />
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-emerald-500 to-green-600 shadow-lg shadow-emerald-500/25 mx-auto">
+          <MessageCircle className="h-7 w-7 text-white" />
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Verify your phone</h1>
-        <p className="text-sm text-slate-500">Enter the 6-digit code sent to your WhatsApp</p>
-        <p className="text-sm font-medium text-slate-700">{maskPhone(phone)}</p>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Verify your phone</h1>
+          <p className="text-sm text-slate-500">Enter the 6-digit code sent to your WhatsApp</p>
+          <p className="text-sm font-semibold text-slate-700">{maskPhone(phone)}</p>
+        </div>
       </div>
 
       {/* Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-100/50 p-6 sm:p-8 space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 p-6 sm:p-7 space-y-6">
         <form onSubmit={handleVerifyOtp} className="space-y-4">
           <div className="space-y-2">
             <label htmlFor="otp" className="text-sm font-medium text-slate-700">
@@ -175,7 +177,7 @@ function VerifyOtpContent() {
               value={otp}
               onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
               disabled={loading}
-              className="w-full h-12 rounded-xl border border-slate-200 bg-white px-4 text-center text-xl tracking-[0.5em] font-mono text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
+              className="w-full h-14 rounded-xl border border-slate-200 bg-white px-4 text-center text-2xl tracking-[0.5em] font-mono text-slate-900 placeholder:text-slate-300 focus:outline-none focus:ring-2 focus:ring-emerald-500/30 focus:border-emerald-400 transition-all"
               autoComplete="one-time-code"
               autoFocus
             />
@@ -184,7 +186,7 @@ function VerifyOtpContent() {
           <button
             type="submit"
             disabled={loading || otp.length !== 6}
-            className="w-full flex items-center justify-center gap-2 min-h-[48px] h-12 rounded-xl bg-emerald-600 text-white font-medium text-sm hover:bg-emerald-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            className="w-full flex items-center justify-center gap-2 min-h-[48px] h-12 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition-all shadow-sm shadow-emerald-600/20 disabled:opacity-60 disabled:cursor-not-allowed"
           >
             {loading ? 'Verifying...' : 'Verify & Sign In'}
           </button>
@@ -201,7 +203,7 @@ function VerifyOtpContent() {
               disabled={resending}
               className="font-medium text-emerald-600 hover:underline disabled:opacity-50"
             >
-              {resending ? 'Resending...' : 'Resend OTP'}
+              {resending ? 'Resending...' : 'Resend code'}
             </button>
           )}
         </div>

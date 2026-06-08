@@ -3,7 +3,7 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import { createClient } from '@/lib/supabase/client';
-import { MessageCircle, ShieldCheck, Users, Lock, Sparkles, Phone } from 'lucide-react';
+import { MessageCircle, ShieldCheck, Users, Lock, Phone } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -239,8 +239,7 @@ export default function LoginPage() {
           {/* ─── STAFF TAB ─── */}
           {tab === 'staff' && (
             <form onSubmit={handleStaffLogin} className="space-y-4">
-              <div className="rounded-xl bg-violet-50 border border-violet-100 px-4 py-3 flex items-start gap-2.5">
-                <Sparkles className="h-4 w-4 text-violet-500 mt-0.5 shrink-0" />
+              <div className="rounded-xl bg-violet-50 border border-violet-100 px-4 py-3">
                 <p className="text-xs text-violet-700 leading-relaxed">
                   Use the mobile number and password your salon owner gave you.
                 </p>

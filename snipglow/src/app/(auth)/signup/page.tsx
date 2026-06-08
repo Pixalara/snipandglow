@@ -32,18 +32,22 @@ export default function SignupPage() {
   }
 
   return (
-    <div className="space-y-8">
+    <div className="space-y-6">
       {/* Header */}
-      <div className="text-center space-y-2">
-        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-100 to-violet-100 border border-pink-200 mx-auto mb-2">
-          <span className="text-lg font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">S</span>
+      <div className="text-center space-y-3">
+        <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-pink-500 via-fuchsia-500 to-violet-500 shadow-lg shadow-fuchsia-500/25 mx-auto">
+          <span className="text-2xl font-bold text-white">S</span>
         </div>
-        <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create your account</h1>
-        <p className="text-sm text-slate-500">Start managing your salon with SnipandGlow</p>
+        <div className="space-y-1">
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create your account</h1>
+          <p className="text-sm text-slate-500">
+            Start managing your salon with <span className="font-semibold text-slate-700">snipand</span><span className="font-semibold bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+          </p>
+        </div>
       </div>
 
       {/* Card */}
-      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-100/50 p-6 sm:p-8 space-y-6">
+      <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-200/50 p-6 sm:p-7 space-y-6">
 
         {/* Steps */}
         <div className="space-y-3">
@@ -65,7 +69,7 @@ export default function SignupPage() {
         <button
           onClick={handleGoogleSignUp}
           disabled={googleLoading}
-          className="w-full flex items-center justify-center gap-3 min-h-[48px] h-12 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-sm hover:border-emerald-300 hover:bg-emerald-50/50 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+          className="w-full flex items-center justify-center gap-3 min-h-[48px] h-12 rounded-xl border border-slate-200 bg-white text-slate-700 font-medium text-sm hover:border-slate-300 hover:bg-slate-50 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
             <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
