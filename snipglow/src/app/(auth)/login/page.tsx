@@ -15,6 +15,14 @@ export default function LoginPage() {
   const [staffEmail, setStaffEmail] = useState('');
   const [staffPassword, setStaffPassword] = useState('');
   const [staffLoading, setStaffLoading] = useState(false);
+  // Staff code-based verification (first-login proof of email + WhatsApp).
+  const [verifyMode, setVerifyMode] = useState(false);
+  const [verifySessionToken, setVerifySessionToken] = useState('');
+  const [verifyMaskedPhone, setVerifyMaskedPhone] = useState('');
+  const [phoneCode, setPhoneCode] = useState('');
+  const [emailCode, setEmailCode] = useState('');
+  const [verifyLoading, setVerifyLoading] = useState(false);
+  const [verifyInfo, setVerifyInfo] = useState<string | null>(null);
 
   async function handleGoogleSignIn() {
     setError(null);
@@ -94,6 +102,14 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) {
+        // If the block is because the account is awaiting verification, offer
+        // the inline code-based verification flow instead of a dead end.
+        if (res.status === 403 && /verif/i.test(data.error || '')) {
+          setError(null);
+          await startStaffVerification(email);
+          setStaffLoading(false);
+          return;
+        }
         setError(data.error || 'Login is not allowed for this account.');
         setStaffLoading(false);
         return;
@@ -116,6 +132,84 @@ export default function LoginPage() {
     } catch {
       setError('Network error. Please try again.');
       setStaffLoading(false);
+    }
+  }
+
+  async function startStaffVerification(email: string) {
+    setVerifyInfo(null);
+    setVerifyLoading(true);
+    try {
+      const res = await fetch('/api/auth/staff-verify/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Could not start verification.');
+        setVerifyLoading(false);
+        return;
+      }
+      if (data.alreadyVerified) {
+        setVerifyInfo('Your account is already verified. Please sign in.');
+        setVerifyLoading(false);
+        return;
+      }
+      setVerifySessionToken(data.session_token);
+      setVerifyMaskedPhone(data.maskedPhone || '');
+      setVerifyMode(true);
+      setVerifyInfo(
+        `We sent a 6-digit code to your WhatsApp (${data.maskedPhone || ''}) and your email. Enter both to verify your account.`
+      );
+    } catch {
+      setError('Network error. Please try again.');
+    } finally {
+      setVerifyLoading(false);
+    }
+  }
+
+  async function handleStaffVerify(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+    if (phoneCode.length < 6 || emailCode.length < 6) {
+      setError('Enter both 6-digit codes.');
+      return;
+    }
+    setVerifyLoading(true);
+    try {
+      const res = await fetch('/api/auth/staff-verify/confirm', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          session_token: verifySessionToken,
+          phone_code: phoneCode,
+          email: staffEmail.trim().toLowerCase(),
+          email_code: emailCode,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Verification failed.');
+        setVerifyLoading(false);
+        return;
+      }
+      // Verified — sign in immediately with the password they already entered.
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email: staffEmail.trim().toLowerCase(),
+        password: staffPassword,
+      });
+      if (signInError) {
+        // Verified but password missing/incorrect — send them back to sign in.
+        setVerifyMode(false);
+        setVerifyInfo('Your account is verified! Please sign in with your password.');
+        setVerifyLoading(false);
+        return;
+      }
+      router.push('/dashboard');
+    } catch {
+      setError('Network error. Please try again.');
+      setVerifyLoading(false);
     }
   }
 
@@ -217,11 +311,62 @@ export default function LoginPage() {
             </button>
             <button
               type="button"
-              onClick={() => { setMode('choose'); setError(null); }}
+              onClick={() => { setMode('choose'); setError(null); setVerifyMode(false); }}
               className="w-full text-sm text-slate-500 hover:text-slate-700 transition-colors"
             >
               ← Back to all options
             </button>
+
+            {/* Inline verification (first login) */}
+            {verifyMode && (
+              <div className="mt-2 space-y-3 rounded-xl border border-violet-200 bg-violet-50/60 p-4">
+                <p className="text-xs text-slate-600">
+                  {verifyInfo || 'Enter the codes sent to your WhatsApp and email.'}
+                </p>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-700">WhatsApp code {verifyMaskedPhone && `(${verifyMaskedPhone})`}</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={phoneCode}
+                    onChange={(e) => setPhoneCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="6-digit WhatsApp code"
+                    className="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                    disabled={verifyLoading}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-xs font-medium text-slate-700">Email code</label>
+                  <input
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={emailCode}
+                    onChange={(e) => setEmailCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="6-digit email code"
+                    className="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm tracking-widest text-slate-900 focus:outline-none focus:ring-2 focus:ring-violet-500/30"
+                    disabled={verifyLoading}
+                  />
+                </div>
+                <button
+                  type="button"
+                  onClick={handleStaffVerify}
+                  disabled={verifyLoading || phoneCode.length < 6 || emailCode.length < 6}
+                  className="w-full flex items-center justify-center gap-2 min-h-[44px] h-11 rounded-xl bg-violet-600 text-white font-medium text-sm hover:bg-violet-700 transition-all disabled:opacity-60 disabled:cursor-not-allowed"
+                >
+                  {verifyLoading ? 'Verifying...' : 'Verify & sign in'}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => startStaffVerification(staffEmail.trim().toLowerCase())}
+                  disabled={verifyLoading}
+                  className="w-full text-xs text-slate-500 hover:text-slate-700 transition-colors"
+                >
+                  Resend codes
+                </button>
+              </div>
+            )}
           </form>
         )}
 
