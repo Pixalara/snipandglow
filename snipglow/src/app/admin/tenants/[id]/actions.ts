@@ -254,3 +254,73 @@ export async function adminUpdateTenantPlan(
   revalidatePath(`/admin/tenants/${tenantId}`);
   return { success: true };
 }
+
+// =============================================================================
+// Admin — activate / extend a tenant's subscription.
+//
+// Used when payment is taken offline (interim, until Razorpay is live) or to
+// extend a paid plan. Sets subscription_status = 'active' and pushes
+// subscription_end forward by the given number of months from the later of
+// "now" or the current end date (so extending early doesn't lose paid days).
+// This clears the computed-expiry lock immediately.
+// =============================================================================
+
+export async function adminActivateSubscription(
+  tenantId: string,
+  months: number = 1
+): Promise<{ success: boolean; error?: string }> {
+  const user = await requireAdmin();
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  const m = Number.isFinite(months) && months > 0 ? Math.min(60, Math.floor(months)) : 1;
+
+  const admin = createAdminClient();
+
+  const { data: tenant } = await (admin
+    .from('tenants' as any)
+    .select('name, subscription_status, subscription_start, subscription_end')
+    .eq('id', tenantId)
+    .single() as any);
+
+  if (!tenant) return { success: false, error: 'Tenant not found.' };
+
+  const now = new Date();
+  const currentEnd = (tenant as any).subscription_end ? new Date((tenant as any).subscription_end) : null;
+  // Extend from the later of now or the current (future) end date.
+  const base = currentEnd && currentEnd.getTime() > now.getTime() ? currentEnd : now;
+  const newEnd = new Date(base);
+  newEnd.setMonth(newEnd.getMonth() + m);
+
+  // Stamp a start date if the tenant never had one.
+  const start = (tenant as any).subscription_start || now.toISOString();
+
+  const { error } = await (admin
+    .from('tenants' as any)
+    .update({
+      subscription_status: 'active',
+      subscription_start: start,
+      subscription_end: newEnd.toISOString(),
+    } as any)
+    .eq('id', tenantId) as any);
+
+  if (error) {
+    return { success: false, error: `Failed to activate subscription: ${error.message}` };
+  }
+
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'activate_subscription',
+    targetType: 'tenant',
+    targetId: tenantId,
+    metadata: {
+      tenant_name: (tenant as any).name,
+      months: m,
+      previous_status: (tenant as any).subscription_status,
+      new_end: newEnd.toISOString(),
+    },
+  });
+
+  revalidatePath(`/admin/tenants/${tenantId}`);
+  return { success: true };
+}

@@ -96,7 +96,12 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       </Section>
 
       {/* Subscription plan — admin can change the tenant's plan tier */}
-      <AdminPlanEditor tenantId={tenantId} currentPlan={tenant.plan_tier || 'starter'} />
+      <AdminPlanEditor
+        tenantId={tenantId}
+        currentPlan={tenant.plan_tier || 'starter'}
+        subscriptionStatus={tenant.subscription_status}
+        subscriptionEnd={tenant.subscription_end ?? null}
+      />
 
       {/* WhatsApp Settings — redaction-safe; never renders any access token */}
       <Section title="WhatsApp Settings">

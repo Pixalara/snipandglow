@@ -2,12 +2,14 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
-import { CreditCard, CheckCircle2, AlertTriangle } from 'lucide-react';
-import { adminUpdateTenantPlan } from './actions';
+import { CreditCard, CheckCircle2, AlertTriangle, Crown } from 'lucide-react';
+import { adminUpdateTenantPlan, adminActivateSubscription } from './actions';
 
 interface Props {
   tenantId: string;
   currentPlan: string;
+  subscriptionStatus?: string;
+  subscriptionEnd?: string | null;
 }
 
 // DB plan_tier values (CHECK: starter | pro | enterprise) mapped to the
@@ -18,7 +20,7 @@ const PLAN_OPTIONS: { value: string; label: string }[] = [
   { value: 'enterprise', label: 'Growth (enterprise)' },
 ];
 
-export function AdminPlanEditor({ tenantId, currentPlan }: Props) {
+export function AdminPlanEditor({ tenantId, currentPlan, subscriptionStatus, subscriptionEnd }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [plan, setPlan] = useState(
@@ -26,6 +28,12 @@ export function AdminPlanEditor({ tenantId, currentPlan }: Props) {
   );
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Subscription activation state.
+  const [months, setMonths] = useState(1);
+  const [actPending, startActTransition] = useTransition();
+  const [actError, setActError] = useState('');
+  const [actSuccess, setActSuccess] = useState(false);
 
   const dirty = plan !== currentPlan;
 
@@ -44,6 +52,25 @@ export function AdminPlanEditor({ tenantId, currentPlan }: Props) {
       }
     });
   }
+
+  function handleActivate() {
+    setActError('');
+    setActSuccess(false);
+    startActTransition(async () => {
+      const res = await adminActivateSubscription(tenantId, months);
+      if (res.success) {
+        setActSuccess(true);
+        router.refresh();
+        setTimeout(() => setActSuccess(false), 2500);
+      } else {
+        setActError(res.error || 'Failed to activate subscription.');
+      }
+    });
+  }
+
+  const endLabel = subscriptionEnd
+    ? new Date(subscriptionEnd).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+    : '—';
 
   const inputCls =
     'w-full h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring';
@@ -90,6 +117,51 @@ export function AdminPlanEditor({ tenantId, currentPlan }: Props) {
             <CheckCircle2 className="size-4 shrink-0" /> Plan updated.
           </div>
         )}
+
+        {/* Subscription activation / extension */}
+        <div className="mt-2 border-t border-border pt-4 space-y-3">
+          <div className="flex items-center gap-2">
+            <Crown className="size-4 text-muted-foreground" />
+            <h3 className="text-sm font-semibold text-foreground">Subscription</h3>
+          </div>
+          <p className="text-xs text-muted-foreground">
+            Status: <span className="font-medium text-foreground capitalize">{subscriptionStatus || '—'}</span>
+            {' · '}Renews / ends: <span className="font-medium text-foreground">{endLabel}</span>
+          </p>
+          <p className="text-xs text-muted-foreground">
+            Activating sets the status to <span className="font-medium">active</span> and extends the end date.
+            Use this after taking payment offline (interim, until Razorpay is live).
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:items-end">
+            <div className="space-y-1">
+              <label className="text-xs font-medium text-muted-foreground">Extend by</label>
+              <select className={inputCls} value={months} onChange={(e) => setMonths(Number(e.target.value))}>
+                <option value={1}>1 month</option>
+                <option value={3}>3 months</option>
+                <option value={6}>6 months</option>
+                <option value={12}>12 months</option>
+              </select>
+            </div>
+            <button
+              onClick={handleActivate}
+              disabled={actPending}
+              className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-emerald-500 disabled:opacity-50"
+            >
+              <Crown className="size-4" />
+              {actPending ? 'Activating...' : 'Activate / Extend'}
+            </button>
+          </div>
+          {actError && (
+            <div className="flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600">
+              <AlertTriangle className="size-4 shrink-0" /> {actError}
+            </div>
+          )}
+          {actSuccess && (
+            <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600">
+              <CheckCircle2 className="size-4 shrink-0" /> Subscription activated &amp; extended.
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
