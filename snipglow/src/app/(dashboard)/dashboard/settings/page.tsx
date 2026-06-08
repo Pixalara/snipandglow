@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
 import { getSubscriptionState } from '@/lib/subscription';
+import { RenewButton } from './renew-button';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -207,18 +208,11 @@ export default async function SettingsPage() {
                 <div>
                   <p className="text-sm font-semibold text-red-800 dark:text-red-200">Your subscription has expired</p>
                   <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                    All features are locked except Dashboard and Settings. Renew your subscription to continue managing appointments, billing, customers, and more.
+                    All features are locked except Dashboard and Settings. Complete your payment to continue managing appointments, billing, customers, and more.
                   </p>
                 </div>
               </div>
-              <Link
-                href="https://snipandglow.com/#pricing"
-                target="_blank"
-                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-pink-500 hover:to-fuchsia-500 transition-all"
-              >
-                <Crown className="size-4" />
-                Renew Subscription — ₹799/mo
-              </Link>
+              <RenewButton />
             </div>
           )}
 

@@ -4,6 +4,7 @@ import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Crown, Lock, AlertTriangle, X } from 'lucide-react';
+import { CompletePaymentModal } from '@/components/complete-payment-modal';
 
 interface SubscriptionGuardProps {
   subscriptionStatus: string;
@@ -24,6 +25,7 @@ export function SubscriptionGuard({
   children,
 }: SubscriptionGuardProps) {
   const pathname = usePathname();
+  const [payOpen, setPayOpen] = useState(false);
 
   // Effective expiry: prefer the computed prop; fall back to explicit status.
   const isExpired =
@@ -35,8 +37,9 @@ export function SubscriptionGuard({
 
   return (
     <>
-      {isExpired && <TrialEndedDialog endedAt={trialEndedAt} />}
-      {!isExpired || isAccessible ? children : <LockedFeature />}
+      {isExpired && <TrialEndedDialog endedAt={trialEndedAt} onPay={() => setPayOpen(true)} />}
+      {!isExpired || isAccessible ? children : <LockedFeature onPay={() => setPayOpen(true)} />}
+      <CompletePaymentModal open={payOpen} onClose={() => setPayOpen(false)} />
     </>
   );
 }
@@ -49,7 +52,7 @@ function formatDate(iso: string | null | undefined): string | null {
 }
 
 /** One-time-per-session popup shown whenever an expired tenant is in the app. */
-function TrialEndedDialog({ endedAt }: { endedAt: string | null | undefined }) {
+function TrialEndedDialog({ endedAt, onPay }: { endedAt: string | null | undefined; onPay: () => void }) {
   const [open, setOpen] = useState(() => {
     if (typeof window === 'undefined') return true;
     // Show once per browser session so it isn't nagging on every navigation.
@@ -97,14 +100,13 @@ function TrialEndedDialog({ endedAt }: { endedAt: string | null | undefined }) {
           </div>
 
           <div className="mt-6 flex w-full flex-col sm:flex-row gap-3">
-            <Link
-              href="/dashboard/settings"
-              onClick={dismiss}
+            <button
+              onClick={() => { dismiss(); onPay(); }}
               className="inline-flex flex-1 items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-pink-500 hover:to-fuchsia-500 transition-all"
             >
               <Crown className="size-4" />
               Complete Payment
-            </Link>
+            </button>
             <button
               onClick={dismiss}
               className="inline-flex items-center justify-center rounded-xl border border-border px-6 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors"
@@ -119,7 +121,7 @@ function TrialEndedDialog({ endedAt }: { endedAt: string | null | undefined }) {
 }
 
 /** Locked content shown on gated pages when expired. */
-function LockedFeature() {
+function LockedFeature({ onPay }: { onPay: () => void }) {
   return (
     <div className="space-y-6">
       <div className="flex flex-col items-center justify-center rounded-2xl border border-red-200 dark:border-red-800/30 bg-gradient-to-br from-red-50 via-rose-50 to-orange-50 dark:from-red-950/20 dark:via-rose-950/10 dark:to-orange-950/10 p-8 sm:p-12 text-center">
@@ -133,13 +135,13 @@ function LockedFeature() {
         </p>
 
         <div className="flex flex-col sm:flex-row items-center gap-3">
-          <Link
-            href="/dashboard/settings"
+          <button
+            onClick={onPay}
             className="inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-pink-500 hover:to-fuchsia-500 transition-all w-full sm:w-auto"
           >
             <Crown className="size-4" />
             Complete Payment
-          </Link>
+          </button>
           <Link
             href="/dashboard"
             className="inline-flex items-center justify-center gap-2 rounded-xl border border-border px-6 py-3 text-sm font-medium text-foreground hover:bg-muted transition-colors w-full sm:w-auto"
