@@ -35,8 +35,8 @@ export default function SignupPage() {
     <div className="space-y-6">
       {/* Header */}
       <div className="text-center space-y-3">
-        <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl bg-gradient-to-br from-pink-500 via-fuchsia-500 to-violet-500 shadow-lg shadow-fuchsia-500/25 mx-auto">
-          <span className="text-2xl font-bold text-white">S</span>
+        <div className="inline-flex items-center justify-center h-16 w-16 rounded-2xl overflow-hidden shadow-lg shadow-fuchsia-500/25 mx-auto bg-white">
+          <img src="/android-chrome-512x512.png" alt="Snip & Glow" className="h-full w-full object-cover" />
         </div>
         <div className="space-y-1">
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Create your account</h1>
