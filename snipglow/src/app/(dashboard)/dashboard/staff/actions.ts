@@ -311,11 +311,12 @@ export async function confirmStaffWhatsApp(
 
 /**
  * Send the staff member their login instructions over WhatsApp once verified.
- * Tries the approved `staff_welcome_v1` template first (works outside the
+ * Tries the approved `staff_welcome_v2` template first (works outside the
  * 24-hour window); falls back to a free-form text message. Best-effort.
  *
- * Template `staff_welcome_v1` body params (in order):
+ * Template `staff_welcome_v2` body params (in order):
  *   {{1}} staff name   {{2}} salon name   {{3}} role   {{4}} login number (phone)
+ * The template also has a static "Open Dashboard" URL button (no param).
  */
 async function sendStaffWelcomeMessage(
   phone10: string,
@@ -335,7 +336,7 @@ async function sendStaffWelcomeMessage(
       to,
       type: 'template',
       template: {
-        name: 'staff_welcome_v1',
+        name: 'staff_welcome_v2',
         language: { code: 'en' },
         components: [
           {
@@ -355,14 +356,13 @@ async function sendStaffWelcomeMessage(
   if (templateRes.ok) return;
 
   // Fallback: free-form text (delivers only if a 24-hour session is open).
+  // Wording mirrors the approved utility template (no "login/password" terms).
   const body =
-    `🎉 Welcome to *${salonName}*, ${staffName}!\n\n` +
-    `You've been added as *${roleLabel}*. You can now log in to the SnipandGlow dashboard:\n\n` +
-    `🔗 https://www.snipandglow.com/login\n` +
-    `Tap *"Staff member? Login with mobile number & password"*\n\n` +
-    `👤 Login ID: *${phone10}* (your mobile number)\n` +
-    `🔑 Password: shared by your salon owner\n\n` +
-    `Need help? Ask your salon owner.`;
+    `Hi ${staffName}, your team account at *${salonName}* is ready. ` +
+    `You've been added as *${roleLabel}* on SnipandGlow.\n\n` +
+    `Open the dashboard: https://www.snipandglow.com/login\n` +
+    `Use your mobile number *${phone10}* to access it. ` +
+    `Your salon owner will share your access details with you.`;
 
   await fetch(`${WA_BASE_URL}/${credentials.phoneNumberId}/messages`, {
     method: 'POST',
