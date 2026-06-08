@@ -225,12 +225,26 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
       key: 'customer',
       header: 'Customer',
       render: (row) => (
-        <div className="flex items-center gap-2">
-          <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-salon-rose/20 to-salon-gold/20">
-            <User className="size-3.5 text-salon-rose" />
+        row.customer_id ? (
+          <Link
+            href={`/dashboard/customers/${row.customer_id}`}
+            className="group flex items-center gap-2"
+          >
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-salon-rose/20 to-salon-gold/20">
+              <User className="size-3.5 text-salon-rose" />
+            </div>
+            <span className="font-medium text-foreground group-hover:text-salon-rose group-hover:underline transition-colors">
+              {row.customer_name}
+            </span>
+          </Link>
+        ) : (
+          <div className="flex items-center gap-2">
+            <div className="flex size-7 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-salon-rose/20 to-salon-gold/20">
+              <User className="size-3.5 text-salon-rose" />
+            </div>
+            <span className="font-medium text-foreground">{row.customer_name}</span>
           </div>
-          <span className="font-medium text-foreground">{row.customer_name}</span>
-        </div>
+        )
       ),
     },
     {
