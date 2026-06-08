@@ -257,7 +257,7 @@ export async function confirmStaffWhatsApp(
   const admin = createAdminClient();
   const { data: emp } = await (admin
     .from('employees')
-    .select('id, phone')
+    .select('id, name, phone, role')
     .eq('id', employeeId)
     .eq('tenant_id', tenantId)
     .single() as any);
@@ -290,8 +290,90 @@ export async function confirmStaffWhatsApp(
     .eq('id', employeeId)
     .eq('tenant_id', tenantId) as any);
 
+  // ── Send login instructions to the staff member's WhatsApp ────────────────
+  // Best-effort; never blocks verification. Includes their role + salon name.
+  try {
+    const { data: tenant } = await (admin
+      .from('tenants')
+      .select('name')
+      .eq('id', tenantId)
+      .single() as any);
+    const salonName = ((tenant?.name as string) || 'the salon').trim();
+    const roleLabel = String(emp.role || 'staff');
+    await sendStaffWelcomeMessage(phone10, emp.name || 'there', salonName, roleLabel);
+  } catch (welcomeErr) {
+    console.error('[StaffVerify] welcome message failed (non-fatal):', welcomeErr);
+  }
+
   revalidatePath('/dashboard/staff');
   return { success: true, data: undefined };
+}
+
+/**
+ * Send the staff member their login instructions over WhatsApp once verified.
+ * Tries the approved `staff_welcome_v1` template first (works outside the
+ * 24-hour window); falls back to a free-form text message. Best-effort.
+ *
+ * Template `staff_welcome_v1` body params (in order):
+ *   {{1}} staff name   {{2}} salon name   {{3}} role   {{4}} login number (phone)
+ */
+async function sendStaffWelcomeMessage(
+  phone10: string,
+  staffName: string,
+  salonName: string,
+  roleLabel: string
+): Promise<void> {
+  const credentials = getPlatformCredentials();
+  if (!credentials) return;
+  const to = `91${phone10}`;
+
+  const templateRes = await fetch(`${WA_BASE_URL}/${credentials.phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${credentials.accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to,
+      type: 'template',
+      template: {
+        name: 'staff_welcome_v1',
+        language: { code: 'en' },
+        components: [
+          {
+            type: 'body',
+            parameters: [
+              { type: 'text', text: staffName },
+              { type: 'text', text: salonName },
+              { type: 'text', text: roleLabel },
+              { type: 'text', text: phone10 },
+            ],
+          },
+        ],
+      },
+    }),
+  });
+
+  if (templateRes.ok) return;
+
+  // Fallback: free-form text (delivers only if a 24-hour session is open).
+  const body =
+    `🎉 Welcome to *${salonName}*, ${staffName}!\n\n` +
+    `You've been added as *${roleLabel}*. You can now log in to the SnipandGlow dashboard:\n\n` +
+    `🔗 https://www.snipandglow.com/login\n` +
+    `Tap *"Staff member? Login with mobile number & password"*\n\n` +
+    `👤 Login ID: *${phone10}* (your mobile number)\n` +
+    `🔑 Password: shared by your salon owner\n\n` +
+    `Need help? Ask your salon owner.`;
+
+  await fetch(`${WA_BASE_URL}/${credentials.phoneNumberId}/messages`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${credentials.accessToken}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messaging_product: 'whatsapp',
+      to,
+      type: 'text',
+      text: { body, preview_url: false },
+    }),
+  });
 }
 
 /**
