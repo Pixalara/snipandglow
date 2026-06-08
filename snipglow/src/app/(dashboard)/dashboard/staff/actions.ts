@@ -563,6 +563,7 @@ export interface StaffPerformance {
 export interface StaffPerformanceResult {
   staff: StaffPerformance[];
   totals: { revenue: number; customers: number; services: number };
+  unattributed: { revenue: number; services: number };
   rangeDays: number;
 }
 
@@ -572,7 +573,7 @@ export interface StaffPerformanceResult {
  * appointment (employee_id). Owner-only.
  */
 export async function getStaffPerformance(days: number = 30): Promise<StaffPerformanceResult> {
-  const empty: StaffPerformanceResult = { staff: [], totals: { revenue: 0, customers: 0, services: 0 }, rangeDays: days };
+  const empty: StaffPerformanceResult = { staff: [], totals: { revenue: 0, customers: 0, services: 0 }, unattributed: { revenue: 0, services: 0 }, rangeDays: days };
 
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -618,19 +619,28 @@ export async function getStaffPerformance(days: number = 30): Promise<StaffPerfo
   let totalRevenue = 0;
   const totalCustomers = new Set<string>();
   let totalServices = 0;
+  // Invoices with no resolvable staff (no appointment link, or appointment has
+  // no employee_id, or that employee no longer exists) so totals reconcile.
+  let unattributedRevenue = 0;
+  let unattributedServices = 0;
 
   for (const inv of invoices ?? []) {
+    const amount = Number(inv.total) || 0;
+    totalRevenue += amount;
+    totalServices += 1;
+    if (inv.customer_id) totalCustomers.add(inv.customer_id);
+
     const empId = inv.appointment_id ? apptEmpMap.get(inv.appointment_id) : null;
-    if (!empId || !empMap.has(empId)) continue; // unattributed invoices skipped
+    if (!empId || !empMap.has(empId)) {
+      unattributedRevenue += amount;
+      unattributedServices += 1;
+      continue;
+    }
     const bucket = agg.get(empId) ?? { revenue: 0, services: 0, customers: new Set<string>() };
-    bucket.revenue += Number(inv.total) || 0;
+    bucket.revenue += amount;
     bucket.services += 1;
     if (inv.customer_id) bucket.customers.add(inv.customer_id);
     agg.set(empId, bucket);
-
-    totalRevenue += Number(inv.total) || 0;
-    totalServices += 1;
-    if (inv.customer_id) totalCustomers.add(inv.customer_id);
   }
 
   const staff: StaffPerformance[] = [...agg.entries()].map(([empId, b]) => {
@@ -652,6 +662,7 @@ export async function getStaffPerformance(days: number = 30): Promise<StaffPerfo
   return {
     staff,
     totals: { revenue: totalRevenue, customers: totalCustomers.size, services: totalServices },
+    unattributed: { revenue: unattributedRevenue, services: unattributedServices },
     rangeDays: days,
   };
 }

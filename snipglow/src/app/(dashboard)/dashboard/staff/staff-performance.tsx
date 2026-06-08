@@ -38,6 +38,7 @@ export function StaffPerformance() {
 
   const staff = data?.staff ?? [];
   const totals = data?.totals ?? { revenue: 0, customers: 0, services: 0 };
+  const unattributed = data?.unattributed ?? { revenue: 0, services: 0 };
   const topPerformer = staff[0] ?? null;
 
   const revenueChart = staff.map((s) => ({ name: s.name, revenue: s.revenue }));
@@ -78,7 +79,7 @@ export function StaffPerformance() {
         <div className="flex items-center justify-center py-16">
           <Loader2 className="size-6 animate-spin text-muted-foreground" />
         </div>
-      ) : staff.length === 0 ? (
+      ) : staff.length === 0 && unattributed.services === 0 ? (
         <div className="flex flex-col items-center justify-center py-16 text-center">
           <div className="flex size-12 items-center justify-center rounded-full bg-muted mb-3">
             <Users className="size-6 text-muted-foreground" />
@@ -170,6 +171,34 @@ export function StaffPerformance() {
                 <div className="col-span-4 sm:col-span-2 text-right font-semibold text-foreground">{formatINR(s.revenue)}</div>
               </div>
             ))}
+
+            {/* Unattributed — bills not linked to a staff member, so totals reconcile */}
+            {unattributed.services > 0 && (
+              <div className="grid grid-cols-12 gap-2 items-center border-t border-border bg-muted/30 px-4 py-3 text-sm">
+                <div className="col-span-5 sm:col-span-4 flex items-center gap-2.5 min-w-0">
+                  <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-muted text-xs font-bold text-muted-foreground">
+                    ?
+                  </span>
+                  <div className="min-w-0">
+                    <p className="truncate font-medium text-muted-foreground">Unattributed</p>
+                    <p className="text-[11px] text-muted-foreground">No staff recorded</p>
+                  </div>
+                </div>
+                <div className="col-span-3 sm:col-span-2 text-center text-muted-foreground">—</div>
+                <div className="hidden sm:block sm:col-span-2 text-center text-muted-foreground">{unattributed.services}</div>
+                <div className="hidden sm:block sm:col-span-2 text-right text-muted-foreground">—</div>
+                <div className="col-span-4 sm:col-span-2 text-right font-semibold text-muted-foreground">{formatINR(unattributed.revenue)}</div>
+              </div>
+            )}
+
+            {/* Total row — reconciles to full billed revenue in range */}
+            <div className="grid grid-cols-12 gap-2 items-center border-t-2 border-border bg-muted/50 px-4 py-3 text-sm">
+              <div className="col-span-5 sm:col-span-4 font-semibold text-foreground">Total</div>
+              <div className="col-span-3 sm:col-span-2 text-center font-semibold text-foreground">{totals.customers}</div>
+              <div className="hidden sm:block sm:col-span-2 text-center font-semibold text-foreground">{totals.services}</div>
+              <div className="hidden sm:block sm:col-span-2 text-right text-muted-foreground">—</div>
+              <div className="col-span-4 sm:col-span-2 text-right font-bold text-foreground">{formatINR(totals.revenue)}</div>
+            </div>
           </div>
         </div>
       )}
