@@ -16,6 +16,8 @@ import {
   Sparkles,
   AlertTriangle,
   ChevronDown,
+  BadgeCheck,
+  KeyRound,
 } from 'lucide-react';
 import type { Employee, Branch, UserRole } from '@/types';
 
@@ -229,36 +231,39 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
       header: 'Login Access',
       render: (row) => {
         if (row.login_method !== 'password') {
-          return <span className="text-xs text-muted-foreground">—</span>;
+          return <span className="text-xs text-muted-foreground">No login</span>;
         }
         const verified = !!row.phone_verified_by_owner;
         return (
           <div className="flex flex-col items-start gap-1.5">
             <span
-              className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+              className={`inline-flex w-fit items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
                 verified
                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
                   : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
               }`}
             >
-              {verified ? 'Verified - can log in' : 'Not verified'}
+              <span className={`size-1.5 rounded-full ${verified ? 'bg-emerald-500' : 'bg-amber-500'}`} />
+              {verified ? 'Verified' : 'Pending'}
             </span>
-            <div className="flex items-center gap-1.5">
+            <div className="flex items-center gap-2">
               {!verified && (
                 <button
                   type="button"
                   onClick={() => { setVerifyTarget(row); setVerifyStep('idle'); setVerifyCode(''); setVerifyMsg(''); setVerifyErr(''); }}
-                  className="rounded-md border border-border px-1.5 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/20"
+                  className="inline-flex items-center gap-1 text-xs font-medium text-violet-600 hover:text-violet-700 dark:text-violet-400 transition-colors"
                 >
-                  Verify WhatsApp
+                  <BadgeCheck className="size-3.5" />
+                  Verify
                 </button>
               )}
               <button
                 type="button"
                 onClick={() => { setResetTarget(row); setResetPw(''); setResetMsg(''); setResetErr(''); }}
-                className="rounded-md border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:bg-muted"
+                className="inline-flex items-center gap-1 text-xs font-medium text-muted-foreground hover:text-foreground transition-colors"
               >
-                Reset password
+                <KeyRound className="size-3.5" />
+                Password
               </button>
             </div>
           </div>
