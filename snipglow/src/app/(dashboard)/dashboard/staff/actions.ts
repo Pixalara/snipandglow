@@ -48,6 +48,68 @@ function isValidStaffPassword(pw: string): boolean {
 const STAFF_PASSWORD_RULE =
   'Password must be at least 6 characters and include a letter, a number, and a special character.';
 
+// =============================================================================
+// Plan-based staff login limits
+//   • Essentials (starter): 5 staff logins total
+//   • Pro:                  10 staff logins total
+//   • Growth (enterprise):  10 staff logins PER BRANCH
+// A "staff login" = an employee row with login_method = 'password'.
+// =============================================================================
+const STAFF_LOGIN_LIMITS = {
+  starter: { perTenant: 5 },
+  pro: { perTenant: 10 },
+  enterprise: { perBranch: 10 },
+} as const;
+
+const PLAN_LABEL: Record<string, string> = {
+  starter: 'Essentials',
+  pro: 'Pro',
+  enterprise: 'Growth',
+};
+
+async function checkStaffLoginLimit(
+  admin: ReturnType<typeof createAdminClient>,
+  tenantId: string,
+  planTier: string,
+  branchId: string
+): Promise<{ allowed: true } | { allowed: false; message: string }> {
+  const plan = (planTier in STAFF_LOGIN_LIMITS ? planTier : 'starter') as keyof typeof STAFF_LOGIN_LIMITS;
+  const label = PLAN_LABEL[plan] ?? 'your';
+
+  if (plan === 'enterprise') {
+    // 10 per branch.
+    const limit = STAFF_LOGIN_LIMITS.enterprise.perBranch;
+    const { count } = await ((admin as any)
+      .from('employees')
+      .select('id', { count: 'exact', head: true })
+      .eq('tenant_id', tenantId)
+      .eq('branch_id', branchId)
+      .eq('login_method', 'password') as any);
+    if ((count ?? 0) >= limit) {
+      return {
+        allowed: false,
+        message: `${label} plan allows up to ${limit} staff logins per branch. This branch has reached its limit.`,
+      };
+    }
+    return { allowed: true };
+  }
+
+  // starter / pro — per tenant total.
+  const limit = STAFF_LOGIN_LIMITS[plan].perTenant;
+  const { count } = await ((admin as any)
+    .from('employees')
+    .select('id', { count: 'exact', head: true })
+    .eq('tenant_id', tenantId)
+    .eq('login_method', 'password') as any);
+  if ((count ?? 0) >= limit) {
+    return {
+      allowed: false,
+      message: `${label} plan allows up to ${limit} staff logins. Upgrade your plan to add more team members.`,
+    };
+  }
+  return { allowed: true };
+}
+
 /**
  * Create a new employee.
  * Requires owner role (enforced by RLS + UI guard).
@@ -98,6 +160,20 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
     }
     if (!isValidStaffPassword(input.password!)) {
       return { success: false, error: STAFF_PASSWORD_RULE };
+    }
+
+    // ── Plan-based staff login limit ─────────────────────────────────────────
+    // Essentials (starter): 5 total · Pro: 10 total · Growth (enterprise): 10 per branch.
+    const { data: tenantRow } = await (admin
+      .from('tenants')
+      .select('plan_tier')
+      .eq('id', tenantId)
+      .single() as any);
+    const planTier = (tenantRow?.plan_tier as string) || 'starter';
+
+    const limitResult = await checkStaffLoginLimit(admin, tenantId, planTier, input.branch_id);
+    if (!limitResult.allowed) {
+      return { success: false, error: limitResult.message };
     }
 
     const loginEmail = staffAuthEmail(phone10);

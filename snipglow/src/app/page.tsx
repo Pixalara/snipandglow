@@ -1209,6 +1209,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-pink-500 mb-3">Everything you need</p>
                   {[
                     { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
+                    { title: 'Up to 5 Staff Logins', desc: 'Give 5 team members their own secure dashboard access' },
                     { title: 'Customer Management', desc: 'Loyalty tiers, memberships & visit history' },
                     { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback (shared number)' },
                     { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow - you pay nothing extra' },
@@ -1293,6 +1294,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">Everything in Essentials, plus</p>
                   {[
                     { title: 'WhatsApp API Setup - one-time fee ₹3,500', desc: 'Meta verification, number registration & template approvals' },
+                    { title: 'Up to 10 Staff Logins', desc: 'Double the team access of Essentials - 10 members with their own dashboards' },
                     { title: 'Own WhatsApp Business API', desc: 'Your phone number, your branding, full control' },
                     { title: 'WhatsApp Marketing Broadcasts', desc: 'Festival offers, birthdays, flash sales & win-back campaigns' },
                     { title: '50+ Marketing Templates', desc: 'Pre-approved for every occasion, ready to use' },
@@ -1373,6 +1375,7 @@ export default function HomePage() {
                   <p className="text-[10px] font-bold uppercase tracking-widest text-pink-400 mb-3">Everything in Pro, plus</p>
                   {[
                     { title: 'Multi-Branch Management', desc: 'Centralized dashboard, branch reports & inter-branch transfers' },
+                    { title: '10 Staff Logins Per Branch', desc: 'Each branch gets up to 10 team members with their own dashboard access' },
                     { title: 'Dedicated Support Specialist', desc: 'Priority WhatsApp & call support with <4hr response time' },
                     { title: 'White-Label Onboarding', desc: 'Dedicated onboarding specialist & custom setup assistance' },
                     { title: 'Advanced Analytics', desc: 'Cross-branch revenue, staff performance & trend reports' },
@@ -1586,6 +1589,10 @@ export default function HomePage() {
             <FaqItem
               question="How does WhatsApp work on each plan?"
               answer="On Essentials, booking confirmations, appointment reminders, bills, and feedback requests are sent automatically from the shared SnipandGlow WhatsApp number - zero setup needed. On Pro and Growth, you connect your own WhatsApp Business number so all messages come from your salon's brand. Pro includes a one-time WhatsApp API setup fee of ₹3,500 (our team handles everything). Growth includes the same setup for free. Pro and Growth also unlock broadcast campaigns (birthday offers, festival deals, win-back messages) to all your customers at once."
+            />
+            <FaqItem
+              question="How many staff can I give login access to?"
+              answer="Each plan includes secure, role-based staff logins (each staff member logs in with their own mobile number and password set by you). Essentials includes up to 5 staff logins, Pro includes up to 10 staff logins, and Growth includes up to 10 staff logins per branch - perfect for multi-location chains. The owner account does not count against these limits, and you can deactivate a staff member anytime to free up a slot."
             />
             <FaqItem
               question="What do I need to connect my own WhatsApp Business API (Pro / Growth)?"
