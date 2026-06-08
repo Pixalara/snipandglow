@@ -49,10 +49,10 @@ export function StaffPerformance() {
   return (
     <div className="rounded-2xl border border-border bg-card overflow-hidden">
       {/* Header */}
-      <div className="flex flex-col gap-3 border-b border-border bg-gradient-to-br from-violet-500/5 to-transparent px-6 py-4 sm:flex-row sm:items-center sm:justify-between">
+      <div className="flex flex-col gap-3 border-b border-border bg-gradient-to-br from-violet-500/5 to-transparent px-4 py-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-2.5">
-          <div className="flex size-9 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
-            <TrendingUp className="size-4.5 text-violet-600 dark:text-violet-400" />
+          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
+            <TrendingUp className="size-4 text-violet-600 dark:text-violet-400" />
           </div>
           <div>
             <h2 className="text-sm font-semibold text-foreground">Staff Performance</h2>
@@ -60,12 +60,12 @@ export function StaffPerformance() {
           </div>
         </div>
         {/* Range tabs */}
-        <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1 w-fit">
+        <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1 w-full sm:w-fit">
           {RANGES.map((r) => (
             <button
               key={r.value}
               onClick={() => setDays(r.value)}
-              className={`rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+              className={`flex-1 sm:flex-none rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
                 days === r.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
               }`}
             >
@@ -90,7 +90,7 @@ export function StaffPerformance() {
           </p>
         </div>
       ) : (
-        <div className="p-6 space-y-6">
+        <div className="p-4 sm:p-6 space-y-6">
           {/* Summary stat cards */}
           <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
             <StatCard icon={<IndianRupee className="size-4" />} tint="emerald" label="Total Revenue" value={formatINR(totals.revenue)} />
