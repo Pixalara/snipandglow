@@ -84,7 +84,8 @@ async function checkStaffLoginLimit(
       .select('id', { count: 'exact', head: true })
       .eq('tenant_id', tenantId)
       .eq('branch_id', branchId)
-      .eq('login_method', 'password') as any);
+      .eq('login_method', 'password')
+      .eq('is_active', true) as any);
     if ((count ?? 0) >= limit) {
       return {
         allowed: false,
@@ -100,7 +101,8 @@ async function checkStaffLoginLimit(
     .from('employees')
     .select('id', { count: 'exact', head: true })
     .eq('tenant_id', tenantId)
-    .eq('login_method', 'password') as any);
+    .eq('login_method', 'password')
+    .eq('is_active', true) as any);
   if ((count ?? 0) >= limit) {
     return {
       allowed: false,
