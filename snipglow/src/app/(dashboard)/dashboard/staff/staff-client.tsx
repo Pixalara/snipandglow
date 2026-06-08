@@ -18,6 +18,10 @@ import {
   ChevronDown,
   BadgeCheck,
   KeyRound,
+  MoreVertical,
+  Pencil,
+  UserPlus,
+  Ban,
 } from 'lucide-react';
 import type { Employee, Branch, UserRole } from '@/types';
 
@@ -70,6 +74,8 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
   const [resetBusy, setResetBusy] = useState(false);
   const [resetMsg, setResetMsg] = useState('');
   const [resetErr, setResetErr] = useState('');
+  // Row actions dropdown (Edit / Role / Deactivate).
+  const [menuOpenId, setMenuOpenId] = useState<string | null>(null);
 
   async function handleSendCode() {
     if (!verifyTarget) return;
@@ -274,37 +280,56 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
       key: 'actions',
       header: '',
       render: (row) => (
-        <div className="flex items-center gap-1">
-          <RoleGuard role={role} action="update" resource="staff">
-            <Button variant="ghost" size="sm" className="rounded-lg text-xs" onClick={() => handleEdit(row)}>
-              Edit
-            </Button>
-          </RoleGuard>
-          <RoleGuard role={role} action="update" resource="staff">
-            <Button
-              variant="ghost"
-              size="sm"
-              className="rounded-lg text-xs text-blue-600 hover:text-blue-700 hover:bg-blue-50 dark:text-blue-400 dark:hover:bg-blue-900/20"
-              onClick={() => { setRoleChangeTarget(row); setRoleChangeError(''); }}
-            >
-              Role
-            </Button>
-          </RoleGuard>
-          <RoleGuard role={role} action="delete" resource="staff">
-            {row.is_active && (
-              <Button
-                variant="ghost"
-                size="sm"
-                className="rounded-lg text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20"
-                onClick={() => {
-                  setDeactivateTarget(row);
-                  setDeactivateError('');
-                }}
-              >
-                Deactivate
-              </Button>
-            )}
-          </RoleGuard>
+        <div className="relative flex justify-end">
+          <button
+            type="button"
+            onClick={() => setMenuOpenId(menuOpenId === row.id ? null : row.id)}
+            className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
+            aria-label="Row actions"
+          >
+            <MoreVertical className="size-4" />
+          </button>
+
+          {menuOpenId === row.id && (
+            <>
+              {/* Click-away backdrop */}
+              <div className="fixed inset-0 z-10" onClick={() => setMenuOpenId(null)} />
+              <div className="absolute right-0 top-9 z-20 w-40 overflow-hidden rounded-xl border border-border bg-card shadow-lg">
+                <RoleGuard role={role} action="update" resource="staff">
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpenId(null); handleEdit(row); }}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <Pencil className="size-3.5 text-muted-foreground" />
+                    Edit
+                  </button>
+                </RoleGuard>
+                <RoleGuard role={role} action="update" resource="staff">
+                  <button
+                    type="button"
+                    onClick={() => { setMenuOpenId(null); setRoleChangeTarget(row); setRoleChangeError(''); }}
+                    className="flex w-full items-center gap-2 px-3 py-2.5 text-sm text-foreground hover:bg-muted transition-colors"
+                  >
+                    <UserPlus className="size-3.5 text-muted-foreground" />
+                    Change role
+                  </button>
+                </RoleGuard>
+                <RoleGuard role={role} action="delete" resource="staff">
+                  {row.is_active && (
+                    <button
+                      type="button"
+                      onClick={() => { setMenuOpenId(null); setDeactivateTarget(row); setDeactivateError(''); }}
+                      className="flex w-full items-center gap-2 border-t border-border px-3 py-2.5 text-sm text-red-600 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20 transition-colors"
+                    >
+                      <Ban className="size-3.5" />
+                      Deactivate
+                    </button>
+                  )}
+                </RoleGuard>
+              </div>
+            </>
+          )}
         </div>
       ),
     },
