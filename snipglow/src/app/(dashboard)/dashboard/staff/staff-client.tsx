@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
+import { StaffPerformance } from './staff-performance';
 import { EmployeeForm } from './employee-form';
 import { deactivateEmployee, changeEmployeeRole, sendStaffWhatsAppCode, confirmStaffWhatsApp, resetEmployeePassword } from './actions';
 import {
@@ -346,6 +347,9 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
           />
         </div>
       )}
+
+      {/* Staff performance metrics */}
+      {role === 'owner' && <StaffPerformance />}
 
       {/* Create/Edit Modal */}
       {showForm && (

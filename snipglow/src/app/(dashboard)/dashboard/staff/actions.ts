@@ -545,3 +545,113 @@ export async function changeEmployeeRole(
   revalidatePath('/dashboard/staff');
   return { success: true, data: undefined };
 }
+
+// =============================================================================
+// Staff Performance Metrics
+// =============================================================================
+
+export interface StaffPerformance {
+  employeeId: string;
+  name: string;
+  role: UserRole;
+  customersServed: number;   // distinct customers billed
+  servicesCount: number;     // total billed line items / appointments
+  revenue: number;           // total billed amount attributed to this staff
+  avgTicket: number;         // revenue / servicesCount
+}
+
+export interface StaffPerformanceResult {
+  staff: StaffPerformance[];
+  totals: { revenue: number; customers: number; services: number };
+  rangeDays: number;
+}
+
+/**
+ * Compute per-staff performance for the current tenant over the last `days`.
+ * Attributes each completed invoice to the staff member on its linked
+ * appointment (employee_id). Owner-only.
+ */
+export async function getStaffPerformance(days: number = 30): Promise<StaffPerformanceResult> {
+  const empty: StaffPerformanceResult = { staff: [], totals: { revenue: 0, customers: 0, services: 0 }, rangeDays: days };
+
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return empty;
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId || user.user_metadata?.role !== 'owner') return empty;
+
+  const admin = createAdminClient();
+
+  const since = new Date();
+  since.setDate(since.getDate() - days);
+  const sinceIso = since.toISOString();
+
+  // Active employees (the people we attribute to).
+  const { data: emps } = await (admin
+    .from('employees')
+    .select('id, name, role, is_active')
+    .eq('tenant_id', tenantId) as any);
+
+  const empMap = new Map<string, { name: string; role: UserRole }>();
+  for (const e of emps ?? []) empMap.set(e.id, { name: e.name, role: e.role });
+
+  // Invoices in range, joined to their appointment's employee_id.
+  const { data: invoices } = await (admin
+    .from('invoices')
+    .select('id, total, customer_id, created_at, appointment_id')
+    .eq('tenant_id', tenantId)
+    .gte('created_at', sinceIso) as any);
+
+  const apptIds = [...new Set((invoices ?? []).map((i: any) => i.appointment_id).filter(Boolean))] as string[];
+  const apptEmpMap = new Map<string, string>();
+  if (apptIds.length > 0) {
+    const { data: appts } = await (admin
+      .from('appointments')
+      .select('id, employee_id')
+      .in('id', apptIds) as any);
+    for (const a of appts ?? []) if (a.employee_id) apptEmpMap.set(a.id, a.employee_id);
+  }
+
+  // Aggregate per employee.
+  const agg = new Map<string, { revenue: number; services: number; customers: Set<string> }>();
+  let totalRevenue = 0;
+  const totalCustomers = new Set<string>();
+  let totalServices = 0;
+
+  for (const inv of invoices ?? []) {
+    const empId = inv.appointment_id ? apptEmpMap.get(inv.appointment_id) : null;
+    if (!empId || !empMap.has(empId)) continue; // unattributed invoices skipped
+    const bucket = agg.get(empId) ?? { revenue: 0, services: 0, customers: new Set<string>() };
+    bucket.revenue += Number(inv.total) || 0;
+    bucket.services += 1;
+    if (inv.customer_id) bucket.customers.add(inv.customer_id);
+    agg.set(empId, bucket);
+
+    totalRevenue += Number(inv.total) || 0;
+    totalServices += 1;
+    if (inv.customer_id) totalCustomers.add(inv.customer_id);
+  }
+
+  const staff: StaffPerformance[] = [...agg.entries()].map(([empId, b]) => {
+    const meta = empMap.get(empId)!;
+    return {
+      employeeId: empId,
+      name: meta.name,
+      role: meta.role,
+      customersServed: b.customers.size,
+      servicesCount: b.services,
+      revenue: b.revenue,
+      avgTicket: b.services > 0 ? Math.round(b.revenue / b.services) : 0,
+    };
+  });
+
+  // Highest revenue first.
+  staff.sort((a, b) => b.revenue - a.revenue);
+
+  return {
+    staff,
+    totals: { revenue: totalRevenue, customers: totalCustomers.size, services: totalServices },
+    rangeDays: days,
+  };
+}
