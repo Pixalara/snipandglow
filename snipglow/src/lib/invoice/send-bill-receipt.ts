@@ -248,6 +248,18 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
       },
     } as any) as any);
 
+    // Reflect the real delivery outcome on the invoice so the customer's billing
+    // history shows an accurate state ('delivered' when sent, else 'failed').
+    try {
+      await (admin
+        .from('invoices' as any)
+        .update({ delivery_status: sendResult.success ? 'delivered' : 'failed' } as any)
+        .eq('invoice_number', invoiceNumber)
+        .eq('tenant_id', tenantId) as any);
+    } catch (deliveryErr) {
+      console.error('[BillReceipt] Failed to update invoice delivery_status:', deliveryErr);
+    }
+
     // Feedback request (single rating ask).
     // The bill above carries a PDF document header — WhatsApp must fetch and
     // process that media before delivering it, whereas this feedback template is
