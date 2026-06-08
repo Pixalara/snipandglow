@@ -136,7 +136,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       <Section title={`Branches (${branches.length})`}>
         <SimpleTable
           headers={['Name', 'Address', 'Default', 'Active']}
-          rows={branches.map((b: any) => [b.name, b.address || '—', b.is_default ? '✓' : '', b.is_active ? '✓' : '✗'])}
+          rows={branches.map((b: any) => [b.name, b.address || '—', b.is_default ? 'Default' : '—', activeCell(b.is_active)])}
         />
       </Section>
 
@@ -144,7 +144,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       <Section title={`Staff (${staff.length})`}>
         <SimpleTable
           headers={['Name', 'Phone', 'Email', 'Role', 'Active']}
-          rows={staff.map((s: any) => [s.name, s.phone || '—', s.email || '—', s.role, s.is_active ? '✓' : '✗'])}
+          rows={staff.map((s: any) => [s.name, s.phone || '—', s.email || '—', roleCell(s.role), activeCell(s.is_active)])}
         />
       </Section>
 
@@ -152,7 +152,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       <Section title={`Services (${services.length})`}>
         <SimpleTable
           headers={['Name', 'Category', 'Price', 'Active']}
-          rows={services.map((s: any) => [s.name, s.category || '—', `₹${s.price}`, s.is_active ? '✓' : '✗'])}
+          rows={services.map((s: any) => [s.name, s.category || '—', `₹${s.price}`, activeCell(s.is_active)])}
         />
       </Section>
 
@@ -168,7 +168,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       <Section title={`Recent Appointments (${appointments.length})`}>
         <SimpleTable
           headers={['Date', 'Time', 'Status', 'Source']}
-          rows={appointments.map((a: any) => [a.appointment_date, a.start_time, a.status, a.source || 'dashboard'])}
+          rows={appointments.map((a: any) => [a.appointment_date, a.start_time, apptStatusCell(a.status), a.source || 'dashboard'])}
         />
       </Section>
     </div>
@@ -199,7 +199,7 @@ function Field({ label, value }: { label: string; value: string }) {
   );
 }
 
-function SimpleTable({ headers, rows }: { headers: string[]; rows: string[][] }) {
+function SimpleTable({ headers, rows }: { headers: string[]; rows: React.ReactNode[][] }) {
   if (rows.length === 0) return <p className="text-sm text-muted-foreground">No data</p>;
   return (
     <div className="overflow-x-auto">
@@ -218,5 +218,50 @@ function SimpleTable({ headers, rows }: { headers: string[]; rows: string[][] })
         </tbody>
       </table>
     </div>
+  );
+}
+
+/** Render an active/inactive value as a colored status pill. */
+function activeCell(isActive: boolean): React.ReactNode {
+  return (
+    <span
+      className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${
+        isActive
+          ? 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400'
+          : 'bg-slate-100 text-slate-500 dark:bg-slate-800 dark:text-slate-400'
+      }`}
+    >
+      <span className={`size-1.5 rounded-full ${isActive ? 'bg-emerald-500' : 'bg-slate-400'}`} />
+      {isActive ? 'Active' : 'Inactive'}
+    </span>
+  );
+}
+
+/** Render an appointment status as a colored pill. */
+function apptStatusCell(status: string): React.ReactNode {
+  const tints: Record<string, string> = {
+    booked: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    confirmed: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400',
+    completed: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+    cancelled: 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400',
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${tints[status] ?? tints.completed}`}>
+      {status}
+    </span>
+  );
+}
+
+/** Render a role value as a subtle capitalized pill. */
+function roleCell(role: string): React.ReactNode {
+  const tints: Record<string, string> = {
+    owner: 'bg-purple-100 text-purple-700 dark:bg-purple-900/30 dark:text-purple-300',
+    manager: 'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-300',
+    staff: 'bg-slate-100 text-slate-600 dark:bg-slate-800 dark:text-slate-300',
+  };
+  return (
+    <span className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium capitalize ${tints[role] ?? tints.staff}`}>
+      {role}
+    </span>
   );
 }
