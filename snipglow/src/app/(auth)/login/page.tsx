@@ -11,7 +11,10 @@ export default function LoginPage() {
   const [phoneLoading, setPhoneLoading] = useState(false);
   const [phone, setPhone] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [mode, setMode] = useState<'choose' | 'phone'>('choose');
+  const [mode, setMode] = useState<'choose' | 'phone' | 'staff'>('choose');
+  const [staffEmail, setStaffEmail] = useState('');
+  const [staffPassword, setStaffPassword] = useState('');
+  const [staffLoading, setStaffLoading] = useState(false);
 
   async function handleGoogleSignIn() {
     setError(null);
@@ -70,6 +73,52 @@ export default function LoginPage() {
     }
   }
 
+  async function handleStaffLogin(e: React.FormEvent) {
+    e.preventDefault();
+    setError(null);
+
+    const email = staffEmail.trim().toLowerCase();
+    if (!email || !staffPassword) {
+      setError('Please enter your email and password.');
+      return;
+    }
+
+    setStaffLoading(true);
+    try {
+      // 1. Pre-flight gate: blocks unverified / deactivated staff before any
+      //    session is issued.
+      const res = await fetch('/api/auth/staff-login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Login is not allowed for this account.');
+        setStaffLoading(false);
+        return;
+      }
+
+      // 2. Gate passed — perform the actual password sign-in (sets cookies).
+      const supabase = createClient();
+      const { error: signInError } = await supabase.auth.signInWithPassword({
+        email,
+        password: staffPassword,
+      });
+      if (signInError) {
+        setError('Invalid email or password.');
+        setStaffLoading(false);
+        return;
+      }
+
+      // 3. Land on the dashboard; middleware routes by role/tenant.
+      router.push('/dashboard');
+    } catch {
+      setError('Network error. Please try again.');
+      setStaffLoading(false);
+    }
+  }
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -116,7 +165,64 @@ export default function LoginPage() {
               <MessageCircle className="h-5 w-5" />
               Login with WhatsApp OTP
             </button>
+
+            {/* Staff login (email + password set by owner) */}
+            <button
+              onClick={() => { setMode('staff'); setError(null); }}
+              className="w-full flex items-center justify-center gap-2 min-h-[44px] text-sm font-medium text-slate-500 hover:text-slate-700 transition-colors"
+            >
+              Staff member? Login with email & password
+            </button>
           </>
+        )}
+
+        {mode === 'staff' && (
+          <form onSubmit={handleStaffLogin} className="space-y-4">
+            <div className="space-y-2">
+              <label htmlFor="staff-email" className="text-sm font-medium text-slate-700">
+                Staff Email
+              </label>
+              <input
+                id="staff-email"
+                type="email"
+                placeholder="you@salon.com"
+                value={staffEmail}
+                onChange={(e) => setStaffEmail(e.target.value)}
+                className="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
+                disabled={staffLoading}
+                autoFocus
+              />
+            </div>
+            <div className="space-y-2">
+              <label htmlFor="staff-password" className="text-sm font-medium text-slate-700">
+                Password
+              </label>
+              <input
+                id="staff-password"
+                type="password"
+                placeholder="Password set by your salon owner"
+                value={staffPassword}
+                onChange={(e) => setStaffPassword(e.target.value)}
+                className="w-full h-11 rounded-xl border border-slate-200 bg-white px-4 text-sm text-slate-900 placeholder:text-slate-400 focus:outline-none focus:ring-2 focus:ring-violet-500/30 focus:border-violet-400 transition-all"
+                disabled={staffLoading}
+              />
+              <p className="text-xs text-slate-400">Your salon owner sets and shares these credentials.</p>
+            </div>
+            <button
+              type="submit"
+              disabled={staffLoading || !staffEmail || !staffPassword}
+              className="w-full flex items-center justify-center gap-2 min-h-[48px] h-12 rounded-xl bg-violet-600 text-white font-medium text-sm hover:bg-violet-700 transition-all shadow-sm disabled:opacity-60 disabled:cursor-not-allowed"
+            >
+              {staffLoading ? 'Signing in...' : 'Sign in'}
+            </button>
+            <button
+              type="button"
+              onClick={() => { setMode('choose'); setError(null); }}
+              className="w-full text-sm text-slate-500 hover:text-slate-700 transition-colors"
+            >
+              ← Back to all options
+            </button>
+          </form>
         )}
 
         {mode === 'phone' && (

@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { EmployeeForm } from './employee-form';
-import { deactivateEmployee, changeEmployeeRole } from './actions';
+import { deactivateEmployee, changeEmployeeRole, setEmployeeVerification } from './actions';
 import {
   Users,
   Plus,
@@ -55,6 +55,16 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
   const [roleChangeError, setRoleChangeError] = useState('');
   const [isChangingRole, setIsChangingRole] = useState(false);
   const [showPermissions, setShowPermissions] = useState(false);
+  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+
+  async function handleVerify(emp: Employee, field: 'email' | 'phone', value: boolean) {
+    setVerifyingId(emp.id + field);
+    await setEmployeeVerification(
+      emp.id,
+      field === 'email' ? { email_verified: value } : { phone_verified: value }
+    );
+    setVerifyingId(null);
+  }
 
   function handleEdit(employee: Employee) {
     setEditingEmployee(employee);
@@ -181,6 +191,59 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
           {row.is_active ? 'Active' : 'Inactive'}
         </span>
       ),
+    },
+    {
+      key: 'login_access',
+      header: 'Login Access',
+      render: (row) => {
+        if (row.login_method !== 'password') {
+          return <span className="text-xs text-muted-foreground">—</span>;
+        }
+        const emailOk = !!row.email_verified_by_owner;
+        const phoneOk = !!row.phone_verified_by_owner;
+        const fullyVerified = emailOk && phoneOk;
+        return (
+          <div className="flex flex-col gap-1">
+            <span
+              className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
+                fullyVerified
+                  ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
+                  : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
+              }`}
+            >
+              {fullyVerified ? 'Verified - can log in' : 'Awaiting verification'}
+            </span>
+            <div className="flex items-center gap-1.5">
+              <button
+                type="button"
+                disabled={verifyingId === row.id + 'email'}
+                onClick={() => handleVerify(row, 'email', !emailOk)}
+                className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                  emailOk
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20'
+                    : 'border-border text-muted-foreground hover:bg-muted'
+                }`}
+                title="Toggle email verification"
+              >
+                {emailOk ? '✓ Email' : 'Verify email'}
+              </button>
+              <button
+                type="button"
+                disabled={verifyingId === row.id + 'phone'}
+                onClick={() => handleVerify(row, 'phone', !phoneOk)}
+                className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
+                  phoneOk
+                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20'
+                    : 'border-border text-muted-foreground hover:bg-muted'
+                }`}
+                title="Toggle WhatsApp/phone verification"
+              >
+                {phoneOk ? '✓ WhatsApp' : 'Verify WhatsApp'}
+              </button>
+            </div>
+          </div>
+        );
+      },
     },
     {
       key: 'actions',

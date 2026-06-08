@@ -36,6 +36,10 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
   const [specializations, setSpecializations] = useState(
     employee?.specializations?.join(', ') ?? ''
   );
+  // Login provisioning (create mode only). When enabled, owner sets a password
+  // and the staff member can log in with email + password.
+  const [enableLogin, setEnableLogin] = useState(false);
+  const [password, setPassword] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState('');
 
@@ -60,6 +64,19 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
       return;
     }
 
+    if (!isEditing && enableLogin) {
+      if (!email.trim()) {
+        setError('Email is required to give this staff member login access.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (password.length < 8) {
+        setError('Password must be at least 8 characters.');
+        setIsSubmitting(false);
+        return;
+      }
+    }
+
     const specs = specializations
       .split(',')
       .map((s) => s.trim())
@@ -72,6 +89,7 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
       role,
       branch_id: branchId,
       specializations: specs,
+      ...(!isEditing && enableLogin ? { password } : {}),
     };
 
     const result = isEditing
@@ -191,6 +209,46 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
           placeholder="e.g., Hair Color, Bridal Makeup, Facials"
         />
       </div>
+
+      {/* Login provisioning — create mode only */}
+      {!isEditing && (
+        <div className="space-y-3 rounded-xl border border-border bg-muted/30 p-4">
+          <label className="flex items-center gap-2.5 cursor-pointer">
+            <input
+              type="checkbox"
+              checked={enableLogin}
+              onChange={(e) => setEnableLogin(e.target.checked)}
+              className="size-4 rounded border-input"
+            />
+            <span className="text-sm font-medium text-foreground">Give this staff member login access</span>
+          </label>
+
+          {enableLogin && (
+            <div className="space-y-3 pt-1">
+              <p className="text-xs text-muted-foreground">
+                You set the email and password. Share these with your staff member - they log in
+                on the same login page. For security, you must verify their email and WhatsApp from
+                the staff list before their first login.
+              </p>
+              <div className="space-y-1.5">
+                <label htmlFor="employee-password" className="text-sm font-medium text-foreground">
+                  Password
+                </label>
+                <Input
+                  id="employee-password"
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="At least 8 characters"
+                />
+                <p className="text-xs text-muted-foreground">
+                  An email above is required when login access is enabled.
+                </p>
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       {/* Error message */}
       {error && (

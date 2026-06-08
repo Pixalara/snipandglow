@@ -25,6 +25,30 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid 10-digit Indian mobile number' }, { status: 400 });
     }
 
+    // ── Guard: password-based staff must use email + password, not OTP ────────
+    // If this phone belongs to a staff member provisioned with a password login,
+    // block the OTP path so they can't bypass the owner's email/phone
+    // verification gate by logging in via WhatsApp OTP.
+    {
+      const admin0 = createAdminClient();
+      const phone10 = phoneE164.slice(2); // strip 91
+      for (const p of [phone10, phoneE164, `+${phoneE164}`]) {
+        const { data: staffRow } = await ((admin0
+          .from('employees') as any)
+          .select('login_method')
+          .eq('phone', p)
+          .eq('login_method', 'password')
+          .limit(1)
+          .maybeSingle() as any);
+        if (staffRow) {
+          return NextResponse.json(
+            { error: 'This number is registered as staff. Please log in with the email and password set by your salon owner.' },
+            { status: 403 }
+          );
+        }
+      }
+    }
+
     // Generate 6-digit OTP
     const otp = String(Math.floor(100000 + Math.random() * 900000));
     const expiresAt = new Date(Date.now() + 5 * 60 * 1000); // 5 minutes

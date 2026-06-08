@@ -92,6 +92,11 @@ export interface Employee {
   specializations: string[];
   is_active: boolean;
   created_at: string;
+  /** Owner-controlled verification gates for staff login (migration 028). */
+  email_verified_by_owner?: boolean;
+  phone_verified_by_owner?: boolean;
+  login_method?: 'otp' | 'oauth' | 'password';
+  must_change_password?: boolean;
 }
 
 /** A person who visits a Branch for services */
@@ -485,6 +490,12 @@ export interface CreateEmployeeInput {
   role: UserRole;
   branch_id: string;
   specializations?: string[];
+  /**
+   * Password the owner sets for a staff member's login. When provided, the
+   * staff account is provisioned with email + password credentials and
+   * login_method='password'. Optional for owner self-onboarding paths.
+   */
+  password?: string;
 }
 
 /** Input for creating a branch */
