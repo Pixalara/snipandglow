@@ -45,8 +45,8 @@ const navGroups: NavGroup[] = [
     label: 'Main',
     items: [
       { label: 'Dashboard', href: '/dashboard', icon: LayoutDashboard, resource: 'dashboard' },
-      { label: 'Appointments', href: '/dashboard/appointments', icon: Calendar, resource: 'appointments' },
       { label: 'Customers', href: '/dashboard/customers', icon: Users, resource: 'customers' },
+      { label: 'Appointments', href: '/dashboard/appointments', icon: Calendar, resource: 'appointments' },
       { label: 'Billing', href: '/dashboard/billing', icon: Receipt, resource: 'billing' },
     ],
   },

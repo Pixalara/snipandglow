@@ -2,6 +2,7 @@
 
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { formatDateIN, formatTimeIST } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
@@ -9,7 +10,7 @@ import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
-import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices, getCustomerMembershipDiscount } from './actions';
+import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices, getActiveEmployees, getCustomerMembershipDiscount } from './actions';
 import {
   Calendar,
   List,
@@ -504,12 +505,28 @@ function CompleteAndBillModal({
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
+  const router = useRouter();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
   const [additionalDiscountPct, setAdditionalDiscountPct] = useState(0);
   const [membershipInfo, setMembershipInfo] = useState<{ discountPct: number; membershipName: string } | null>(null);
   const [loadingMembership, setLoadingMembership] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<{ invoiceNumber: string } | null>(null);
+
+  // Refresh server data (list + calendar reflect the completed/updated appt)
+  // when closing after a successful bill.
+  function handleClose() {
+    if (success) router.refresh();
+    onClose();
+  }
+
+  // Catalog + selections for cross-sell / staff attribution.
+  const [catalog, setCatalog] = useState<{ id: string; name: string; price: number }[]>([]);
+  const [employees, setEmployees] = useState<{ id: string; name: string; role: string }[]>([]);
+  const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(appointment.service_ids ?? []);
+  const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
+  const [addServiceId, setAddServiceId] = useState<string>('');
+  const [loadingLists, setLoadingLists] = useState(true);
 
   // Auto-fetch membership discount for this customer
   useEffect(() => {
@@ -524,18 +541,75 @@ function CompleteAndBillModal({
     fetchMembership();
   }, [appointment.customer_id]);
 
+  // Load services catalog + staff list (owner shown first for default selection).
+  useEffect(() => {
+    async function load() {
+      setLoadingLists(true);
+      const [svc, emp] = await Promise.all([getActiveServices(), getActiveEmployees()]);
+      setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price })));
+      const emps = emp.map((e) => ({ id: e.id, name: e.name, role: e.role }));
+      // Owner first, then the rest by name.
+      emps.sort((a, b) => {
+        if (a.role === 'owner' && b.role !== 'owner') return -1;
+        if (b.role === 'owner' && a.role !== 'owner') return 1;
+        return a.name.localeCompare(b.name);
+      });
+      setEmployees(emps);
+      // Default staff: the appointment's assigned employee if present, else owner (first).
+      const defaultEmp = emps.find((e) => e.id === appointment.employee_id) ?? emps[0];
+      setSelectedEmployeeId(defaultEmp?.id ?? '');
+      // Seed selected services from the appointment.
+      setSelectedServiceIds(
+        (appointment.service_ids && appointment.service_ids.length > 0)
+          ? appointment.service_ids
+          : []
+      );
+      setLoadingLists(false);
+    }
+    load();
+  }, [appointment.employee_id, appointment.service_ids]);
+
+  const selectedServices = catalog.filter((s) => selectedServiceIds.includes(s.id));
+  const servicesSubtotal = selectedServices.reduce((sum, s) => sum + s.price, 0);
+
   // Total discount = membership + additional (capped at 100%)
   const membershipDiscountPct = membershipInfo?.discountPct ?? 0;
   const totalDiscountPct = Math.min(100, membershipDiscountPct + additionalDiscountPct);
 
-  const discountedTotal = appointment.total_amount > 0
-    ? Math.round(appointment.total_amount - (appointment.total_amount * totalDiscountPct / 100))
+  const discountedTotal = servicesSubtotal > 0
+    ? Math.round(servicesSubtotal - (servicesSubtotal * totalDiscountPct / 100))
     : 0;
+
+  function addService() {
+    if (!addServiceId) return;
+    if (!selectedServiceIds.includes(addServiceId)) {
+      setSelectedServiceIds([...selectedServiceIds, addServiceId]);
+    }
+    setAddServiceId('');
+  }
+
+  function removeService(id: string) {
+    setSelectedServiceIds(selectedServiceIds.filter((s) => s !== id));
+  }
 
   function handleConfirm() {
     setError('');
+    if (selectedServiceIds.length === 0) {
+      setError('Add at least one service before generating the bill.');
+      return;
+    }
+    if (!selectedEmployeeId) {
+      setError('Select the staff member who served the customer.');
+      return;
+    }
     startTransition(async () => {
-      const result = await completeAndGenerateBill(appointment.id, paymentMethod, undefined, totalDiscountPct);
+      const result = await completeAndGenerateBill(
+        appointment.id,
+        paymentMethod,
+        selectedServiceIds,
+        totalDiscountPct,
+        selectedEmployeeId
+      );
       if (result.success) {
         setSuccess({ invoiceNumber: result.data.invoiceNumber });
       } else {
@@ -548,7 +622,7 @@ function CompleteAndBillModal({
   if (success) {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center">
-        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
+        <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={handleClose} aria-hidden="true" />
         <div className="relative z-10 w-full max-w-sm rounded-2xl border border-border bg-card p-6 shadow-xl mx-4 max-h-[90vh] overflow-y-auto">
           <div className="flex flex-col items-center gap-4 text-center">
             <div className="flex size-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/20">
@@ -566,7 +640,7 @@ function CompleteAndBillModal({
                   View Bills
                 </Button>
               </Link>
-              <Button className="flex-1 rounded-xl" onClick={onClose}>
+              <Button className="flex-1 rounded-xl" onClick={handleClose}>
                 Done
               </Button>
             </div>
@@ -601,25 +675,80 @@ function CompleteAndBillModal({
               <span className="font-medium text-foreground">{appointment.customer_name}</span>
             </div>
             <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Service</span>
-              <span className="font-medium text-foreground">{appointment.service_name}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
-              <span className="text-muted-foreground">Stylist</span>
-              <span className="text-foreground">{appointment.employee_name}</span>
-            </div>
-            <div className="flex items-center justify-between text-sm">
               <span className="text-muted-foreground">Date & Time</span>
               <span className="text-foreground">
                 {formatDateIN(appointment.appointment_date)}, {formatTimeIST(`1970-01-01T${appointment.start_time}`)}
               </span>
             </div>
-            {appointment.total_amount > 0 && (
-              <div className="flex items-center justify-between text-sm pt-2 border-t border-border mt-2">
-                <span className="font-medium text-foreground">Total Amount</span>
-                <span className="text-lg font-bold text-foreground">₹{appointment.total_amount.toLocaleString('en-IN')}</span>
-              </div>
-            )}
+          </div>
+
+          {/* Served by (staff) — required, owner first by default */}
+          <div className="space-y-1.5">
+            <label className="text-sm font-medium text-foreground">Served by</label>
+            <select
+              value={selectedEmployeeId}
+              onChange={(e) => setSelectedEmployeeId(e.target.value)}
+              disabled={loadingLists}
+              className="w-full h-11 rounded-xl border border-border bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            >
+              {employees.length === 0 && <option value="">Loading staff...</option>}
+              {employees.map((e) => (
+                <option key={e.id} value={e.id}>
+                  {e.name}{e.role === 'owner' ? ' (Owner)' : e.role === 'manager' ? ' (Manager)' : ''}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Services — editable (cross-sell additions before billing) */}
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-foreground">Services</label>
+            <div className="space-y-1.5">
+              {selectedServices.length === 0 && (
+                <p className="text-xs text-muted-foreground">No services selected. Add at least one below.</p>
+              )}
+              {selectedServices.map((s) => (
+                <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
+                  <span className="text-sm text-foreground">{s.name}</span>
+                  <div className="flex items-center gap-2">
+                    <span className="text-sm font-medium text-foreground">₹{s.price.toLocaleString('en-IN')}</span>
+                    <button
+                      type="button"
+                      onClick={() => removeService(s.id)}
+                      className="text-muted-foreground hover:text-red-600 transition-colors"
+                      aria-label={`Remove ${s.name}`}
+                    >
+                      <XCircle className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+            {/* Add service */}
+            <div className="flex items-center gap-2">
+              <select
+                value={addServiceId}
+                onChange={(e) => setAddServiceId(e.target.value)}
+                disabled={loadingLists}
+                className="flex-1 h-11 rounded-xl border border-border bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+              >
+                <option value="">+ Add a service…</option>
+                {catalog
+                  .filter((s) => !selectedServiceIds.includes(s.id))
+                  .map((s) => (
+                    <option key={s.id} value={s.id}>
+                      {s.name} — ₹{s.price.toLocaleString('en-IN')}
+                    </option>
+                  ))}
+              </select>
+              <Button type="button" variant="outline" className="rounded-xl" onClick={addService} disabled={!addServiceId}>
+                Add
+              </Button>
+            </div>
+            <div className="flex items-center justify-between text-sm pt-1">
+              <span className="font-medium text-foreground">Subtotal</span>
+              <span className="text-base font-bold text-foreground">₹{servicesSubtotal.toLocaleString('en-IN')}</span>
+            </div>
           </div>
 
           {/* Discount */}
@@ -680,7 +809,7 @@ function CompleteAndBillModal({
             </div>
 
             {/* Total discount summary */}
-            {totalDiscountPct > 0 && appointment.total_amount > 0 && (
+            {totalDiscountPct > 0 && servicesSubtotal > 0 && (
               <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 space-y-1.5">
                 {membershipInfo && additionalDiscountPct > 0 && (
                   <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">

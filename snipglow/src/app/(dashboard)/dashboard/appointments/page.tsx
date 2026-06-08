@@ -21,6 +21,8 @@ export interface AppointmentRow {
   customer_name: string;
   service_name: string;
   employee_name: string;
+  employee_id: string;
+  service_ids: string[];
   total_amount: number;
 }
 
@@ -123,10 +125,23 @@ export default async function AppointmentsPage() {
     customer_name: custMap[apt.customer_id ?? ''] ?? '—',
     service_name: getServiceNames(apt, svcMap),
     employee_name: empMap[apt.employee_id ?? ''] ?? '—',
+    employee_id: apt.employee_id ?? '',
+    service_ids: getServiceIds(apt),
     total_amount: getServiceTotal(apt, svcMap),
   }));
 
   return <AppointmentsClient appointments={rows} role={role} />;
+}
+
+/** Get the resolved list of service IDs for an appointment (multi-service aware). */
+function getServiceIds(apt: { service_id: string | null; whatsapp_flow_ref?: string | null }): string[] {
+  try {
+    const extraIds = apt.whatsapp_flow_ref ? JSON.parse(apt.whatsapp_flow_ref) : null;
+    if (Array.isArray(extraIds) && extraIds.length > 0) {
+      return extraIds.filter(Boolean);
+    }
+  } catch { /* not JSON */ }
+  return apt.service_id ? [apt.service_id] : [];
 }
 
 /** Get all service names for an appointment (handles multi-service) */

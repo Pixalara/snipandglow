@@ -262,7 +262,8 @@ export async function completeAndGenerateBill(
   appointmentId: string,
   paymentMethod: 'cash' | 'upi' | 'card',
   serviceIds?: string[],
-  customDiscountPct?: number
+  customDiscountPct?: number,
+  employeeId?: string
 ): Promise<ActionResult<{ invoiceId: string; invoiceNumber: string }>> {
   const supabase = await createClient();
 
@@ -302,7 +303,8 @@ export async function completeAndGenerateBill(
     // Not JSON, use just the primary service_id
   }
 
-  // Use provided serviceIds override, or the stored ones
+  // Use provided serviceIds override (staff may add cross-sell services at
+  // billing time), or the stored ones.
   const idsToFetch = serviceIds && serviceIds.length > 0 ? serviceIds : allServiceIds;
   const { data: services } = await supabase
     .from('services')
@@ -311,6 +313,21 @@ export async function completeAndGenerateBill(
 
   if (!services || services.length === 0) {
     return { success: false, error: 'Services not found.' };
+  }
+
+  // Validate the staff member (who performed the service) belongs to this tenant.
+  let performedByEmployeeId: string | null = appointment.employee_id ?? null;
+  if (employeeId) {
+    const { data: emp } = await supabase
+      .from('employees')
+      .select('id')
+      .eq('id', employeeId)
+      .eq('tenant_id', tenantId)
+      .maybeSingle();
+    if (!emp) {
+      return { success: false, error: 'Selected staff member not found.' };
+    }
+    performedByEmployeeId = employeeId;
   }
 
   // 3. Check for active membership discount or use custom discount
@@ -338,10 +355,20 @@ export async function completeAndGenerateBill(
   const taxableAmount = subtotal - discountAmount;
   const total = taxableAmount;
 
-  // 5. Mark appointment as completed
+  // 5. Mark appointment as completed, persist the final service list + the
+  //    staff who performed it, so the appointments list and calendar reflect
+  //    exactly what was billed (cross-sell additions + correct stylist).
+  const finalServiceIds = services.map((s) => s.id);
+  const completionUpdate: Record<string, unknown> = {
+    status: 'completed',
+    service_id: finalServiceIds[0],
+    whatsapp_flow_ref: JSON.stringify(finalServiceIds),
+  };
+  if (performedByEmployeeId) completionUpdate.employee_id = performedByEmployeeId;
+
   const { error: updateError } = await supabase
     .from('appointments')
-    .update({ status: 'completed' })
+    .update(completionUpdate as never)
     .eq('id', appointmentId);
 
   if (updateError) {
