@@ -18,6 +18,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { RowActionsMenu } from '@/components/row-actions-menu';
 import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership, deleteCustomer, getLoyaltyConfig } from './actions';
 import { getLoyaltyTier, DEFAULT_LOYALTY_CONFIG } from '@/lib/loyalty';
 import type { Customer, Membership } from '@/types';
@@ -116,24 +117,14 @@ export function CustomersTable({ customers, loyaltyConfig: initialConfig }: Cust
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
       render: (row) => (
-        <div className="flex items-center gap-1">
-          <button
-            onClick={() => setEditingCustomer(row)}
-            className="inline-flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-            title="Edit customer"
-          >
-            <Pencil className="size-4" />
-          </button>
-          <button
-            onClick={() => setDeletingCustomer(row)}
-            className="inline-flex items-center justify-center size-9 rounded-lg text-muted-foreground hover:text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors"
-            title="Delete customer"
-          >
-            <Trash2 className="size-4" />
-          </button>
-        </div>
+        <RowActionsMenu
+          actions={[
+            { label: 'Edit', icon: <Pencil className="size-3.5" />, onClick: () => setEditingCustomer(row) },
+            { label: 'Delete', icon: <Trash2 className="size-3.5" />, danger: true, onClick: () => setDeletingCustomer(row) },
+          ]}
+        />
       ),
     },
   ];

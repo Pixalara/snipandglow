@@ -5,6 +5,7 @@ import { formatINR } from '@/lib/utils';
 import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
 import { ServiceForm } from './service-form';
+import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
 import { softDeleteService } from './actions';
 import {
   Scissors,
@@ -235,10 +236,21 @@ function ServiceCard({ service, role, onEdit, onDelete }: ServiceCardProps) {
               {service.category}
             </span>
           </div>
-          <div className="shrink-0 text-right">
+          <div className="flex shrink-0 items-start gap-1">
             <span className="text-base font-bold text-foreground">
               {formatINR(service.price)}
             </span>
+            {/* Actions menu — owner/manager only */}
+            {(role === 'owner' || role === 'manager') && (
+              <RowActionsMenu
+                actions={[
+                  { label: 'Edit', icon: <Pencil className="size-3.5" />, onClick: onEdit },
+                  ...(role === 'owner'
+                    ? [{ label: 'Delete', icon: <Trash2 className="size-3.5" />, danger: true, onClick: onDelete } as RowAction]
+                    : []),
+                ]}
+              />
+            )}
           </div>
         </div>
 
@@ -248,22 +260,6 @@ function ServiceCard({ service, role, onEdit, onDelete }: ServiceCardProps) {
             {service.category}
           </span>
         </div>
-
-        {/* Edit/Delete buttons — owner/manager only */}
-        <RoleGuard role={role} action="update" resource="services">
-          <div className="flex items-center gap-2 pt-2 border-t border-border">
-            <Button variant="ghost" size="sm" className="rounded-lg gap-1.5 text-xs" onClick={onEdit}>
-              <Pencil className="size-3" />
-              Edit
-            </Button>
-            <RoleGuard role={role} action="delete" resource="services">
-              <Button variant="ghost" size="sm" className="rounded-lg gap-1.5 text-xs text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-400 dark:hover:bg-red-900/20" onClick={onDelete}>
-                <Trash2 className="size-3" />
-                Delete
-              </Button>
-            </RoleGuard>
-          </div>
-        </RoleGuard>
       </div>
     </div>
   );

@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { formatDateIN, formatTimeIST } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
+import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
@@ -260,51 +261,18 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
     },
     {
       key: 'actions',
-      header: 'Actions',
+      header: '',
       render: (row) => {
         const loading = isPending && actionId === row.id;
         const canAct = row.status === 'booked' || row.status === 'confirmed';
-        return (
-          <div className="flex flex-col gap-1 min-w-[160px]">
-            {canAct && (
-              <div className="grid grid-cols-2 gap-1">
-                <button
-                  onClick={() => setEditTarget(row)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-violet-50 text-violet-700 border border-violet-200 hover:bg-violet-100 transition-colors"
-                >
-                  <Pencil className="size-3" />
-                  Edit
-                </button>
-                <button
-                  onClick={() => setRescheduleTarget(row)}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-amber-50 text-amber-700 border border-amber-200 hover:bg-amber-100 transition-colors"
-                >
-                  <CalendarClock className="size-3" />
-                  Reschedule
-                </button>
-                <button
-                  onClick={() => setCompleteTarget(row)}
-                  disabled={loading}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-emerald-50 text-emerald-700 border border-emerald-200 hover:bg-emerald-100 transition-colors disabled:opacity-50"
-                >
-                  <CircleCheck className="size-3" />
-                  Complete
-                </button>
-                <button
-                  onClick={() => handleStatusChange(row.id, 'cancelled')}
-                  disabled={loading}
-                  className="inline-flex items-center justify-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium bg-red-50 text-red-700 border border-red-200 hover:bg-red-100 transition-colors disabled:opacity-50"
-                >
-                  <XCircle className="size-3" />
-                  Cancel
-                </button>
-              </div>
-            )}
-            {(row.status === 'completed' || row.status === 'cancelled') && (
-              <span className="text-xs text-muted-foreground italic">—</span>
-            )}
-          </div>
-        );
+        if (!canAct) return <span className="text-xs text-muted-foreground">—</span>;
+        const actions: RowAction[] = [
+          { label: 'Edit', icon: <Pencil className="size-3.5" />, onClick: () => setEditTarget(row) },
+          { label: 'Reschedule', icon: <CalendarClock className="size-3.5" />, onClick: () => setRescheduleTarget(row) },
+          { label: 'Mark complete', icon: <CircleCheck className="size-3.5" />, disabled: loading, onClick: () => setCompleteTarget(row) },
+          { label: 'Cancel', icon: <XCircle className="size-3.5" />, danger: true, disabled: loading, onClick: () => handleStatusChange(row.id, 'cancelled') },
+        ];
+        return <RowActionsMenu actions={actions} />;
       },
     },
   ];
