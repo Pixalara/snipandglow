@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { EmployeeForm } from './employee-form';
-import { deactivateEmployee, changeEmployeeRole, setEmployeeVerification } from './actions';
+import { deactivateEmployee, changeEmployeeRole, sendStaffWhatsAppCode, confirmStaffWhatsApp, resetEmployeePassword } from './actions';
 import {
   Users,
   Plus,
@@ -55,15 +55,47 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
   const [roleChangeError, setRoleChangeError] = useState('');
   const [isChangingRole, setIsChangingRole] = useState(false);
   const [showPermissions, setShowPermissions] = useState(false);
-  const [verifyingId, setVerifyingId] = useState<string | null>(null);
+  // Staff WhatsApp verification (owner-driven).
+  const [verifyTarget, setVerifyTarget] = useState<Employee | null>(null);
+  const [verifyStep, setVerifyStep] = useState<'idle' | 'sent'>('idle');
+  const [verifyCode, setVerifyCode] = useState('');
+  const [verifyBusy, setVerifyBusy] = useState(false);
+  const [verifyMsg, setVerifyMsg] = useState('');
+  const [verifyErr, setVerifyErr] = useState('');
+  // Password reset.
+  const [resetTarget, setResetTarget] = useState<Employee | null>(null);
+  const [resetPw, setResetPw] = useState('');
+  const [resetBusy, setResetBusy] = useState(false);
+  const [resetMsg, setResetMsg] = useState('');
+  const [resetErr, setResetErr] = useState('');
 
-  async function handleVerify(emp: Employee, field: 'email' | 'phone', value: boolean) {
-    setVerifyingId(emp.id + field);
-    await setEmployeeVerification(
-      emp.id,
-      field === 'email' ? { email_verified: value } : { phone_verified: value }
-    );
-    setVerifyingId(null);
+  async function handleSendCode() {
+    if (!verifyTarget) return;
+    setVerifyBusy(true); setVerifyErr(''); setVerifyMsg('');
+    const res = await sendStaffWhatsAppCode(verifyTarget.id);
+    setVerifyBusy(false);
+    if (!res.success) { setVerifyErr(res.error); return; }
+    setVerifyStep('sent');
+    setVerifyMsg('Code sent to the staff WhatsApp. Ask them for it and enter below.');
+  }
+
+  async function handleConfirmCode() {
+    if (!verifyTarget) return;
+    setVerifyBusy(true); setVerifyErr(''); setVerifyMsg('');
+    const res = await confirmStaffWhatsApp(verifyTarget.id, verifyCode);
+    setVerifyBusy(false);
+    if (!res.success) { setVerifyErr(res.error); return; }
+    setVerifyTarget(null); setVerifyStep('idle'); setVerifyCode('');
+  }
+
+  async function handleResetPassword() {
+    if (!resetTarget) return;
+    setResetBusy(true); setResetErr(''); setResetMsg('');
+    const res = await resetEmployeePassword(resetTarget.id, resetPw);
+    setResetBusy(false);
+    if (!res.success) { setResetErr(res.error); return; }
+    setResetMsg('Password updated. Share the new password with your staff member.');
+    setResetPw('');
   }
 
   function handleEdit(employee: Employee) {
@@ -199,46 +231,34 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
         if (row.login_method !== 'password') {
           return <span className="text-xs text-muted-foreground">—</span>;
         }
-        const emailOk = !!row.email_verified_by_owner;
-        const phoneOk = !!row.phone_verified_by_owner;
-        const fullyVerified = emailOk && phoneOk;
+        const verified = !!row.phone_verified_by_owner;
         return (
-          <div className="flex flex-col gap-1">
+          <div className="flex flex-col items-start gap-1.5">
             <span
               className={`inline-flex w-fit items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium ${
-                fullyVerified
+                verified
                   ? 'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
                   : 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300'
               }`}
             >
-              {fullyVerified ? 'Verified - can log in' : 'Awaiting verification'}
+              {verified ? 'Verified - can log in' : 'Not verified'}
             </span>
             <div className="flex items-center gap-1.5">
+              {!verified && (
+                <button
+                  type="button"
+                  onClick={() => { setVerifyTarget(row); setVerifyStep('idle'); setVerifyCode(''); setVerifyMsg(''); setVerifyErr(''); }}
+                  className="rounded-md border border-border px-1.5 py-0.5 text-[10px] font-medium text-violet-700 hover:bg-violet-50 dark:text-violet-300 dark:hover:bg-violet-900/20"
+                >
+                  Verify WhatsApp
+                </button>
+              )}
               <button
                 type="button"
-                disabled={verifyingId === row.id + 'email'}
-                onClick={() => handleVerify(row, 'email', !emailOk)}
-                className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
-                  emailOk
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20'
-                    : 'border-border text-muted-foreground hover:bg-muted'
-                }`}
-                title="Toggle email verification"
+                onClick={() => { setResetTarget(row); setResetPw(''); setResetMsg(''); setResetErr(''); }}
+                className="rounded-md border border-border px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground hover:bg-muted"
               >
-                {emailOk ? '✓ Email' : 'Verify email'}
-              </button>
-              <button
-                type="button"
-                disabled={verifyingId === row.id + 'phone'}
-                onClick={() => handleVerify(row, 'phone', !phoneOk)}
-                className={`rounded-md border px-1.5 py-0.5 text-[10px] font-medium transition-colors ${
-                  phoneOk
-                    ? 'border-emerald-200 bg-emerald-50 text-emerald-700 dark:border-emerald-800 dark:bg-emerald-900/20'
-                    : 'border-border text-muted-foreground hover:bg-muted'
-                }`}
-                title="Toggle WhatsApp/phone verification"
-              >
-                {phoneOk ? '✓ WhatsApp' : 'Verify WhatsApp'}
+                Reset password
               </button>
             </div>
           </div>
@@ -348,6 +368,76 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
             branches={branches}
             onClose={handleCloseForm}
           />
+        </Modal>
+      )}
+
+      {/* Staff WhatsApp verification (owner-driven) */}
+      {verifyTarget && (
+        <Modal onClose={() => setVerifyTarget(null)}>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Verify {verifyTarget.name}&apos;s WhatsApp</h2>
+            <p className="text-sm text-muted-foreground">
+              Send a one-time code to <strong>{verifyTarget.phone}</strong> on WhatsApp. Ask your staff
+              member to read it back to you, then enter it here to allow their login.
+            </p>
+
+            {verifyStep === 'idle' ? (
+              <Button className="w-full rounded-xl" onClick={handleSendCode} disabled={verifyBusy}>
+                {verifyBusy ? 'Sending...' : 'Send code to WhatsApp'}
+              </Button>
+            ) : (
+              <div className="space-y-3">
+                <input
+                  type="text"
+                  inputMode="numeric"
+                  maxLength={6}
+                  value={verifyCode}
+                  onChange={(e) => setVerifyCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                  placeholder="Enter the 6-digit code"
+                  className="w-full h-11 rounded-xl border border-input bg-transparent px-4 text-sm tracking-widest outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                />
+                <div className="flex gap-2">
+                  <Button variant="outline" className="flex-1 rounded-xl" onClick={handleSendCode} disabled={verifyBusy}>
+                    Resend
+                  </Button>
+                  <Button className="flex-1 rounded-xl" onClick={handleConfirmCode} disabled={verifyBusy || verifyCode.length < 6}>
+                    {verifyBusy ? 'Verifying...' : 'Confirm & verify'}
+                  </Button>
+                </div>
+              </div>
+            )}
+
+            {verifyMsg && <p className="text-sm text-emerald-600">{verifyMsg}</p>}
+            {verifyErr && <p className="text-sm text-destructive">{verifyErr}</p>}
+          </div>
+        </Modal>
+      )}
+
+      {/* Reset staff password (owner-only) */}
+      {resetTarget && (
+        <Modal onClose={() => setResetTarget(null)}>
+          <div className="space-y-4">
+            <h2 className="text-lg font-semibold text-foreground">Reset {resetTarget.name}&apos;s password</h2>
+            <p className="text-sm text-muted-foreground">
+              Set a new password and share it with your staff member. Their login ID stays their
+              mobile number (<strong>{resetTarget.phone}</strong>).
+            </p>
+            <input
+              type="text"
+              value={resetPw}
+              onChange={(e) => setResetPw(e.target.value)}
+              placeholder="e.g., Salon@1"
+              className="w-full h-11 rounded-xl border border-input bg-transparent px-4 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+            />
+            <p className="text-xs text-muted-foreground">
+              At least 6 characters with a letter, a number, and a special character.
+            </p>
+            <Button className="w-full rounded-xl" onClick={handleResetPassword} disabled={resetBusy || !resetPw}>
+              {resetBusy ? 'Updating...' : 'Update password'}
+            </Button>
+            {resetMsg && <p className="text-sm text-emerald-600">{resetMsg}</p>}
+            {resetErr && <p className="text-sm text-destructive">{resetErr}</p>}
+          </div>
         </Modal>
       )}
 

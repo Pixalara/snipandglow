@@ -4,41 +4,53 @@ import { createAdminClient } from '@/lib/supabase/admin';
 // =============================================================================
 // POST /api/auth/staff-login
 //
-// Pre-flight check for owner-provisioned staff (email + password) login.
-// Enforces the security gate: a staff account cannot log in until the OWNER has
-// verified BOTH the email and the WhatsApp/phone from the owner dashboard.
+// Pre-flight check for staff login. Staff log in with their PHONE NUMBER as the
+// user id + the password the owner set. Internally the phone maps to a synthetic
+// auth email (`<digits>@staff.snipandglow.com`).
 //
-// This endpoint does NOT issue a session itself — the client performs the
-// actual signInWithPassword. It only validates that login is permitted and
-// returns a clear reason if it is blocked, so we never leak a session for an
-// unverified staff account. (signInWithPassword on the client will only be
-// called after this returns ok.)
+// Enforces the security gate: a staff account cannot log in until the OWNER has
+// verified the staff member's WhatsApp number from the owner dashboard.
+//
+// Returns the synthetic email so the client can call signInWithPassword.
 // =============================================================================
+
+function normalizeStaffPhone(raw: string): string | null {
+  const digits = (raw || '').replace(/\D/g, '');
+  const ten = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+  if (ten.length !== 10 || !/^[6-9]/.test(ten)) return null;
+  return ten;
+}
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json();
+    const { phone } = await request.json();
 
-    if (!email || typeof email !== 'string') {
-      return NextResponse.json({ error: 'Email is required' }, { status: 400 });
+    if (!phone || typeof phone !== 'string') {
+      return NextResponse.json({ error: 'Phone number is required' }, { status: 400 });
     }
 
-    const normalized = email.trim().toLowerCase();
+    const phone10 = normalizeStaffPhone(phone);
+    if (!phone10) {
+      return NextResponse.json({ error: 'Enter a valid 10-digit mobile number.' }, { status: 400 });
+    }
+
+    const loginEmail = `${phone10}@staff.snipandglow.com`;
     const admin = createAdminClient();
 
-    // Look up the employee row by email (password-based staff).
+    // Find the password-staff employee row by phone.
     const { data: emp } = await ((admin
       .from('employees') as any)
-      .select('id, is_active, login_method, email_verified_by_owner, phone_verified_by_owner, role')
-      .ilike('email', normalized)
+      .select('id, is_active, login_method, phone_verified_by_owner')
+      .eq('phone', phone10)
       .eq('login_method', 'password')
       .limit(1)
       .maybeSingle() as any);
 
-    // Not a password-staff account — let the normal password flow proceed.
-    // (Owners using email/password, if any, are unaffected.)
     if (!emp) {
-      return NextResponse.json({ ok: true, gated: false });
+      return NextResponse.json(
+        { error: 'No staff login found for this number. Ask your salon owner to create your access.' },
+        { status: 404 }
+      );
     }
 
     if (!emp.is_active) {
@@ -48,19 +60,14 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    if (!emp.email_verified_by_owner || !emp.phone_verified_by_owner) {
-      const pending: string[] = [];
-      if (!emp.email_verified_by_owner) pending.push('email');
-      if (!emp.phone_verified_by_owner) pending.push('WhatsApp number');
+    if (!emp.phone_verified_by_owner) {
       return NextResponse.json(
-        {
-          error: `Your account is awaiting owner verification (${pending.join(' and ')}). Please ask your salon owner to verify you before logging in.`,
-        },
+        { error: 'Your account is awaiting verification by your salon owner. Please ask them to verify your WhatsApp number.' },
         { status: 403 }
       );
     }
 
-    return NextResponse.json({ ok: true, gated: true });
+    return NextResponse.json({ ok: true, email: loginEmail });
   } catch (err) {
     console.error('[StaffLogin] Unexpected error:', err);
     return NextResponse.json({ error: 'Something went wrong. Please try again.' }, { status: 500 });

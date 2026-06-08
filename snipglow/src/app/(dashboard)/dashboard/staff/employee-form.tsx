@@ -65,13 +65,20 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
     }
 
     if (!isEditing && enableLogin) {
-      if (!email.trim()) {
-        setError('Email is required to give this staff member login access.');
+      const phoneDigits = phone.replace(/\D/g, '');
+      const ten = phoneDigits.length === 12 && phoneDigits.startsWith('91') ? phoneDigits.slice(2) : phoneDigits;
+      if (ten.length !== 10) {
+        setError('A valid 10-digit mobile number is required — it is the staff login ID.');
         setIsSubmitting(false);
         return;
       }
-      if (password.length < 8) {
-        setError('Password must be at least 8 characters.');
+      // Policy: >=6 chars, at least one letter, one number, one special char.
+      const okLen = password.length >= 6;
+      const hasLetter = /[A-Za-z]/.test(password);
+      const hasNumber = /[0-9]/.test(password);
+      const hasSpecial = /[^A-Za-z0-9]/.test(password);
+      if (!okLen || !hasLetter || !hasNumber || !hasSpecial) {
+        setError('Password must be at least 6 characters and include a letter, a number, and a special character.');
         setIsSubmitting(false);
         return;
       }
@@ -226,9 +233,10 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
           {enableLogin && (
             <div className="space-y-3 pt-1">
               <p className="text-xs text-muted-foreground">
-                You set the email and password. Share these with your staff member - they log in
-                on the same login page. For security, you must verify their email and WhatsApp from
-                the staff list before their first login.
+                The staff member logs in with their <strong>mobile number</strong> (entered above) as
+                the user ID and the password you set here. Share these with them. Before their first
+                login, verify their WhatsApp number from the staff list (Send code - they tell you the
+                code - you confirm it).
               </p>
               <div className="space-y-1.5">
                 <label htmlFor="employee-password" className="text-sm font-medium text-foreground">
@@ -239,10 +247,10 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
                   type="text"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="At least 8 characters"
+                  placeholder="e.g., Salon@1"
                 />
                 <p className="text-xs text-muted-foreground">
-                  An email above is required when login access is enabled.
+                  At least 6 characters with a letter, a number, and a special character.
                 </p>
               </div>
             </div>

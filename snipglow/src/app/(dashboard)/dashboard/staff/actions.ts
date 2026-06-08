@@ -3,7 +3,50 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { getPlatformCredentials, WA_BASE_URL } from '@/lib/whatsapp/config';
 import type { ActionResult, Employee, CreateEmployeeInput, UserRole } from '@/types';
+
+// =============================================================================
+// Staff login model (phone = user ID, owner-set password)
+// -----------------------------------------------------------------------------
+// • The staff member's USER ID is their phone number. Internally we map this to
+//   a synthetic Supabase auth email (`<digits>@staff.snipandglow.com`) because
+//   Supabase password auth requires an email — the staff never sees or types it.
+// • The OWNER sets the password and shares it with the staff member.
+// • Before first login, the OWNER verifies the staff WhatsApp number by sending
+//   a one-time code (from the owner dashboard) and entering what the staff
+//   member received. This proves the number is reachable/correct.
+// • Owner can reset the password any time. Staff cannot self-reset.
+// =============================================================================
+
+/** Normalize an Indian phone to bare 10 digits (the canonical staff user ID). */
+function normalizeStaffPhone(raw: string): string | null {
+  const digits = (raw || '').replace(/\D/g, '');
+  // Strip 91 country code if present (12-digit 91XXXXXXXXXX).
+  const ten = digits.length === 12 && digits.startsWith('91') ? digits.slice(2) : digits;
+  if (ten.length !== 10 || !/^[6-9]/.test(ten)) return null;
+  return ten;
+}
+
+/** Synthetic auth email for a staff phone (never shown to the user). */
+function staffAuthEmail(phone10: string): string {
+  return `${phone10}@staff.snipandglow.com`;
+}
+
+/**
+ * Password policy for staff logins: at least 6 chars, including at least one
+ * letter, one number, and one special character.
+ */
+function isValidStaffPassword(pw: string): boolean {
+  if (!pw || pw.length < 6) return false;
+  if (!/[A-Za-z]/.test(pw)) return false;
+  if (!/[0-9]/.test(pw)) return false;
+  if (!/[^A-Za-z0-9]/.test(pw)) return false;
+  return true;
+}
+
+const STAFF_PASSWORD_RULE =
+  'Password must be at least 6 characters and include a letter, a number, and a special character.';
 
 /**
  * Create a new employee.
@@ -41,36 +84,38 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
   const admin = createAdminClient();
 
   // ── Staff login provisioning ──────────────────────────────────────────────
-  // When the owner provides a password, we create a real Supabase auth account
-  // (email + password) so the staff member can log in on the same login screen.
-  // The account is gated: the owner must verify the email + phone before the
-  // staff member can actually sign in (enforced at login time).
+  // When the owner provides a password, we create a Supabase auth account whose
+  // login id maps to the staff phone (via a synthetic email). The staff member
+  // logs in with their PHONE NUMBER + this password. The account is gated: the
+  // owner must verify the WhatsApp number before the staff member can sign in.
   const wantsLogin = !!input.password;
   let authUserId: string | null = null;
+  const phone10 = normalizeStaffPhone(input.phone);
 
   if (wantsLogin) {
-    const email = input.email?.trim().toLowerCase();
-    if (!email) {
-      return { success: false, error: 'Email is required to give this staff member login access.' };
+    if (!phone10) {
+      return { success: false, error: 'Enter a valid 10-digit mobile number — it is the staff login ID.' };
     }
-    if (input.password!.length < 8) {
-      return { success: false, error: 'Password must be at least 8 characters.' };
+    if (!isValidStaffPassword(input.password!)) {
+      return { success: false, error: STAFF_PASSWORD_RULE };
     }
 
-    // Reject if this email already has an auth account (avoid hijacking).
+    const loginEmail = staffAuthEmail(phone10);
+
+    // Reject if this phone already has a staff login account.
     const { data: existingList } = await admin.auth.admin.listUsers({ perPage: 1000 });
-    const clash = existingList?.users?.find((u: any) => (u.email || '').toLowerCase() === email);
+    const clash = existingList?.users?.find((u: any) => (u.email || '').toLowerCase() === loginEmail);
     if (clash) {
-      return { success: false, error: 'An account with this email already exists. Use a different email.' };
+      return { success: false, error: 'A staff login already exists for this phone number.' };
     }
 
     const { data: created, error: createErr } = await admin.auth.admin.createUser({
-      email,
+      email: loginEmail,
       password: input.password,
-      email_confirm: true, // owner-provisioned; we gate login via verification flags
+      email_confirm: true, // synthetic email; login gated via verification flag
       user_metadata: {
         name: input.name.trim(),
-        phone: input.phone.trim(),
+        phone: phone10,
         tenant_id: tenantId,
         branch_id: input.branch_id,
         role: input.role,
@@ -92,14 +137,15 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
       branch_id: input.branch_id,
       auth_user_id: authUserId,
       name: input.name.trim(),
-      phone: input.phone.trim(),
+      phone: phone10 ?? input.phone.trim(),
       email: input.email?.trim().toLowerCase() || null,
       role: input.role,
       specializations: input.specializations ?? [],
       is_active: true,
       login_method: wantsLogin ? 'password' : 'otp',
-      // New password-based staff start UNVERIFIED — owner must verify before login.
-      email_verified_by_owner: !wantsLogin,
+      // Password staff start UNVERIFIED — owner verifies WhatsApp before login.
+      // Email verification is no longer used; force it true so it never gates.
+      email_verified_by_owner: true,
       phone_verified_by_owner: !wantsLogin,
     } as any)
     .select()
@@ -107,7 +153,6 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
 
   if (error) {
     console.error('Employee creation error:', error);
-    // Roll back the orphaned auth account if the employee row failed.
     if (authUserId) {
       await admin.auth.admin.deleteUser(authUserId).catch(() => {});
     }
@@ -119,52 +164,139 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
 }
 
 /**
- * Owner verifies a staff member's email and/or WhatsApp/phone. Both must be
- * verified before a password-based staff member can log in (security gate).
+ * Owner sends a one-time WhatsApp verification code to a staff member's number.
+ * The owner then enters what the staff received (confirmStaffWhatsApp) to verify.
  * Requires owner role.
  */
-export async function setEmployeeVerification(
-  employeeId: string,
-  updates: { email_verified?: boolean; phone_verified?: boolean }
-): Promise<ActionResult<void>> {
+export async function sendStaffWhatsAppCode(employeeId: string): Promise<ActionResult<void>> {
   const supabase = await createClient();
-
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
   const tenantId = user.user_metadata?.tenant_id;
-  const role = user.user_metadata?.role;
-  if (role !== 'owner') {
+  if (user.user_metadata?.role !== 'owner') {
     return { success: false, error: 'Only owners can verify staff.' };
   }
 
   const admin = createAdminClient();
+  const { data: emp } = await (admin
+    .from('employees')
+    .select('id, phone, login_method')
+    .eq('id', employeeId)
+    .eq('tenant_id', tenantId)
+    .single() as any);
 
-  // Scope to the owner's tenant so one owner can't verify another salon's staff.
-  const patch: Record<string, unknown> = {};
-  if (updates.email_verified !== undefined) patch.email_verified_by_owner = updates.email_verified;
-  if (updates.phone_verified !== undefined) patch.phone_verified_by_owner = updates.phone_verified;
-  if (Object.keys(patch).length === 0) {
-    return { success: false, error: 'Nothing to update.' };
+  if (!emp) return { success: false, error: 'Staff member not found.' };
+  const phone10 = normalizeStaffPhone(emp.phone);
+  if (!phone10) return { success: false, error: 'Staff has an invalid phone number.' };
+
+  const code = String(Math.floor(100000 + Math.random() * 900000));
+  const expiresAt = new Date(Date.now() + 10 * 60 * 1000).toISOString();
+
+  // Reuse the otp_codes table (keyed by phone) for the staff verification code.
+  await (admin.from('otp_codes').delete().eq('phone', `staff:${phone10}`) as any);
+  const { error: insErr } = await (admin.from('otp_codes').insert({
+    phone: `staff:${phone10}`,
+    code,
+    expires_at: expiresAt,
+  } as any) as any);
+  if (insErr) {
+    console.error('[StaffVerify] code insert failed:', insErr.message);
+    return { success: false, error: 'Could not generate code. Please try again.' };
   }
 
-  const { error } = await (admin
+  // Send the code to the staff member's WhatsApp via the approved OTP template.
+  const credentials = getPlatformCredentials();
+  if (credentials) {
+    try {
+      await fetch(`${WA_BASE_URL}/${credentials.phoneNumberId}/messages`, {
+        method: 'POST',
+        headers: { Authorization: `Bearer ${credentials.accessToken}`, 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          messaging_product: 'whatsapp',
+          to: `91${phone10}`,
+          type: 'template',
+          template: {
+            name: 'otp_verification',
+            language: { code: 'en_US' },
+            components: [
+              { type: 'body', parameters: [{ type: 'text', text: code }, { type: 'text', text: 'Verification' }] },
+              { type: 'button', sub_type: 'url', index: '0', parameters: [{ type: 'text', text: code }] },
+            ],
+          },
+        }),
+      });
+    } catch (waErr) {
+      console.error('[StaffVerify] WhatsApp send error:', waErr);
+      return { success: false, error: 'Could not send WhatsApp code. Please try again.' };
+    }
+  } else {
+    console.log(`[StaffVerify] WhatsApp not configured. Code for ${phone10}: ${code}`);
+  }
+
+  return { success: true, data: undefined };
+}
+
+/**
+ * Owner confirms the WhatsApp code the staff member received. On success the
+ * staff member's phone is verified and they may log in. Requires owner role.
+ */
+export async function confirmStaffWhatsApp(
+  employeeId: string,
+  code: string
+): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (user.user_metadata?.role !== 'owner') {
+    return { success: false, error: 'Only owners can verify staff.' };
+  }
+
+  const admin = createAdminClient();
+  const { data: emp } = await (admin
     .from('employees')
-    .update(patch as any)
+    .select('id, phone')
+    .eq('id', employeeId)
+    .eq('tenant_id', tenantId)
+    .single() as any);
+  if (!emp) return { success: false, error: 'Staff member not found.' };
+
+  const phone10 = normalizeStaffPhone(emp.phone);
+  if (!phone10) return { success: false, error: 'Staff has an invalid phone number.' };
+
+  const { data: codeRow } = await (admin
+    .from('otp_codes')
+    .select('id, code, expires_at')
+    .eq('phone', `staff:${phone10}`)
+    .order('created_at', { ascending: false })
+    .limit(1)
+    .maybeSingle() as any);
+
+  if (!codeRow) return { success: false, error: 'No code found. Send a new code first.' };
+  if (new Date(codeRow.expires_at) < new Date()) {
+    await (admin.from('otp_codes').delete().eq('id', codeRow.id) as any);
+    return { success: false, error: 'Code expired. Send a new code.' };
+  }
+  if (String(codeRow.code) !== String(code).trim()) {
+    return { success: false, error: 'Incorrect code. Please re-check with your staff.' };
+  }
+
+  await (admin.from('otp_codes').delete().eq('id', codeRow.id) as any);
+  await (admin
+    .from('employees')
+    .update({ phone_verified_by_owner: true } as any)
     .eq('id', employeeId)
     .eq('tenant_id', tenantId) as any);
-
-  if (error) {
-    return { success: false, error: 'Failed to update verification. Please try again.' };
-  }
 
   revalidatePath('/dashboard/staff');
   return { success: true, data: undefined };
 }
 
 /**
- * Owner resets a staff member's login password.
- * Requires owner role. Only applies to password-based staff accounts.
+ * Owner resets a staff member's login password. Owner-only; staff cannot
+ * self-reset. Enforces the staff password policy.
  */
 export async function resetEmployeePassword(
   employeeId: string,
@@ -176,12 +308,11 @@ export async function resetEmployeePassword(
   if (!user) return { success: false, error: 'Not authenticated' };
 
   const tenantId = user.user_metadata?.tenant_id;
-  const role = user.user_metadata?.role;
-  if (role !== 'owner') {
+  if (user.user_metadata?.role !== 'owner') {
     return { success: false, error: 'Only owners can reset staff passwords.' };
   }
-  if (!newPassword || newPassword.length < 8) {
-    return { success: false, error: 'Password must be at least 8 characters.' };
+  if (!isValidStaffPassword(newPassword)) {
+    return { success: false, error: STAFF_PASSWORD_RULE };
   }
 
   const admin = createAdminClient();
