@@ -1175,8 +1175,13 @@ export default function HomePage() {
 
             {/* ── ESSENTIALS ─────────────────────────────────── */}
             <div className="relative flex flex-col rounded-3xl overflow-hidden border border-pink-200 bg-gradient-to-b from-pink-50 to-white shadow-md hover:shadow-xl transition-shadow duration-300">
-              {/* Top colour band */}
-              <div className="h-1.5 w-full bg-gradient-to-r from-pink-400 to-rose-400" />
+              {/* Top badge */}
+              <div className="relative">
+                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-400 blur-lg opacity-50" />
+                <div className="relative bg-gradient-to-r from-pink-500 to-rose-400 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
+                  MOST POPULAR
+                </div>
+              </div>
 
               <div className="grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
                 {/* Row 1 - Header (description grows) */}
@@ -1341,7 +1346,7 @@ export default function HomePage() {
               <div className="relative">
                 <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 blur-lg opacity-60" />
                 <div className="relative bg-gradient-to-r from-pink-500 to-violet-500 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
-                  MOST POPULAR
+                  PREMIUM
                 </div>
               </div>
 
