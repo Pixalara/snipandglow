@@ -63,7 +63,7 @@ export function StructuredData() {
       'WhatsApp booking, reminder automation and CRM platform for salons, spas and beauty studios.',
     sameAs: [
       'https://www.linkedin.com/company/pixalara/',
-      'https://www.instagram.com/pixalara/',
+      'https://www.instagram.com/snipandglowapp/',
       'https://x.com/pixalara',
     ],
     contactPoint: {
