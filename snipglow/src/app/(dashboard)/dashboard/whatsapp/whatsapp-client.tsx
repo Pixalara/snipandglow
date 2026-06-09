@@ -658,7 +658,11 @@ function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
   // Interim manual-setup flow (while Embedded Signup / Tech Provider approval is
   // pending). When no Facebook config id is configured, self-serve Embedded
   // Signup cannot complete, so we offer a "Request Setup" flow instead.
-  const embeddedSignupAvailable = Boolean(process.env.NEXT_PUBLIC_FB_CONFIG_ID);
+  // TEMP: force the Embedded Signup "Connect WhatsApp" button to always show so
+  // the flow can be screen-recorded for Meta's Tech Provider / Embedded Signup
+  // review. Revert to `Boolean(process.env.NEXT_PUBLIC_FB_CONFIG_ID)` once the
+  // config id is set in env and review is complete.
+  const embeddedSignupAvailable = true;
   const [setupRequest, setSetupRequest] = useState<{
     status: string;
     contactPhone: string;

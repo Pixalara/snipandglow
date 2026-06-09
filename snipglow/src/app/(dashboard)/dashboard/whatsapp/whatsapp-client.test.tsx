@@ -208,7 +208,13 @@ describe('WhatsAppClient — render by onboarding status', () => {
 // =============================================================================
 // Interim manual-setup flow (when Embedded Signup config id is absent)
 // =============================================================================
-describe('WhatsAppClient — interim manual setup', () => {
+// NOTE: The interim manual-setup flow is temporarily disabled — the Embedded
+// Signup "Connect WhatsApp" button is force-shown so the flow can be
+// screen-recorded for Meta's review (see whatsapp-client.tsx
+// `embeddedSignupAvailable = true`). These tests are skipped until that
+// override is reverted.
+// =============================================================================
+describe.skip('WhatsAppClient — interim manual setup', () => {
   it('shows the Request WhatsApp Setup form (not the connect button) when no config id is present', async () => {
     vi.stubEnv('NEXT_PUBLIC_FB_CONFIG_ID', '');
     vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
