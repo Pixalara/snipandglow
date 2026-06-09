@@ -36,30 +36,45 @@ export async function GET(request: NextRequest) {
   const now = new Date();
   // Window: trials ending between now and 24h from now (i.e. "expires tomorrow").
   const in24h = new Date(now.getTime() + 24 * 60 * 60 * 1000);
+  const TRIAL_DAYS = 15;
 
-  // Trials on the free plan, not yet alerted, ending within the next 24 hours.
-  const { data: tenants } = await (admin
+  // All not-yet-alerted trials. We compute the effective end date in JS so this
+  // works whether or not subscription_end was stamped (old trials fall back to
+  // created_at + 15 days).
+  const { data: candidates } = await (admin
     .from('tenants' as any)
-    .select('id, name, owner_name, phone, subscription_status, subscription_end')
+    .select('id, name, owner_name, phone, subscription_status, subscription_start, subscription_end, created_at')
     .eq('subscription_status', 'trial')
     .eq('trial_expiry_alert_sent', false)
-    .not('subscription_end', 'is', null)
-    .gt('subscription_end', now.toISOString())
-    .lte('subscription_end', in24h.toISOString())
-    .limit(100) as any);
+    .limit(500) as any);
+
+  // Keep only trials whose effective end falls in the next ~24h.
+  const tenants = (candidates ?? []).filter((t: any) => {
+    let end: Date | null = t.subscription_end ? new Date(t.subscription_end) : null;
+    if (!end) {
+      const start = t.subscription_start ? new Date(t.subscription_start) : (t.created_at ? new Date(t.created_at) : null);
+      if (start) {
+        end = new Date(start);
+        end.setDate(end.getDate() + TRIAL_DAYS);
+      }
+    }
+    if (!end || isNaN(end.getTime())) return false;
+    return end.getTime() > now.getTime() && end.getTime() <= in24h.getTime();
+  });
 
   let sent = 0;
   let skipped = 0;
 
-  for (const t of tenants ?? []) {
+  for (const t of tenants) {
     try {
       const ownerPhone = await getOwnerPhone(admin, t.id);
       if (!ownerPhone) { skipped++; continue; }
 
       const name = ((t.owner_name as string) || (t.name as string) || 'there').trim();
-      const expiryLabel = new Date(t.subscription_end).toLocaleDateString('en-IN', {
-        day: 'numeric', month: 'long', year: 'numeric',
-      });
+      // Resolve the effective end again for the label.
+      let end: Date = t.subscription_end ? new Date(t.subscription_end) : new Date(t.subscription_start || t.created_at);
+      if (!t.subscription_end) end.setDate(end.getDate() + TRIAL_DAYS);
+      const expiryLabel = end.toLocaleDateString('en-IN', { day: 'numeric', month: 'long', year: 'numeric' });
 
       const result = await sendMessage(credentials, ownerPhone, {
         type: 'template',
@@ -90,5 +105,5 @@ export async function GET(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({ status: 'ok', sent, skipped, checked: (tenants ?? []).length });
+  return NextResponse.json({ status: 'ok', sent, skipped, checked: tenants.length });
 }
