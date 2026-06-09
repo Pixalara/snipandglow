@@ -26,7 +26,7 @@ export default function RefundPolicyPage() {
       </p>
       <ul>
         <li>The 15-day period starts from the date of your first paid subscription payment</li>
-        <li>This applies to both Starter (₹799/month) and Pro (₹1,199/month) plans</li>
+        <li>This applies to Starter (₹799/month), Pro (₹1,199/month), and Growth (₹1,499/month) plans</li>
         <li>The free trial period does not count toward the 15-day refund window</li>
       </ul>
 

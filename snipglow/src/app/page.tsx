@@ -1272,12 +1272,12 @@ export default function HomePage() {
 
                 {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-violet-700/50">
-                  <p className="text-sm text-violet-400 line-through mb-1">₹1,499/month</p>
+                  <p className="text-sm text-violet-400 line-through mb-1">₹1,999/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
-                    <span className="text-5xl font-extrabold text-white tracking-tight">₹999</span>
+                    <span className="text-5xl font-extrabold text-white tracking-tight">₹1,199</span>
                     <span className="text-base text-slate-400 font-medium">/month</span>
                   </div>
-                  <p className="text-xs text-slate-400 font-medium">₹11,988/year &nbsp;·&nbsp; Single branch &nbsp;·&nbsp; Billed yearly</p>
+                  <p className="text-xs text-slate-400 font-medium">₹14,388/year &nbsp;·&nbsp; Single branch &nbsp;·&nbsp; Billed yearly</p>
                 </div>
 
                 {/* Row 3 - CTA */}
@@ -1353,7 +1353,7 @@ export default function HomePage() {
 
                 {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-slate-700/60">
-                  <p className="text-sm text-slate-500 line-through mb-1">₹1,999/month</p>
+                  <p className="text-sm text-slate-500 line-through mb-1">₹2,999/month</p>
                   <div className="flex items-baseline gap-1.5 mb-2">
                     <span className="text-5xl font-extrabold text-white tracking-tight">₹1,499</span>
                     <span className="text-base text-slate-400 font-medium">/month</span>
@@ -1414,7 +1414,7 @@ export default function HomePage() {
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">No hidden charges</p>
-              <p className="text-xs text-slate-500 mt-1">₹799, ₹999, or ₹1,499 is exactly what you pay. No surprises.</p>
+              <p className="text-xs text-slate-500 mt-1">₹799, ₹1,199, or ₹1,499 is exactly what you pay. No surprises.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">15-day full refund</p>
@@ -2183,3 +2183,4 @@ function ContactSalesModal({ onClose }: { onClose: () => void }) {
     </div>
   );
 }
+
