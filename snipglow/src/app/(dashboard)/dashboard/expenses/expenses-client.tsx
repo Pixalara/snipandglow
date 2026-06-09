@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DataTable, type Column } from '@/components/data-table';
+import { ExportButton } from '@/components/export-button';
 import { RoleGuard } from '@/components/role-guard';
 import { createExpense, updateExpense, deleteExpense } from './actions';
 import {
@@ -251,6 +252,21 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
+        <div className="sm:ml-auto w-full sm:w-auto">
+          <ExportButton
+            filename="expenses"
+            label="Export to Excel"
+            rows={filteredExpenses}
+            columns={[
+              { header: 'Date', value: (r) => r.expense_date },
+              { header: 'Category', value: (r) => CATEGORY_LABELS[r.category] ?? r.category },
+              { header: 'Description', value: (r) => r.description },
+              { header: 'Amount (INR)', value: (r) => r.amount },
+              { header: 'Payment Method', value: (r) => PAYMENT_LABELS[r.payment_method] ?? r.payment_method },
+              { header: 'Note', value: (r) => r.receipt_note ?? '' },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Expenses Table */}

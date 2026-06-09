@@ -7,6 +7,7 @@ import {
 } from 'recharts';
 import { TrendingUp, Users, IndianRupee, Scissors, Trophy, Loader2 } from 'lucide-react';
 import { formatINR } from '@/lib/utils';
+import { ExportButton } from '@/components/export-button';
 import { getStaffPerformance, type StaffPerformanceResult } from './actions';
 
 // =============================================================================
@@ -60,18 +61,33 @@ export function StaffPerformance() {
           </div>
         </div>
         {/* Range tabs */}
-        <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1 w-full sm:w-fit">
-          {RANGES.map((r) => (
-            <button
-              key={r.value}
-              onClick={() => setDays(r.value)}
-              className={`flex-1 sm:flex-none rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
-                days === r.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              {r.label}
-            </button>
-          ))}
+        <div className="flex items-center gap-2 w-full sm:w-auto">
+          <div className="flex flex-1 items-center rounded-xl border border-border bg-muted/50 p-1 sm:flex-none">
+            {RANGES.map((r) => (
+              <button
+                key={r.value}
+                onClick={() => setDays(r.value)}
+                className={`flex-1 sm:flex-none rounded-lg px-3 py-1.5 text-xs font-medium transition-all ${
+                  days === r.value ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
+                }`}
+              >
+                {r.label}
+              </button>
+            ))}
+          </div>
+          <ExportButton
+            filename={`staff-performance-${days}d`}
+            label="Export"
+            rows={staff}
+            columns={[
+              { header: 'Staff', value: (s) => s.name },
+              { header: 'Role', value: (s) => s.role },
+              { header: 'Customers Served', value: (s) => s.customersServed },
+              { header: 'Services Billed', value: (s) => s.servicesCount },
+              { header: 'Avg Ticket (INR)', value: (s) => s.avgTicket },
+              { header: 'Revenue (INR)', value: (s) => s.revenue },
+            ]}
+          />
         </div>
       </div>
 

@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DataTable, type Column } from '@/components/data-table';
+import { ExportButton } from '@/components/export-button';
 import { upsertPayroll, markPayrollPaid } from './actions';
 import {
   BadgeDollarSign,
@@ -250,6 +251,24 @@ export function PayrollClient({ payrollRecords, employees, currentMonth, role }:
           onChange={(e) => setSelectedMonth(e.target.value)}
           className="w-full sm:w-auto rounded-lg"
         />
+        <div className="sm:ml-auto w-full sm:w-auto">
+          <ExportButton
+            filename={`payroll-${selectedMonth}`}
+            label="Export to Excel"
+            rows={filteredRecords}
+            columns={[
+              { header: 'Employee', value: (r) => r.employee_name },
+              { header: 'Month', value: (r) => r.month },
+              { header: 'Base Salary (INR)', value: (r) => r.base_salary },
+              { header: 'Bonus (INR)', value: (r) => r.bonus },
+              { header: 'Deductions (INR)', value: (r) => r.deductions },
+              { header: 'Net Salary (INR)', value: (r) => r.net_salary },
+              { header: 'Status', value: (r) => r.payment_status },
+              { header: 'Paid Date', value: (r) => r.paid_date ?? '' },
+              { header: 'Payment Method', value: (r) => r.payment_method ?? '' },
+            ]}
+          />
+        </div>
       </div>
 
       {/* Payroll Table */}

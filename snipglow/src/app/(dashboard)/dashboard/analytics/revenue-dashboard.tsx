@@ -81,8 +81,8 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
       lines.push(`${h.label},${h.count}`);
     }
 
-    const csv = lines.join('\n');
-    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
+    const csv = lines.join('\r\n');
+    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const link = document.createElement('a');
     link.href = url;

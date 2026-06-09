@@ -19,6 +19,8 @@ import {
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RowActionsMenu } from '@/components/row-actions-menu';
+import { ExportButton } from '@/components/export-button';
+import type { ExportColumn } from '@/lib/export-csv';
 import { updateCustomer, getAvailableMemberships, getCustomerMembership, assignCustomerMembership, deleteCustomer, getLoyaltyConfig } from './actions';
 import { getLoyaltyTier, DEFAULT_LOYALTY_CONFIG } from '@/lib/loyalty';
 import type { Customer, Membership } from '@/types';
@@ -27,6 +29,21 @@ import type { LoyaltyTierConfig } from '@/lib/loyalty';
 /** Customer row with optional active membership info (serialized-safe) */
 export interface CustomerRow extends Customer {
   has_active_membership: boolean;
+}
+
+/** Columns for the customers Excel export. */
+function customerExportColumns(config: LoyaltyTierConfig): ExportColumn<CustomerRow>[] {
+  return [
+    { header: 'Name', value: (r) => r.name },
+    { header: 'Phone', value: (r) => r.phone },
+    { header: 'Email', value: (r) => r.email ?? '' },
+    { header: 'Loyalty Tier', value: (r) => getLoyaltyTier(r.total_visits, config).label },
+    { header: 'Total Visits', value: (r) => r.total_visits },
+    { header: 'Total Spent (INR)', value: (r) => r.total_spent },
+    { header: 'Last Visit', value: (r) => (r.last_visit_at ? formatDateIN(r.last_visit_at) : '') },
+    { header: 'Active Membership', value: (r) => (r.has_active_membership ? 'Yes' : 'No') },
+    { header: 'Joined', value: (r) => (r.created_at ? formatDateIN(r.created_at) : '') },
+  ];
 }
 
 interface CustomersTableProps {
@@ -151,6 +168,15 @@ export function CustomersTable({ customers, loyaltyConfig: initialConfig }: Cust
 
   return (
     <>
+      <div className="flex items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">{customers.length} customer{customers.length !== 1 ? 's' : ''}</p>
+        <ExportButton
+          filename="customers"
+          label="Export to Excel"
+          rows={customers}
+          columns={customerExportColumns(loyaltyConfig)}
+        />
+      </div>
       <div className="rounded-xl border border-border overflow-hidden">
         <DataTable
           columns={columns}
