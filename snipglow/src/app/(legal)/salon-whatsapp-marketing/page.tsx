@@ -175,7 +175,7 @@ export default function SalonWhatsAppMarketingPage() {
         </p>
 
         <p>
-          The <strong>Pro plan at ₹999/month</strong> adds your own WhatsApp Business number so
+          The <strong>Pro plan at ₹1,199/month</strong> adds your own WhatsApp Business number so
           all messages come from your salon brand, plus broadcast campaign capabilities and marketing
           templates.
         </p>

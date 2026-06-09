@@ -171,7 +171,7 @@ export default function BestSalonSoftwareIndiaPage() {
         </p>
         <ul>
           <li><strong>Essentials - ₹799/month:</strong> WhatsApp automation (shared number), appointments, billing, CRM, staff management, analytics. All WhatsApp costs covered.</li>
-          <li><strong>Pro - ₹999/month:</strong> Own WhatsApp Business number, broadcast campaigns, 50+ marketing templates.</li>
+          <li><strong>Pro - ₹1,199/month:</strong> Own WhatsApp Business number, broadcast campaigns, 50+ marketing templates.</li>
           <li><strong>Growth - ₹1,499/month:</strong> Multi-branch management, centralised reporting.</li>
         </ul>
         <p>

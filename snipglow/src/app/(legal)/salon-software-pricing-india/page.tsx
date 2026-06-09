@@ -128,7 +128,7 @@ export default function SalonSoftwarePricingIndiaPage() {
               <tr className="bg-slate-50">
                 <th className="text-left p-3 border border-slate-200 font-semibold">Feature</th>
                 <th className="text-center p-3 border border-slate-200 font-semibold">Essentials<br/><span className="font-normal text-slate-500">₹799/mo</span></th>
-                <th className="text-center p-3 border border-slate-200 font-semibold">Pro<br/><span className="font-normal text-slate-500">₹999/mo</span></th>
+                <th className="text-center p-3 border border-slate-200 font-semibold">Pro<br/><span className="font-normal text-slate-500">₹1,199/mo</span></th>
                 <th className="text-center p-3 border border-slate-200 font-semibold">Growth<br/><span className="font-normal text-slate-500">₹1,499/mo</span></th>
               </tr>
             </thead>

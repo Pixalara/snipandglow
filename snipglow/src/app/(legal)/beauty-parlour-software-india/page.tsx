@@ -136,7 +136,7 @@ export default function BeautyParlourSoftwareIndiaPage() {
 
         <ul>
           <li><strong>Essentials - ₹799/month:</strong> Appointments, billing, CRM, WhatsApp automation, staff management, and analytics. All WhatsApp messaging costs are covered by Snip and Glow.</li>
-          <li><strong>Pro - ₹999/month:</strong> Everything in Essentials plus your own WhatsApp Business number and broadcast campaign capabilities.</li>
+          <li><strong>Pro - ₹1,199/month:</strong> Everything in Essentials plus your own WhatsApp Business number and broadcast campaign capabilities.</li>
           <li><strong>Growth - ₹1,499/month:</strong> Multi-branch management for parlour chains with centralised reporting.</li>
         </ul>
 
