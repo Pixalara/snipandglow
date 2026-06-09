@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { formatISTDate } from '@/lib/datetime';
+import { planLabel } from '@/lib/subscription';
 import Link from 'next/link';
 
 // =============================================================================
@@ -80,7 +81,7 @@ export default async function AdminTenantsPage() {
                   <td className="px-4 py-3 text-foreground/80">{t.owner_name || '—'}</td>
                   <td className="px-4 py-3 text-muted-foreground">{t.phone || '—'}</td>
                   <td className="px-4 py-3">
-                    <span className="text-xs px-2 py-0.5 rounded bg-muted text-foreground/80">{t.plan_tier || 'starter'}</span>
+                    <span className="text-xs px-2 py-0.5 rounded bg-muted text-foreground/80">{planLabel(t.plan_tier)}</span>
                   </td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${

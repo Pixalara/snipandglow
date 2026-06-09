@@ -13,6 +13,25 @@
 
 export const TRIAL_DAYS = 15;
 
+// =============================================================================
+// Plan tier display labels.
+//
+// The DB stores raw plan tiers ('starter' | 'pro' | 'enterprise') but the
+// product is marketed with friendlier names. Use this helper anywhere a plan
+// tier is shown to a human so admin/UI surfaces stay consistent.
+// =============================================================================
+export function planLabel(tier?: string | null): string {
+  switch ((tier || '').toLowerCase()) {
+    case 'pro':
+      return 'Pro';
+    case 'enterprise':
+      return 'Growth';
+    case 'starter':
+    default:
+      return 'Essentials';
+  }
+}
+
 export interface SubscriptionState {
   isExpired: boolean;
   isTrial: boolean;

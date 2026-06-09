@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/auth';
 import { formatISTDate } from '@/lib/datetime';
+import { planLabel } from '@/lib/subscription';
 
 export default async function AdminSubscriptionsPage() {
   await requireAdmin();
@@ -55,7 +56,7 @@ export default async function AdminSubscriptionsPage() {
                   <td className="px-4 py-3 font-mono text-xs text-muted-foreground">{t.tenant_code}</td>
                   <td className="px-4 py-3 text-foreground font-medium">{t.name}</td>
                   <td className="px-4 py-3 text-foreground/80">{t.owner_name || '—'}</td>
-                  <td className="px-4 py-3 text-xs text-foreground/80">{t.plan_tier || 'starter'}</td>
+                  <td className="px-4 py-3 text-xs text-foreground/80">{planLabel(t.plan_tier)}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
