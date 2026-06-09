@@ -1222,7 +1222,7 @@ export default function HomePage() {
                     { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
                     { title: 'Up to 5 Staff Logins', desc: 'Give 5 team members their own secure dashboard access' },
                     { title: 'Customer Management', desc: 'Loyalty tiers, memberships & visit history' },
-                    { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback (shared number)' },
+                    { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback' },
                     { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow - you pay nothing extra' },
                     { title: 'Analytics & Reports', desc: 'Revenue, insights & staff performance dashboard' },
                     { title: 'WhatsApp Booking', desc: 'Clients book via WhatsApp, QR code or booking link - no app download needed' },
