@@ -29,6 +29,23 @@ export async function GET(request: NextRequest) {
 
   const admin = createAdminClient();
 
+  // ── Plan gating ───────────────────────────────────────────────────────────
+  // Win-back is a MARKETING feature — Pro & Growth only. Essentials (starter)
+  // tenants are strictly excluded. We also skip expired/cancelled tenants.
+  // Build the set of eligible tenant ids up front.
+  const { data: eligibleTenants } = await (admin
+    .from('tenants' as any)
+    .select('id, plan_tier, subscription_status')
+    .in('plan_tier', ['pro', 'enterprise'])
+    .neq('subscription_status', 'expired')
+    .neq('subscription_status', 'cancelled') as any);
+  const eligibleTenantIds = new Set<string>((eligibleTenants ?? []).map((t: any) => t.id));
+
+  // If no Pro/Growth tenants exist, there's nothing to send.
+  if (eligibleTenantIds.size === 0) {
+    return NextResponse.json({ status: 'ok', sent_30d: 0, sent_60d: 0, note: 'no Pro/Growth tenants' });
+  }
+
   // Get IST date
   const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
   const [todayDate] = nowIST.split(', ');
@@ -72,6 +89,8 @@ export async function GET(request: NextRequest) {
 
   for (const customer of customers30d ?? []) {
     try {
+      // Plan gate: only Pro/Growth tenants get win-back (marketing) messages.
+      if (!eligibleTenantIds.has(customer.tenant_id)) continue;
       if (!customer.phone) continue;
       const phone = customer.phone.replace(/\D/g, '');
       if (!phone || phone.length < 10) continue;
@@ -137,6 +156,8 @@ export async function GET(request: NextRequest) {
 
   for (const customer of customers60d ?? []) {
     try {
+      // Plan gate: only Pro/Growth tenants get win-back (marketing) messages.
+      if (!eligibleTenantIds.has(customer.tenant_id)) continue;
       if (!customer.phone) continue;
       const phone = customer.phone.replace(/\D/g, '');
       if (!phone || phone.length < 10) continue;

@@ -800,6 +800,7 @@ export default function HomePage() {
                     icon: '🎁',
                     title: 'Win-Back Campaigns',
                     desc: 'Automated 30-day and 60-day reminders with special offers to bring back inactive customers.',
+                    pro: true,
                   },
                 ].map((item) => (
                   <div key={item.title} className="flex items-start gap-4 feature-card-item">
@@ -807,7 +808,12 @@ export default function HomePage() {
                       {item.icon}
                     </div>
                     <div>
-                      <h3 className="text-base font-bold text-slate-900">{item.title}</h3>
+                      <h3 className="text-base font-bold text-slate-900 flex items-center gap-2">
+                        {item.title}
+                        {(item as { pro?: boolean }).pro && (
+                          <span className="inline-flex items-center rounded-full bg-violet-100 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wide text-violet-700">Pro</span>
+                        )}
+                      </h3>
                       <p className="text-sm text-slate-500 mt-1 leading-relaxed">{item.desc}</p>
                     </div>
                   </div>
@@ -1230,7 +1236,7 @@ export default function HomePage() {
 
                   <div className="pt-5 mt-5 border-t border-pink-100 space-y-2">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Not included</p>
-                    {['Own WhatsApp Business API', 'Marketing broadcasts', 'Multi-branch management'].map((f) => (
+                    {['Own WhatsApp Business API', 'Marketing broadcasts', 'Win-back campaigns (30 & 60 day)', 'Multi-branch management'].map((f) => (
                       <div key={f} className="flex items-center gap-2.5">
                         <span className="flex h-4 w-4 shrink-0 items-center justify-center rounded-full bg-slate-100">
                           <span className="text-slate-400 text-[10px] font-bold">✕</span>
@@ -1297,6 +1303,7 @@ export default function HomePage() {
                     { title: 'Up to 10 Staff Logins', desc: 'Double the team access of Essentials - 10 members with their own dashboards' },
                     { title: 'Own WhatsApp Business API', desc: 'Your phone number, your branding, full control' },
                     { title: 'WhatsApp Marketing Broadcasts', desc: 'Festival offers, birthdays, flash sales & win-back campaigns' },
+                    { title: 'Win-Back Campaigns', desc: 'Automated 30-day & 60-day reminders with special offers to bring back inactive customers' },
                     { title: '50+ Marketing Templates', desc: 'Pre-approved for every occasion, ready to use' },
                     { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
                     { title: 'Priority Support', desc: 'WhatsApp & call support with <4hr response time' },
