@@ -144,7 +144,7 @@ export default function TermsPage() {
       </p>
       <ul>
         <li><strong>Email:</strong>{' '}
-          <a href="mailto:dileep.cloudops@gmail.com" className="text-emerald-600 hover:underline">dileep.cloudops@gmail.com</a>
+          <a href="mailto:snipandglow.support@pixalara.com" className="text-emerald-600 hover:underline">snipandglow.support@pixalara.com</a>
         </li>
         <li><strong>Website:</strong>{' '}
           <a href="https://snipandglow.com" className="text-emerald-600 hover:underline">snipandglow.com</a>

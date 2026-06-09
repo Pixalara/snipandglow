@@ -35,7 +35,7 @@ export default function RefundPolicyPage() {
       <ol>
         <li>
           Send an email to{' '}
-          <a href="mailto:dileep.cloudops@gmail.com" className="text-emerald-600 hover:underline">dileep.cloudops@gmail.com</a>{' '}
+          <a href="mailto:snipandglow.support@pixalara.com" className="text-emerald-600 hover:underline">snipandglow.support@pixalara.com</a>{' '}
           with the subject line &quot;Refund Request&quot;
         </li>
         <li>Include your registered email address and salon name</li>
@@ -96,7 +96,7 @@ export default function RefundPolicyPage() {
       </p>
       <ul>
         <li><strong>Email:</strong>{' '}
-          <a href="mailto:dileep.cloudops@gmail.com" className="text-emerald-600 hover:underline">dileep.cloudops@gmail.com</a>
+          <a href="mailto:snipandglow.support@pixalara.com" className="text-emerald-600 hover:underline">snipandglow.support@pixalara.com</a>
         </li>
         <li><strong>Website:</strong>{' '}
           <a href="https://snipandglow.com" className="text-emerald-600 hover:underline">snipandglow.com</a>

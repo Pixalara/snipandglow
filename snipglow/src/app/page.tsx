@@ -1706,7 +1706,7 @@ export default function HomePage() {
             <Link href="/privacy" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Privacy Policy</Link>
             <Link href="/terms" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Terms of Service</Link>
             <Link href="/refund" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Refund Policy</Link>
-            <a href="mailto:dileep.cloudops@gmail.com" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Contact</a>
+            <a href="mailto:snipandglow.support@pixalara.com" className="text-xs text-slate-500 hover:text-slate-300 transition-colors">Contact</a>
           </div>
 
           {/* SEO resources - crawlable internal links */}
