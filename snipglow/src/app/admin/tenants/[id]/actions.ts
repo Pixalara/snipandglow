@@ -300,6 +300,8 @@ export async function adminActivateSubscription(
       subscription_status: 'active',
       subscription_start: start,
       subscription_end: newEnd.toISOString(),
+      // Reset so a future expiry can alert again.
+      trial_expiry_alert_sent: false,
     } as any)
     .eq('id', tenantId) as any);
 
