@@ -83,10 +83,15 @@ export async function GET(request: NextRequest) {
           language: { code: 'en' },
           components: [
             {
+              type: 'header',
+              parameters: [
+                { type: 'text', text: expiryLabel },
+              ],
+            },
+            {
               type: 'body',
               parameters: [
                 { type: 'text', text: name },
-                { type: 'text', text: expiryLabel },
               ],
             },
           ],
