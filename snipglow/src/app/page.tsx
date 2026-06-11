@@ -242,7 +242,7 @@ export default function HomePage() {
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
-              Trusted by 500+ Indian Salon Owners
+              Your competitors just got smarter. Have you?
             </div>
 
             <div className="space-y-4">
