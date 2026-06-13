@@ -899,6 +899,7 @@ export default function HomePage() {
                       'Service popularity',
                       'Expense tracking',
                       'Payroll management',
+                      'Product inventory & retail',
                       'Audit trails',
                     ].map((f) => (
                       <div key={f} className="flex items-center gap-2">
@@ -1222,6 +1223,7 @@ export default function HomePage() {
                     { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
                     { title: 'Up to 5 Staff Logins', desc: 'Give 5 team members their own secure dashboard access' },
                     { title: 'Customer Management', desc: 'Loyalty tiers, memberships & visit history' },
+                    { title: 'Product Inventory', desc: 'Track retail products, stock levels and sell them on any bill' },
                     { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback' },
                     { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow - you pay nothing extra' },
                     { title: 'Analytics & Reports', desc: 'Revenue, insights & staff performance dashboard' },
