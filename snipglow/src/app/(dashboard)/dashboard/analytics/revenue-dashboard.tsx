@@ -218,7 +218,7 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
           icon={<Wallet className="size-4" />}
           title="Product Cost"
           value={formatINR(stats.productCost)}
-          subtitle="Cost of goods sold"
+          subtitle="Buying cost of sold products"
           iconBg="bg-rose-100 dark:bg-rose-900/30"
           iconColor="text-rose-600 dark:text-rose-400"
         />
