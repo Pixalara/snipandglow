@@ -434,10 +434,18 @@ export async function completeAndGenerateBill(
     return { success: false, error: 'Appointment completed but failed to generate bill.' };
   }
 
-  // 7. Create invoice line items for ALL services
+  // 7. Create invoice line items for ALL services.
+  // IMPORTANT: every object below MUST carry the SAME set of keys
+  // (service_id, product_id, item_type, …). PostgREST derives the column set
+  // for a bulk insert from the FIRST object in the array — any keys missing
+  // there are dropped for the whole batch. If service rows (which come first)
+  // omitted item_type/product_id, the product rows would silently lose those
+  // columns and never appear in Revenue analytics.
   const lineItems = services.map((svc) => ({
     invoice_id: invoice.id,
     service_id: svc.id,
+    product_id: null as string | null,
+    item_type: 'service',
     service_name: svc.name,
     unit_price: svc.price,
     quantity: 1,
@@ -450,7 +458,7 @@ export async function completeAndGenerateBill(
     const pr = productRows.find((r) => r.id === pid)!;
     return {
       invoice_id: invoice.id,
-      service_id: null,
+      service_id: null as string | null,
       product_id: pid,
       item_type: 'product',
       service_name: pr.name,
@@ -460,7 +468,12 @@ export async function completeAndGenerateBill(
     };
   });
 
-  await supabase.from('invoice_items').insert([...lineItems, ...productLineItems] as any);
+  const { error: itemsError } = await supabase
+    .from('invoice_items')
+    .insert([...lineItems, ...productLineItems] as any);
+  if (itemsError) {
+    console.error('completeAndGenerateBill invoice_items insert error:', itemsError);
+  }
 
   // 7b. Decrement product stock + record 'sale' movements (best-effort).
   if (qtyByProduct.size > 0) {
