@@ -7,7 +7,7 @@ import { formatTimeIST, formatDateIN } from '@/lib/utils';
 import {
   updateAppointmentStatus, completeAndGenerateBill,
   getSlotsForReschedule, rescheduleAppointment,
-  getCustomerMembershipDiscount, getActiveServices, getActiveEmployees,
+  getCustomerMembershipDiscount, getActiveServices, getActiveEmployees, getActiveProducts,
 } from './actions';
 import {
   CalendarClock, CircleCheck, XCircle, X, User, Scissors,
@@ -273,6 +273,9 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [addServiceId, setAddServiceId] = useState<string>('');
   const [loadingLists, setLoadingLists] = useState(true);
+  const [productCatalog, setProductCatalog] = useState<{ id: string; name: string; price: number; stock: number; unit: string }[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<{ id: string; name: string; price: number; quantity: number; maxStock: number }[]>([]);
+  const [addProductId, setAddProductId] = useState<string>('');
 
   useEffect(() => {
     getCustomerMembershipDiscount(appointment.customer_id).then(info => {
@@ -284,8 +287,9 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
   useEffect(() => {
     async function load() {
       setLoadingLists(true);
-      const [svc, emp] = await Promise.all([getActiveServices(), getActiveEmployees()]);
+      const [svc, emp, prods] = await Promise.all([getActiveServices(), getActiveEmployees(), getActiveProducts()]);
       setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price })));
+      setProductCatalog(prods.map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), stock: Number(p.stock_quantity), unit: p.unit })));
       const emps = emp.map((e) => ({ id: e.id, name: e.name, role: e.role }));
       emps.sort((a, b) => {
         if (a.role === 'owner' && b.role !== 'owner') return -1;
@@ -303,10 +307,12 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
 
   const selectedServices = catalog.filter((s) => selectedServiceIds.includes(s.id));
   const servicesSubtotal = selectedServices.reduce((sum, s) => sum + s.price, 0);
+  const productsSubtotal = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
+  const subtotal = servicesSubtotal + productsSubtotal;
   const membershipDiscountPct = membershipInfo?.discountPct ?? 0;
   const totalDiscountPct = Math.min(100, membershipDiscountPct + additionalDiscountPct);
-  const discountedTotal = servicesSubtotal > 0
-    ? Math.round(servicesSubtotal - (servicesSubtotal * totalDiscountPct / 100)) : 0;
+  const discountedTotal = subtotal > 0
+    ? Math.round(subtotal - (subtotal * totalDiscountPct / 100)) : 0;
 
   function addService() {
     if (!addServiceId) return;
@@ -315,6 +321,22 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
   }
   function removeService(id: string) {
     setSelectedServiceIds(selectedServiceIds.filter((s) => s !== id));
+  }
+  function addProduct() {
+    if (!addProductId) return;
+    const prod = productCatalog.find((p) => p.id === addProductId);
+    if (prod && !selectedProducts.some((p) => p.id === prod.id)) {
+      setSelectedProducts([...selectedProducts, { id: prod.id, name: prod.name, price: prod.price, quantity: 1, maxStock: prod.stock }]);
+    }
+    setAddProductId('');
+  }
+  function removeProduct(id: string) {
+    setSelectedProducts(selectedProducts.filter((p) => p.id !== id));
+  }
+  function setProductQty(id: string, qty: number) {
+    setSelectedProducts(selectedProducts.map((p) =>
+      p.id === id ? { ...p, quantity: Math.max(1, Math.min(p.maxStock || 1, qty)) } : p
+    ));
   }
   function handleClose() {
     if (success) router.refresh();
@@ -326,7 +348,7 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
     if (selectedServiceIds.length === 0) { setError('Add at least one service before generating the bill.'); return; }
     if (!selectedEmployeeId) { setError('Select the staff member who served the customer.'); return; }
     startTransition(async () => {
-      const result = await completeAndGenerateBill(appointment.id, paymentMethod, selectedServiceIds, totalDiscountPct, selectedEmployeeId);
+      const result = await completeAndGenerateBill(appointment.id, paymentMethod, selectedServiceIds, totalDiscountPct, selectedEmployeeId, selectedProducts.map((p) => ({ product_id: p.id, quantity: p.quantity })));
       if (result.success) setSuccess({ invoiceNumber: result.data.invoiceNumber });
       else setError(result.error);
     });
@@ -437,9 +459,51 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
               </select>
               <Button type="button" variant="outline" className="rounded-xl" onClick={addService} disabled={!addServiceId}>Add</Button>
             </div>
+
+            {/* Products (retail) */}
+            <div className="space-y-1.5 pt-2">
+              <label className="text-sm font-medium text-foreground">Products</label>
+              {selectedProducts.map((p) => (
+                <div key={p.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 gap-2">
+                  <span className="text-sm text-foreground min-w-0 truncate">{p.name}</span>
+                  <div className="flex items-center gap-2 shrink-0">
+                    <input
+                      type="number"
+                      min={1}
+                      max={p.maxStock}
+                      value={p.quantity}
+                      onChange={(e) => setProductQty(p.id, parseInt(e.target.value) || 1)}
+                      className="h-8 w-14 rounded-lg border border-input bg-transparent px-2 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      aria-label={`Quantity for ${p.name}`}
+                    />
+                    <span className="text-sm font-medium text-foreground w-16 text-right">₹{(p.price * p.quantity).toLocaleString('en-IN')}</span>
+                    <button type="button" onClick={() => removeProduct(p.id)} className="text-muted-foreground hover:text-red-600 transition-colors" aria-label={`Remove ${p.name}`}>
+                      <XCircle className="size-4" />
+                    </button>
+                  </div>
+                </div>
+              ))}
+              <div className="flex items-center gap-2">
+                <select
+                  value={addProductId}
+                  onChange={(e) => setAddProductId(e.target.value)}
+                  disabled={loadingLists}
+                  className="flex-1 h-11 rounded-xl border border-border bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                >
+                  <option value="">+ Add a product…</option>
+                  {productCatalog.filter((p) => !selectedProducts.some((sp) => sp.id === p.id)).map((p) => (
+                    <option key={p.id} value={p.id} disabled={p.stock <= 0}>
+                      {p.name} — ₹{p.price.toLocaleString('en-IN')}{p.stock <= 0 ? ' (Out of stock)' : ` (${p.stock} in stock)`}
+                    </option>
+                  ))}
+                </select>
+                <Button type="button" variant="outline" className="rounded-xl" onClick={addProduct} disabled={!addProductId}>Add</Button>
+              </div>
+            </div>
+
             <div className="flex items-center justify-between text-sm pt-1">
               <span className="font-medium text-foreground">Subtotal</span>
-              <span className="text-base font-bold text-foreground">₹{servicesSubtotal.toLocaleString('en-IN')}</span>
+              <span className="text-base font-bold text-foreground">₹{subtotal.toLocaleString('en-IN')}</span>
             </div>
           </div>
 

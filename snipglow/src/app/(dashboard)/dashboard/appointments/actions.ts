@@ -263,7 +263,8 @@ export async function completeAndGenerateBill(
   paymentMethod: 'cash' | 'upi' | 'card',
   serviceIds?: string[],
   customDiscountPct?: number,
-  employeeId?: string
+  employeeId?: string,
+  products?: { product_id: string; quantity: number }[]
 ): Promise<ActionResult<{ invoiceId: string; invoiceNumber: string }>> {
   const supabase = await createClient();
 
@@ -330,6 +331,32 @@ export async function completeAndGenerateBill(
     performedByEmployeeId = employeeId;
   }
 
+  // 2b. Validate any retail products being sold alongside the services.
+  type ProdRow = { id: string; name: string; selling_price: number; stock_quantity: number; branch_id: string | null; is_active: boolean };
+  const qtyByProduct = new Map<string, number>();
+  let productRows: ProdRow[] = [];
+  if (products && products.length > 0) {
+    for (const p of products) {
+      if (!p.product_id || !p.quantity || p.quantity <= 0) continue;
+      qtyByProduct.set(p.product_id, (qtyByProduct.get(p.product_id) ?? 0) + Math.trunc(p.quantity));
+    }
+    if (qtyByProduct.size > 0) {
+      const { data: prods } = await (supabase as any)
+        .from('products')
+        .select('id, name, selling_price, stock_quantity, branch_id, is_active')
+        .in('id', Array.from(qtyByProduct.keys()));
+      productRows = (prods ?? []) as ProdRow[];
+      for (const [pid, qty] of qtyByProduct) {
+        const pr = productRows.find((r) => r.id === pid);
+        if (!pr) return { success: false, error: 'One of the selected products was not found.' };
+        if (!pr.is_active) return { success: false, error: `${pr.name} is inactive and cannot be sold.` };
+        if (Number(pr.stock_quantity) < qty) {
+          return { success: false, error: `Not enough stock for ${pr.name}. Only ${pr.stock_quantity} left in stock.` };
+        }
+      }
+    }
+  }
+
   // 3. Check for active membership discount or use custom discount
   let discountPct = customDiscountPct ?? 0;
   if (!customDiscountPct || customDiscountPct === 0) {
@@ -349,8 +376,13 @@ export async function completeAndGenerateBill(
     }
   }
 
-  // 4. Calculate totals from all services
-  const subtotal = services.reduce((sum, svc) => sum + svc.price, 0);
+  // 4. Calculate totals from all services + products
+  const servicesSubtotal = services.reduce((sum, svc) => sum + svc.price, 0);
+  const productsSubtotal = Array.from(qtyByProduct.entries()).reduce((sum, [pid, qty]) => {
+    const pr = productRows.find((r) => r.id === pid);
+    return sum + (pr ? Number(pr.selling_price) * qty : 0);
+  }, 0);
+  const subtotal = servicesSubtotal + productsSubtotal;
   const discountAmount = Math.round((subtotal * discountPct) / 100);
   const taxableAmount = subtotal - discountAmount;
   const total = taxableAmount;
@@ -412,10 +444,61 @@ export async function completeAndGenerateBill(
     line_total: svc.price,
   }));
 
-  await supabase.from('invoice_items').insert(lineItems);
+  // Product line items (item_type='product', name stored in service_name so
+  // the PDF / receipt render unchanged).
+  const productLineItems = Array.from(qtyByProduct.entries()).map(([pid, qty]) => {
+    const pr = productRows.find((r) => r.id === pid)!;
+    return {
+      invoice_id: invoice.id,
+      service_id: null,
+      product_id: pid,
+      item_type: 'product',
+      service_name: pr.name,
+      unit_price: Number(pr.selling_price),
+      quantity: qty,
+      line_total: Number(pr.selling_price) * qty,
+    };
+  });
 
-  // 8. Send bill receipt to customer via WhatsApp
-  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, discountPct, discountAmount, total, paymentMethod);
+  await supabase.from('invoice_items').insert([...lineItems, ...productLineItems] as any);
+
+  // 7b. Decrement product stock + record 'sale' movements (best-effort).
+  if (qtyByProduct.size > 0) {
+    const { data: emp } = await supabase
+      .from('employees')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+    for (const [pid, qty] of qtyByProduct) {
+      const pr = productRows.find((r) => r.id === pid);
+      if (!pr) continue;
+      const newStock = Math.max(0, Number(pr.stock_quantity) - qty);
+      const { error: stockErr } = await (supabase as any)
+        .from('products')
+        .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
+        .eq('id', pid);
+      if (stockErr) { console.error('completeAndGenerateBill stock decrement error:', stockErr); continue; }
+      await (supabase as any).from('inventory_movements').insert({
+        tenant_id: tenantId,
+        branch_id: pr.branch_id ?? branchId,
+        product_id: pid,
+        movement_type: 'sale',
+        quantity: -qty,
+        note: `Sold on invoice ${invoice.invoice_number}`,
+        reference_type: 'invoice',
+        reference_id: invoice.id,
+        created_by: emp?.id ?? null,
+      });
+    }
+    revalidatePath('/dashboard/inventory');
+  }
+
+  // 8. Send bill receipt to customer via WhatsApp (services + products)
+  const productReceiptItems = Array.from(qtyByProduct.entries()).map(([pid, qty]) => {
+    const pr = productRows.find((r) => r.id === pid)!;
+    return { name: pr.name, price: Number(pr.selling_price), quantity: qty };
+  });
+  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, discountPct, discountAmount, total, paymentMethod, productReceiptItems);
 
   revalidatePath('/dashboard/appointments');
   revalidatePath('/dashboard/billing');
@@ -669,6 +752,29 @@ export async function getActiveServices(): Promise<Service[]> {
 }
 
 /**
+ * Fetch active retail products (with stock + selling price) for billing.
+ */
+export interface BillingProduct {
+  id: string;
+  name: string;
+  selling_price: number;
+  stock_quantity: number;
+  unit: string;
+}
+
+export async function getActiveProducts(): Promise<BillingProduct[]> {
+  const supabase = await createClient();
+
+  const { data } = await (supabase as any)
+    .from('products')
+    .select('id, name, selling_price, stock_quantity, unit')
+    .eq('is_active', true)
+    .order('name');
+
+  return (data ?? []) as BillingProduct[];
+}
+
+/**
  * Fetch active employees for the current tenant/branch.
  */
 export async function getActiveEmployees(): Promise<Employee[]> {
@@ -904,7 +1010,8 @@ async function notifyCustomerBillReceipt(
   discountPct: number,
   discountAmount: number,
   total: number,
-  paymentMethod: string
+  paymentMethod: string,
+  productItems: { name: string; price: number; quantity: number }[] = []
 ) {
   // Delegate to the shared bill-receipt sender so this path stays in lockstep
   // with the billing-page path (PDF attached via bill_receipt_v2, feedback
@@ -912,7 +1019,10 @@ async function notifyCustomerBillReceipt(
   await sendBillReceiptWithPdf({
     tenantId,
     customerId,
-    items: services.map((s) => ({ service_name: s.name, unit_price: s.price, quantity: 1 })),
+    items: [
+      ...services.map((s) => ({ service_name: s.name, unit_price: s.price, quantity: 1 })),
+      ...productItems.map((p) => ({ service_name: p.name, unit_price: p.price, quantity: p.quantity })),
+    ],
     invoiceNumber,
     total,
     paymentMethod,
