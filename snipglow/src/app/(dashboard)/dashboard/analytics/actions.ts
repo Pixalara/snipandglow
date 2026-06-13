@@ -16,6 +16,11 @@ export interface RevenueStats {
   totalCustomers: number;
   newCustomers: number;
   totalInvoices: number;
+  // Product (retail) metrics — separate from service totals.
+  productSales: number;
+  productCost: number;
+  productMargin: number;
+  productUnitsSold: number;
 }
 
 export interface DailyRevenue {
@@ -157,12 +162,35 @@ export async function getRevenueData(period: PeriodType): Promise<RevenueData | 
   const invoiceIds = invoices.map((inv) => inv.id);
   let invoiceItems: any[] = [];
   if (invoiceIds.length > 0) {
-    const { data: items } = await admin
+    const { data: items } = await (admin as any)
       .from('invoice_items')
-      .select('service_name, line_total, quantity')
+      .select('service_name, line_total, quantity, item_type, product_id')
       .in('invoice_id', invoiceIds);
     invoiceItems = items ?? [];
   }
+
+  // ─── Product (retail) metrics ───────────────────────────────────────────────
+  // Product line items carry item_type='product' + product_id. Sales = sum of
+  // their line totals; Cost = purchase_price × qty (looked up from products);
+  // Margin = Sales − Cost. Kept separate from the service-inclusive totals.
+  const productItems = invoiceItems.filter((it) => it.item_type === 'product' && it.product_id);
+  const productSales = productItems.reduce((s, it) => s + (it.line_total || 0), 0);
+  const productUnitsSold = productItems.reduce((s, it) => s + (it.quantity || 0), 0);
+  let productCost = 0;
+  if (productItems.length > 0) {
+    const productIds = Array.from(new Set(productItems.map((it) => it.product_id)));
+    const { data: prods } = await (admin as any)
+      .from('products')
+      .select('id, purchase_price')
+      .in('id', productIds);
+    const priceMap = new Map<string, number>(
+      (prods ?? []).map((p: any) => [p.id as string, Number(p.purchase_price) || 0])
+    );
+    for (const it of productItems) {
+      productCost += (priceMap.get(it.product_id) ?? 0) * (it.quantity || 0);
+    }
+  }
+  const productMargin = productSales - productCost;
 
   // ─── Stats ────────────────────────────────────────────────────────────────
   const totalRevenue = invoices.reduce((sum, inv) => sum + (inv.total || 0), 0);
@@ -181,6 +209,10 @@ export async function getRevenueData(period: PeriodType): Promise<RevenueData | 
     totalCustomers: customersRes.count ?? 0,
     newCustomers: newCustomersRes.count ?? 0,
     totalInvoices: invoices.length,
+    productSales,
+    productCost,
+    productMargin,
+    productUnitsSold,
   };
 
   // ─── Daily Revenue ────────────────────────────────────────────────────────

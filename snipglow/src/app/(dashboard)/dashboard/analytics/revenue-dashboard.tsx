@@ -14,6 +14,8 @@ import {
   XCircle,
   BarChart3,
   Download,
+  Package,
+  Percent,
 } from 'lucide-react';
 import type { RevenueData, PeriodType } from './actions';
 import { RevenueCharts } from './revenue-charts';
@@ -56,6 +58,10 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
     lines.push(`Avg Revenue/Appointment,${stats.avgRevenuePerAppointment}`);
     lines.push(`New Customers,${stats.newCustomers}`);
     lines.push(`Total Invoices,${stats.totalInvoices}`);
+    lines.push(`Product Sales,${stats.productSales}`);
+    lines.push(`Product Cost,${stats.productCost}`);
+    lines.push(`Product Margin,${stats.productMargin}`);
+    lines.push(`Product Units Sold,${stats.productUnitsSold}`);
     lines.push('');
     lines.push('Daily Revenue');
     lines.push('Date,Revenue,Appointments,Invoices');
@@ -199,6 +205,30 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
           subtitle="This period"
           iconBg="bg-teal-100 dark:bg-teal-900/30"
           iconColor="text-teal-600 dark:text-teal-400"
+        />
+        <KPICard
+          icon={<Package className="size-4" />}
+          title="Product Sales"
+          value={formatINR(stats.productSales)}
+          subtitle={`${stats.productUnitsSold} sold`}
+          iconBg="bg-amber-100 dark:bg-amber-900/30"
+          iconColor="text-amber-600 dark:text-amber-400"
+        />
+        <KPICard
+          icon={<Wallet className="size-4" />}
+          title="Product Cost"
+          value={formatINR(stats.productCost)}
+          subtitle="Cost of goods sold"
+          iconBg="bg-rose-100 dark:bg-rose-900/30"
+          iconColor="text-rose-600 dark:text-rose-400"
+        />
+        <KPICard
+          icon={<Percent className="size-4" />}
+          title="Product Margin"
+          value={formatINR(stats.productMargin)}
+          subtitle={stats.productSales > 0 ? `${Math.round((stats.productMargin / stats.productSales) * 100)}% margin` : 'No sales'}
+          iconBg={stats.productMargin >= 0 ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'}
+          iconColor={stats.productMargin >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
         />
       </div>
 
