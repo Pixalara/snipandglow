@@ -20,6 +20,8 @@
 -- =============================================================================
 
 -- ── 1. Rebuild PRODUCT line items from the inventory sale ledger ─────────────
+BEGIN;
+
 INSERT INTO invoice_items
   (invoice_id, service_id, product_id, item_type, service_name, unit_price, quantity, line_total)
 SELECT
@@ -68,3 +70,5 @@ WHERE inv.appointment_id IS NOT NULL
     SELECT 1 FROM invoice_items ii
     WHERE ii.invoice_id = inv.id AND ii.item_type = 'service'
   );
+
+COMMIT;
