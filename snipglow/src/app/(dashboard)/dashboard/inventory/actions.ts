@@ -301,6 +301,31 @@ export async function deactivateProduct(id: string): Promise<ActionResult<void>>
   return { success: true, data: undefined };
 }
 
+/**
+ * Reactivate a previously deactivated product. Requires owner or manager.
+ */
+export async function reactivateProduct(id: string): Promise<ActionResult<void>> {
+  const { ctx, error: authError } = await getAuthContext();
+  if (!ctx) return { success: false, error: authError ?? 'Not authenticated' };
+  if (ctx.role !== 'owner' && ctx.role !== 'manager') {
+    return { success: false, error: 'Only owners and managers can reactivate products.' };
+  }
+
+  const supabase = await createClient();
+  const { error } = await (supabase as any)
+    .from('products')
+    .update({ is_active: true, updated_at: new Date().toISOString() })
+    .eq('id', id);
+
+  if (error) {
+    console.error('Inventory: reactivateProduct error:', error);
+    return { success: false, error: 'Failed to reactivate product. Please try again.' };
+  }
+
+  revalidatePath('/dashboard/inventory');
+  return { success: true, data: undefined };
+}
+
 export interface InventorySummary {
   totalProducts: number;
   lowStock: number;

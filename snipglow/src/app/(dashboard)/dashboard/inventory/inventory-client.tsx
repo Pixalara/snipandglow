@@ -10,7 +10,7 @@ import { ExportButton } from '@/components/export-button';
 import { RoleGuard } from '@/components/role-guard';
 import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
 import { ProductForm } from './product-form';
-import { adjustProductStock, deactivateProduct } from './actions';
+import { adjustProductStock, deactivateProduct, reactivateProduct } from './actions';
 import {
   Package,
   Plus,
@@ -20,6 +20,7 @@ import {
   PackagePlus,
   SlidersHorizontal,
   PowerOff,
+  Power,
   AlertTriangle,
   Boxes,
   PackageX,
@@ -175,6 +176,8 @@ export function InventoryClient({ products, role }: InventoryClientProps) {
         ];
         if (p.is_active) {
           actions.push({ label: 'Deactivate', icon: <PowerOff className="size-3.5" />, danger: true, onClick: () => { setDeactivateTarget(p); setActionError(''); } });
+        } else {
+          actions.push({ label: 'Reactivate', icon: <Power className="size-3.5" />, onClick: () => { void reactivateProduct(p.id); } });
         }
         return <RowActionsMenu actions={actions} />;
       },
