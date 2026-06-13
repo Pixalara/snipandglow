@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { isValidIndianPhone, formatPhoneE164 } from '@/lib/utils';
+import { isValidIndianPhone, formatPhoneE164, toTitleCase } from '@/lib/utils';
 import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership } from '@/types';
 
 /**
@@ -35,7 +35,7 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Action
     .insert({
       tenant_id: tenantId,
       branch_id: branchId,
-      name: input.name.trim(),
+      name: toTitleCase(input.name),
       phone: formattedPhone,
       email: input.email?.trim() || null,
       gender: input.gender || null,
@@ -71,7 +71,7 @@ export async function updateCustomer(id: string, input: UpdateCustomerInput): Pr
   }
 
   const updateData: Record<string, unknown> = {};
-  if (input.name !== undefined) updateData.name = input.name.trim();
+  if (input.name !== undefined) updateData.name = toTitleCase(input.name);
   if (input.phone !== undefined) updateData.phone = formatPhoneE164(input.phone);
   if (input.email !== undefined) updateData.email = input.email?.trim() || null;
   if (input.gender !== undefined) updateData.gender = input.gender || null;
@@ -316,7 +316,7 @@ export async function createCustomerWithMembership(
     .insert({
       tenant_id: tenantId,
       branch_id: branchId,
-      name: input.name.trim(),
+      name: toTitleCase(input.name),
       phone: formattedPhone,
       email: input.email?.trim() || null,
       gender: input.gender || null,

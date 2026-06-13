@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { isAdminEmail } from '@/lib/admin/auth';
+import { toTitleCase } from '@/lib/utils';
 import type { ActionResult } from '@/types';
 
 /**
@@ -101,8 +102,8 @@ export async function updateSalonProfile(input: {
   const { error: tenantError } = await supabase
     .from('tenants')
     .update({
-      name: input.salon_name,
-      owner_name: input.owner_name,
+      name: toTitleCase(input.salon_name),
+      owner_name: toTitleCase(input.owner_name),
       phone: input.phone,
     })
     .eq('id', tenantId);

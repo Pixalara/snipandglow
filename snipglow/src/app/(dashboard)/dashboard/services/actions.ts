@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { toTitleCase } from '@/lib/utils';
 import type { ActionResult, Service, CreateServiceInput, UpdateServiceInput } from '@/types';
 
 /**
@@ -39,8 +40,8 @@ export async function createService(input: CreateServiceInput): Promise<ActionRe
     .insert({
       tenant_id: tenantId,
       branch_id: branchId,
-      name: input.name.trim(),
-      category: input.category.trim(),
+      name: toTitleCase(input.name),
+      category: toTitleCase(input.category),
       duration_minutes: input.duration_minutes,
       price: input.price,
       is_active: true,
@@ -81,8 +82,8 @@ export async function updateService(id: string, input: UpdateServiceInput): Prom
   }
 
   const updateData: Record<string, unknown> = {};
-  if (input.name !== undefined) updateData.name = input.name.trim();
-  if (input.category !== undefined) updateData.category = input.category.trim();
+  if (input.name !== undefined) updateData.name = toTitleCase(input.name);
+  if (input.category !== undefined) updateData.category = toTitleCase(input.category);
   if (input.duration_minutes !== undefined) updateData.duration_minutes = input.duration_minutes;
   if (input.price !== undefined) updateData.price = input.price;
   if (input.is_active !== undefined) updateData.is_active = input.is_active;

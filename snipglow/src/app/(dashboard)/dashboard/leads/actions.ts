@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { isValidIndianPhone, formatPhoneE164 } from '@/lib/utils';
+import { isValidIndianPhone, formatPhoneE164, toTitleCase } from '@/lib/utils';
 import type { ActionResult, Lead, Customer, CreateLeadInput, UpdateLeadInput } from '@/types';
 
 // Note: The 'leads' table is created via migration 011 but not yet in generated types.
@@ -49,7 +49,7 @@ export async function createLead(input: CreateLeadInput): Promise<ActionResult<L
     .insert({
       tenant_id: tenantId,
       branch_id: branchId,
-      name: input.name.trim(),
+      name: toTitleCase(input.name),
       phone: formattedPhone,
       email: input.email?.trim() || null,
       source: input.source || 'walk_in',
@@ -95,7 +95,7 @@ export async function updateLead(
   }
 
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (input.name !== undefined) updateData.name = input.name.trim();
+  if (input.name !== undefined) updateData.name = toTitleCase(input.name);
   if (input.phone !== undefined) updateData.phone = formatPhoneE164(input.phone);
   if (input.email !== undefined) updateData.email = input.email?.trim() || null;
   if (input.source !== undefined) updateData.source = input.source;

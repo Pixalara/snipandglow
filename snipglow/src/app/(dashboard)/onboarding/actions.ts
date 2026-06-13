@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { toTitleCase } from '@/lib/utils';
 import type { ActionResult } from '@/types';
 
 export async function completeOnboarding(data: {
@@ -42,8 +43,8 @@ export async function completeOnboarding(data: {
     const { data: tenant, error: tenantError } = await admin
       .from('tenants')
       .insert({
-        name: data.salonName,
-        owner_name: data.ownerName,
+        name: toTitleCase(data.salonName),
+        owner_name: toTitleCase(data.ownerName),
         phone: data.phone,
         subscription_status: 'trial',
         subscription_start: trialStart.toISOString(),
@@ -63,7 +64,7 @@ export async function completeOnboarding(data: {
       .from('branches')
       .insert({
         tenant_id: tenant.id,
-        name: data.branchName,
+        name: toTitleCase(data.branchName),
         address: data.branchAddress ?? null,
         operating_hours: operatingHours,
         is_default: true,
@@ -81,7 +82,7 @@ export async function completeOnboarding(data: {
       tenant_id: tenant.id,
       branch_id: branch.id,
       auth_user_id: user.id,
-      name: data.ownerName,
+      name: toTitleCase(data.ownerName),
       phone: data.phone,
       email: user.email ?? null,
       role: 'owner',
@@ -98,8 +99,8 @@ export async function completeOnboarding(data: {
       const serviceRows = data.services.map((svc) => ({
         tenant_id: tenant.id,
         branch_id: branch.id,
-        name: svc.name,
-        category: svc.category,
+        name: toTitleCase(svc.name),
+        category: toTitleCase(svc.category),
         duration_minutes: svc.duration_minutes,
         price: svc.price,
         is_active: true,
@@ -114,7 +115,7 @@ export async function completeOnboarding(data: {
         tenant_id: tenant.id,
         branch_id: branch.id,
         role: 'owner',
-        name: data.ownerName,
+        name: toTitleCase(data.ownerName),
       },
     });
 

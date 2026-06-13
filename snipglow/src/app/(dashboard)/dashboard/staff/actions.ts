@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { getPlatformCredentials, WA_BASE_URL } from '@/lib/whatsapp/config';
+import { toTitleCase } from '@/lib/utils';
 import type { ActionResult, Employee, CreateEmployeeInput, UserRole } from '@/types';
 
 // =============================================================================
@@ -192,7 +193,7 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
       password: input.password,
       email_confirm: true, // synthetic email; login gated via verification flag
       user_metadata: {
-        name: input.name.trim(),
+        name: toTitleCase(input.name),
         phone: phone10,
         tenant_id: tenantId,
         branch_id: input.branch_id,
@@ -214,7 +215,7 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
       tenant_id: tenantId,
       branch_id: input.branch_id,
       auth_user_id: authUserId,
-      name: input.name.trim(),
+      name: toTitleCase(input.name),
       phone: phone10 ?? input.phone.trim(),
       email: input.email?.trim().toLowerCase() || null,
       role: input.role,
@@ -526,7 +527,7 @@ export async function updateEmployee(
   }
 
   const updateData: Record<string, unknown> = {};
-  if (input.name !== undefined) updateData.name = input.name.trim();
+  if (input.name !== undefined) updateData.name = toTitleCase(input.name);
   if (input.phone !== undefined) updateData.phone = input.phone.trim();
   if (input.email !== undefined) updateData.email = input.email?.trim() || null;
   if (input.role !== undefined) updateData.role = input.role;

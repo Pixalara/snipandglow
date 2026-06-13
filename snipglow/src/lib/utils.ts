@@ -10,6 +10,30 @@ export function cn(...inputs: ClassValue[]) {
 }
 
 // =============================================================================
+// Title Case (proper-noun formatting for names)
+// =============================================================================
+
+/**
+ * Capitalize the first letter of each word for a professional, consistent look
+ * across customer/tenant/product/service names. Only the FIRST letter of each
+ * word is uppercased — the rest is left as typed, so acronyms and brand casing
+ * (e.g. "JK Salon", "L'Oreal", "iD") are preserved rather than mangled.
+ * Collapses runs of whitespace to single spaces and trims the ends.
+ *
+ * Examples: "coconut oil" → "Coconut Oil", "jk salon" → "Jk Salon",
+ *           "JK SALON" → "JK SALON", "  ravi   kumar " → "Ravi Kumar"
+ */
+export function toTitleCase(value: string | null | undefined): string {
+  if (!value) return "";
+  return value
+    .trim()
+    .replace(/\s+/g, " ")
+    .split(" ")
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .join(" ");
+}
+
+// =============================================================================
 // Billing Calculation Types
 // =============================================================================
 

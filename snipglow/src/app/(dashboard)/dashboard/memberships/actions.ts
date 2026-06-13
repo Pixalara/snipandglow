@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { toTitleCase } from '@/lib/utils';
 import type { ActionResult, Membership, CustomerMembership, CreateMembershipInput, AssignMembershipInput } from '@/types';
 
 // =============================================================================
@@ -44,7 +45,7 @@ export async function createMembership(input: CreateMembershipInput): Promise<Ac
     .insert({
       tenant_id: tenantId,
       branch_id: branchId,
-      name: input.name.trim(),
+      name: toTitleCase(input.name),
       description: input.description?.trim() || null,
       price: input.price,
       validity_days: input.validity_days,
@@ -87,7 +88,7 @@ export async function updateMembership(id: string, input: Partial<CreateMembersh
   }
 
   const updateData: Record<string, unknown> = {};
-  if (input.name !== undefined) updateData.name = input.name.trim();
+  if (input.name !== undefined) updateData.name = toTitleCase(input.name);
   if (input.description !== undefined) updateData.description = input.description?.trim() || null;
   if (input.price !== undefined) updateData.price = input.price;
   if (input.validity_days !== undefined) updateData.validity_days = input.validity_days;

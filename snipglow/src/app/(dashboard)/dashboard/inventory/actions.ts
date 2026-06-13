@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { toTitleCase } from '@/lib/utils';
 import type {
   ActionResult,
   Product,
@@ -104,10 +105,10 @@ export async function createProduct(input: CreateProductInput): Promise<ActionRe
     .insert({
       tenant_id: ctx.tenantId,
       branch_id: ctx.branchId,
-      name: input.name.trim(),
+      name: toTitleCase(input.name),
       sku: input.sku?.trim() || null,
-      category: input.category?.trim() || null,
-      brand: input.brand?.trim() || null,
+      category: input.category?.trim() ? toTitleCase(input.category) : null,
+      brand: input.brand?.trim() ? toTitleCase(input.brand) : null,
       unit: input.unit?.trim() || 'piece',
       purchase_price: input.purchase_price ?? 0,
       selling_price: input.selling_price,
@@ -168,10 +169,10 @@ export async function updateProduct(id: string, input: UpdateProductInput): Prom
   }
 
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
-  if (input.name !== undefined) updateData.name = input.name.trim();
+  if (input.name !== undefined) updateData.name = toTitleCase(input.name);
   if (input.sku !== undefined) updateData.sku = input.sku?.trim() || null;
-  if (input.category !== undefined) updateData.category = input.category?.trim() || null;
-  if (input.brand !== undefined) updateData.brand = input.brand?.trim() || null;
+  if (input.category !== undefined) updateData.category = input.category?.trim() ? toTitleCase(input.category) : null;
+  if (input.brand !== undefined) updateData.brand = input.brand?.trim() ? toTitleCase(input.brand) : null;
   if (input.unit !== undefined) updateData.unit = input.unit?.trim() || 'piece';
   if (input.purchase_price !== undefined) updateData.purchase_price = input.purchase_price;
   if (input.selling_price !== undefined) updateData.selling_price = input.selling_price;

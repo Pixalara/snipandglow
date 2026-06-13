@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { toTitleCase } from '@/lib/utils';
 import type { ActionResult, Branch, CreateBranchInput, OperatingHours } from '@/types';
 
 /** Branch stats for the performance comparison */
@@ -140,7 +141,7 @@ export async function createBranch(input: CreateBranchInput): Promise<ActionResu
     .from('branches')
     .insert({
       tenant_id: tenantId,
-      name: input.name.trim(),
+      name: toTitleCase(input.name),
       address: input.address?.trim() || null,
       phone: input.phone?.trim() || null,
       operating_hours: input.operating_hours ?? defaultHours,
@@ -182,7 +183,7 @@ export async function updateBranch(
   }
 
   const updateData: Record<string, unknown> = {};
-  if (input.name !== undefined) updateData.name = input.name.trim();
+  if (input.name !== undefined) updateData.name = toTitleCase(input.name);
   if (input.address !== undefined) updateData.address = input.address?.trim() || null;
   if (input.phone !== undefined) updateData.phone = input.phone?.trim() || null;
   if (input.operating_hours !== undefined) updateData.operating_hours = input.operating_hours;
