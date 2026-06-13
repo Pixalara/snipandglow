@@ -51,7 +51,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
 
   const [{ data: customers, error }, membershipsRes] = await Promise.all([
     query,
-    supabase.from('customer_memberships').select('customer_id').eq('status', 'active'),
+    supabase.from('customer_memberships').select('customer_id').eq('status', 'active').limit(500),
   ]);
 
   if (error) {

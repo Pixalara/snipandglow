@@ -1,4 +1,4 @@
-import type { Metadata } from 'next'
+import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
 import './globals.css'
 import { Providers } from './providers'
@@ -99,15 +99,21 @@ export const metadata: Metadata = {
   },
   verification: {
     other: {
-      'msvalidate.01': 'REPLACE_WITH_BING_TOKEN',
-      'facebook-domain-verification': 'REPLACE_WITH_META_BUSINESS_TOKEN',
+      'geo.region': 'IN',
+      'geo.placename': 'India',
+      'content-language': 'en-IN',
     },
   },
-  other: {
-    'geo.region': 'IN',
-    'geo.placename': 'India',
-    'content-language': 'en-IN',
-  },
+}
+
+export const viewport: Viewport = {
+  width: 'device-width',
+  initialScale: 1,
+  maximumScale: 5,
+  themeColor: [
+    { media: '(prefers-color-scheme: light)', color: '#ffffff' },
+    { media: '(prefers-color-scheme: dark)', color: '#0f172a' },
+  ],
 }
 
 export default function RootLayout({

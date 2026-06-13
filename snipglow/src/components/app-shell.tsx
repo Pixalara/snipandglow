@@ -20,7 +20,7 @@ export function AppShell({ role, userName, branches, activeBranchId, planTier, c
   const pathname = usePathname();
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-hidden">
       {/* Sidebar */}
       <Sidebar
         role={role}

@@ -530,7 +530,7 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
                 onChange={e => setAdditionalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value)||0)))}
                 className="w-24 text-center" />
             </div>
-            {totalDiscountPct > 0 && servicesSubtotal > 0 && (
+            {totalDiscountPct > 0 && subtotal > 0 && (
               <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 flex items-center justify-between">
                 <span className="text-sm text-emerald-700 dark:text-emerald-400">{totalDiscountPct}% total discount</span>
                 <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">₹{discountedTotal.toLocaleString('en-IN')}</span>

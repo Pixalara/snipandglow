@@ -2,6 +2,7 @@
 
 import { useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { StructuredData } from './structured-data';
 import {
   Scissors,
@@ -400,8 +401,8 @@ export default function HomePage() {
                   <div className="shrink-0" style={{ background: 'linear-gradient(135deg, #075e54 0%, #0a7a6e 100%)', padding: '8px 12px 8px 12px' }}>
                     <div className="flex items-center gap-2">
                       <div className="relative shrink-0">
-                        <div className="h-8 w-8 rounded-full overflow-hidden" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)', border: '1.5px solid rgba(255,255,255,0.3)' }}>
-                          <img src="/jksalonandspalogo.png" alt="JK Salon & Spa" className="w-full h-full object-cover" />
+                        <div className="relative h-8 w-8 rounded-full overflow-hidden" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)', border: '1.5px solid rgba(255,255,255,0.3)' }}>
+                          <Image src="/jksalonandspalogo.png" alt="JK Salon & Spa" fill sizes="32px" className="object-cover" priority />
                         </div>
                         <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400" style={{ border: '2px solid #075e54' }} />
                       </div>
