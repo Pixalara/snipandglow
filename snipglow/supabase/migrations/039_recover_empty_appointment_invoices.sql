@@ -24,7 +24,7 @@ INSERT INTO invoice_items
   (invoice_id, service_id, product_id, item_type, service_name, unit_price, quantity, line_total)
 SELECT
   inv.id,
-  NULL,
+  NULL::uuid,
   im.product_id,
   'product',
   pr.name,
@@ -48,7 +48,7 @@ INSERT INTO invoice_items
 SELECT DISTINCT
   inv.id,
   s.id,
-  NULL,
+  NULL::uuid,
   'service',
   s.name,
   s.price,
