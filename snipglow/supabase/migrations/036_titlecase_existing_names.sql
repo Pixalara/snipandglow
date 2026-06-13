@@ -1,10 +1,10 @@
 -- =============================================================================
 -- Migration 036: Title-case existing names (one-time data cleanup)
 --
--- Capitalizes the FIRST letter of each word for existing names so old records
--- match the new auto-formatting applied on create/update in the app. Only the
--- first letter of each word is changed — the rest is left as-is so acronyms and
--- brand casing (e.g. "JK Salon", "L'Oreal") are preserved, not mangled.
+-- Capitalizes existing names to Title Case so old records match the new
+-- auto-formatting applied on create/update in the app. Each word's first
+-- letter is uppercased and the rest lowercased, cleaning up messy input like
+-- "HEENA MAKWANA" or "hand wax rica" into "Heena Makwana" / "Hand Wax Rica".
 --
 -- Safe / idempotent: only rows whose value actually changes are updated.
 -- A temporary helper function is created and dropped at the end.
@@ -15,7 +15,8 @@ CREATE OR REPLACE FUNCTION sg_cap_words(txt text) RETURNS text AS $$
     WHEN txt IS NULL OR btrim(txt) = '' THEN txt
     ELSE (
       SELECT string_agg(
-        CASE WHEN w = '' THEN w ELSE upper(left(w, 1)) || substr(w, 2) END,
+        CASE WHEN w = '' THEN w
+             ELSE upper(left(w, 1)) || lower(substr(w, 2)) END,
         ' ' ORDER BY ord
       )
       FROM regexp_split_to_table(regexp_replace(btrim(txt), '\s+', ' ', 'g'), ' ')
@@ -51,6 +52,8 @@ UPDATE tenants SET owner_name = sg_cap_words(owner_name)
 -- Branches
 UPDATE branches SET name = sg_cap_words(name)
   WHERE name IS DISTINCT FROM sg_cap_words(name);
+UPDATE branches SET address = sg_cap_words(address)
+  WHERE address IS DISTINCT FROM sg_cap_words(address);
 
 -- Employees / staff
 UPDATE employees SET name = sg_cap_words(name)

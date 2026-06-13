@@ -14,14 +14,14 @@ export function cn(...inputs: ClassValue[]) {
 // =============================================================================
 
 /**
- * Capitalize the first letter of each word for a professional, consistent look
- * across customer/tenant/product/service names. Only the FIRST letter of each
- * word is uppercased — the rest is left as typed, so acronyms and brand casing
- * (e.g. "JK Salon", "L'Oreal", "iD") are preserved rather than mangled.
+ * Format a name in Title Case for a professional, consistent look across
+ * customer/tenant/product/service names and addresses. Each word's first
+ * letter is uppercased and the rest lowercased, so messy input like
+ * "HEENA MAKWANA", "hand wax rica" or "kAdam ROAD" all become clean Title Case.
  * Collapses runs of whitespace to single spaces and trims the ends.
  *
- * Examples: "coconut oil" → "Coconut Oil", "jk salon" → "Jk Salon",
- *           "JK SALON" → "JK SALON", "  ravi   kumar " → "Ravi Kumar"
+ * Examples: "coconut oil" → "Coconut Oil", "HAND WAX RICA" → "Hand Wax Rica",
+ *           "  ravi   KUMAR " → "Ravi Kumar"
  */
 export function toTitleCase(value: string | null | undefined): string {
   if (!value) return "";
@@ -29,7 +29,7 @@ export function toTitleCase(value: string | null | undefined): string {
     .trim()
     .replace(/\s+/g, " ")
     .split(" ")
-    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1) : word))
+    .map((word) => (word ? word.charAt(0).toUpperCase() + word.slice(1).toLowerCase() : word))
     .join(" ");
 }
 

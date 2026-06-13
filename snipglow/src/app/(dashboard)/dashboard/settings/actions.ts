@@ -116,7 +116,7 @@ export async function updateSalonProfile(input: {
   if (branchId && input.address) {
     await supabase
       .from('branches')
-      .update({ address: input.address })
+      .update({ address: toTitleCase(input.address) })
       .eq('id', branchId);
   }
 

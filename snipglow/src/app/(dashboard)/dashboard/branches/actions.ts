@@ -142,7 +142,7 @@ export async function createBranch(input: CreateBranchInput): Promise<ActionResu
     .insert({
       tenant_id: tenantId,
       name: toTitleCase(input.name),
-      address: input.address?.trim() || null,
+      address: input.address?.trim() ? toTitleCase(input.address) : null,
       phone: input.phone?.trim() || null,
       operating_hours: input.operating_hours ?? defaultHours,
       is_default: false,
@@ -184,7 +184,7 @@ export async function updateBranch(
 
   const updateData: Record<string, unknown> = {};
   if (input.name !== undefined) updateData.name = toTitleCase(input.name);
-  if (input.address !== undefined) updateData.address = input.address?.trim() || null;
+  if (input.address !== undefined) updateData.address = input.address?.trim() ? toTitleCase(input.address) : null;
   if (input.phone !== undefined) updateData.phone = input.phone?.trim() || null;
   if (input.operating_hours !== undefined) updateData.operating_hours = input.operating_hours;
 

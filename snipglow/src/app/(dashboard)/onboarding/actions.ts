@@ -65,7 +65,7 @@ export async function completeOnboarding(data: {
       .insert({
         tenant_id: tenant.id,
         name: toTitleCase(data.branchName),
-        address: data.branchAddress ?? null,
+        address: data.branchAddress ? toTitleCase(data.branchAddress) : null,
         operating_hours: operatingHours,
         is_default: true,
         is_active: true,
