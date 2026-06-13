@@ -24,10 +24,11 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   if (!tenant) notFound();
 
   // Fetch related data in parallel
-  const [branchesRes, staffRes, servicesRes, customersRes, appointmentsRes, waSettingsRes, setupReqRes] = await Promise.all([
+  const [branchesRes, staffRes, servicesRes, productsRes, customersRes, appointmentsRes, waSettingsRes, setupReqRes] = await Promise.all([
     admin.from('branches').select('id, name, address, is_default, is_active').eq('tenant_id', tenantId),
     admin.from('employees').select('id, name, phone, email, role, is_active').eq('tenant_id', tenantId),
     admin.from('services').select('id, name, category, price, duration_minutes, is_active').eq('tenant_id', tenantId),
+    (admin.from('products' as any).select('id, name, category, brand, selling_price, stock_quantity, unit, is_active').eq('tenant_id', tenantId).order('name', { ascending: true }) as any),
     admin.from('customers').select('id, name, phone, email, total_visits, total_spent, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(50),
     admin.from('appointments').select('id, appointment_date, start_time, status, source, created_at').eq('tenant_id', tenantId).order('appointment_date', { ascending: false }).limit(20),
     (admin.from('tenant_whatsapp_settings' as any).select('*').eq('tenant_id', tenantId).maybeSingle() as any),
@@ -46,6 +47,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   const branches = branchesRes.data ?? [];
   const staff = staffRes.data ?? [];
   const services = servicesRes.data ?? [];
+  const products = productsRes.data ?? [];
   const customers = customersRes.data ?? [];
   const appointments = appointmentsRes.data ?? [];
   const waView = toAdminWhatsAppView(waSettingsRes.data);
@@ -159,6 +161,20 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         <SimpleTable
           headers={['Name', 'Category', 'Price', 'Active']}
           rows={services.map((s: any) => [s.name, s.category || '—', `₹${s.price}`, activeCell(s.is_active)])}
+        />
+      </Section>
+
+      {/* Products (inventory) */}
+      <Section title={`Products (${products.length})`}>
+        <SimpleTable
+          headers={['Name', 'Category / Brand', 'Stock', 'Selling Price', 'Active']}
+          rows={products.map((p: any) => [
+            p.name,
+            [p.category, p.brand].filter(Boolean).join(' · ') || '—',
+            `${p.stock_quantity ?? 0} ${p.unit || ''}`.trim(),
+            `₹${p.selling_price ?? 0}`,
+            activeCell(p.is_active),
+          ])}
         />
       </Section>
 
