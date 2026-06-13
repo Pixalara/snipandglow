@@ -21,6 +21,7 @@ import {
   MessageCircle,
   Star,
   Headphones,
+  Package,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { can, type Resource } from '@/lib/permissions';
@@ -63,6 +64,7 @@ const navGroups: NavGroup[] = [
     label: 'Business',
     items: [
       { label: 'Services', href: '/dashboard/services', icon: Scissors, resource: 'services' },
+      { label: 'Inventory', href: '/dashboard/inventory', icon: Package, resource: 'inventory' },
       { label: 'Revenue', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
       { label: 'Staff', href: '/dashboard/staff', icon: UserCog, resource: 'staff' },
       { label: 'Expenses', href: '/dashboard/expenses', icon: Wallet, resource: 'expenses' },

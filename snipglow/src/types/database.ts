@@ -128,6 +128,87 @@ export interface Service {
   created_at: string;
 }
 
+// =============================================================================
+// Inventory (retail products + stock movements) — migration 034
+// =============================================================================
+
+/** Stock movement category. Positive qty for stock_in/return, negative for sale/damage. */
+export type InventoryMovementType = 'stock_in' | 'sale' | 'adjustment' | 'return' | 'damage';
+
+/** Computed stock status used for UI badges (not stored in the DB). */
+export type StockStatus = 'in_stock' | 'low_stock' | 'out_of_stock' | 'inactive';
+
+/** A retail product the salon sells, with current stock level. */
+export interface Product {
+  id: string;
+  tenant_id: string;
+  branch_id: string | null;
+  name: string;
+  sku: string | null;
+  category: string | null;
+  brand: string | null;
+  unit: string;
+  purchase_price: number;
+  selling_price: number;
+  stock_quantity: number;
+  low_stock_threshold: number;
+  is_active: boolean;
+  created_at: string;
+  updated_at: string;
+}
+
+/** An append-only stock-change ledger entry. */
+export interface InventoryMovement {
+  id: string;
+  tenant_id: string;
+  branch_id: string | null;
+  product_id: string;
+  movement_type: InventoryMovementType;
+  quantity: number;
+  note: string | null;
+  reference_type: string | null;
+  reference_id: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+/** Input for creating a product. */
+export interface CreateProductInput {
+  name: string;
+  sku?: string | null;
+  category?: string | null;
+  brand?: string | null;
+  unit?: string;
+  purchase_price?: number;
+  selling_price: number;
+  /** Opening stock quantity. */
+  stock_quantity: number;
+  low_stock_threshold: number;
+  is_active?: boolean;
+}
+
+/** Input for updating a product. Stock is changed via stock adjustments, not here. */
+export interface UpdateProductInput {
+  name?: string;
+  sku?: string | null;
+  category?: string | null;
+  brand?: string | null;
+  unit?: string;
+  purchase_price?: number;
+  selling_price?: number;
+  low_stock_threshold?: number;
+  is_active?: boolean;
+}
+
+/** Input for adjusting a product's stock level (records an inventory movement). */
+export interface StockAdjustmentInput {
+  product_id: string;
+  movement_type: InventoryMovementType;
+  /** Signed delta to apply (e.g. +10 for stock_in, -2 for damage). Must be non-zero. */
+  quantity: number;
+  note?: string | null;
+}
+
 /** A scheduled booking linking Customer, Service, and Employee */
 export interface Appointment {
   id: string;
