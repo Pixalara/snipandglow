@@ -296,11 +296,15 @@ export default function NewBillingPage() {
       setSubmitting(false);
 
       if (result.success) {
+        // Refresh products so stock hints reflect the just-completed sale.
+        getBillableProducts().then(setProducts).catch(() => {});
         setSuccessInvoice({
           invoice_number: result.data.invoice_number,
           id: result.data.id,
         });
       } else {
+        // Stock may have changed elsewhere; refresh hints on failure too.
+        getBillableProducts().then(setProducts).catch(() => {});
         setError(result.error);
       }
     });
