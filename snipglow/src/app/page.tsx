@@ -28,6 +28,7 @@ import {
   Headphones,
   Megaphone,
   Smartphone,
+  Package,
 } from 'lucide-react';
 
 // Animated counter that counts up when scrolled into view
@@ -1131,6 +1132,7 @@ export default function HomePage() {
               { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
               { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges - all sent automatically.', color: 'bg-green-100 text-green-600' },
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
+              { icon: Package, title: 'Product Inventory', desc: 'Track retail products, stock levels, and purchase costs. Sell products on any bill — stock updates automatically.', color: 'bg-teal-100 text-teal-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
               { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns - all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
