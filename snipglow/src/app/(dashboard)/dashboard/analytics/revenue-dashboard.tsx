@@ -159,6 +159,7 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
           icon={stats.netProfit >= 0 ? <TrendingUp className="size-4" /> : <TrendingDown className="size-4" />}
           title="Net Profit"
           value={formatINR(stats.netProfit)}
+          subtitle="After expenses & product cost"
           iconBg={stats.netProfit >= 0 ? 'bg-emerald-100 dark:bg-emerald-900/30' : 'bg-red-100 dark:bg-red-900/30'}
           iconColor={stats.netProfit >= 0 ? 'text-emerald-600 dark:text-emerald-400' : 'text-red-600 dark:text-red-400'}
         />

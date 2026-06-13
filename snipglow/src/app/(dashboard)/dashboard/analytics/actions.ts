@@ -201,7 +201,10 @@ export async function getRevenueData(period: PeriodType): Promise<RevenueData | 
   const stats: RevenueStats = {
     totalRevenue,
     totalExpenses,
-    netProfit: totalRevenue - totalExpenses,
+    // Net profit = revenue − running expenses − cost of products sold (COGS).
+    // Product revenue is already inside totalRevenue (invoice totals), but the
+    // buying cost of those products lives only here, so subtract it once.
+    netProfit: totalRevenue - totalExpenses - productCost,
     totalAppointments: appointments.length,
     completedAppointments,
     cancelledAppointments,

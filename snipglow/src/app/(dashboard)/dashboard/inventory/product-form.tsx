@@ -141,10 +141,12 @@ export function ProductForm({ product, onClose }: ProductFormProps) {
           <div>
             <Label htmlFor="purchase_price">Purchase Price (₹)</Label>
             <Input id="purchase_price" name="purchase_price" type="number" min="0" step="0.01" defaultValue={product?.purchase_price ?? ''} placeholder="0" className="mt-1" />
+            <p className="mt-1 text-[11px] text-muted-foreground">What you pay the supplier — used for profit reports.</p>
           </div>
           <div>
             <Label htmlFor="selling_price">Selling Price (₹)</Label>
             <Input id="selling_price" name="selling_price" type="number" min="0" step="0.01" defaultValue={product?.selling_price ?? ''} placeholder="0" required className="mt-1" />
+            <p className="mt-1 text-[11px] text-muted-foreground">What the customer pays.</p>
           </div>
         </div>
 
