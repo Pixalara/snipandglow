@@ -197,7 +197,7 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
           {/* Items */}
           <View style={styles.body}>
             <View style={styles.tableHead}>
-              <Text style={[styles.th, styles.colService]}>Service</Text>
+              <Text style={[styles.th, styles.colService]}>Service / Product</Text>
               <Text style={[styles.th, styles.colQty]}>Qty</Text>
               <Text style={[styles.th, styles.colRate]}>Rate</Text>
               <Text style={[styles.th, styles.colAmount]}>Amount</Text>

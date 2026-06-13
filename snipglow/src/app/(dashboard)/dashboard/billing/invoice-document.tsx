@@ -116,7 +116,7 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
       <table style="width:100%;border-collapse:separate;border-spacing:0;font-size:14px;">
         <thead>
           <tr style="background:#111827;color:#ffffff;">
-            <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border-radius:8px 0 0 8px;">Service</th>
+            <th style="padding:11px 16px;text-align:left;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border-radius:8px 0 0 8px;">Service / Product</th>
             <th style="padding:11px 16px;text-align:center;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Qty</th>
             <th style="padding:11px 16px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;">Rate</th>
             <th style="padding:11px 16px;text-align:right;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;border-radius:0 8px 8px 0;">Amount</th>
