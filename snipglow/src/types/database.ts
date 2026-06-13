@@ -526,6 +526,10 @@ export interface CreateInvoiceItemInput {
   service_name: string;
   unit_price: number;
   quantity: number;
+  /** 'service' (default) or 'product'. Product items decrement inventory stock. */
+  item_type?: 'service' | 'product';
+  /** Set for product line items; links the sale to a product for stock tracking. */
+  product_id?: string | null;
 }
 
 /** Input for creating a customer */

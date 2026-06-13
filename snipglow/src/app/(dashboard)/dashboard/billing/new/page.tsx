@@ -7,7 +7,7 @@ import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { calculateInvoiceTotal, formatINR } from '@/lib/utils';
 import { searchCustomers, getActiveServices } from '../../appointments/actions';
-import { createInvoice, getCustomerActiveMembership, getTenantGstSettings } from '../actions';
+import { createInvoice, getCustomerActiveMembership, getTenantGstSettings, getBillableProducts, type BillableProduct } from '../actions';
 import { getAvailableMemberships } from '../../customers/actions';
 import type { Service, PaymentMethod, Membership, CreateInvoiceItemInput } from '@/types';
 
@@ -24,10 +24,16 @@ interface CustomerOption {
 
 interface LineItem {
   id: string; // local unique key
-  service_id: string;
+  /** The <select> value: a service id, `plan-<id>`, or `product-<id>`. */
+  selectKey: string;
+  item_type: 'service' | 'product';
+  service_id: string; // service id or membership plan id (empty for products)
+  product_id?: string; // product id (for product items)
   service_name: string;
   unit_price: number;
   quantity: number;
+  /** Available stock for product items (client-side hint). */
+  maxStock?: number;
 }
 
 export default function NewBillingPage() {
@@ -46,6 +52,7 @@ export default function NewBillingPage() {
 
   // Services state
   const [services, setServices] = useState<Service[]>([]);
+  const [products, setProducts] = useState<BillableProduct[]>([]);
   const [membershipPlans, setMembershipPlans] = useState<Membership[]>([]);
   const [lineItems, setLineItems] = useState<LineItem[]>([]);
 
@@ -67,13 +74,15 @@ export default function NewBillingPage() {
   // Load services, membership plans, and GST settings on mount
   useEffect(() => {
     async function loadData() {
-      const [svcData, membData, gstSettings] = await Promise.all([
+      const [svcData, membData, gstSettings, prodData] = await Promise.all([
         getActiveServices(),
         getAvailableMemberships(),
         getTenantGstSettings(),
+        getBillableProducts(),
       ]);
       setServices(svcData);
       setMembershipPlans(membData);
+      setProducts(prodData);
       setGstEnabled(gstSettings.gst_enabled);
       setGstRate(gstSettings.gst_rate);
       setDefaultDiscount(gstSettings.discount_enabled ? gstSettings.discount_value : 0);
@@ -151,10 +160,14 @@ export default function NewBillingPage() {
       ...prev,
       {
         id: crypto.randomUUID(),
+        selectKey: '',
+        item_type: 'service',
         service_id: '',
+        product_id: undefined,
         service_name: '',
         unit_price: 0,
         quantity: 1,
+        maxStock: undefined,
       },
     ]);
   }
@@ -163,21 +176,24 @@ export default function NewBillingPage() {
     setLineItems((prev) => prev.filter((item) => item.id !== id));
   }
 
-  function handleServiceChange(itemId: string, serviceId: string) {
-    // Check if it's a membership plan (prefixed with "plan-")
-    if (serviceId.startsWith('plan-')) {
-      const planId = serviceId.replace('plan-', '');
+  function handleServiceChange(itemId: string, selectKey: string) {
+    // Membership plan (prefixed with "plan-")
+    if (selectKey.startsWith('plan-')) {
+      const planId = selectKey.replace('plan-', '');
       const plan = membershipPlans.find((p) => p.id === planId);
       if (!plan) return;
-
       setLineItems((prev) =>
         prev.map((item) =>
           item.id === itemId
             ? {
                 ...item,
-                service_id: serviceId,
+                selectKey,
+                item_type: 'service',
+                service_id: planId,
+                product_id: undefined,
                 service_name: `👑 ${plan.name} (Membership)`,
                 unit_price: plan.price,
+                maxStock: undefined,
               }
             : item
         )
@@ -185,17 +201,47 @@ export default function NewBillingPage() {
       return;
     }
 
-    const service = services.find((s) => s.id === serviceId);
-    if (!service) return;
+    // Product (prefixed with "product-")
+    if (selectKey.startsWith('product-')) {
+      const productId = selectKey.replace('product-', '');
+      const product = products.find((p) => p.id === productId);
+      if (!product) return;
+      setLineItems((prev) =>
+        prev.map((item) =>
+          item.id === itemId
+            ? {
+                ...item,
+                selectKey,
+                item_type: 'product',
+                service_id: '',
+                product_id: product.id,
+                service_name: product.name,
+                unit_price: Number(product.selling_price),
+                maxStock: Number(product.stock_quantity),
+                // clamp existing quantity to available stock
+                quantity: Math.min(item.quantity, Math.max(1, Number(product.stock_quantity))),
+              }
+            : item
+        )
+      );
+      return;
+    }
 
+    // Service
+    const service = services.find((s) => s.id === selectKey);
+    if (!service) return;
     setLineItems((prev) =>
       prev.map((item) =>
         item.id === itemId
           ? {
               ...item,
+              selectKey,
+              item_type: 'service',
               service_id: service.id,
+              product_id: undefined,
               service_name: service.name,
               unit_price: service.price,
+              maxStock: undefined,
             }
           : item
       )
@@ -205,16 +251,21 @@ export default function NewBillingPage() {
   function handleQuantityChange(itemId: string, quantity: number) {
     if (quantity < 1) return;
     setLineItems((prev) =>
-      prev.map((item) =>
-        item.id === itemId ? { ...item, quantity } : item
-      )
+      prev.map((item) => {
+        if (item.id !== itemId) return item;
+        // Don't allow product quantity above available stock.
+        const capped = item.item_type === 'product' && item.maxStock != null
+          ? Math.min(quantity, item.maxStock)
+          : quantity;
+        return { ...item, quantity: Math.max(1, capped) };
+      })
     );
   }
 
   const isFormValid =
     selectedCustomer &&
     lineItems.length > 0 &&
-    lineItems.every((item) => item.service_id) &&
+    lineItems.every((item) => item.selectKey) &&
     paymentMethod;
 
   async function handleSubmit(e: React.FormEvent) {
@@ -225,7 +276,9 @@ export default function NewBillingPage() {
     setSubmitting(true);
 
     const items: CreateInvoiceItemInput[] = lineItems.map((item) => ({
-      service_id: item.service_id.startsWith('plan-') ? item.service_id.replace('plan-', '') : item.service_id,
+      service_id: item.item_type === 'product' ? '' : item.service_id,
+      product_id: item.item_type === 'product' ? item.product_id : undefined,
+      item_type: item.item_type,
       service_name: item.service_name,
       unit_price: item.unit_price,
       quantity: item.quantity,
@@ -415,11 +468,11 @@ export default function NewBillingPage() {
           </CardContent>
         </Card>
 
-        {/* Service Line Items */}
+        {/* Service & Product Line Items */}
         <Card>
           <CardHeader className="pb-3">
             <div className="flex items-center justify-between">
-              <CardTitle className="text-base">Services</CardTitle>
+              <CardTitle className="text-base">Services &amp; Products</CardTitle>
               <Button
                 type="button"
                 variant="outline"
@@ -429,14 +482,14 @@ export default function NewBillingPage() {
                 <svg className="mr-1 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                   <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" />
                 </svg>
-                Add Service
+                Add Item
               </Button>
             </div>
           </CardHeader>
           <CardContent>
             {lineItems.length === 0 ? (
               <p className="text-sm text-muted-foreground text-center py-4">
-                No services added yet. Click &quot;Add Service&quot; to begin.
+                No items added yet. Click &quot;Add Item&quot; to add a service or product.
               </p>
             ) : (
               <div className="space-y-3">
@@ -455,12 +508,12 @@ export default function NewBillingPage() {
                       </label>
                       <select
                         id={`service-${item.id}`}
-                        value={item.service_id}
+                        value={item.selectKey}
                         onChange={(e) => handleServiceChange(item.id, e.target.value)}
                         className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                        aria-label={`Select service for item ${index + 1}`}
+                        aria-label={`Select service or product for item ${index + 1}`}
                       >
-                        <option value="">Select a service or plan...</option>
+                        <option value="">Select a service, product or plan...</option>
                         <optgroup label="Services">
                           {services.map((svc) => (
                             <option key={svc.id} value={svc.id}>
@@ -468,6 +521,16 @@ export default function NewBillingPage() {
                             </option>
                           ))}
                         </optgroup>
+                        {products.length > 0 && (
+                          <optgroup label="Products">
+                            {products.map((prod) => (
+                              <option key={`product-${prod.id}`} value={`product-${prod.id}`} disabled={prod.stock_quantity <= 0}>
+                                {prod.name} — {formatINR(Number(prod.selling_price))}
+                                {prod.stock_quantity <= 0 ? ' (Out of stock)' : ` (${prod.stock_quantity} in stock)`}
+                              </option>
+                            ))}
+                          </optgroup>
+                        )}
                         {membershipPlans.length > 0 && (
                           <optgroup label="Membership Plans">
                             {membershipPlans.map((plan) => (
@@ -489,6 +552,7 @@ export default function NewBillingPage() {
                         id={`qty-${item.id}`}
                         type="number"
                         min={1}
+                        max={item.item_type === 'product' && item.maxStock != null ? item.maxStock : undefined}
                         value={item.quantity}
                         onChange={(e) =>
                           handleQuantityChange(item.id, parseInt(e.target.value) || 1)
@@ -500,7 +564,7 @@ export default function NewBillingPage() {
 
                     {/* Line total */}
                     <div className="min-w-[80px] text-right text-sm font-medium text-foreground">
-                      {item.service_id ? formatINR(item.unit_price * item.quantity) : '—'}
+                      {item.selectKey ? formatINR(item.unit_price * item.quantity) : '—'}
                     </div>
 
                     {/* Remove button */}
@@ -508,7 +572,7 @@ export default function NewBillingPage() {
                       type="button"
                       onClick={() => handleRemoveLineItem(item.id)}
                       className="self-start text-muted-foreground hover:text-destructive transition-colors sm:self-center"
-                      aria-label={`Remove service item ${index + 1}`}
+                      aria-label={`Remove item ${index + 1}`}
                     >
                       <svg className="h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                         <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 7l-.867 12.142A2 2 0 0116.138 21H7.862a2 2 0 01-1.995-1.858L5 7m5 4v6m4-6v6m1-10V4a1 1 0 00-1-1h-4a1 1 0 00-1 1v3M4 7h16" />

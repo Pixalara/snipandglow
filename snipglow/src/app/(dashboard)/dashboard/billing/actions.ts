@@ -54,6 +54,36 @@ export async function getCustomerActiveMembership(
 }
 
 /**
+ * Active products available to sell on a bill (with current stock).
+ * RLS scopes to the current tenant. Used by the new-bill screen.
+ */
+export interface BillableProduct {
+  id: string;
+  name: string;
+  selling_price: number;
+  stock_quantity: number;
+  unit: string;
+}
+
+export async function getBillableProducts(): Promise<BillableProduct[]> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return [];
+
+  const { data, error } = await (supabase as any)
+    .from('products')
+    .select('id, name, selling_price, stock_quantity, unit')
+    .eq('is_active', true)
+    .order('name', { ascending: true });
+
+  if (error) {
+    console.error('getBillableProducts error:', error);
+    return [];
+  }
+  return (data ?? []) as BillableProduct[];
+}
+
+/**
  * Create an invoice with line items.
  * Applies membership discount automatically if customer has active membership.
  * Calculates GST if provided.
@@ -77,7 +107,7 @@ export async function createInvoice(
     return { success: false, error: 'Customer is required.' };
   }
   if (!input.items || input.items.length === 0) {
-    return { success: false, error: 'At least one service item is required.' };
+    return { success: false, error: 'At least one item is required.' };
   }
   if (!input.payment_method) {
     return { success: false, error: 'Payment method is required.' };
@@ -86,6 +116,37 @@ export async function createInvoice(
   // Calculate totals
   const discountPct = input.discount_pct ?? 0;
   const gstRate = input.gst_rate ?? 0;
+
+  // --- Product stock pre-check -------------------------------------------
+  // Aggregate quantities per product across all product line items, then make
+  // sure there is enough stock BEFORE creating the invoice. Block (with a clear
+  // message) rather than overselling.
+  const qtyByProduct = new Map<string, number>();
+  for (const it of input.items) {
+    if (it.item_type === 'product' && it.product_id) {
+      qtyByProduct.set(it.product_id, (qtyByProduct.get(it.product_id) ?? 0) + it.quantity);
+    }
+  }
+  let productRows: { id: string; name: string; stock_quantity: number; branch_id: string | null; is_active: boolean }[] = [];
+  if (qtyByProduct.size > 0) {
+    const { data: prods, error: prodErr } = await (supabase as any)
+      .from('products')
+      .select('id, name, stock_quantity, branch_id, is_active')
+      .in('id', Array.from(qtyByProduct.keys()));
+    if (prodErr) {
+      console.error('Invoice product lookup error:', prodErr);
+      return { success: false, error: 'Failed to check product stock. Please try again.' };
+    }
+    productRows = (prods ?? []) as typeof productRows;
+    for (const [pid, qty] of qtyByProduct) {
+      const p = productRows.find((r) => r.id === pid);
+      if (!p) return { success: false, error: 'One of the selected products was not found.' };
+      if (!p.is_active) return { success: false, error: `${p.name} is inactive and cannot be sold.` };
+      if (Number(p.stock_quantity) < qty) {
+        return { success: false, error: `Not enough stock for ${p.name}. Only ${p.stock_quantity} left in stock.` };
+      }
+    }
+  }
 
   const totals = calculateInvoiceTotal({
     lineItems: input.items.map((item) => ({
@@ -126,7 +187,9 @@ export async function createInvoice(
   // Insert invoice items
   const invoiceItems = input.items.map((item) => ({
     invoice_id: invoice.id,
-    service_id: item.service_id,
+    service_id: item.item_type === 'product' ? null : item.service_id,
+    product_id: item.item_type === 'product' ? (item.product_id ?? null) : null,
+    item_type: item.item_type ?? 'service',
     service_name: item.service_name,
     unit_price: item.unit_price,
     quantity: item.quantity,
@@ -135,12 +198,54 @@ export async function createInvoice(
 
   const { error: itemsError } = await supabase
     .from('invoice_items')
-    .insert(invoiceItems);
+    .insert(invoiceItems as any);
 
   if (itemsError) {
     console.error('Invoice items creation error:', itemsError);
     // Invoice was created but items failed — still return the invoice
     return { success: true, data: invoice as Invoice };
+  }
+
+  // --- Decrement product stock + record 'sale' movements -----------------
+  // Runs only when the invoice has product line items. Best-effort: a failure
+  // here is logged but does not fail the (already created) invoice.
+  if (qtyByProduct.size > 0) {
+    const { data: employee } = await supabase
+      .from('employees')
+      .select('id')
+      .eq('auth_user_id', user.id)
+      .maybeSingle();
+
+    for (const [pid, qty] of qtyByProduct) {
+      const p = productRows.find((r) => r.id === pid);
+      if (!p) continue;
+      const newStock = Math.max(0, Number(p.stock_quantity) - qty);
+
+      const { error: stockErr } = await (supabase as any)
+        .from('products')
+        .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
+        .eq('id', pid);
+      if (stockErr) {
+        console.error('Invoice stock decrement error:', stockErr);
+        continue;
+      }
+
+      const { error: moveErr } = await (supabase as any).from('inventory_movements').insert({
+        tenant_id: tenantId,
+        branch_id: p.branch_id ?? branchId,
+        product_id: pid,
+        movement_type: 'sale',
+        quantity: -qty,
+        note: `Sold on invoice ${invoice.invoice_number}`,
+        reference_type: 'invoice',
+        reference_id: invoice.id,
+        created_by: employee?.id ?? null,
+      });
+      if (moveErr) {
+        console.error('Invoice sale movement log error:', moveErr);
+      }
+    }
+    revalidatePath('/dashboard/inventory');
   }
 
   // Send bill receipt to customer via WhatsApp + feedback request
