@@ -1318,8 +1318,8 @@ export default function HomePage() {
                     { title: '50+ Marketing Templates', desc: 'Pre-approved for every occasion, ready to use' },
                     { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
                     { title: 'Priority Support', desc: 'WhatsApp & call support with <4hr response time' },
-                    { title: 'Free Website Setup', desc: 'We build your salon website — domain cost extra' },
-                    { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com — domain cost extra' },
+                    { title: 'Free Website Setup', desc: 'We build your salon website. Domain name registration charges apply separately (~₹800-₹1,200/year based on domain name)' },
+                    { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com included with your domain' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500">
@@ -1401,8 +1401,8 @@ export default function HomePage() {
                     { title: 'Advanced Analytics', desc: 'Cross-branch revenue, staff performance & trend reports' },
                     { title: 'Free WhatsApp API Setup (₹3,500 value)', desc: 'Full setup: Meta verification, number & template approvals' },
                     { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
-                    { title: 'Free Website Setup', desc: 'We build your salon website — domain cost extra' },
-                    { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com — domain cost extra' },
+                    { title: 'Free Website Setup', desc: 'We build your salon website. Domain name registration charges apply separately (~₹800-₹1,200/year based on domain name)' },
+                    { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com included with your domain' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500">
