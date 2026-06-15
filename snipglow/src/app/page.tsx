@@ -1448,13 +1448,13 @@ export default function HomePage() {
       </section>
 
       {/* ===== PRO & GROWTH REQUIREMENTS ===== */}
-      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #f0f4ff 50%, #fafafa 100%)' }}>
+      <section className="py-8 sm:py-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #f0f4ff 50%, #fafafa 100%)' }}>
         {/* Subtle dot pattern */}
         <div className="absolute inset-0 opacity-[0.025]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(99 102 241) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
           {/* Header */}
-          <div className="text-center mb-10 sm:mb-14 reveal">
+          <div className="text-center mb-8 sm:mb-10 reveal">
             <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100 mb-4">
               <Shield className="h-3.5 w-3.5 text-violet-600" />
               <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 uppercase tracking-wider">Setup Prerequisites</span>
