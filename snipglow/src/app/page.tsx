@@ -1442,6 +1442,159 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== PRO & GROWTH REQUIREMENTS ===== */}
+      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #f0f4ff 50%, #fafafa 100%)' }}>
+        {/* Subtle dot pattern */}
+        <div className="absolute inset-0 opacity-[0.025]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(99 102 241) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
+
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+          {/* Header */}
+          <div className="text-center mb-10 sm:mb-14 reveal">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-violet-50 to-indigo-50 border border-violet-100 mb-4">
+              <Shield className="h-3.5 w-3.5 text-violet-600" />
+              <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 uppercase tracking-wider">Setup Prerequisites</span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+              Requirements for Pro &amp; Growth Plans
+            </h2>
+            <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              To activate WhatsApp and business automation features on Pro or Growth plans, salons must provide
+              basic business verification details during onboarding. Here&apos;s everything you&apos;ll need — most
+              salons already have it all.
+            </p>
+          </div>
+
+          {/* 3-column requirement cards */}
+          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 reveal">
+
+            {/* Card 1 — Legal Business Name */}
+            <div className="rounded-2xl border border-violet-100 bg-white shadow-sm shadow-violet-100/50 p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 shadow-md shadow-violet-200">
+                  <FileText className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-violet-500">Document 1</p>
+                  <h3 className="text-sm font-bold text-slate-900 leading-tight">Proof of Legal Business Name</h3>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed -mt-1">
+                Provide one government-issued document showing the exact legal business name:
+              </p>
+              <ul className="space-y-2">
+                {[
+                  'GST Certificate',
+                  'Certificate of Incorporation (COI)',
+                  'Shop & Establishment Certificate',
+                  'Udyam / MSME Registration Certificate',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-violet-400" />
+                    <span className="text-xs text-slate-700 leading-snug">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Card 2 — Business Address & Phone */}
+            <div className="rounded-2xl border border-indigo-100 bg-white shadow-sm shadow-indigo-100/50 p-6 flex flex-col gap-4">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 shadow-md shadow-indigo-200">
+                  <MapPin className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-indigo-500">Document 2</p>
+                  <h3 className="text-sm font-bold text-slate-900 leading-tight">Proof of Business Address &amp; Phone</h3>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed -mt-1">
+                One document showing the legal business name and physical address matching your application:
+              </p>
+              <ul className="space-y-2">
+                {[
+                  'Recent utility bill (electricity, water, landline)',
+                  'Business bank statement — within last 3 months',
+                  'Rental or lease agreement',
+                  'Government-issued business license',
+                ].map((item) => (
+                  <li key={item} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-indigo-400" />
+                    <span className="text-xs text-slate-700 leading-snug">{item}</span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+
+            {/* Card 3 — Additional Prerequisites */}
+            <div className="rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-100/50 p-6 flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
+              <div className="flex items-center gap-3">
+                <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md shadow-blue-200">
+                  <Zap className="h-5 w-5 text-white" />
+                </div>
+                <div>
+                  <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-500">Prerequisites</p>
+                  <h3 className="text-sm font-bold text-slate-900 leading-tight">Additional Requirements</h3>
+                </div>
+              </div>
+              <p className="text-xs text-slate-500 leading-relaxed -mt-1">
+                A few additional items needed before WhatsApp Business API can be activated:
+              </p>
+              <ul className="space-y-3">
+                {[
+                  {
+                    label: 'Clean phone number',
+                    desc: 'Not registered to any personal or regular WhatsApp app — must be able to receive an OTP or voice call.',
+                  },
+                  {
+                    label: 'Business website',
+                    desc: 'A live, HTTPS-secure website showcasing your salon.',
+                  },
+                  {
+                    label: 'Domain-based business email',
+                    desc: 'E.g. contact@yoursalon.com — avoid free domains like Gmail or Yahoo for this step.',
+                  },
+                  {
+                    label: 'Meta Business Account',
+                    desc: 'A registered Facebook Business Page and admin access to Meta Business Manager.',
+                  },
+                ].map(({ label, desc }) => (
+                  <li key={label} className="flex items-start gap-2.5">
+                    <CheckCircle2 className="h-3.5 w-3.5 shrink-0 mt-0.5 text-blue-400" />
+                    <span className="text-xs text-slate-700 leading-snug">
+                      <span className="font-semibold text-slate-800">{label}:</span>{' '}
+                      {desc}
+                    </span>
+                  </li>
+                ))}
+              </ul>
+            </div>
+          </div>
+
+          {/* Reassurance strip */}
+          <div className="mt-8 sm:mt-10 rounded-2xl border border-emerald-100 bg-gradient-to-r from-emerald-50 to-teal-50 px-5 py-4 sm:px-6 flex flex-col sm:flex-row items-start sm:items-center gap-3 reveal">
+            <div className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-100">
+              <Headphones className="h-4.5 w-4.5 text-emerald-600" />
+            </div>
+            <div className="flex-1 min-w-0">
+              <p className="text-sm font-semibold text-slate-800">Our team handles the entire setup for you.</p>
+              <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
+                Once you upgrade to Pro or Growth, our onboarding team will guide you through document submission and
+                WhatsApp API activation — step by step. Most salons go live within 2–3 business days.
+              </p>
+            </div>
+            <a
+              href={`https://wa.me/919449602995?text=${encodeURIComponent('Hi, I want to upgrade to Pro plan and need help with WhatsApp setup.')}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200 whitespace-nowrap"
+            >
+              <MessageCircle className="h-3.5 w-3.5" />
+              Chat with Setup Team
+            </a>
+          </div>
+        </div>
+      </section>
+
       {/* ===== CTA BANNER ===== */}
       <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 8%, #1e1b4b 50%, #0f172a 92%, #ffffff 100%)' }}>
         {/* Subtle radial glow */}
