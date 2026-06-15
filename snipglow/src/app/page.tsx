@@ -30,6 +30,7 @@ import {
   Megaphone,
   Smartphone,
   Package,
+  Settings,
 } from 'lucide-react';
 
 // Animated counter that counts up when scrolled into view
@@ -1317,6 +1318,8 @@ export default function HomePage() {
                     { title: '50+ Marketing Templates', desc: 'Pre-approved for every occasion, ready to use' },
                     { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
                     { title: 'Priority Support', desc: 'WhatsApp & call support with <4hr response time' },
+                    { title: 'Free Website Setup', desc: 'We build your salon website — domain cost extra' },
+                    { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com — domain cost extra' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500">
@@ -1398,6 +1401,8 @@ export default function HomePage() {
                     { title: 'Advanced Analytics', desc: 'Cross-branch revenue, staff performance & trend reports' },
                     { title: 'Free WhatsApp API Setup (₹3,500 value)', desc: 'Full setup: Meta verification, number & template approvals' },
                     { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
+                    { title: 'Free Website Setup', desc: 'We build your salon website — domain cost extra' },
+                    { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com — domain cost extra' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
                       <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500">
@@ -1459,7 +1464,7 @@ export default function HomePage() {
             </h2>
             <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
               To activate WhatsApp and business automation features on Pro or Growth plans, salons must provide
-              basic business verification details during onboarding. Here&apos;s everything you&apos;ll need — most
+              basic business verification details during onboarding. Here&apos;s everything you&apos;ll need - most
               salons already have it all.
             </p>
           </div>
@@ -1513,7 +1518,7 @@ export default function HomePage() {
               <ul className="space-y-2">
                 {[
                   'Recent utility bill (electricity, water, landline)',
-                  'Business bank statement — within last 3 months',
+                  'Business bank statement - within last 3 months',
                   'Rental or lease agreement',
                   'Government-issued business license',
                 ].map((item) => (
@@ -1529,7 +1534,7 @@ export default function HomePage() {
             <div className="rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-100/50 p-6 flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md shadow-blue-200">
-                  <Zap className="h-5 w-5 text-white" />
+                  <Settings className="h-5 w-5 text-white" />
                 </div>
                 <div>
                   <p className="text-[11px] font-semibold uppercase tracking-wider text-blue-500">Prerequisites</p>
@@ -1543,7 +1548,7 @@ export default function HomePage() {
                 {[
                   {
                     label: 'Clean phone number',
-                    desc: 'Not registered to any personal or regular WhatsApp app — must be able to receive an OTP or voice call.',
+                    desc: 'Not registered to any personal or regular WhatsApp app - must be able to receive an OTP or voice call.',
                   },
                   {
                     label: 'Business website',
@@ -1551,7 +1556,7 @@ export default function HomePage() {
                   },
                   {
                     label: 'Domain-based business email',
-                    desc: 'E.g. contact@yoursalon.com — avoid free domains like Gmail or Yahoo for this step.',
+                    desc: 'E.g. contact@yoursalon.com - avoid free domains like Gmail or Yahoo for this step.',
                   },
                   {
                     label: 'Meta Business Account',
@@ -1579,7 +1584,7 @@ export default function HomePage() {
               <p className="text-sm font-semibold text-slate-800">Our team handles the entire setup for you.</p>
               <p className="text-xs text-slate-500 mt-0.5 leading-relaxed">
                 Once you upgrade to Pro or Growth, our onboarding team will guide you through document submission and
-                WhatsApp API activation — step by step. Most salons go live within 2–3 business days.
+                WhatsApp API activation - step by step. Most salons go live within 2-3 business days.
               </p>
             </div>
             <a
