@@ -1159,7 +1159,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== PRICING ===== */}
-      <section id="pricing" className="pt-12 pb-16 sm:pt-20 sm:pb-24 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fafafa 100%)' }}>
+      <section id="pricing" className="pt-12 pb-8 sm:pt-20 sm:pb-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fafafa 100%)' }}>
         {/* Subtle background pattern */}
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0 0 0) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
         
@@ -1429,7 +1429,7 @@ export default function HomePage() {
 
           </div>
           {/* Trust badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-12 reveal">
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-8 reveal">
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">&#8377;0 setup fee</p>
               <p className="text-xs text-slate-500 mt-1">We set up everything for free. No hidden onboarding charges.</p>
