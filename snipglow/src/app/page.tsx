@@ -290,10 +290,6 @@ export default function HomePage() {
 
             {/* Benefit cards - infinite horizontal scroll marquee */}
             <div className="relative overflow-hidden lg:overflow-visible lg:w-[calc(200%+4rem)]">
-              {/* Fade edges */}
-              <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(255,255,255,1), transparent)' }} />
-              <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none lg:hidden" style={{ background: 'linear-gradient(to left, rgba(255,255,255,1), transparent)' }} />
-
               <div className="flex gap-3 benefit-marquee">
                 {[
                   { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', gradient: 'from-pink-500/10 to-rose-500/5', border: 'border-pink-200/60', iconBg: 'bg-pink-100', titleColor: 'text-pink-700' },
