@@ -241,7 +241,7 @@ export default function HomePage() {
 
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center w-full">
           {/* Left */}
-          <div className="space-y-8 reveal-left min-w-0 overflow-hidden">
+          <div className="space-y-8 reveal-left min-w-0 overflow-hidden lg:overflow-visible">
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
@@ -289,10 +289,10 @@ export default function HomePage() {
             </div>
 
             {/* Benefit cards - infinite horizontal scroll marquee */}
-            <div className="relative overflow-hidden">
+            <div className="relative overflow-hidden lg:overflow-visible lg:w-[calc(200%+4rem)]">
               {/* Fade edges */}
               <div className="absolute left-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to right, rgba(255,255,255,1), transparent)' }} />
-              <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none" style={{ background: 'linear-gradient(to left, rgba(255,255,255,1), transparent)' }} />
+              <div className="absolute right-0 top-0 bottom-0 w-8 z-10 pointer-events-none lg:hidden" style={{ background: 'linear-gradient(to left, rgba(255,255,255,1), transparent)' }} />
 
               <div className="flex gap-3 benefit-marquee">
                 {[
@@ -363,7 +363,7 @@ export default function HomePage() {
           </div>
 
           {/* Right - WhatsApp Phone Mockup */}
-          <div className="flex justify-center items-center reveal-right mt-8 lg:mt-0">
+          <div className="relative z-20 flex justify-center items-center reveal-right mt-8 lg:mt-0">
             <div className="relative">
               {/* Layered ambient glow */}
               <div className="absolute inset-0 rounded-[52px] blur-3xl scale-110" style={{ background: 'radial-gradient(ellipse, rgba(37,211,102,0.25) 0%, rgba(18,140,126,0.15) 40%, transparent 70%)' }} />
