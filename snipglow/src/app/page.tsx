@@ -239,7 +239,7 @@ export default function HomePage() {
         <div className="absolute top-1/2 right-1/6 w-80 h-80 bg-pink-200/25 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 left-1/2 w-72 h-72 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-center w-full">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-start w-full">
           {/* Left */}
           <div className="space-y-8 reveal-left min-w-0 overflow-hidden lg:overflow-visible">
             {/* Trust badge */}
@@ -344,13 +344,10 @@ export default function HomePage() {
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> 15-day refund</span>
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Cancel anytime</span>
             </div>
-
-            {/* Interactive no-show loss calculator */}
-            <NoShowCalculator onCta={() => setShowDemoModal(true)} />
           </div>
 
-          {/* Right - WhatsApp Phone Mockup */}
-          <div className="relative z-20 flex justify-center items-center reveal-right mt-8 lg:mt-0">
+          {/* Right - WhatsApp Phone Mockup + no-show calculator */}
+          <div className="relative z-20 flex flex-col items-center gap-10 reveal-right mt-8 lg:mt-0">
             <div className="relative">
               {/* Layered ambient glow */}
               <div className="absolute inset-0 rounded-[52px] blur-3xl scale-110" style={{ background: 'radial-gradient(ellipse, rgba(37,211,102,0.25) 0%, rgba(18,140,126,0.15) 40%, transparent 70%)' }} />
@@ -665,6 +662,11 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+            </div>
+
+            {/* Interactive no-show loss calculator */}
+            <div className="w-full max-w-md">
+              <NoShowCalculator onCta={() => setShowDemoModal(true)} />
             </div>
           </div>
         </div>
