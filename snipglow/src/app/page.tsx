@@ -337,25 +337,16 @@ export default function HomePage() {
               </Link>
             </div>
 
-            {/* Pain calculator - alert style */}
-            <div className="rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 to-orange-50/60 px-4 py-4 sm:px-5 shadow-sm">
-              <div className="flex items-start gap-3 mb-3">
-                <span className="text-xl shrink-0 mt-0.5">⚠️</span>
-                <p className="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
-                  2 missed appointments/day? At ₹500 per service, that&apos;s{' '}
-                  <span className="text-red-600 font-bold">₹30,000</span>{' '}
-                  lost every month.{' '}
-                  <span className="text-slate-600 font-normal">SnipandGlow sends automatic WhatsApp reminders before every visit.</span>
-                </p>
-              </div>
-              <button
-                onClick={() => setShowDemoModal(true)}
-                className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
-              >
-                Recover Lost Bookings
-                <ArrowRight className="h-3.5 w-3.5" />
-              </button>
+            {/* CTA microcopy - risk reversal */}
+            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 -mt-4 text-xs text-slate-500">
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> No credit card</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Setup in 10 mins</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> 15-day refund</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Cancel anytime</span>
             </div>
+
+            {/* Interactive no-show loss calculator */}
+            <NoShowCalculator onCta={() => setShowDemoModal(true)} />
           </div>
 
           {/* Right - WhatsApp Phone Mockup */}
@@ -674,6 +665,46 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== TRUST BAR ===== */}
+      <section className="py-6 sm:py-8 bg-white border-y border-slate-100">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="flex flex-col items-center gap-5">
+            <p className="text-center text-sm sm:text-base font-semibold text-slate-700">
+              Trusted by <span className="text-pink-600">500+ salons &amp; spas</span> across India
+            </p>
+            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-x-10">
+              {[
+                { icon: '🇮🇳', label: 'Made in India' },
+                { icon: '🏛️', label: 'DPIIT Recognized Startup' },
+                { icon: '💬', label: 'Built on WhatsApp Business' },
+                { icon: '🔒', label: 'AES-256 Encrypted' },
+                { icon: '🧾', label: 'GST-Ready Billing' },
+              ].map(({ icon, label }) => (
+                <div key={label} className="inline-flex items-center gap-2">
+                  <span className="text-lg">{icon}</span>
+                  <span className="text-xs sm:text-sm font-medium text-slate-600">{label}</span>
+                </div>
+              ))}
+            </div>
+            <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-1">
+              {[
+                { value: 500, suffix: '+', label: 'Active salons' },
+                { value: 12, suffix: '+', label: 'Cities across India' },
+                { value: 2, suffix: 'L+', label: 'WhatsApp messages sent' },
+                { value: 70, suffix: '%', label: 'Fewer no-shows' },
+              ].map(({ value, suffix, label }) => (
+                <div key={label} className="text-center">
+                  <p className="text-xl sm:text-2xl font-bold text-slate-900">
+                    <AnimatedNumber value={value} suffix={suffix} />
+                  </p>
+                  <p className="text-[11px] sm:text-xs text-slate-500">{label}</p>
+                </div>
+              ))}
             </div>
           </div>
         </div>
@@ -1044,6 +1075,89 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== TESTIMONIALS ===== */}
+      <section className="py-12 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fdf2f8 50%, #ffffff 100%)' }}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="text-center mb-10 reveal">
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Loved by salon owners</p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Real salons. Real results.</h2>
+            <div className="flex items-center justify-center gap-2">
+              <div className="flex">
+                {[...Array(5)].map((_, i) => (
+                  <Star key={i} className="h-5 w-5 text-amber-400" fill="currentColor" />
+                ))}
+              </div>
+              <span className="text-sm font-semibold text-slate-700">4.9/5</span>
+              <span className="text-sm text-slate-500">from 200+ salon owners</span>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 reveal">
+            {[
+              {
+                name: 'Neha Thakur', salon: 'Glow & Grace Salon', city: 'Shimla',
+                initials: 'NT', color: 'bg-pink-100 text-pink-700',
+                quote: 'Half my clients used to forget their slots in tourist season. The automatic WhatsApp reminders cut our no-shows by almost 70% in the first month. Setup was done for us in a single afternoon.',
+                metric: 'No-shows down ~70%',
+              },
+              {
+                name: 'Rohan Mehta', salon: 'Urban Mane Studio', city: 'Bangalore',
+                initials: 'RM', color: 'bg-violet-100 text-violet-700',
+                quote: 'We tried two expensive Western tools before this. SnipandGlow is WhatsApp-first, which is exactly how our clients book. Billing and GST invoices that used to take an hour now take seconds.',
+                metric: 'Saves 3 hrs/day',
+              },
+              {
+                name: 'Pooja Sharma', salon: 'Roop Sundari Beauty Lounge', city: 'Jaipur',
+                initials: 'PS', color: 'bg-fuchsia-100 text-fuchsia-700',
+                quote: 'The festival broadcast campaigns are a game changer. One Teej offer message to our customer list filled the whole weekend. We made back the yearly cost in a single campaign.',
+                metric: '1 campaign = booked weekend',
+              },
+              {
+                name: 'Sandeep Verma', salon: 'Trends Unisex Salon', city: 'Hisar',
+                initials: 'SV', color: 'bg-emerald-100 text-emerald-700',
+                quote: 'In a small town, trust matters. Clients love booking on WhatsApp without calling, and the confirmation message looks professional. My walk-ins now turn into regulars.',
+                metric: 'More repeat clients',
+              },
+              {
+                name: 'Sai Priya', salon: 'Mirror Image Salon & Spa', city: 'Hyderabad',
+                initials: 'SP', color: 'bg-amber-100 text-amber-700',
+                quote: 'The membership and win-back automation keeps our chairs full on slow days. Inactive clients get a gentle nudge after 30 days and a good number come right back.',
+                metric: '+28% retention',
+              },
+              {
+                name: 'Aanya Kapoor', salon: 'The Bombay Cut', city: 'South Delhi',
+                initials: 'AK', color: 'bg-blue-100 text-blue-700',
+                quote: 'My premium clients expect a polished experience. Branded WhatsApp messages from our own number, instant invoices, and 5-star reviews going straight to Google — it all just runs on autopilot.',
+                metric: 'More 5★ Google reviews',
+              },
+            ].map((t) => (
+              <div key={t.name} className="flex flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow reveal-scale">
+                <div className="flex mb-3">
+                  {[...Array(5)].map((_, i) => (
+                    <Star key={i} className="h-4 w-4 text-amber-400" fill="currentColor" />
+                  ))}
+                </div>
+                <p className="text-sm text-slate-600 leading-relaxed flex-1">&ldquo;{t.quote}&rdquo;</p>
+                <div className="inline-flex items-center self-start gap-1.5 mt-4 mb-4 rounded-full bg-emerald-50 px-3 py-1 text-xs font-semibold text-emerald-700">
+                  <TrendingUp className="h-3.5 w-3.5" /> {t.metric}
+                </div>
+                <div className="flex items-center gap-3 pt-4 border-t border-slate-100">
+                  <div className={`flex h-11 w-11 shrink-0 items-center justify-center rounded-full font-bold text-sm ${t.color}`}>
+                    {t.initials}
+                  </div>
+                  <div>
+                    <p className="text-sm font-bold text-slate-900">{t.name}</p>
+                    <p className="text-xs text-slate-500 flex items-center gap-1">
+                      {t.salon} <span className="text-slate-300">·</span> <MapPin className="h-3 w-3" /> {t.city}
+                    </p>
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        </div>
+      </section>
+
       {/* ===== BEFORE VS AFTER ===== */}
       <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 6%, #0f172a 94%, #ffffff 100%)' }}>
         {/* Background glow */}
@@ -1151,6 +1265,66 @@ export default function HomePage() {
               </div>
             ))}
           </div>
+        </div>
+      </section>
+
+      {/* ===== COMPARISON TABLE ===== */}
+      <section className="py-12 sm:py-20 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)' }}>
+        <div className="mx-auto max-w-5xl px-4 sm:px-6">
+          <div className="text-center mb-10 reveal">
+            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Why switch</p>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">SnipandGlow vs the old way</h2>
+            <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto">See how an all-in-one WhatsApp platform compares to registers and generic salon software.</p>
+          </div>
+
+          <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm reveal">
+            <table className="w-full text-left">
+              <thead>
+                <tr className="bg-slate-50">
+                  <th className="px-3 py-4 sm:px-6 text-xs sm:text-sm font-semibold text-slate-500">What you get</th>
+                  <th className="px-2 py-4 sm:px-4 text-center">
+                    <span className="block text-sm sm:text-base font-bold bg-gradient-to-r from-pink-600 to-violet-600 bg-clip-text text-transparent">SnipandGlow</span>
+                  </th>
+                  <th className="px-2 py-4 sm:px-4 text-center text-xs sm:text-sm font-semibold text-slate-500">Pen &amp; Register</th>
+                  <th className="px-2 py-4 sm:px-4 text-center text-xs sm:text-sm font-semibold text-slate-500">Generic Software</th>
+                </tr>
+              </thead>
+              <tbody>
+                {[
+                  { feature: 'WhatsApp booking & confirmations', us: true, register: false, generic: 'partial' },
+                  { feature: 'Automatic no-show reminders', us: true, register: false, generic: 'partial' },
+                  { feature: 'GST-ready billing & UPI tracking', us: true, register: false, generic: 'partial' },
+                  { feature: 'Marketing broadcasts (festivals, win-back)', us: true, register: false, generic: false },
+                  { feature: 'Free done-for-you setup', us: true, register: false, generic: false },
+                  { feature: 'Built for Indian salons', us: true, register: 'partial', generic: false },
+                  { feature: 'Multi-branch management', us: true, register: false, generic: 'partial' },
+                  { feature: 'Monthly cost', us: 'text:From ₹799', register: 'text:Your time', generic: 'text:₹3,000–5,000' },
+                ].map((row) => (
+                  <tr key={row.feature} className="border-t border-slate-100">
+                    <td className="px-3 py-3.5 sm:px-6 text-xs sm:text-sm font-medium text-slate-700">{row.feature}</td>
+                    {(['us', 'register', 'generic'] as const).map((col) => {
+                      const val = row[col];
+                      const isUs = col === 'us';
+                      return (
+                        <td key={col} className={`px-2 py-3.5 sm:px-4 text-center ${isUs ? 'bg-pink-50/40' : ''}`}>
+                          {typeof val === 'string' && val.startsWith('text:') ? (
+                            <span className={`text-xs sm:text-sm font-semibold ${isUs ? 'text-pink-700' : 'text-slate-500'}`}>{val.slice(5)}</span>
+                          ) : val === true ? (
+                            <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
+                          ) : val === 'partial' ? (
+                            <span className="text-amber-500 text-lg leading-none" title="Limited">~</span>
+                          ) : (
+                            <X className="h-4 w-4 text-slate-300 mx-auto" />
+                          )}
+                        </td>
+                      );
+                    })}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+          <p className="text-center text-xs text-slate-400 mt-4">✓ Included &nbsp;·&nbsp; ~ Limited / costs extra &nbsp;·&nbsp; ✕ Not available</p>
         </div>
       </section>
 
@@ -1809,12 +1983,24 @@ export default function HomePage() {
               question="How is SnipandGlow different from other salon software?"
               answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is purpose-built for Indian salons - WhatsApp-first, GST billing, UPI tracking, free setup, and honest pricing. Essentials at ₹799/mo covers everything a single salon needs. Pro at ₹1,199/mo adds your own WhatsApp API and broadcast marketing. Growth at ₹1,499/mo adds multi-branch for expanding chains."
             />
+            <FaqItem
+              question="Do my customers need to download any app to book?"
+              answer="No. Your customers book through WhatsApp or a simple booking link - no app download, no account creation, nothing to install. They use the same WhatsApp they already have on their phone, which is why booking rates are so high."
+            />
+            <FaqItem
+              question="How soon will I see results?"
+              answer="Most salons notice fewer no-shows within the first 2 weeks, simply because reminders go out automatically before every appointment. Marketing broadcasts and win-back campaigns (Pro/Growth) often pay for the plan within the first month."
+            />
+            <FaqItem
+              question="What if my staff isn't tech-savvy?"
+              answer="If your team can use WhatsApp, they can use SnipandGlow - it's that simple. We also handle the full setup for you and provide free training during onboarding, so your staff is comfortable from day one. Real human support is a WhatsApp message away."
+            />
           </div>
         </div>
       </section>
 
       {/* ===== FOOTER ===== */}
-      <footer className="pt-12 pb-8" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #0f172a 6%, #020617 20%)' }}>
+      <footer className="pt-12 pb-24 lg:pb-8" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #0f172a 6%, #020617 20%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           {/* Top row: Logo + Nav + CTA */}
           <div className="flex flex-col gap-6 md:flex-row md:items-center md:justify-between pb-8 border-b border-slate-800/60">
@@ -1896,12 +2082,18 @@ export default function HomePage() {
         </div>
       </footer>
 
+      {/* Live activity FOMO toast */}
+      <LiveActivityToast />
+
+      {/* Sticky mobile CTA bar */}
+      <StickyMobileCTA onDemo={() => setShowDemoModal(true)} />
+
       {/* Floating WhatsApp Button with pulse glow ring */}
       <a
         href="https://wa.me/919449602995?text=Hi%2C%20I%27m%20interested%20in%20SnipandGlow%20for%20my%20salon"
         target="_blank"
         rel="noopener noreferrer"
-        className="fixed bottom-6 right-6 z-50 group"
+        className="fixed bottom-24 lg:bottom-6 right-6 z-50 group"
         aria-label="Chat with us on WhatsApp"
       >
         {/* Pulsing glow rings */}
@@ -1942,6 +2134,155 @@ const TIME_SLOTS = [
   '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM',
   '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
 ];
+
+// =============================================================================
+// Interactive no-show loss calculator (hero)
+// =============================================================================
+function NoShowCalculator({ onCta }: { onCta: () => void }) {
+  const [missed, setMissed] = useState(2);
+  const [avgPrice, setAvgPrice] = useState(500);
+  const monthlyLoss = missed * avgPrice * 30;
+
+  return (
+    <div className="rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 to-orange-50/60 px-4 py-4 sm:px-5 shadow-sm">
+      <div className="flex items-start gap-3 mb-4">
+        <span className="text-xl shrink-0 mt-0.5">⚠️</span>
+        <p className="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
+          How much are no-shows costing your salon?
+        </p>
+      </div>
+
+      <div className="space-y-4 mb-4">
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-medium text-slate-600">Missed appointments / day</label>
+            <span className="text-sm font-bold text-slate-900">{missed}</span>
+          </div>
+          <input
+            type="range" min={1} max={10} step={1} value={missed}
+            onChange={(e) => setMissed(Number(e.target.value))}
+            className="w-full accent-amber-500 cursor-pointer"
+            aria-label="Missed appointments per day"
+          />
+        </div>
+        <div>
+          <div className="flex items-center justify-between mb-1.5">
+            <label className="text-xs font-medium text-slate-600">Average service price</label>
+            <span className="text-sm font-bold text-slate-900">₹{avgPrice.toLocaleString('en-IN')}</span>
+          </div>
+          <input
+            type="range" min={200} max={3000} step={100} value={avgPrice}
+            onChange={(e) => setAvgPrice(Number(e.target.value))}
+            className="w-full accent-amber-500 cursor-pointer"
+            aria-label="Average service price"
+          />
+        </div>
+      </div>
+
+      <div className="rounded-xl bg-white/70 border border-amber-200 px-4 py-3 mb-4">
+        <p className="text-sm text-slate-700 leading-snug">
+          You could be losing{' '}
+          <span className="text-red-600 font-bold text-lg sm:text-xl">₹{monthlyLoss.toLocaleString('en-IN')}</span>{' '}
+          every month.{' '}
+          <span className="text-slate-500">SnipandGlow sends automatic WhatsApp reminders before every visit.</span>
+        </p>
+      </div>
+
+      <button
+        onClick={onCta}
+        className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
+      >
+        Recover Lost Bookings
+        <ArrowRight className="h-3.5 w-3.5" />
+      </button>
+    </div>
+  );
+}
+
+// =============================================================================
+// Live activity FOMO toast
+// =============================================================================
+const LIVE_ACTIVITY = [
+  { name: 'Neha', city: 'Shimla', action: 'started a free trial' },
+  { name: 'Rohan', city: 'Bangalore', action: 'connected their WhatsApp' },
+  { name: 'Pooja', city: 'Jaipur', action: 'sent a festival broadcast' },
+  { name: 'Sandeep', city: 'Hisar', action: 'booked a setup call' },
+  { name: 'Sai Priya', city: 'Hyderabad', action: 'upgraded to Pro' },
+  { name: 'Aanya', city: 'South Delhi', action: 'started a free trial' },
+  { name: 'Karan', city: 'Bangalore', action: 'got 3 new bookings today' },
+];
+
+function LiveActivityToast() {
+  const [index, setIndex] = useState(0);
+  const [visible, setVisible] = useState(false);
+
+  useEffect(() => {
+    let mounted = true;
+    const cycle = () => {
+      if (!mounted) return;
+      setVisible(true);
+      const hideTimer = setTimeout(() => setVisible(false), 4500);
+      const nextTimer = setTimeout(() => {
+        if (!mounted) return;
+        setIndex((i) => (i + 1) % LIVE_ACTIVITY.length);
+        cycle();
+      }, 9000);
+      return () => {
+        clearTimeout(hideTimer);
+        clearTimeout(nextTimer);
+      };
+    };
+    const start = setTimeout(cycle, 3500);
+    return () => {
+      mounted = false;
+      clearTimeout(start);
+    };
+  }, []);
+
+  const item = LIVE_ACTIVITY[index];
+
+  return (
+    <div
+      className={`hidden lg:flex fixed bottom-6 left-6 z-40 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-lg shadow-slate-200/60 transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
+      role="status"
+      aria-live="polite"
+    >
+      <span className="relative flex h-2.5 w-2.5 shrink-0">
+        <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
+        <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
+      </span>
+      <div>
+        <p className="text-xs font-semibold text-slate-900">{item.name} from {item.city}</p>
+        <p className="text-[11px] text-slate-500">just {item.action} · moments ago</p>
+      </div>
+    </div>
+  );
+}
+
+// =============================================================================
+// Sticky mobile CTA bar
+// =============================================================================
+function StickyMobileCTA({ onDemo }: { onDemo: () => void }) {
+  return (
+    <div className="lg:hidden fixed bottom-0 inset-x-0 z-40 border-t border-slate-200 bg-white/95 backdrop-blur px-4 py-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] shadow-[0_-4px_20px_rgba(0,0,0,0.06)]">
+      <div className="flex items-center gap-2.5">
+        <button
+          onClick={onDemo}
+          className="flex-1 inline-flex items-center justify-center gap-1.5 rounded-xl border border-slate-200 px-3 py-3 text-sm font-semibold text-slate-700 active:scale-95 transition-transform"
+        >
+          Book Demo
+        </button>
+        <Link
+          href="/signup"
+          className="flex-[1.5] inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 px-3 py-3 text-sm font-semibold text-white shadow-md shadow-pink-200 active:scale-95 transition-transform"
+        >
+          Start Free Trial
+          <ArrowRight className="h-4 w-4" />
+        </Link>
+      </div>
+    </div>
+  );
+}
 
 function FaqItem({ question, answer }: { question: string; answer: string }) {
   const [isOpen, setIsOpen] = useState(false);
