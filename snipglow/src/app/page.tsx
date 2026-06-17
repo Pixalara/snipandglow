@@ -181,20 +181,20 @@ export default function HomePage() {
           <div className="flex items-center gap-2 sm:gap-3">
             <button
               onClick={() => setShowDemoModal(true)}
-              className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
+              className="hidden md:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
               style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
             >
               Book Free Setup Call
             </button>
             <Link
               href="/login"
-              className="hidden sm:inline-flex px-4 py-2 text-sm text-slate-300 border border-slate-600 rounded-full hover:border-slate-400 hover:text-white transition-all"
+              className="hidden md:inline-flex px-4 py-2 text-sm text-slate-300 border border-slate-600 rounded-full hover:border-slate-400 hover:text-white transition-all"
             >
               Login
             </Link>
             <Link
               href="/signup"
-              className="hidden sm:inline-flex px-5 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
+              className="hidden md:inline-flex px-5 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
               style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
             >
               Get Started
@@ -2086,7 +2086,7 @@ function NoShowCalculator({ onCta }: { onCta: () => void }) {
   const monthlyLoss = missed * avgPrice * 30;
 
   return (
-    <div className="rounded-2xl border border-amber-300/70 bg-gradient-to-br from-amber-50 to-orange-50/60 px-4 py-4 sm:px-5 shadow-sm">
+    <div className="rounded-2xl border border-white/50 bg-white/15 backdrop-blur-md px-4 py-4 sm:px-5 shadow-lg shadow-slate-300/20">
       <div className="flex items-start gap-3 mb-4">
         <span className="text-xl shrink-0 mt-0.5">⚠️</span>
         <p className="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
@@ -2121,7 +2121,7 @@ function NoShowCalculator({ onCta }: { onCta: () => void }) {
         </div>
       </div>
 
-      <div className="rounded-xl bg-white/70 border border-amber-200 px-4 py-3 mb-4">
+      <div className="rounded-xl bg-white/30 border border-white/50 px-4 py-3 mb-4">
         <p className="text-sm text-slate-700 leading-snug">
           You could be losing{' '}
           <span className="text-red-600 font-bold text-lg sm:text-xl">₹{monthlyLoss.toLocaleString('en-IN')}</span>{' '}
