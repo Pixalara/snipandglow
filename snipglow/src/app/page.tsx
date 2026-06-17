@@ -711,7 +711,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
-      <section className="py-10 sm:py-16 bg-white overflow-hidden">
+      <section className="py-8 sm:py-12 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -794,7 +794,7 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <section className="py-10 sm:py-16 bg-white overflow-hidden">
+      <section className="py-8 sm:py-12 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -892,7 +892,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ANALYTICS & DASHBOARD ===== */}
-      <section className="py-10 sm:py-16 bg-white overflow-hidden">
+      <section className="py-8 sm:py-12 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -957,7 +957,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
-      <section id="how-it-works" className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
+      <section id="how-it-works" className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 sm:mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">How It Works</p>
@@ -1048,7 +1048,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ROI SECTION ===== */}
-      <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
+      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Real Results</p>
@@ -1076,7 +1076,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== TESTIMONIALS ===== */}
-      <section className="py-12 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fdf2f8 50%, #ffffff 100%)' }}>
+      <section className="py-8 sm:py-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fdf2f8 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-10 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Loved by salon owners</p>
@@ -1159,7 +1159,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BEFORE VS AFTER ===== */}
-      <section className="py-16 sm:py-24 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 6%, #0f172a 94%, #ffffff 100%)' }}>
+      <section className="py-10 sm:py-16 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 6%, #0f172a 94%, #ffffff 100%)' }}>
         {/* Background glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
           <div className="w-[800px] h-[400px] rounded-full blur-3xl opacity-20" style={{ background: 'radial-gradient(ellipse, #ec4899 0%, #8b5cf6 50%, transparent 70%)' }} />
@@ -1232,7 +1232,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== FEATURES GRID ===== */}
-      <section id="features" className="pt-16 pb-8 sm:pt-24 sm:pb-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
+      <section id="features" className="pt-10 pb-8 sm:pt-14 sm:pb-10 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Features</p>
@@ -1269,12 +1269,12 @@ export default function HomePage() {
       </section>
 
       {/* ===== COMPARISON TABLE ===== */}
-      <section className="py-12 sm:py-20 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)' }}>
+      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-5xl px-4 sm:px-6">
           <div className="text-center mb-10 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Why switch</p>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">SnipandGlow vs the old way</h2>
-            <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto">See how an all-in-one WhatsApp platform compares to registers and generic salon software.</p>
+            <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto">See how an all-in-one WhatsApp platform compares to a paper register and a popular salon tool like Salonist.</p>
           </div>
 
           <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm reveal">
@@ -1286,19 +1286,19 @@ export default function HomePage() {
                     <span className="block text-sm sm:text-base font-bold bg-gradient-to-r from-pink-600 to-violet-600 bg-clip-text text-transparent">SnipandGlow</span>
                   </th>
                   <th className="px-2 py-4 sm:px-4 text-center text-xs sm:text-sm font-semibold text-slate-500">Pen &amp; Register</th>
-                  <th className="px-2 py-4 sm:px-4 text-center text-xs sm:text-sm font-semibold text-slate-500">Generic Software</th>
+                  <th className="px-2 py-4 sm:px-4 text-center text-xs sm:text-sm font-semibold text-slate-500">Salonist</th>
                 </tr>
               </thead>
               <tbody>
                 {[
                   { feature: 'WhatsApp booking & confirmations', us: true, register: false, generic: 'partial' },
-                  { feature: 'Automatic no-show reminders', us: true, register: false, generic: 'partial' },
+                  { feature: 'Automatic no-show reminders', us: true, register: false, generic: true },
                   { feature: 'GST-ready billing & UPI tracking', us: true, register: false, generic: 'partial' },
-                  { feature: 'Marketing broadcasts (festivals, win-back)', us: true, register: false, generic: false },
+                  { feature: 'Marketing broadcasts (festivals, win-back)', us: true, register: false, generic: 'partial' },
                   { feature: 'Free done-for-you setup', us: true, register: false, generic: false },
-                  { feature: 'Built for Indian salons', us: true, register: 'partial', generic: false },
-                  { feature: 'Multi-branch management', us: true, register: false, generic: 'partial' },
-                  { feature: 'Monthly cost', us: 'text:From ₹799', register: 'text:Your time', generic: 'text:₹3,000–5,000' },
+                  { feature: 'Built for Indian salons', us: true, register: 'partial', generic: 'partial' },
+                  { feature: 'Multi-branch management', us: true, register: false, generic: true },
+                  { feature: 'Monthly cost', us: 'text:From ₹799', register: 'text:Your time', generic: 'text:₹2,000+' },
                 ].map((row) => (
                   <tr key={row.feature} className="border-t border-slate-100">
                     <td className="px-3 py-3.5 sm:px-6 text-xs sm:text-sm font-medium text-slate-700">{row.feature}</td>
@@ -1325,6 +1325,7 @@ export default function HomePage() {
             </table>
           </div>
           <p className="text-center text-xs text-slate-400 mt-4">✓ Included &nbsp;·&nbsp; ~ Limited / costs extra &nbsp;·&nbsp; ✕ Not available</p>
+          <p className="text-center text-[11px] text-slate-400 mt-1">Comparison based on publicly listed features and pricing as of 2026. Salonist&trade; is a trademark of its respective owner; please verify current plans on their website.</p>
         </div>
       </section>
 
@@ -1771,7 +1772,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== CTA BANNER ===== */}
-      <section className="relative py-20 sm:py-28 overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 8%, #1e1b4b 50%, #0f172a 92%, #ffffff 100%)' }}>
+      <section className="relative py-14 sm:py-20 overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 8%, #1e1b4b 50%, #0f172a 92%, #ffffff 100%)' }}>
         {/* Subtle radial glow */}
         <div className="absolute inset-0 flex items-center justify-center">
           <div className="w-[600px] h-[400px] rounded-full bg-gradient-to-r from-violet-600/20 via-pink-500/10 to-orange-500/20 blur-3xl" />
@@ -1845,7 +1846,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BOOK A DEMO SECTION ===== */}
-      <section className="py-12 sm:py-16 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #e9d5ff 20%, #fce7f3 50%, #e9d5ff 80%, #f8fafc 100%)' }}>
+      <section className="py-8 sm:py-12 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #e9d5ff 20%, #fce7f3 50%, #e9d5ff 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-4xl rounded-3xl px-5 py-10 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to run your salon like this?
@@ -1910,7 +1911,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== FAQ SECTION ===== */}
-      <section className="py-10 sm:py-16 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
+      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">FAQ</p>
