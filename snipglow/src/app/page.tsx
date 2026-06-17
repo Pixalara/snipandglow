@@ -1268,67 +1268,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== COMPARISON TABLE ===== */}
-      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 50%, #ffffff 100%)' }}>
-        <div className="mx-auto max-w-5xl px-4 sm:px-6">
-          <div className="text-center mb-10 reveal">
-            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Why switch</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">SnipandGlow vs the old way</h2>
-            <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto">See how an all-in-one WhatsApp platform compares to a paper register and a popular salon tool like Salonist.</p>
-          </div>
-
-          <div className="overflow-hidden rounded-2xl border border-slate-200 shadow-sm reveal">
-            <table className="w-full text-left">
-              <thead>
-                <tr className="bg-slate-50">
-                  <th className="px-3 py-4 sm:px-6 text-xs sm:text-sm font-semibold text-slate-500">What you get</th>
-                  <th className="px-2 py-4 sm:px-4 text-center">
-                    <span className="block text-sm sm:text-base font-bold bg-gradient-to-r from-pink-600 to-violet-600 bg-clip-text text-transparent">SnipandGlow</span>
-                  </th>
-                  <th className="px-2 py-4 sm:px-4 text-center text-xs sm:text-sm font-semibold text-slate-500">Pen &amp; Register</th>
-                  <th className="px-2 py-4 sm:px-4 text-center text-xs sm:text-sm font-semibold text-slate-500">Salonist</th>
-                </tr>
-              </thead>
-              <tbody>
-                {[
-                  { feature: 'WhatsApp booking & confirmations', us: true, register: false, generic: 'partial' },
-                  { feature: 'Automatic no-show reminders', us: true, register: false, generic: true },
-                  { feature: 'GST-ready billing & UPI tracking', us: true, register: false, generic: 'partial' },
-                  { feature: 'Marketing broadcasts (festivals, win-back)', us: true, register: false, generic: 'partial' },
-                  { feature: 'Free done-for-you setup', us: true, register: false, generic: false },
-                  { feature: 'Built for Indian salons', us: true, register: 'partial', generic: 'partial' },
-                  { feature: 'Multi-branch management', us: true, register: false, generic: true },
-                  { feature: 'Monthly cost', us: 'text:From ₹799', register: 'text:Your time', generic: 'text:₹2,000+' },
-                ].map((row) => (
-                  <tr key={row.feature} className="border-t border-slate-100">
-                    <td className="px-3 py-3.5 sm:px-6 text-xs sm:text-sm font-medium text-slate-700">{row.feature}</td>
-                    {(['us', 'register', 'generic'] as const).map((col) => {
-                      const val = row[col];
-                      const isUs = col === 'us';
-                      return (
-                        <td key={col} className={`px-2 py-3.5 sm:px-4 text-center ${isUs ? 'bg-pink-50/40' : ''}`}>
-                          {typeof val === 'string' && val.startsWith('text:') ? (
-                            <span className={`text-xs sm:text-sm font-semibold ${isUs ? 'text-pink-700' : 'text-slate-500'}`}>{val.slice(5)}</span>
-                          ) : val === true ? (
-                            <CheckCircle2 className="h-5 w-5 text-emerald-500 mx-auto" />
-                          ) : val === 'partial' ? (
-                            <span className="text-amber-500 text-lg leading-none" title="Limited">~</span>
-                          ) : (
-                            <X className="h-4 w-4 text-slate-300 mx-auto" />
-                          )}
-                        </td>
-                      );
-                    })}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-          <p className="text-center text-xs text-slate-400 mt-4">✓ Included &nbsp;·&nbsp; ~ Limited / costs extra &nbsp;·&nbsp; ✕ Not available</p>
-          <p className="text-center text-[11px] text-slate-400 mt-1">Comparison based on publicly listed features and pricing as of 2026. Salonist&trade; is a trademark of its respective owner; please verify current plans on their website.</p>
-        </div>
-      </section>
-
       {/* ===== PRICING ===== */}
       <section id="pricing" className="pt-12 pb-8 sm:pt-20 sm:pb-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #ffffff 50%, #fafafa 100%)' }}>
         {/* Subtle background pattern */}
