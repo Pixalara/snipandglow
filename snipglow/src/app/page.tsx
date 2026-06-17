@@ -1881,7 +1881,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="What do I need to connect my own WhatsApp Business API (Pro / Growth)?"
-              answer="You need: (1) a Facebook/Meta account, (2) a Facebook Business Page or Instagram account for your salon, (3) a phone number that can receive an OTP and is not currently active on the WhatsApp app, and (4) a business document such as a GST certificate, shop licence, or Udyam registration. A website or domain-based email is not required - a Facebook Business Page is sufficient for most salons."
+              answer="You need: (1) a Facebook/Meta account, (2) a Facebook Business Page or Instagram account for your salon, (3) a phone number that can receive an OTP and is not currently active on the WhatsApp app, (4) a business document such as a GST certificate, shop licence, or Udyam registration, and (5) a registered website domain along with a domain-based business email (for example, name@yoursalon.com) - these are required by Meta to verify your business for the WhatsApp Business API. Don't have a domain or business email yet? Our team can guide you through getting one quickly during onboarding."
             />
             <FaqItem
               question="Do I need to do any technical setup for the WhatsApp API?"
@@ -2142,48 +2142,82 @@ function NoShowCalculator({ onCta }: { onCta: () => void }) {
 // =============================================================================
 // Live activity FOMO toast
 // =============================================================================
-const LIVE_ACTIVITY = [
-  { name: 'Neha', city: 'Shimla', action: 'started a free trial' },
-  { name: 'Rohan', city: 'Bangalore', action: 'connected their WhatsApp' },
-  { name: 'Pooja', city: 'Jaipur', action: 'sent a festival broadcast' },
-  { name: 'Sandeep', city: 'Hisar', action: 'booked a setup call' },
-  { name: 'Sai Priya', city: 'Hyderabad', action: 'upgraded to Pro' },
-  { name: 'Aanya', city: 'South Delhi', action: 'started a free trial' },
-  { name: 'Karan', city: 'Bangalore', action: 'got 3 new bookings today' },
+const LA_NAMES = [
+  'Aarav', 'Vivaan', 'Aditya', 'Vihaan', 'Arjun', 'Sai', 'Reyansh', 'Ishaan', 'Rohan', 'Karan',
+  'Rahul', 'Vikram', 'Sandeep', 'Manish', 'Deepak', 'Anil', 'Farhan', 'Harman', 'Nikhil', 'Varun',
+  'Priya', 'Ananya', 'Diya', 'Aadhya', 'Saanvi', 'Riya', 'Meera', 'Pooja', 'Neha', 'Kavya',
+  'Aanya', 'Isha', 'Sneha', 'Nisha', 'Tara', 'Zara', 'Aisha', 'Simran', 'Gauri', 'Ritu',
+];
+const LA_CITIES = [
+  'Mumbai', 'Delhi', 'Bangalore', 'Hyderabad', 'Chennai', 'Kolkata', 'Pune', 'Ahmedabad', 'Jaipur', 'Lucknow',
+  'Surat', 'Indore', 'Bhopal', 'Chandigarh', 'Shimla', 'Hisar', 'Coimbatore', 'Kochi', 'Nagpur', 'Patna',
+  'Guwahati', 'Visakhapatnam', 'Mysuru', 'Noida', 'Gurugram', 'Thane', 'Ludhiana', 'Amritsar', 'Udaipur', 'Dehradun',
+  'Goa', 'Vadodara', 'Nashik', 'Rajkot', 'Raipur', 'Ranchi',
+];
+const LA_SALONS = [
+  'Glow & Grace Salon', 'Urban Mane Studio', 'Roop Sundari Beauty Lounge', 'Trends Unisex Salon', 'Mirror Image Salon & Spa',
+  'The Bombay Cut', 'Velvet Scissors', 'Blush Beauty Bar', 'Shear Genius', 'Glamour Studio',
+  'Bliss Salon & Spa', 'Style Avenue', 'The Hair Lounge', 'Pamper Palace', 'Radiance Beauty Studio',
+  'Scissors & Co.', 'Luxe Salon', 'Chic Roots', 'Halo Hair & Beauty', 'Tangerine Salon',
+  'Aura Beauty Lounge', 'Mane & Co.', 'The Grooming Room', 'Posh Salon', 'Serene Spa & Salon',
+  'Vanity Beauty Bar', 'Knots & Curls', 'Elegance Unisex Salon', 'Snip Studio', 'Crowning Glory',
+  'The Beauty Hub', 'Glow Up Studio', 'Kanchan Beauty Parlour', 'Sundaram Salon', 'Lavanya Beauty Lounge',
+  'Trendz Salon', 'Reflections Salon & Spa', 'Bombshell Beauty', 'Fringe Benefits', 'Mirror Mirror Salon',
 ];
 
+function pick<T>(arr: T[]): T {
+  return arr[Math.floor(Math.random() * arr.length)];
+}
+
+function randomActivity(): { title: string; subtitle: string } {
+  const r = Math.random();
+  if (r < 0.7) {
+    // Mostly: someone booked an appointment with a salon
+    return {
+      title: `${pick(LA_NAMES)} from ${pick(LA_CITIES)}`,
+      subtitle: `booked an appointment with ${pick(LA_SALONS)}`,
+    };
+  }
+  // Otherwise: a salon started a free trial
+  return {
+    title: `${pick(LA_SALONS)}`,
+    subtitle: `${pick(LA_CITIES)} · just started a free trial`,
+  };
+}
+
 function LiveActivityToast() {
-  const [index, setIndex] = useState(0);
+  // Deterministic first value so server and client markup match (no hydration mismatch)
+  const [act, setAct] = useState<{ title: string; subtitle: string }>({
+    title: `${LA_NAMES[0]} from ${LA_CITIES[0]}`,
+    subtitle: `booked an appointment with ${LA_SALONS[0]}`,
+  });
   const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     let mounted = true;
+    let hideTimer: ReturnType<typeof setTimeout>;
+    let nextTimer: ReturnType<typeof setTimeout>;
+
     const cycle = () => {
       if (!mounted) return;
+      setAct(randomActivity());
       setVisible(true);
-      const hideTimer = setTimeout(() => setVisible(false), 4500);
-      const nextTimer = setTimeout(() => {
-        if (!mounted) return;
-        setIndex((i) => (i + 1) % LIVE_ACTIVITY.length);
-        cycle();
-      }, 9000);
-      return () => {
-        clearTimeout(hideTimer);
-        clearTimeout(nextTimer);
-      };
+      hideTimer = setTimeout(() => mounted && setVisible(false), 4500);
+      nextTimer = setTimeout(cycle, 7500);
     };
-    const start = setTimeout(cycle, 3500);
+
+    const start = setTimeout(cycle, 3000);
     return () => {
       mounted = false;
       clearTimeout(start);
+      clearTimeout(hideTimer);
+      clearTimeout(nextTimer);
     };
   }, []);
 
-  const item = LIVE_ACTIVITY[index];
-
   return (
     <div
-      className={`hidden lg:flex fixed bottom-6 left-6 z-40 items-center gap-3 rounded-2xl border border-slate-200 bg-white px-4 py-3 shadow-lg shadow-slate-200/60 transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
+      className={`fixed left-3 sm:left-6 bottom-24 lg:bottom-6 z-40 flex max-w-[72vw] sm:max-w-xs items-center gap-2.5 sm:gap-3 rounded-2xl border border-slate-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg shadow-slate-200/60 transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
       role="status"
       aria-live="polite"
     >
@@ -2191,9 +2225,9 @@ function LiveActivityToast() {
         <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-emerald-400 opacity-75" />
         <span className="relative inline-flex h-2.5 w-2.5 rounded-full bg-emerald-500" />
       </span>
-      <div>
-        <p className="text-xs font-semibold text-slate-900">{item.name} from {item.city}</p>
-        <p className="text-[11px] text-slate-500">just {item.action} · moments ago</p>
+      <div className="min-w-0">
+        <p className="text-[11px] sm:text-xs font-semibold text-slate-900 truncate">{act.title}</p>
+        <p className="text-[10px] sm:text-[11px] text-slate-500 leading-snug line-clamp-2 sm:truncate">{act.subtitle} · moments ago</p>
       </div>
     </div>
   );
