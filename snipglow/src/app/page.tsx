@@ -1422,7 +1422,7 @@ export default function HomePage() {
                 <div className="space-y-3">
                   <p className="text-[10px] font-bold uppercase tracking-widest text-violet-400 mb-3">Everything in Essentials, plus</p>
                   {[
-                    { title: 'WhatsApp API Setup - one-time fee ₹3,500', desc: 'Meta verification, number registration & template approvals' },
+                    { title: 'WhatsApp API Setup - one-time fee ₹5,000', desc: 'Meta verification, number registration & template approvals' },
                     { title: 'Up to 10 Staff Logins', desc: 'Double the team access of Essentials - 10 members with their own dashboards' },
                     { title: 'Own WhatsApp Business API', desc: 'Your phone number, your branding, full control' },
                     { title: 'WhatsApp Marketing Broadcasts', desc: 'Festival offers, birthdays, flash sales & win-back campaigns' },
@@ -1511,7 +1511,7 @@ export default function HomePage() {
                     { title: 'Dedicated Support Specialist', desc: 'Priority WhatsApp & call support with <4hr response time' },
                     { title: 'White-Label Onboarding', desc: 'Dedicated onboarding specialist & custom setup assistance' },
                     { title: 'Advanced Analytics', desc: 'Cross-branch revenue, staff performance & trend reports' },
-                    { title: 'Free WhatsApp API Setup (₹3,500 value)', desc: 'Full setup: Meta verification, number & template approvals' },
+                    { title: 'WhatsApp API Setup - one-time fee ₹5,000', desc: 'Full setup: Meta verification, number & template approvals' },
                     { title: 'Meta Charges on Your Account', desc: 'WhatsApp conversation fees are paid directly to Meta from your own WABA - transparent, no markup' },
                     { title: 'Free Website Setup', desc: 'We build your salon website. Domain name registration charges apply separately (~₹800-₹1,200/year based on domain name)' },
                     { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com included with your domain' },
@@ -1875,7 +1875,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How does WhatsApp work on each plan?"
-              answer="On Essentials, booking confirmations, appointment reminders, bills, and feedback requests are sent automatically from the shared SnipandGlow WhatsApp number - zero setup needed. On Pro and Growth, you connect your own WhatsApp Business number so all messages come from your salon's brand. Pro includes a one-time WhatsApp API setup fee of ₹3,500 (our team handles everything). Growth includes the same setup for free. Pro and Growth also unlock broadcast campaigns (birthday offers, festival deals, win-back messages) to all your customers at once."
+              answer="On Essentials, booking confirmations, appointment reminders, bills, and feedback requests are sent automatically from the shared SnipandGlow WhatsApp number - zero setup needed. On Pro and Growth, you connect your own WhatsApp Business number so all messages come from your salon's brand. Pro and Growth both include a one-time WhatsApp API setup fee of ₹5,000 (our team handles everything). Pro and Growth also unlock broadcast campaigns (birthday offers, festival deals, win-back messages) to all your customers at once."
             />
             <FaqItem
               question="How many staff can I give login access to?"
@@ -1887,7 +1887,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="Do I need to do any technical setup for the WhatsApp API?"
-              answer="No. On Pro and Growth plans, our team handles the complete WhatsApp API setup - Meta Business verification, number registration, and template approvals. On the Growth plan this is included free (₹3,500 value). On the Pro plan it is a one-time setup fee of ₹3,500. You just provide the required documents."
+              answer="No. On Pro and Growth plans, our team handles the complete WhatsApp API setup - Meta Business verification, number registration, and template approvals. On both Pro and Growth plans it is a one-time setup fee of ₹5,000. You just provide the required documents."
             />
             <FaqItem
               question="Will connecting my own WhatsApp API affect my existing WhatsApp Business app?"
