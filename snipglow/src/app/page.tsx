@@ -239,9 +239,9 @@ export default function HomePage() {
         <div className="absolute top-1/2 right-1/6 w-80 h-80 bg-pink-200/25 rounded-full blur-3xl pointer-events-none" />
         <div className="absolute bottom-1/4 left-1/2 w-72 h-72 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-start w-full">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-stretch w-full">
           {/* Left */}
-          <div className="space-y-8 reveal-left min-w-0 overflow-hidden lg:overflow-visible">
+          <div className="flex flex-col gap-8 reveal-left min-w-0 overflow-hidden lg:overflow-visible lg:justify-between">
             {/* Trust badge */}
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
               <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
