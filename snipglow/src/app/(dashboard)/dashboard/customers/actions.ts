@@ -3,7 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { isValidIndianPhone, formatPhoneE164, toTitleCase } from '@/lib/utils';
+import { isValidIndianPhone, formatPhoneE164, toTitleCase, isValidDateOfBirth } from '@/lib/utils';
 import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership } from '@/types';
 
 /**
@@ -20,6 +20,11 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Action
   // Validate phone
   if (!isValidIndianPhone(input.phone)) {
     return { success: false, error: 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).' };
+  }
+
+  // Validate date of birth if provided
+  if (input.date_of_birth && !isValidDateOfBirth(input.date_of_birth)) {
+    return { success: false, error: 'Please enter a valid date of birth (between 1950 and today).' };
   }
 
   const tenantId = user.user_metadata?.tenant_id;
@@ -39,6 +44,7 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Action
       phone: formattedPhone,
       email: input.email?.trim() || null,
       gender: input.gender || null,
+      date_of_birth: input.date_of_birth || null,
       notes: input.notes?.trim() || null,
     })
     .select()
@@ -70,11 +76,17 @@ export async function updateCustomer(id: string, input: UpdateCustomerInput): Pr
     return { success: false, error: 'Please enter a valid 10-digit Indian mobile number.' };
   }
 
+  // Validate date of birth if a non-null value is provided
+  if (input.date_of_birth && !isValidDateOfBirth(input.date_of_birth)) {
+    return { success: false, error: 'Please enter a valid date of birth (between 1950 and today).' };
+  }
+
   const updateData: Record<string, unknown> = {};
   if (input.name !== undefined) updateData.name = toTitleCase(input.name);
   if (input.phone !== undefined) updateData.phone = formatPhoneE164(input.phone);
   if (input.email !== undefined) updateData.email = input.email?.trim() || null;
   if (input.gender !== undefined) updateData.gender = input.gender || null;
+  if (input.date_of_birth !== undefined) updateData.date_of_birth = input.date_of_birth || null;
   if (input.notes !== undefined) updateData.notes = input.notes?.trim() || null;
 
   const { data, error } = await supabase
@@ -301,6 +313,11 @@ export async function createCustomerWithMembership(
     return { success: false, error: 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).' };
   }
 
+  // Validate date of birth if provided
+  if (input.date_of_birth && !isValidDateOfBirth(input.date_of_birth)) {
+    return { success: false, error: 'Please enter a valid date of birth (between 1950 and today).' };
+  }
+
   const tenantId = user.user_metadata?.tenant_id;
   const branchId = user.user_metadata?.branch_id;
   if (!tenantId || !branchId) {
@@ -320,6 +337,7 @@ export async function createCustomerWithMembership(
       phone: formattedPhone,
       email: input.email?.trim() || null,
       gender: input.gender || null,
+      date_of_birth: input.date_of_birth || null,
       notes: input.notes?.trim() || null,
     })
     .select()

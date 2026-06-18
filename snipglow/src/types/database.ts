@@ -108,6 +108,8 @@ export interface Customer {
   phone: string;
   email: string | null;
   gender: string | null;
+  /** ISO date string (YYYY-MM-DD) or null. Optional, used for birthday wishes. */
+  date_of_birth: string | null;
   notes: string | null;
   total_visits: number;
   total_spent: number;
@@ -538,6 +540,8 @@ export interface CreateCustomerInput {
   phone: string;
   email?: string;
   gender?: string;
+  /** ISO date string (YYYY-MM-DD). Optional. */
+  date_of_birth?: string;
   notes?: string;
 }
 
@@ -547,6 +551,8 @@ export interface UpdateCustomerInput {
   phone?: string;
   email?: string | null;
   gender?: string | null;
+  /** ISO date string (YYYY-MM-DD) or null. */
+  date_of_birth?: string | null;
   notes?: string | null;
 }
 

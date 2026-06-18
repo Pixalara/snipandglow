@@ -149,6 +149,7 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
           phone: customer.phone,
           email: customer.email,
           gender: customer.gender,
+          date_of_birth: customer.date_of_birth ?? null,
           notes: customer.notes,
           total_visits: customer.total_visits ?? 0,
           total_spent: customer.total_spent ?? 0,
@@ -188,6 +189,7 @@ function CustomerProfileHeader({
     phone: string;
     email: string | null;
     gender: string | null;
+    date_of_birth: string | null;
     notes: string | null;
     total_visits: number;
     total_spent: number;
@@ -224,6 +226,9 @@ function CustomerProfileHeader({
         {customer.email && <DetailItem label="Email" value={customer.email} />}
         {customer.gender && (
           <DetailItem label="Gender" value={capitalize(customer.gender)} />
+        )}
+        {customer.date_of_birth && (
+          <DetailItem label="Date of Birth" value={formatDateIN(customer.date_of_birth)} />
         )}
         <DetailItem label="Total Visits" value={String(customer.total_visits)} />
         <DetailItem label="Total Spent" value={formatINR(customer.total_spent)} />

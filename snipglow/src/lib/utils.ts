@@ -126,6 +126,32 @@ export function isValidIndianPhone(phone: string): boolean {
 }
 
 /**
+ * Validate a Date of Birth ISO string (YYYY-MM-DD).
+ * Rules:
+ *  - Must be a real calendar date (rejects e.g. 2023-02-30).
+ *  - Year must be 1950 or later.
+ *  - Must not be in the future (compared against today, date-only).
+ */
+export function isValidDateOfBirth(iso: string): boolean {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(iso)) return false;
+  const [year, month, day] = iso.split("-").map(Number);
+  if (year < 1950) return false;
+  const date = new Date(year, month - 1, day);
+  // Round-trip check to reject invalid dates (e.g. Feb 30, month 13)
+  if (
+    date.getFullYear() !== year ||
+    date.getMonth() !== month - 1 ||
+    date.getDate() !== day
+  ) {
+    return false;
+  }
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  if (date > today) return false;
+  return true;
+}
+
+/**
  * Convert a phone number to E.164 format (+91XXXXXXXXXX).
  * Strips spaces, dashes, and existing +91 prefix, then prepends +91.
  */

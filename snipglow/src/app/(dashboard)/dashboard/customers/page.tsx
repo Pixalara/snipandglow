@@ -41,7 +41,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
   // Fetch customers with only needed columns + limit for performance
   let query = supabase
     .from('customers')
-    .select('id, name, phone, email, gender, notes, total_visits, total_spent, last_visit_at, created_at, tenant_id, branch_id')
+    .select('id, name, phone, email, gender, date_of_birth, notes, total_visits, total_spent, last_visit_at, created_at, tenant_id, branch_id')
     .order('name', { ascending: true })
     .limit(200);
 
@@ -72,6 +72,7 @@ export default async function CustomersPage({ searchParams }: CustomersPageProps
     total_spent: c.total_spent ?? 0,
     last_visit_at: c.last_visit_at ?? null,
     created_at: c.created_at ?? '',
+    date_of_birth: c.date_of_birth ?? null,
     has_active_membership: !!activeMemberships[c.id],
   }));
 

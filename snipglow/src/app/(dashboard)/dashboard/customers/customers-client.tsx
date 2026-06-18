@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { formatINR, formatDateIN } from '@/lib/utils';
+import { formatINR, formatDateIN, isValidDateOfBirth } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import {
   Users,
@@ -30,6 +30,11 @@ import type { LoyaltyTierConfig } from '@/lib/loyalty';
 export interface CustomerRow extends Customer {
   has_active_membership: boolean;
 }
+
+const DOB_MONTHS = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+];
 
 /** Columns for the customers Excel export. */
 function customerExportColumns(config: LoyaltyTierConfig): ExportColumn<CustomerRow>[] {
@@ -226,6 +231,16 @@ function EditCustomerModal({
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
 
+  // Date of Birth (split from ISO YYYY-MM-DD)
+  const dobParts = customer.date_of_birth ? customer.date_of_birth.split('-') : [];
+  const [dobYear, setDobYear] = useState(dobParts[0] ?? '');
+  const [dobMonth, setDobMonth] = useState(dobParts[1] ? String(Number(dobParts[1])) : '');
+  const [dobDay, setDobDay] = useState(dobParts[2] ? String(Number(dobParts[2])) : '');
+
+  const currentYear = new Date().getFullYear();
+  const dobYears = Array.from({ length: currentYear - 1950 + 1 }, (_, i) => currentYear - i);
+  const dobDays = Array.from({ length: 31 }, (_, i) => i + 1);
+
   // Membership state
   const [memberships, setMemberships] = useState<Membership[]>([]);
   const [currentMembershipId, setCurrentMembershipId] = useState<string>('');
@@ -258,6 +273,23 @@ function EditCustomerModal({
     setError('');
     setSuccess(false);
 
+    // Validate optional Date of Birth: require all three parts together, then strict-validate.
+    let date_of_birth: string | null = null;
+    const anyDob = dobDay || dobMonth || dobYear;
+    const allDob = dobDay && dobMonth && dobYear;
+    if (anyDob && !allDob) {
+      setError('Please select day, month and year for date of birth, or clear all three.');
+      return;
+    }
+    if (allDob) {
+      const iso = `${dobYear}-${dobMonth.padStart(2, '0')}-${dobDay.padStart(2, '0')}`;
+      if (!isValidDateOfBirth(iso)) {
+        setError('Please enter a valid date of birth (year 1950 or later, and not in the future).');
+        return;
+      }
+      date_of_birth = iso;
+    }
+
     startTransition(async () => {
       // Update customer info
       const result = await updateCustomer(customer.id, {
@@ -265,6 +297,7 @@ function EditCustomerModal({
         phone: phone.trim(),
         email: email.trim() || null,
         gender: gender || null,
+        date_of_birth,
         notes: notes.trim() || null,
       });
 
@@ -375,6 +408,48 @@ function EditCustomerModal({
                 <option value="other">Other</option>
               </select>
             </div>
+          </div>
+
+          <div className="space-y-1.5">
+            <label className="text-xs font-medium text-muted-foreground">
+              Date of Birth <span className="text-muted-foreground/70">(optional)</span>
+            </label>
+            <div className="grid grid-cols-3 gap-3">
+              <select
+                value={dobDay}
+                onChange={(e) => setDobDay(e.target.value)}
+                aria-label="Day of birth"
+                className="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Day</option>
+                {dobDays.map((d) => (
+                  <option key={d} value={String(d)}>{d}</option>
+                ))}
+              </select>
+              <select
+                value={dobMonth}
+                onChange={(e) => setDobMonth(e.target.value)}
+                aria-label="Month of birth"
+                className="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Month</option>
+                {DOB_MONTHS.map((m, i) => (
+                  <option key={m} value={String(i + 1)}>{m}</option>
+                ))}
+              </select>
+              <select
+                value={dobYear}
+                onChange={(e) => setDobYear(e.target.value)}
+                aria-label="Year of birth"
+                className="h-9 w-full rounded-xl border border-input bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              >
+                <option value="">Year</option>
+                {dobYears.map((y) => (
+                  <option key={y} value={String(y)}>{y}</option>
+                ))}
+              </select>
+            </div>
+            <p className="text-xs text-muted-foreground">Used for birthday wishes on WhatsApp (Pro &amp; Growth).</p>
           </div>
 
           <div className="space-y-1.5">
