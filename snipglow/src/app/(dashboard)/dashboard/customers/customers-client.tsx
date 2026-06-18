@@ -214,7 +214,7 @@ export function CustomersTable({ customers, loyaltyConfig: initialConfig }: Cust
 // Edit Customer Modal (with Membership Assignment)
 // =============================================================================
 
-function EditCustomerModal({
+export function EditCustomerModal({
   customer,
   onClose,
 }: {
