@@ -7,7 +7,7 @@ import { AdminGstEditor } from './gst-editor';
 import { AdminWhatsAppActivator } from './whatsapp-activator';
 import { AdminPlanEditor } from './plan-editor';
 import { toAdminWhatsAppView } from '@/lib/whatsapp/redaction';
-import { planLabel } from '@/lib/subscription';
+import { planLabel, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
 
 // =============================================================================
 // Admin — Tenant Detail Page
@@ -91,6 +91,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <Field label="Owner" value={tenant.owner_name || '—'} />
           <Field label="Phone" value={tenant.phone || '—'} />
           <Field label="Plan" value={planLabel(tenant.plan_tier)} />
+          <Field label="Billing Cycle" value={billingCycleLabel(getBillingCycle(tenant.settings))} />
           <Field label="Status" value={tenant.subscription_status} />
           <Field label="Created" value={formatISTDate(tenant.created_at)} />
           <Field label="Subscription Start" value={formatISTDate(tenant.subscription_start)} />
@@ -102,6 +103,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       <AdminPlanEditor
         tenantId={tenantId}
         currentPlan={tenant.plan_tier || 'starter'}
+        currentBillingCycle={getBillingCycle(tenant.settings)}
         subscriptionStatus={tenant.subscription_status}
         subscriptionEnd={tenant.subscription_end ?? null}
       />

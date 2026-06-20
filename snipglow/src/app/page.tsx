@@ -119,6 +119,15 @@ export default function HomePage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [billingCycle, setBillingCycle] = useState<'monthly' | 'yearly'>('yearly');
+
+  // Landing-page pricing (display strings). Monthly = list price (no discount);
+  // yearly = discounted effective per-month, billed once for the year.
+  const PRICING = {
+    essentials: { monthly: '999', yearly: '799', yearlyTotal: '9,588', discount: 20 },
+    pro: { monthly: '1,499', yearly: '1,199', yearlyTotal: '14,388', discount: 20 },
+    growth: { monthly: '1,899', yearly: '1,499', yearlyTotal: '17,988', discount: 21 },
+  };
 
   useEffect(() => {
     const observer = new IntersectionObserver(
@@ -1288,6 +1297,23 @@ export default function HomePage() {
             </p>
           </div>
 
+          {/* Billing cycle toggle */}
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4 mb-10 reveal">
+            <span className={`text-sm font-semibold transition-colors ${billingCycle === 'monthly' ? 'text-slate-900' : 'text-slate-400'}`}>Monthly</span>
+            <button
+              type="button"
+              role="switch"
+              aria-checked={billingCycle === 'yearly'}
+              aria-label="Toggle billing cycle"
+              onClick={() => setBillingCycle((c) => (c === 'yearly' ? 'monthly' : 'yearly'))}
+              className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full transition-colors ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-pink-500 to-violet-500' : 'bg-slate-300'}`}
+            >
+              <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-1'}`} />
+            </button>
+            <span className={`text-sm font-semibold transition-colors ${billingCycle === 'yearly' ? 'text-slate-900' : 'text-slate-400'}`}>Yearly</span>
+            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">Save up to 21%</span>
+          </div>
+
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
 
             {/* ── ESSENTIALS ─────────────────────────────────── */}
@@ -1315,12 +1341,24 @@ export default function HomePage() {
 
                 {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-pink-100">
-                  <p className="text-sm text-slate-400 line-through mb-1">₹999/month</p>
-                  <div className="flex items-baseline gap-1.5 mb-2">
-                    <span className="text-5xl font-extrabold text-slate-900 tracking-tight">₹799</span>
-                    <span className="text-base text-slate-500 font-medium">/month</span>
-                  </div>
-                  <p className="text-xs text-slate-500 font-medium">₹9,588/year &nbsp;·&nbsp; 15-day free trial &nbsp;·&nbsp; Cancel anytime</p>
+                  {billingCycle === 'yearly' ? (
+                    <>
+                      <p className="text-sm text-slate-400 line-through mb-1">₹{PRICING.essentials.monthly}/month</p>
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-5xl font-extrabold text-slate-900 tracking-tight">₹{PRICING.essentials.yearly}</span>
+                        <span className="text-base text-slate-500 font-medium">/month</span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">₹{PRICING.essentials.yearlyTotal}/year billed once &nbsp;·&nbsp; Save {PRICING.essentials.discount}% &nbsp;·&nbsp; 15-day free trial</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-5xl font-extrabold text-slate-900 tracking-tight">₹{PRICING.essentials.monthly}</span>
+                        <span className="text-base text-slate-500 font-medium">/month</span>
+                      </div>
+                      <p className="text-xs text-slate-500 font-medium">Billed monthly &nbsp;·&nbsp; 15-day free trial &nbsp;·&nbsp; Cancel anytime</p>
+                    </>
+                  )}
                 </div>
 
                 {/* Row 3 - CTA */}
@@ -1401,12 +1439,24 @@ export default function HomePage() {
 
                 {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-violet-700/50">
-                  <p className="text-sm text-violet-400 line-through mb-1">₹1,999/month</p>
-                  <div className="flex items-baseline gap-1.5 mb-2">
-                    <span className="text-5xl font-extrabold text-white tracking-tight">₹1,199</span>
-                    <span className="text-base text-slate-400 font-medium">/month</span>
-                  </div>
-                  <p className="text-xs text-slate-400 font-medium">₹14,388/year &nbsp;·&nbsp; Single branch &nbsp;·&nbsp; Billed yearly</p>
+                  {billingCycle === 'yearly' ? (
+                    <>
+                      <p className="text-sm text-violet-400 line-through mb-1">₹{PRICING.pro.monthly}/month</p>
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-5xl font-extrabold text-white tracking-tight">₹{PRICING.pro.yearly}</span>
+                        <span className="text-base text-slate-400 font-medium">/month</span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium">₹{PRICING.pro.yearlyTotal}/year billed once &nbsp;·&nbsp; Save {PRICING.pro.discount}% &nbsp;·&nbsp; Single branch</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-5xl font-extrabold text-white tracking-tight">₹{PRICING.pro.monthly}</span>
+                        <span className="text-base text-slate-400 font-medium">/month</span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium">Billed monthly &nbsp;·&nbsp; Single branch &nbsp;·&nbsp; Cancel anytime</p>
+                    </>
+                  )}
                 </div>
 
                 {/* Row 3 - CTA */}
@@ -1485,12 +1535,24 @@ export default function HomePage() {
 
                 {/* Row 2 - Pricing */}
                 <div className="mb-8 pb-8 border-b border-slate-700/60">
-                  <p className="text-sm text-slate-500 line-through mb-1">₹2,999/month</p>
-                  <div className="flex items-baseline gap-1.5 mb-2">
-                    <span className="text-5xl font-extrabold text-white tracking-tight">₹1,499</span>
-                    <span className="text-base text-slate-400 font-medium">/month</span>
-                  </div>
-                  <p className="text-xs text-slate-400 font-medium">₹17,988/year &nbsp;·&nbsp; 2 branches incl. &nbsp;·&nbsp; +₹499/branch &nbsp;·&nbsp; Billed yearly</p>
+                  {billingCycle === 'yearly' ? (
+                    <>
+                      <p className="text-sm text-slate-500 line-through mb-1">₹{PRICING.growth.monthly}/month</p>
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-5xl font-extrabold text-white tracking-tight">₹{PRICING.growth.yearly}</span>
+                        <span className="text-base text-slate-400 font-medium">/month</span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium">₹{PRICING.growth.yearlyTotal}/year billed once &nbsp;·&nbsp; Save {PRICING.growth.discount}% &nbsp;·&nbsp; 2 branches incl. · +₹499/branch</p>
+                    </>
+                  ) : (
+                    <>
+                      <div className="flex items-baseline gap-1.5 mb-2">
+                        <span className="text-5xl font-extrabold text-white tracking-tight">₹{PRICING.growth.monthly}</span>
+                        <span className="text-base text-slate-400 font-medium">/month</span>
+                      </div>
+                      <p className="text-xs text-slate-400 font-medium">Billed monthly &nbsp;·&nbsp; 2 branches incl. · +₹499/branch</p>
+                    </>
+                  )}
                 </div>
 
                 {/* Row 3 - CTA */}
@@ -1548,7 +1610,7 @@ export default function HomePage() {
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">No hidden charges</p>
-              <p className="text-xs text-slate-500 mt-1">₹799, ₹1,199, or ₹1,499 is exactly what you pay. No surprises.</p>
+              <p className="text-xs text-slate-500 mt-1">The price you see is exactly what you pay. No surprises.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
               <p className="font-bold text-slate-900 text-sm">15-day full refund</p>

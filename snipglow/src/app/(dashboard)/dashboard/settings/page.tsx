@@ -14,7 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
-import { getSubscriptionState } from '@/lib/subscription';
+import { getSubscriptionState, planLabel, planMonthlyPrice, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
 import { RenewButton } from './renew-button';
 
 export default async function SettingsPage() {
@@ -80,6 +80,11 @@ export default async function SettingsPage() {
   const discountEnabled = (settings.discount_enabled as boolean) ?? false;
   const discountValue = (settings.discount_value as number) ?? 0;
 
+  // Plan + billing cycle
+  const planTier = (tenant as any).plan_tier ?? 'starter';
+  const billingCycle = getBillingCycle(settings);
+  const planMonthly = planMonthlyPrice(planTier, billingCycle);
+
   // Salon profile data
   const salonProfile = {
     tenantCode: (tenant as any).tenant_code ?? 'SNG-000',
@@ -139,7 +144,7 @@ export default async function SettingsPage() {
                   {isExpired ? 'Subscription Expired' : isTrial ? 'Free Trial' : 'Active Subscription'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  SnipandGlow — Essentials Plan (₹799/mo)
+                  SnipandGlow — {planLabel(planTier)} Plan · {billingCycleLabel(billingCycle)} (₹{planMonthly.toLocaleString('en-IN')}/mo)
                 </p>
               </div>
             </div>
@@ -236,7 +241,7 @@ export default async function SettingsPage() {
                 className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-blue-500 hover:to-indigo-500 transition-all"
               >
                 <Crown className="size-4" />
-                Subscribe Now — ₹799/mo
+                Subscribe Now — ₹{planMonthly.toLocaleString('en-IN')}/mo
               </Link>
             </div>
           )}

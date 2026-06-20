@@ -207,7 +207,8 @@ type AllowedPlanTier = (typeof ALLOWED_PLAN_TIERS)[number];
 
 export async function adminUpdateTenantPlan(
   tenantId: string,
-  planTier: string
+  planTier: string,
+  billingCycle: string = 'yearly'
 ): Promise<{ success: boolean; error?: string }> {
   const user = await requireAdmin();
 
@@ -217,21 +218,25 @@ export async function adminUpdateTenantPlan(
     return { success: false, error: 'Invalid plan tier.' };
   }
 
+  const cycle = billingCycle === 'monthly' ? 'monthly' : 'yearly';
+
   const admin = createAdminClient();
 
   const { data: tenant } = await (admin
     .from('tenants' as any)
-    .select('name, plan_tier')
+    .select('name, plan_tier, settings')
     .eq('id', tenantId)
     .single() as any);
 
   if (!tenant) return { success: false, error: 'Tenant not found.' };
 
   const previousPlan = (tenant as any).plan_tier ?? 'starter';
+  const currentSettings = ((tenant as any).settings as Record<string, unknown>) ?? {};
+  const previousCycle = (currentSettings.billing_cycle as string) ?? 'yearly';
 
   const { error } = await (admin
     .from('tenants' as any)
-    .update({ plan_tier: planTier })
+    .update({ plan_tier: planTier, settings: { ...currentSettings, billing_cycle: cycle } })
     .eq('id', tenantId) as any);
 
   if (error) {
@@ -248,6 +253,8 @@ export async function adminUpdateTenantPlan(
       tenant_name: (tenant as any).name,
       previous_plan: previousPlan,
       new_plan: planTier,
+      previous_cycle: previousCycle,
+      new_cycle: cycle,
     },
   });
 

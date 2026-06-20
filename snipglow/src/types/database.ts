@@ -41,6 +41,8 @@ export interface TenantSettings {
   gst_enabled?: boolean;
   gst_rate?: number;
   logo_url?: string;
+  /** Subscription billing cycle. Defaults to 'yearly' when absent. */
+  billing_cycle?: 'monthly' | 'yearly';
   [key: string]: unknown;
 }
 

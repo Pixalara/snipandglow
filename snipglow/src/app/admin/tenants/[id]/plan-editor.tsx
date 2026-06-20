@@ -8,6 +8,7 @@ import { adminUpdateTenantPlan, adminActivateSubscription } from './actions';
 interface Props {
   tenantId: string;
   currentPlan: string;
+  currentBillingCycle?: string;
   subscriptionStatus?: string;
   subscriptionEnd?: string | null;
 }
@@ -20,11 +21,19 @@ const PLAN_OPTIONS: { value: string; label: string }[] = [
   { value: 'enterprise', label: 'Growth (enterprise)' },
 ];
 
-export function AdminPlanEditor({ tenantId, currentPlan, subscriptionStatus, subscriptionEnd }: Props) {
+const CYCLE_OPTIONS: { value: string; label: string }[] = [
+  { value: 'yearly', label: 'Yearly (discounted)' },
+  { value: 'monthly', label: 'Monthly (list price)' },
+];
+
+export function AdminPlanEditor({ tenantId, currentPlan, currentBillingCycle, subscriptionStatus, subscriptionEnd }: Props) {
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [plan, setPlan] = useState(
     PLAN_OPTIONS.some((p) => p.value === currentPlan) ? currentPlan : 'starter'
+  );
+  const [cycle, setCycle] = useState(
+    currentBillingCycle === 'monthly' ? 'monthly' : 'yearly'
   );
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
@@ -35,14 +44,14 @@ export function AdminPlanEditor({ tenantId, currentPlan, subscriptionStatus, sub
   const [actError, setActError] = useState('');
   const [actSuccess, setActSuccess] = useState(false);
 
-  const dirty = plan !== currentPlan;
+  const dirty = plan !== currentPlan || cycle !== (currentBillingCycle === 'monthly' ? 'monthly' : 'yearly');
 
   function handleSave() {
     setError('');
     setSuccess(false);
     if (!dirty) return;
     startTransition(async () => {
-      const res = await adminUpdateTenantPlan(tenantId, plan);
+      const res = await adminUpdateTenantPlan(tenantId, plan, cycle);
       if (res.success) {
         setSuccess(true);
         router.refresh();
@@ -87,11 +96,21 @@ export function AdminPlanEditor({ tenantId, currentPlan, subscriptionStatus, sub
           effect immediately — the tenant only needs to reload.
         </p>
 
-        <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:items-end">
+        <div className="grid grid-cols-1 sm:grid-cols-[1fr_1fr_auto] gap-3 sm:items-end">
           <div className="space-y-1">
             <label className="text-xs font-medium text-muted-foreground">Plan Tier</label>
             <select className={inputCls} value={plan} onChange={(e) => setPlan(e.target.value)}>
               {PLAN_OPTIONS.map((opt) => (
+                <option key={opt.value} value={opt.value}>
+                  {opt.label}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div className="space-y-1">
+            <label className="text-xs font-medium text-muted-foreground">Billing Cycle</label>
+            <select className={inputCls} value={cycle} onChange={(e) => setCycle(e.target.value)}>
+              {CYCLE_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
                   {opt.label}
                 </option>

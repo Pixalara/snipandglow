@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/auth';
 import { formatISTDate } from '@/lib/datetime';
-import { planLabel } from '@/lib/subscription';
+import { planLabel, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
 
 export default async function AdminSubscriptionsPage() {
   await requireAdmin();
@@ -9,7 +9,7 @@ export default async function AdminSubscriptionsPage() {
 
   const { data: tenants } = await (admin
     .from('tenants' as any)
-    .select('id, name, tenant_code, owner_name, phone, plan_tier, subscription_status, subscription_start, subscription_end, created_at')
+    .select('id, name, tenant_code, owner_name, phone, plan_tier, subscription_status, subscription_start, subscription_end, created_at, settings')
     .order('subscription_status')
     .order('created_at', { ascending: false }) as any);
 
@@ -45,6 +45,7 @@ export default async function AdminSubscriptionsPage() {
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Salon</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Owner</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Plan</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Billing</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Start</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">End</th>
@@ -57,6 +58,7 @@ export default async function AdminSubscriptionsPage() {
                   <td className="px-4 py-3 text-foreground font-medium">{t.name}</td>
                   <td className="px-4 py-3 text-foreground/80">{t.owner_name || '—'}</td>
                   <td className="px-4 py-3 text-xs text-foreground/80">{planLabel(t.plan_tier)}</td>
+                  <td className="px-4 py-3 text-xs text-foreground/80">{billingCycleLabel(getBillingCycle(t.settings))}</td>
                   <td className="px-4 py-3">
                     <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                       t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
