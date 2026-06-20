@@ -125,8 +125,8 @@ export default function HomePage() {
   // yearly = discounted effective per-month, billed once for the year.
   const PRICING = {
     essentials: { monthly: '999', yearly: '799', yearlyTotal: '9,588', discount: 20 },
-    pro: { monthly: '1,999', yearly: '1,199', yearlyTotal: '14,388', discount: 40 },
-    growth: { monthly: '2,999', yearly: '1,499', yearlyTotal: '17,988', discount: 50 },
+    pro: { monthly: '1,999', yearly: '1,399', yearlyTotal: '16,788', discount: 30 },
+    growth: { monthly: '2,999', yearly: '1,799', yearlyTotal: '21,588', discount: 40 },
   };
 
   useEffect(() => {
@@ -1311,7 +1311,7 @@ export default function HomePage() {
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-1'}`} />
             </button>
             <span className={`text-sm font-semibold transition-colors ${billingCycle === 'yearly' ? 'text-slate-900' : 'text-slate-400'}`}>Yearly</span>
-            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">Save up to 50%</span>
+            <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">Save up to 40%</span>
           </div>
 
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
