@@ -104,8 +104,8 @@ export interface PlanPricing {
 /** Per-tier pricing. Marketing names: starter=Essentials, pro=Pro, enterprise=Growth. */
 export const PLAN_PRICING: Record<'starter' | 'pro' | 'enterprise', PlanPricing> = {
   starter: { monthly: 999, yearlyPerMonth: 799 },
-  pro: { monthly: 1499, yearlyPerMonth: 1199 },
-  enterprise: { monthly: 1899, yearlyPerMonth: 1499 },
+  pro: { monthly: 1999, yearlyPerMonth: 1199 },
+  enterprise: { monthly: 2999, yearlyPerMonth: 1499 },
 };
 
 export function planPricing(tier?: string | null): PlanPricing {
