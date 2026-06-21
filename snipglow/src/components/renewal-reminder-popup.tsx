@@ -7,10 +7,11 @@ import { CompletePaymentModal } from '@/components/complete-payment-modal';
 // =============================================================================
 // Renewal reminder popup.
 //
-// Shows once to the salon OWNER when the subscription / trial end date is within
-// the next 24 hours (and not already expired), nudging them to renew before any
-// interruption. Dismissed state is remembered per end-date in localStorage so it
-// doesn't reappear on every navigation; it shows again for a new renewal date.
+// Shows to the salon OWNER when the subscription / trial end date is within the
+// next 24 hours (and not already expired), nudging them to renew before any
+// interruption. It reappears on every fresh login (session-scoped) so it keeps
+// reminding until the plan is renewed or expires, while not re-popping on every
+// page navigation within the same session.
 // =============================================================================
 
 interface Props {
@@ -32,7 +33,10 @@ export function RenewalReminderPopup({ endDate, isExpired, isOwner, planLabel }:
     // Only within the 24 hours BEFORE the renewal date.
     if (ms <= 0 || ms > 24 * 60 * 60 * 1000) return;
     try {
-      if (localStorage.getItem(`renewal_reminder_dismissed_${endDate}`) === '1') return;
+      // Session-scoped: shown once per login (resets on next login), so it
+      // keeps reminding on every login until the plan is renewed or expires,
+      // without nagging on every page navigation within the same session.
+      if (sessionStorage.getItem(`renewal_reminder_dismissed_${endDate}`) === '1') return;
     } catch { /* ignore */ }
     setHoursLeft(Math.max(1, Math.ceil(ms / (60 * 60 * 1000))));
     setShow(true);
@@ -40,7 +44,7 @@ export function RenewalReminderPopup({ endDate, isExpired, isOwner, planLabel }:
 
   function dismiss() {
     try {
-      if (endDate) localStorage.setItem(`renewal_reminder_dismissed_${endDate}`, '1');
+      if (endDate) sessionStorage.setItem(`renewal_reminder_dismissed_${endDate}`, '1');
     } catch { /* ignore */ }
     setShow(false);
   }
