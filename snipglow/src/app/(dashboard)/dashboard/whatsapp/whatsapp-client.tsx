@@ -1114,26 +1114,6 @@ function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
           )}
         </div>
       </div>
-
-      {/* How it works */}
-      <div className="rounded-xl border border-border bg-card p-6">
-        <h3 className="text-sm font-semibold text-foreground mb-3">How it works</h3>
-        {embeddedSignupAvailable ? (
-          <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-            <li>Click &quot;Connect WhatsApp&quot; to start Meta&apos;s Embedded Signup</li>
-            <li>Log in with your Facebook account and select your Business</li>
-            <li>Verify your WhatsApp Business number</li>
-            <li>Once connected, all messages will be sent from your own number</li>
-          </ol>
-        ) : (
-          <ol className="space-y-2 text-sm text-muted-foreground list-decimal list-inside">
-            <li>Request setup with your WhatsApp number</li>
-            <li>Keep a business document handy (GST certificate, shop licence, or Udyam) and a Facebook Business Page</li>
-            <li>Our team verifies and registers your number with Meta — usually within 24 hours</li>
-            <li>Once activated, all messages are sent from your own number</li>
-          </ol>
-        )}
-      </div>
     </div>
   );
 }
