@@ -911,3 +911,19 @@ button, a, [role="button"] {
   .card-lift:hover { transform: none; }
   html { scroll-behavior: auto; }
 }
+
+/* =============================================================================
+   Number inputs — hide the native spinner arrows.
+   The up/down spinners eat horizontal space and clip the value in narrow,
+   center-aligned fields (e.g. per-item discount / quantity boxes), which made
+   a single "0" appear cut off. Hiding them keeps the value fully visible.
+   ============================================================================= */
+input[type='number']::-webkit-outer-spin-button,
+input[type='number']::-webkit-inner-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+input[type='number'] {
+  -moz-appearance: textfield;
+  appearance: textfield;
+}
