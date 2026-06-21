@@ -3,7 +3,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { CreditCard, CheckCircle2, AlertTriangle, Crown } from 'lucide-react';
-import { adminUpdateTenantPlan, adminActivateSubscription } from './actions';
+import { adminUpdateTenantPlan, adminActivateSubscription, adminSetSubscriptionEnd } from './actions';
 
 interface Props {
   tenantId: string;
@@ -43,6 +43,33 @@ export function AdminPlanEditor({ tenantId, currentPlan, currentBillingCycle, su
   const [actPending, startActTransition] = useTransition();
   const [actError, setActError] = useState('');
   const [actSuccess, setActSuccess] = useState(false);
+
+  // Exact expiry-date state (extend a trial or prepone to test expiry lock).
+  const [expiryDate, setExpiryDate] = useState(
+    subscriptionEnd ? new Date(subscriptionEnd).toISOString().slice(0, 10) : ''
+  );
+  const [expPending, startExpTransition] = useTransition();
+  const [expError, setExpError] = useState('');
+  const [expSuccess, setExpSuccess] = useState(false);
+
+  function handleSetExpiry() {
+    setExpError('');
+    setExpSuccess(false);
+    if (!expiryDate) {
+      setExpError('Pick a date first.');
+      return;
+    }
+    startExpTransition(async () => {
+      const res = await adminSetSubscriptionEnd(tenantId, expiryDate);
+      if (res.success) {
+        setExpSuccess(true);
+        router.refresh();
+        setTimeout(() => setExpSuccess(false), 2500);
+      } else {
+        setExpError(res.error || 'Failed to update expiry date.');
+      }
+    });
+  }
 
   const dirty = plan !== currentPlan || cycle !== (currentBillingCycle === 'monthly' ? 'monthly' : 'yearly');
 
@@ -180,6 +207,42 @@ export function AdminPlanEditor({ tenantId, currentPlan, currentBillingCycle, su
               <CheckCircle2 className="size-4 shrink-0" /> Subscription activated &amp; extended.
             </div>
           )}
+
+          {/* Set an exact expiry date (extend a trial, or prepone to test the
+              expired-account lockout). */}
+          <div className="mt-2 border-t border-border pt-4 space-y-2">
+            <label className="text-xs font-medium text-muted-foreground">Set exact expiry date</label>
+            <p className="text-xs text-muted-foreground">
+              Pick any date — a future date gives a trial more time; a past/today date
+              expires the account so you can verify dashboard features are locked.
+            </p>
+            <div className="grid grid-cols-1 sm:grid-cols-[1fr_auto] gap-3 sm:items-end">
+              <input
+                type="date"
+                value={expiryDate}
+                onChange={(e) => setExpiryDate(e.target.value)}
+                className={inputCls}
+                aria-label="Subscription expiry date"
+              />
+              <button
+                onClick={handleSetExpiry}
+                disabled={expPending || !expiryDate}
+                className="inline-flex items-center justify-center gap-1.5 rounded-lg bg-slate-700 px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-slate-600 disabled:opacity-50"
+              >
+                {expPending ? 'Saving...' : 'Set Expiry Date'}
+              </button>
+            </div>
+            {expError && (
+              <div className="flex items-center gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600">
+                <AlertTriangle className="size-4 shrink-0" /> {expError}
+              </div>
+            )}
+            {expSuccess && (
+              <div className="flex items-center gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-sm text-emerald-600">
+                <CheckCircle2 className="size-4 shrink-0" /> Expiry date updated.
+              </div>
+            )}
+          </div>
         </div>
       </div>
     </div>

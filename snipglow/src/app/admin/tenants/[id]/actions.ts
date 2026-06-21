@@ -333,3 +333,73 @@ export async function adminActivateSubscription(
   revalidatePath(`/admin/tenants/${tenantId}`);
   return { success: true };
 }
+
+// =============================================================================
+// Admin — set a tenant's subscription/trial expiry to an EXACT date.
+//
+// Lets admins give a trial more time (future date) OR prepone the expiry to a
+// past/near date to verify that an expired account is correctly locked out of
+// dashboard features. Setting subscription_end is enough: getSubscriptionState
+// computes "expired" from this date at read time.
+// =============================================================================
+
+export async function adminSetSubscriptionEnd(
+  tenantId: string,
+  endDate: string // 'YYYY-MM-DD'
+): Promise<{ success: boolean; error?: string }> {
+  const user = await requireAdmin();
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+    return { success: false, error: 'Please provide a valid date.' };
+  }
+  // Store end-of-day IST (18:30 UTC of the prior day → next day) so the chosen
+  // calendar day counts as fully available. Use 23:59:59 IST = 18:29:59Z.
+  const parsed = new Date(`${endDate}T23:59:59+05:30`);
+  if (isNaN(parsed.getTime())) {
+    return { success: false, error: 'Please provide a valid date.' };
+  }
+
+  const admin = createAdminClient();
+
+  const { data: tenant } = await (admin
+    .from('tenants' as any)
+    .select('name, subscription_status, subscription_start, subscription_end')
+    .eq('id', tenantId)
+    .single() as any);
+
+  if (!tenant) return { success: false, error: 'Tenant not found.' };
+
+  // Stamp a start date if the tenant never had one.
+  const start = (tenant as any).subscription_start || new Date().toISOString();
+
+  const { error } = await (admin
+    .from('tenants' as any)
+    .update({
+      subscription_end: parsed.toISOString(),
+      subscription_start: start,
+      // Allow the trial-expiry alert to fire again for the new date.
+      trial_expiry_alert_sent: false,
+    } as any)
+    .eq('id', tenantId) as any);
+
+  if (error) {
+    return { success: false, error: `Failed to update expiry date: ${error.message}` };
+  }
+
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'set_subscription_end',
+    targetType: 'tenant',
+    targetId: tenantId,
+    metadata: {
+      tenant_name: (tenant as any).name,
+      previous_end: (tenant as any).subscription_end,
+      new_end: parsed.toISOString(),
+    },
+  });
+
+  revalidatePath(`/admin/tenants/${tenantId}`);
+  return { success: true };
+}
