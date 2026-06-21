@@ -12,7 +12,7 @@ import type { PeriodType } from './actions';
 // =============================================================================
 
 interface AnalyticsPageProps {
-  searchParams: Promise<{ period?: string }>;
+  searchParams: Promise<{ period?: string; start?: string; end?: string }>;
 }
 
 export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps) {
@@ -49,8 +49,8 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     );
   }
 
-  const period = (params.period as PeriodType) || 'month';
-  const data = await getRevenueData(period);
+  const period = (params.period as PeriodType) || 'mtd';
+  const data = await getRevenueData(period, params.start, params.end);
 
   if (!data) {
     return (

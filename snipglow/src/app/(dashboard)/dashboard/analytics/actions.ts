@@ -3,7 +3,17 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 
-export type PeriodType = 'today' | 'week' | 'month' | '3months' | 'year';
+export type PeriodType =
+  | 'today'
+  | 'week'
+  | 'this_month'
+  | 'mtd'
+  | 'ytd'
+  | 'custom'
+  // Legacy values kept for backward-compatible URLs
+  | 'month'
+  | '3months'
+  | 'year';
 
 export interface RevenueStats {
   totalRevenue: number;
@@ -55,12 +65,32 @@ export interface RevenueData {
   topServices: ServiceRevenue[];
   paymentBreakdown: PaymentBreakdown[];
   hourlyHeatmap: HourlyHeatmap[];
+  range: { start: string; end: string };
 }
 
-function getDateRange(period: PeriodType): { start: string; end: string } {
+// Validate a YYYY-MM-DD string.
+function isValidDateStr(s: string | undefined): s is string {
+  return !!s && /^\d{4}-\d{2}-\d{2}$/.test(s) && !Number.isNaN(new Date(s + 'T00:00:00').getTime());
+}
+
+function getDateRange(
+  period: PeriodType,
+  customStart?: string,
+  customEnd?: string,
+): { start: string; end: string } {
   const now = new Date();
+  // Reliable IST calendar date (YYYY-MM-DD) without UTC drift.
+  const todayStr = now.toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const [year, month] = todayStr.split('-').map(Number);
+  const endDate = todayStr;
+
+  // Helper to subtract days from the IST "now" and return YYYY-MM-DD.
   const todayIST = new Date(now.toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const endDate = todayIST.toISOString().split('T')[0];
+  const minusDays = (n: number): string => {
+    const d = new Date(todayIST);
+    d.setDate(d.getDate() - n);
+    return d.toLocaleDateString('en-CA');
+  };
 
   let startDate: string;
 
@@ -68,28 +98,37 @@ function getDateRange(period: PeriodType): { start: string; end: string } {
     case 'today':
       startDate = endDate;
       break;
-    case 'week': {
-      const weekAgo = new Date(todayIST);
-      weekAgo.setDate(weekAgo.getDate() - 6);
-      startDate = weekAgo.toISOString().split('T')[0];
+    case 'week':
+      startDate = minusDays(6);
+      break;
+    case 'this_month':
+    case 'mtd':
+      // 1st of the current calendar month → today (month-till-date).
+      startDate = `${year}-${String(month).padStart(2, '0')}-01`;
+      break;
+    case 'ytd': {
+      // Indian financial year: 1 April → today. Jan–Mar belong to the prior FY.
+      const fyStartYear = month >= 4 ? year : year - 1;
+      startDate = `${fyStartYear}-04-01`;
       break;
     }
-    case 'month': {
-      const monthAgo = new Date(todayIST);
-      monthAgo.setDate(monthAgo.getDate() - 29);
-      startDate = monthAgo.toISOString().split('T')[0];
-      break;
+    case 'custom': {
+      const s = isValidDateStr(customStart) ? customStart : endDate;
+      const e = isValidDateStr(customEnd) ? customEnd : endDate;
+      // Guard against reversed ranges.
+      return s <= e ? { start: s, end: e } : { start: e, end: s };
     }
-    case '3months': {
-      const threeMonthsAgo = new Date(todayIST);
-      threeMonthsAgo.setDate(threeMonthsAgo.getDate() - 89);
-      startDate = threeMonthsAgo.toISOString().split('T')[0];
+    // ─── Legacy windows (backward-compatible URLs) ──────────────────────────
+    case 'month':
+      startDate = minusDays(29);
       break;
-    }
+    case '3months':
+      startDate = minusDays(89);
+      break;
     case 'year': {
       const yearAgo = new Date(todayIST);
       yearAgo.setFullYear(yearAgo.getFullYear() - 1);
-      startDate = yearAgo.toISOString().split('T')[0];
+      startDate = yearAgo.toLocaleDateString('en-CA');
       break;
     }
     default:
@@ -99,7 +138,11 @@ function getDateRange(period: PeriodType): { start: string; end: string } {
   return { start: startDate, end: endDate };
 }
 
-export async function getRevenueData(period: PeriodType): Promise<RevenueData | null> {
+export async function getRevenueData(
+  period: PeriodType,
+  customStart?: string,
+  customEnd?: string,
+): Promise<RevenueData | null> {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -110,7 +153,7 @@ export async function getRevenueData(period: PeriodType): Promise<RevenueData | 
   if (!tenantId || !branchId) return null;
 
   const admin = createAdminClient();
-  const { start, end } = getDateRange(period);
+  const { start, end } = getDateRange(period, customStart, customEnd);
 
   // Convert date range to ISO timestamps for created_at comparisons
   const startISO = `${start}T00:00:00+05:30`;
@@ -297,5 +340,6 @@ export async function getRevenueData(period: PeriodType): Promise<RevenueData | 
     topServices,
     paymentBreakdown,
     hourlyHeatmap,
+    range: { start, end },
   };
 }

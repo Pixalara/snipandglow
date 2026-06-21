@@ -1,6 +1,8 @@
 'use client';
 
+import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import * as XLSX from 'xlsx';
 import { formatINR } from '@/lib/utils';
 import {
   IndianRupee,
@@ -28,73 +30,145 @@ interface RevenueDashboardClientProps {
 const periodLabels: Record<PeriodType, string> = {
   today: 'Today',
   week: 'This Week',
+  this_month: 'This Month',
+  mtd: 'Month to Date',
+  ytd: 'Year to Date',
+  custom: 'Custom Range',
+  // Legacy
   month: 'Last 30 Days',
   '3months': 'Last 3 Months',
   year: 'Last Year',
 };
 
-const periods: PeriodType[] = ['today', 'week', 'month', '3months', 'year'];
+// Presets shown as tabs (legacy values still resolve from URLs, just not listed).
+const periods: PeriodType[] = ['today', 'week', 'this_month', 'mtd', 'ytd', 'custom'];
+
+function formatRangeLabel(start: string, end: string): string {
+  const fmt = (s: string) =>
+    new Date(s + 'T12:00:00+05:30').toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+    });
+  return start === end ? fmt(start) : `${fmt(start)} – ${fmt(end)}`;
+}
 
 export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboardClientProps) {
   const router = useRouter();
   const { stats } = data;
 
+  const [customStart, setCustomStart] = useState(data.range.start);
+  const [customEnd, setCustomEnd] = useState(data.range.end);
+
+  const todayStr = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+
   function handlePeriodChange(period: PeriodType) {
+    if (period === 'custom') {
+      router.push(
+        `/dashboard/analytics?period=custom&start=${customStart}&end=${customEnd}`,
+      );
+      return;
+    }
     router.push(`/dashboard/analytics?period=${period}`);
   }
 
-  function handleExport() {
-    // Build CSV content
-    const lines: string[] = [];
-    lines.push('Revenue Report - ' + periodLabels[currentPeriod]);
-    lines.push('');
-    lines.push('Summary');
-    lines.push(`Total Revenue,${stats.totalRevenue}`);
-    lines.push(`Total Expenses,${stats.totalExpenses}`);
-    lines.push(`Net Profit,${stats.netProfit}`);
-    lines.push(`Total Appointments,${stats.totalAppointments}`);
-    lines.push(`Completed,${stats.completedAppointments}`);
-    lines.push(`Cancelled,${stats.cancelledAppointments}`);
-    lines.push(`Avg Revenue/Appointment,${stats.avgRevenuePerAppointment}`);
-    lines.push(`New Customers,${stats.newCustomers}`);
-    lines.push(`Total Invoices,${stats.totalInvoices}`);
-    lines.push(`Product Sales,${stats.productSales}`);
-    lines.push(`Product Cost,${stats.productCost}`);
-    lines.push(`Product Margin,${stats.productMargin}`);
-    lines.push(`Product Units Sold,${stats.productUnitsSold}`);
-    lines.push('');
-    lines.push('Daily Revenue');
-    lines.push('Date,Revenue,Appointments,Invoices');
-    for (const d of data.dailyRevenue) {
-      lines.push(`${d.date},${d.revenue},${d.appointments},${d.invoices}`);
-    }
-    lines.push('');
-    lines.push('Top Services');
-    lines.push('Service,Revenue,Bookings');
-    for (const s of data.topServices) {
-      lines.push(`${s.name},${s.revenue},${s.count}`);
-    }
-    lines.push('');
-    lines.push('Payment Methods');
-    lines.push('Method,Amount,Count');
-    for (const p of data.paymentBreakdown) {
-      lines.push(`${p.method},${p.amount},${p.count}`);
-    }
-    lines.push('');
-    lines.push('Peak Hours');
-    lines.push('Hour,Appointments');
-    for (const h of data.hourlyHeatmap) {
-      lines.push(`${h.label},${h.count}`);
-    }
+  function applyCustomRange() {
+    if (!customStart || !customEnd) return;
+    const [s, e] = customStart <= customEnd ? [customStart, customEnd] : [customEnd, customStart];
+    router.push(`/dashboard/analytics?period=custom&start=${s}&end=${e}`);
+  }
 
-    const csv = lines.join('\r\n');
-    const blob = new Blob(['\uFEFF' + csv], { type: 'text/csv;charset=utf-8;' });
-    const url = URL.createObjectURL(blob);
-    const link = document.createElement('a');
-    link.href = url;
-    link.download = `revenue-report-${currentPeriod}-${new Date().toISOString().split('T')[0]}.csv`;
-    link.click();
-    URL.revokeObjectURL(url);
+  function handleExport() {
+    const wb = XLSX.utils.book_new();
+    const money = '"\u20B9"#,##0'; // ₹ formatted, thousands separated
+    const rangeText = formatRangeLabel(data.range.start, data.range.end);
+    const generatedOn = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    // ─── Sheet 1: Summary ─────────────────────────────────────────────────
+    const summaryAoa: (string | number)[][] = [
+      ['Revenue Report'],
+      ['Period', periodLabels[currentPeriod]],
+      ['Date Range', rangeText],
+      ['Generated', generatedOn],
+      [],
+      ['Metric', 'Value'],
+      ['Total Revenue', stats.totalRevenue],
+      ['Total Expenses', stats.totalExpenses],
+      ['Net Profit (after expenses & product cost)', stats.netProfit],
+      ['Total Appointments', stats.totalAppointments],
+      ['Completed Appointments', stats.completedAppointments],
+      ['Cancelled Appointments', stats.cancelledAppointments],
+      ['Avg Revenue / Appointment', stats.avgRevenuePerAppointment],
+      ['Total Invoices', stats.totalInvoices],
+      ['Total Customers', stats.totalCustomers],
+      ['New Customers (this period)', stats.newCustomers],
+      ['Product Sales', stats.productSales],
+      ['Product Cost', stats.productCost],
+      ['Product Margin', stats.productMargin],
+      ['Product Units Sold', stats.productUnitsSold],
+    ];
+    const wsSummary = XLSX.utils.aoa_to_sheet(summaryAoa);
+    wsSummary['!cols'] = [{ wch: 42 }, { wch: 20 }];
+    // Money rows (0-indexed by row in the sheet): revenue, expenses, profit, avg,
+    // product sales, cost, margin.
+    const moneyRows = [6, 7, 8, 12, 16, 17, 18];
+    for (const r of moneyRows) {
+      const cell = wsSummary[XLSX.utils.encode_cell({ r, c: 1 })];
+      if (cell) cell.z = money;
+    }
+    XLSX.utils.book_append_sheet(wb, wsSummary, 'Summary');
+
+    // ─── Sheet 2: Daily Revenue ───────────────────────────────────────────
+    const dailyAoa: (string | number)[][] = [['Date', 'Revenue', 'Appointments', 'Invoices']];
+    for (const d of data.dailyRevenue) {
+      dailyAoa.push([d.date, d.revenue, d.appointments, d.invoices]);
+    }
+    const wsDaily = XLSX.utils.aoa_to_sheet(dailyAoa);
+    wsDaily['!cols'] = [{ wch: 14 }, { wch: 14 }, { wch: 14 }, { wch: 12 }];
+    for (let i = 0; i < data.dailyRevenue.length; i++) {
+      const cell = wsDaily[XLSX.utils.encode_cell({ r: i + 1, c: 1 })];
+      if (cell) cell.z = money;
+    }
+    XLSX.utils.book_append_sheet(wb, wsDaily, 'Daily Revenue');
+
+    // ─── Sheet 3: Top Services ────────────────────────────────────────────
+    const servicesAoa: (string | number)[][] = [['Service', 'Revenue', 'Bookings']];
+    for (const s of data.topServices) {
+      servicesAoa.push([s.name, s.revenue, s.count]);
+    }
+    const wsServices = XLSX.utils.aoa_to_sheet(servicesAoa);
+    wsServices['!cols'] = [{ wch: 32 }, { wch: 14 }, { wch: 12 }];
+    for (let i = 0; i < data.topServices.length; i++) {
+      const cell = wsServices[XLSX.utils.encode_cell({ r: i + 1, c: 1 })];
+      if (cell) cell.z = money;
+    }
+    XLSX.utils.book_append_sheet(wb, wsServices, 'Top Services');
+
+    // ─── Sheet 4: Payment Methods ─────────────────────────────────────────
+    const payAoa: (string | number)[][] = [['Method', 'Amount', 'Transactions']];
+    for (const p of data.paymentBreakdown) {
+      payAoa.push([p.method.toUpperCase(), p.amount, p.count]);
+    }
+    const wsPay = XLSX.utils.aoa_to_sheet(payAoa);
+    wsPay['!cols'] = [{ wch: 18 }, { wch: 14 }, { wch: 14 }];
+    for (let i = 0; i < data.paymentBreakdown.length; i++) {
+      const cell = wsPay[XLSX.utils.encode_cell({ r: i + 1, c: 1 })];
+      if (cell) cell.z = money;
+    }
+    XLSX.utils.book_append_sheet(wb, wsPay, 'Payment Methods');
+
+    // ─── Sheet 5: Peak Hours ──────────────────────────────────────────────
+    const hoursAoa: (string | number)[][] = [['Hour', 'Appointments']];
+    for (const h of data.hourlyHeatmap) {
+      hoursAoa.push([h.label, h.count]);
+    }
+    const wsHours = XLSX.utils.aoa_to_sheet(hoursAoa);
+    wsHours['!cols'] = [{ wch: 12 }, { wch: 14 }];
+    XLSX.utils.book_append_sheet(wb, wsHours, 'Peak Hours');
+
+    const fileTag =
+      currentPeriod === 'custom' ? `${data.range.start}_to_${data.range.end}` : currentPeriod;
+    XLSX.writeFile(wb, `revenue-report-${fileTag}.xlsx`);
   }
 
   return (
@@ -108,7 +182,7 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
             </div>
             <div>
               <h1 className="text-xl font-bold text-foreground">Revenue Dashboard</h1>
-              <p className="text-sm text-muted-foreground">{periodLabels[currentPeriod]} performance overview</p>
+              <p className="text-sm text-muted-foreground">{formatRangeLabel(data.range.start, data.range.end)}</p>
             </div>
           </div>
           <button
@@ -116,7 +190,7 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
             className="inline-flex h-9 items-center gap-1.5 rounded-xl border border-border bg-card px-4 text-sm font-medium text-foreground hover:bg-muted transition-colors"
           >
             <Download className="size-4" />
-            Export CSV
+            Export Excel
           </button>
         </div>
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-indigo-500/5" />
@@ -138,6 +212,40 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
           </button>
         ))}
       </div>
+
+      {/* Custom Date Range Picker */}
+      {currentPeriod === 'custom' && (
+        <div className="flex flex-col gap-3 rounded-xl border border-border bg-card p-4 sm:flex-row sm:items-end">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">From</label>
+            <input
+              type="date"
+              value={customStart}
+              max={customEnd || todayStr}
+              onChange={(e) => setCustomStart(e.target.value)}
+              className="h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">To</label>
+            <input
+              type="date"
+              value={customEnd}
+              min={customStart}
+              max={todayStr}
+              onChange={(e) => setCustomEnd(e.target.value)}
+              className="h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground"
+            />
+          </div>
+          <button
+            onClick={applyCustomRange}
+            className="inline-flex h-9 items-center justify-center gap-1.5 rounded-lg bg-indigo-600 px-4 text-sm font-medium text-white hover:bg-indigo-700 transition-colors"
+          >
+            <Calendar className="size-4" />
+            Apply
+          </button>
+        </div>
+      )}
 
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
