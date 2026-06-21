@@ -58,7 +58,7 @@ async function buildInvoiceDocument(
   if (!invFull) return null;
 
   const [itemsRes, custRes, tenantRes, branchRes] = await Promise.all([
-    admin.from('invoice_items').select('service_name, unit_price, quantity, line_total').eq('invoice_id', invFull.id),
+    admin.from('invoice_items').select('service_name, unit_price, quantity, discount_pct, discount_amount, line_total').eq('invoice_id', invFull.id),
     admin.from('customers').select('name, phone, email').eq('id', invFull.customer_id).single(),
     admin.from('tenants').select('name, phone, settings').eq('id', tenantId).single(),
     invFull.branch_id
@@ -85,6 +85,8 @@ async function buildInvoiceDocument(
       service_name: it.service_name,
       unit_price: it.unit_price,
       quantity: it.quantity,
+      discount_pct: it.discount_pct ?? 0,
+      discount_amount: it.discount_amount ?? 0,
       line_total: it.line_total ?? it.unit_price * it.quantity,
     })),
     customer: {

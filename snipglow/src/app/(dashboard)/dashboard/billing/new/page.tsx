@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { calculateInvoiceTotal, formatINR } from '@/lib/utils';
+import { calculatePerItemInvoiceTotal, formatINR } from '@/lib/utils';
 import { searchCustomers, getActiveServices } from '../../appointments/actions';
 import { createInvoice, getCustomerActiveMembership, getTenantGstSettings, getBillableProducts, type BillableProduct } from '../actions';
 import { getAvailableMemberships } from '../../customers/actions';
@@ -32,6 +32,8 @@ interface LineItem {
   service_name: string;
   unit_price: number;
   quantity: number;
+  /** Per-line discount percentage (0–100). */
+  discount_pct: number;
   /** Available stock for product items (client-side hint). */
   maxStock?: number;
 }
@@ -60,7 +62,6 @@ export default function NewBillingPage() {
   const [gstEnabled, setGstEnabled] = useState(false);
   const [gstRate, setGstRate] = useState(0);
   const [defaultDiscount, setDefaultDiscount] = useState(0);
-  const [additionalDiscountPct, setAdditionalDiscountPct] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
 
   // UI state
@@ -127,18 +128,29 @@ export default function NewBillingPage() {
     }
   }, [selectedCustomer, fetchMembership]);
 
-  // Calculate totals — membership discount + additional discount (additive, capped at 100%)
+  // Per-item discounts. Membership / tenant-default % becomes the default
+  // discount on each line (the user can override any line).
   const membershipDiscount = activeMembership?.discount_pct ?? 0;
-  const baseDiscount = Math.max(membershipDiscount, defaultDiscount);
-  const totalDiscountPct = Math.min(100, baseDiscount + additionalDiscountPct);
-  const totals = calculateInvoiceTotal({
+  const defaultLineDiscount = Math.max(membershipDiscount, defaultDiscount);
+  const totals = calculatePerItemInvoiceTotal({
     lineItems: lineItems.map((item) => ({
       price: item.unit_price,
       quantity: item.quantity,
+      discountPct: item.discount_pct,
     })),
-    membershipDiscountPct: totalDiscountPct,
     gstRate: gstEnabled ? gstRate : 0,
   });
+
+  // When the default discount becomes known (membership loads / settings),
+  // apply it to any line that hasn't been given its own discount yet.
+  useEffect(() => {
+    if (defaultLineDiscount <= 0) return;
+    setLineItems((prev) =>
+      prev.some((li) => li.discount_pct === 0)
+        ? prev.map((li) => (li.discount_pct === 0 ? { ...li, discount_pct: defaultLineDiscount } : li))
+        : prev
+    );
+  }, [defaultLineDiscount]);
 
   // Handlers
   function handleSelectCustomer(customer: CustomerOption) {
@@ -167,9 +179,17 @@ export default function NewBillingPage() {
         service_name: '',
         unit_price: 0,
         quantity: 1,
+        discount_pct: defaultLineDiscount,
         maxStock: undefined,
       },
     ]);
+  }
+
+  function handleDiscountChange(itemId: string, pct: number) {
+    const v = Math.min(100, Math.max(0, Number.isFinite(pct) ? pct : 0));
+    setLineItems((prev) =>
+      prev.map((item) => (item.id === itemId ? { ...item, discount_pct: v } : item))
+    );
   }
 
   function handleRemoveLineItem(id: string) {
@@ -282,6 +302,7 @@ export default function NewBillingPage() {
       service_name: item.service_name,
       unit_price: item.unit_price,
       quantity: item.quantity,
+      discount_pct: item.discount_pct,
     }));
 
     startTransition(async () => {
@@ -289,7 +310,6 @@ export default function NewBillingPage() {
         customer_id: selectedCustomer.id,
         items,
         payment_method: paymentMethod,
-        discount_pct: totalDiscountPct,
         gst_rate: gstEnabled ? gstRate : 0,
       });
 
@@ -566,9 +586,43 @@ export default function NewBillingPage() {
                       />
                     </div>
 
+                    {/* Per-item discount */}
+                    <div className="flex items-center gap-2">
+                      <label htmlFor={`disc-${item.id}`} className="text-xs text-muted-foreground whitespace-nowrap">
+                        Disc %:
+                      </label>
+                      <input
+                        id={`disc-${item.id}`}
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={item.discount_pct || ''}
+                        placeholder="0"
+                        onChange={(e) => handleDiscountChange(item.id, parseInt(e.target.value) || 0)}
+                        disabled={!item.selectKey}
+                        className="h-8 w-16 rounded-lg border border-input bg-transparent px-2 text-center text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30 disabled:opacity-50"
+                        aria-label={`Discount percent for item ${index + 1}`}
+                      />
+                    </div>
+
                     {/* Line total */}
-                    <div className="min-w-[80px] text-right text-sm font-medium text-foreground">
-                      {item.selectKey ? formatINR(item.unit_price * item.quantity) : '—'}
+                    <div className="min-w-[88px] text-right text-sm font-medium text-foreground">
+                      {item.selectKey ? (
+                        item.discount_pct > 0 ? (
+                          <div className="flex flex-col items-end leading-tight">
+                            <span className="text-[11px] text-muted-foreground line-through">
+                              {formatINR(item.unit_price * item.quantity)}
+                            </span>
+                            <span>
+                              {formatINR(item.unit_price * item.quantity - Math.round((item.unit_price * item.quantity * item.discount_pct) / 100))}
+                            </span>
+                          </div>
+                        ) : (
+                          formatINR(item.unit_price * item.quantity)
+                        )
+                      ) : (
+                        '—'
+                      )}
                     </div>
 
                     {/* Remove button */}
@@ -636,67 +690,18 @@ export default function NewBillingPage() {
               </div>
             </div>
 
-            {/* Additional Discount */}
-            <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">
-                {baseDiscount > 0 ? 'Additional Discount' : 'Discount'}
-              </p>
-
-              {/* Show membership/default discount info */}
-              {baseDiscount > 0 && (
-                <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5 mb-2">
-                  <div className="flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                      <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-                        👑 {membershipDiscount > defaultDiscount ? activeMembership?.name : 'Default'}
-                      </span>
-                    </div>
-                    <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                      {baseDiscount}% off
-                    </span>
-                  </div>
-                </div>
-              )}
-
-              <p className="text-xs text-muted-foreground">
-                {baseDiscount > 0 ? 'Add extra discount on top of membership discount' : 'Apply a discount to this bill'}
-              </p>
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                {[0, 5, 10, 15, 20].map((pct) => (
-                  <button
-                    key={pct}
-                    type="button"
-                    onClick={() => setAdditionalDiscountPct(pct)}
-                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] min-w-[48px] ${
-                      additionalDiscountPct === pct
-                        ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:border-pink-700'
-                        : 'border-border text-muted-foreground hover:border-pink-300'
-                    }`}
-                  >
-                    {pct === 0 ? 'None' : `+${pct}%`}
-                  </button>
-                ))}
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={additionalDiscountPct || ''}
-                  onChange={(e) => setAdditionalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                  placeholder="Custom"
-                  className="w-20 rounded-xl border border-border px-3 py-2.5 text-sm text-center min-h-[44px]"
-                />
+            {/* Per-item discounts are entered per line above. The customer's
+                membership / default discount is auto-applied as each line's
+                default and can be overridden per item. */}
+            {defaultLineDiscount > 0 && (
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5">
+                <p className="text-xs text-amber-700 dark:text-amber-400">
+                  {membershipDiscount > defaultDiscount
+                    ? `Membership discount of ${defaultLineDiscount}% is applied to each item by default — adjust the "Disc %" on any line as needed.`
+                    : `Default discount of ${defaultLineDiscount}% is applied to each item — adjust the "Disc %" on any line as needed.`}
+                </p>
               </div>
-
-              {/* Total discount summary */}
-              {totalDiscountPct > 0 && baseDiscount > 0 && additionalDiscountPct > 0 && (
-                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2 mt-2">
-                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
-                    <span>{membershipDiscount > defaultDiscount ? 'Membership' : 'Default'} ({baseDiscount}%) + Additional ({additionalDiscountPct}%)</span>
-                    <span className="font-medium">= {totalDiscountPct}% total</span>
-                  </div>
-                </div>
-              )}
-            </div>
+            )}
           </CardContent>
         </Card>
 
@@ -712,15 +717,10 @@ export default function NewBillingPage() {
                 <span className="text-foreground">{formatINR(totals.subtotal)}</span>
               </div>
 
-              {totalDiscountPct > 0 && (
+              {totals.discountAmount > 0 && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-green-600 dark:text-green-400">
-                    {baseDiscount > 0 && additionalDiscountPct > 0
-                      ? `Discount (${baseDiscount}% + ${additionalDiscountPct}% = ${totalDiscountPct}%)`
-                      : baseDiscount > 0
-                        ? `${membershipDiscount > defaultDiscount ? 'Membership' : 'Default'} Discount (${totalDiscountPct}%)`
-                        : `Discount (${totalDiscountPct}%)`
-                    }
+                    Discount (per item)
                   </span>
                   <span className="text-green-600 dark:text-green-400">
                     −{formatINR(totals.discountAmount)}

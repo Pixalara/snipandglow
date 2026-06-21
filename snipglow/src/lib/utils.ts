@@ -189,3 +189,77 @@ export function calculateInvoiceTotal(input: BillingCalculation): InvoiceTotals 
 
   return { subtotal, discountAmount, taxableAmount, gstAmount, total };
 }
+
+// =============================================================================
+// Per-item billing calculation
+// =============================================================================
+
+/** A single line with its own discount percentage. */
+export interface PerItemBillingLine {
+  price: number;
+  quantity: number;
+  /** Discount % for THIS line (0–100). */
+  discountPct?: number;
+}
+
+export interface PerItemBillingCalculation {
+  lineItems: PerItemBillingLine[];
+  gstRate: number; // 0-100
+}
+
+/** Computed per-line breakdown returned alongside the totals. */
+export interface PerItemLineResult {
+  /** unit_price × quantity (before discount) */
+  gross: number;
+  /** discount % applied to this line */
+  discountPct: number;
+  /** rounded discount amount for this line */
+  discountAmount: number;
+  /** gross − discountAmount (the charged/net line total) */
+  net: number;
+}
+
+export interface PerItemInvoiceTotals extends InvoiceTotals {
+  /** Per-line breakdown, index-aligned with the input lineItems. */
+  lines: PerItemLineResult[];
+}
+
+/**
+ * Calculate invoice totals where EACH line item carries its own discount %.
+ *
+ * Per line:
+ *   gross    = price × quantity
+ *   discount = round(gross × discountPct / 100)
+ *   net      = gross − discount
+ *
+ * Bill totals:
+ *   subtotal       = Σ gross
+ *   discountAmount = Σ discount
+ *   taxableAmount  = subtotal − discountAmount  (= Σ net)
+ *   gstAmount      = round(taxableAmount × gstRate / 100)
+ *   total          = taxableAmount + gstAmount
+ */
+export function calculatePerItemInvoiceTotal(
+  input: PerItemBillingCalculation
+): PerItemInvoiceTotals {
+  const lines: PerItemLineResult[] = input.lineItems.map((item) => {
+    const gross = item.price * item.quantity;
+    const discountPct = Math.min(100, Math.max(0, item.discountPct ?? 0));
+    const discountAmount = Math.round((gross * discountPct) / 100);
+    return { gross, discountPct, discountAmount, net: gross - discountAmount };
+  });
+
+  const subtotal = lines.reduce((sum, l) => sum + l.gross, 0);
+  const discountAmount = lines.reduce((sum, l) => sum + l.discountAmount, 0);
+  const taxableAmount = subtotal - discountAmount;
+  const gstAmount = Math.round((taxableAmount * input.gstRate) / 100);
+  const total = taxableAmount + gstAmount;
+
+  return { subtotal, discountAmount, taxableAmount, gstAmount, total, lines };
+}
+
+/** Blended discount % across the whole bill (for display / back-compat). */
+export function blendedDiscountPct(subtotal: number, discountAmount: number): number {
+  if (subtotal <= 0) return 0;
+  return Math.round((discountAmount / subtotal) * 100);
+}

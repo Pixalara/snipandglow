@@ -43,7 +43,7 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
     .map(
       (it) => `
       <tr style="border-bottom:1px solid rgba(0,0,0,0.06);">
-        <td style="padding:12px 16px;font-weight:600;color:#000;">${escapeHtml(it.service_name)}</td>
+        <td style="padding:12px 16px;font-weight:600;color:#000;">${escapeHtml(it.service_name)}${it.discount_amount > 0 ? `<div style="font-weight:500;font-size:11px;color:#16a34a;margin-top:2px;">${it.discount_pct}% off (- ${formatINR(it.discount_amount)})</div>` : ''}</td>
         <td style="padding:12px 16px;text-align:center;color:#404040;">${it.quantity}</td>
         <td style="padding:12px 16px;text-align:right;color:#404040;">${formatINR(it.unit_price)}</td>
         <td style="padding:12px 16px;text-align:right;font-weight:600;color:#000;">${formatINR(it.line_total)}</td>
@@ -54,7 +54,7 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
   const discountRow =
     doc.discount_amount > 0
       ? `<div style="display:flex;justify-content:space-between;color:#e11d48;padding:3px 0;">
-          <span>Discount${doc.discount_pct > 0 ? ` (${doc.discount_pct}%)` : ''}</span>
+          <span>Discount</span>
           <span style="font-weight:600;">- ${formatINR(doc.discount_amount)}</span>
         </div>`
       : '';

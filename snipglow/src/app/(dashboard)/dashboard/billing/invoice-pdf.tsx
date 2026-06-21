@@ -205,7 +205,14 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
 
             {doc.items.map((it, i) => (
               <View style={styles.tableRow} key={i}>
-                <Text style={[styles.tdName, styles.colService]}>{it.service_name}</Text>
+                <View style={styles.colService}>
+                  <Text style={styles.tdName}>{it.service_name}</Text>
+                  {it.discount_amount > 0 ? (
+                    <Text style={{ fontSize: 7, color: '#16a34a', marginTop: 1 }}>
+                      {it.discount_pct}% off (- {formatINR(it.discount_amount)})
+                    </Text>
+                  ) : null}
+                </View>
                 <Text style={[styles.td, styles.colQty]}>{it.quantity}</Text>
                 <Text style={[styles.td, styles.colRate]}>{formatINR(it.unit_price)}</Text>
                 <Text style={[styles.tdAmount, styles.colAmount]}>{formatINR(it.line_total)}</Text>
@@ -222,7 +229,7 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
                 {doc.discount_amount > 0 ? (
                   <View style={styles.totalLine}>
                     <Text style={styles.discountLabel}>
-                      Discount{doc.discount_pct > 0 ? ` (${doc.discount_pct}%)` : ''}
+                      Discount
                     </Text>
                     <Text style={styles.discountValue}>- {formatINR(doc.discount_amount)}</Text>
                   </View>

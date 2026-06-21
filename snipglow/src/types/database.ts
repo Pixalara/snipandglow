@@ -255,11 +255,20 @@ export interface Invoice {
 export interface InvoiceItem {
   id: string;
   invoice_id: string;
-  service_id: string;
+  service_id: string | null;
   service_name: string;
   unit_price: number;
   quantity: number;
+  /** Per-line discount percentage (0–100). */
+  discount_pct: number;
+  /** Rounded discount amount for this line. */
+  discount_amount: number;
+  /** Net line total = unit_price × quantity − discount_amount. */
   line_total: number;
+  /** 'service' (default) or 'product'. */
+  item_type?: 'service' | 'product';
+  /** Set for product line items. */
+  product_id?: string | null;
 }
 
 /** A subscription plan offered by a Tenant */
@@ -530,6 +539,8 @@ export interface CreateInvoiceItemInput {
   service_name: string;
   unit_price: number;
   quantity: number;
+  /** Per-line discount percentage (0–100). Defaults to 0. */
+  discount_pct?: number;
   /** 'service' (default) or 'product'. Product items decrement inventory stock. */
   item_type?: 'service' | 'product';
   /** Set for product line items; links the sale to a product for stock tracking. */

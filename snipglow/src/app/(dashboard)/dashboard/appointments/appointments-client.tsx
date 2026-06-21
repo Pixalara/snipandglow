@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { formatDateIN, formatTimeIST } from '@/lib/utils';
+import { formatDateIN, formatTimeIST, calculatePerItemInvoiceTotal } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
@@ -548,7 +548,7 @@ function CompleteAndBillModal({
   const [isPending, startTransition] = useTransition();
   const router = useRouter();
   const [paymentMethod, setPaymentMethod] = useState<'cash' | 'upi' | 'card'>('cash');
-  const [additionalDiscountPct, setAdditionalDiscountPct] = useState(0);
+  const [serviceDiscounts, setServiceDiscounts] = useState<Record<string, number>>({});
   const [membershipInfo, setMembershipInfo] = useState<{ discountPct: number; membershipName: string } | null>(null);
   const [loadingMembership, setLoadingMembership] = useState(true);
   const [error, setError] = useState('');
@@ -570,7 +570,7 @@ function CompleteAndBillModal({
   const [loadingLists, setLoadingLists] = useState(true);
   // Retail products sold alongside the appointment.
   const [productCatalog, setProductCatalog] = useState<{ id: string; name: string; price: number; stock: number; unit: string }[]>([]);
-  const [selectedProducts, setSelectedProducts] = useState<{ id: string; name: string; price: number; quantity: number; maxStock: number }[]>([]);
+  const [selectedProducts, setSelectedProducts] = useState<{ id: string; name: string; price: number; quantity: number; maxStock: number; discount_pct: number }[]>([]);
   const [addProductId, setAddProductId] = useState<string>('');
 
   // Auto-fetch membership discount for this customer
@@ -620,13 +620,27 @@ function CompleteAndBillModal({
   const productsSubtotal = selectedProducts.reduce((sum, p) => sum + p.price * p.quantity, 0);
   const subtotal = servicesSubtotal + productsSubtotal;
 
-  // Total discount = membership + additional (capped at 100%)
+  // Per-item discounts. Membership % is the default for any line not overridden.
   const membershipDiscountPct = membershipInfo?.discountPct ?? 0;
-  const totalDiscountPct = Math.min(100, membershipDiscountPct + additionalDiscountPct);
+  const svcDisc = (id: string) => serviceDiscounts[id] ?? membershipDiscountPct;
+  const billTotals = calculatePerItemInvoiceTotal({
+    lineItems: [
+      ...selectedServices.map((s) => ({ price: s.price, quantity: 1, discountPct: svcDisc(s.id) })),
+      ...selectedProducts.map((p) => ({ price: p.price, quantity: p.quantity, discountPct: p.discount_pct ?? membershipDiscountPct })),
+    ],
+    gstRate: 0,
+  });
+  const discountAmount = billTotals.discountAmount;
+  const discountedTotal = billTotals.total;
 
-  const discountedTotal = subtotal > 0
-    ? Math.round(subtotal - (subtotal * totalDiscountPct / 100))
-    : 0;
+  function setServiceDiscount(id: string, pct: number) {
+    const v = Math.min(100, Math.max(0, Number.isFinite(pct) ? pct : 0));
+    setServiceDiscounts((prev) => ({ ...prev, [id]: v }));
+  }
+  function setProductDiscount(id: string, pct: number) {
+    const v = Math.min(100, Math.max(0, Number.isFinite(pct) ? pct : 0));
+    setSelectedProducts((prev) => prev.map((p) => (p.id === id ? { ...p, discount_pct: v } : p)));
+  }
 
   function addService() {
     if (!addServiceId) return;
@@ -644,7 +658,7 @@ function CompleteAndBillModal({
     if (!addProductId) return;
     const prod = productCatalog.find((p) => p.id === addProductId);
     if (prod && !selectedProducts.some((p) => p.id === prod.id)) {
-      setSelectedProducts([...selectedProducts, { id: prod.id, name: prod.name, price: prod.price, quantity: 1, maxStock: prod.stock }]);
+      setSelectedProducts([...selectedProducts, { id: prod.id, name: prod.name, price: prod.price, quantity: 1, maxStock: prod.stock, discount_pct: membershipDiscountPct }]);
     }
     setAddProductId('');
   }
@@ -670,13 +684,16 @@ function CompleteAndBillModal({
       return;
     }
     startTransition(async () => {
+      const serviceDiscountsToSend: Record<string, number> = {};
+      selectedServiceIds.forEach((id) => { serviceDiscountsToSend[id] = svcDisc(id); });
       const result = await completeAndGenerateBill(
         appointment.id,
         paymentMethod,
         selectedServiceIds,
-        totalDiscountPct,
+        membershipDiscountPct,
         selectedEmployeeId,
-        selectedProducts.map((p) => ({ product_id: p.id, quantity: p.quantity }))
+        selectedProducts.map((p) => ({ product_id: p.id, quantity: p.quantity, discount_pct: p.discount_pct ?? membershipDiscountPct })),
+        serviceDiscountsToSend,
       );
       if (result.success) {
         setSuccess({ invoiceNumber: result.data.invoiceNumber });
@@ -775,22 +792,37 @@ function CompleteAndBillModal({
               {selectedServices.length === 0 && (
                 <p className="text-xs text-muted-foreground">No services selected. Add at least one below.</p>
               )}
-              {selectedServices.map((s) => (
-                <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2">
-                  <span className="text-sm text-foreground">{s.name}</span>
-                  <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-foreground">₹{s.price.toLocaleString('en-IN')}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeService(s.id)}
-                      className="text-muted-foreground hover:text-red-600 transition-colors"
-                      aria-label={`Remove ${s.name}`}
-                    >
-                      <XCircle className="size-4" />
-                    </button>
+              {selectedServices.map((s) => {
+                const gross = s.price;
+                const net = gross - Math.round((gross * svcDisc(s.id)) / 100);
+                return (
+                  <div key={s.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 gap-2">
+                    <span className="text-sm text-foreground min-w-0 truncate">{s.name}</span>
+                    <div className="flex items-center gap-2 shrink-0">
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={serviceDiscounts[s.id] ?? (membershipDiscountPct || '')}
+                        placeholder="0"
+                        onChange={(e) => setServiceDiscount(s.id, parseInt(e.target.value) || 0)}
+                        className="h-8 w-14 rounded-lg border border-input bg-transparent px-2 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        aria-label={`Discount % for ${s.name}`}
+                      />
+                      <span className="text-[11px] text-muted-foreground">%</span>
+                      <span className="text-sm font-medium text-foreground w-16 text-right">₹{net.toLocaleString('en-IN')}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeService(s.id)}
+                        className="text-muted-foreground hover:text-red-600 transition-colors"
+                        aria-label={`Remove ${s.name}`}
+                      >
+                        <XCircle className="size-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             {/* Add service */}
             <div className="flex items-center gap-2">
@@ -817,31 +849,45 @@ function CompleteAndBillModal({
             {/* Products (retail) */}
             <div className="space-y-2 pt-1">
               <p className="text-sm font-medium text-foreground">Products</p>
-              {selectedProducts.map((p) => (
-                <div key={p.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 gap-2">
-                  <span className="text-sm text-foreground min-w-0 truncate">{p.name}</span>
-                  <div className="flex items-center gap-2 shrink-0">
-                    <input
-                      type="number"
-                      min={1}
-                      max={p.maxStock}
-                      value={p.quantity}
-                      onChange={(e) => setProductQty(p.id, parseInt(e.target.value) || 1)}
-                      className="h-8 w-14 rounded-lg border border-input bg-transparent px-2 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                      aria-label={`Quantity for ${p.name}`}
-                    />
-                    <span className="text-sm font-medium text-foreground w-16 text-right">₹{(p.price * p.quantity).toLocaleString('en-IN')}</span>
-                    <button
-                      type="button"
-                      onClick={() => removeProduct(p.id)}
-                      className="text-muted-foreground hover:text-red-600 transition-colors"
-                      aria-label={`Remove ${p.name}`}
-                    >
-                      <XCircle className="size-4" />
-                    </button>
+              {selectedProducts.map((p) => {
+                const net = p.price * p.quantity - Math.round((p.price * p.quantity * (p.discount_pct ?? membershipDiscountPct)) / 100);
+                return (
+                  <div key={p.id} className="flex items-center justify-between rounded-lg border border-border px-3 py-2 gap-2">
+                    <span className="text-sm text-foreground min-w-0 truncate">{p.name}</span>
+                    <div className="flex items-center gap-1.5 shrink-0">
+                      <input
+                        type="number"
+                        min={1}
+                        max={p.maxStock}
+                        value={p.quantity}
+                        onChange={(e) => setProductQty(p.id, parseInt(e.target.value) || 1)}
+                        className="h-8 w-12 rounded-lg border border-input bg-transparent px-2 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        aria-label={`Quantity for ${p.name}`}
+                      />
+                      <input
+                        type="number"
+                        min={0}
+                        max={100}
+                        value={p.discount_pct || ''}
+                        placeholder="0"
+                        onChange={(e) => setProductDiscount(p.id, parseInt(e.target.value) || 0)}
+                        className="h-8 w-12 rounded-lg border border-input bg-transparent px-2 text-center text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                        aria-label={`Discount % for ${p.name}`}
+                      />
+                      <span className="text-[11px] text-muted-foreground">%</span>
+                      <span className="text-sm font-medium text-foreground w-16 text-right">₹{net.toLocaleString('en-IN')}</span>
+                      <button
+                        type="button"
+                        onClick={() => removeProduct(p.id)}
+                        className="text-muted-foreground hover:text-red-600 transition-colors"
+                        aria-label={`Remove ${p.name}`}
+                      >
+                        <XCircle className="size-4" />
+                      </button>
+                    </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
               <div className="flex items-center gap-2">
                 <select
                   value={addProductId}
@@ -870,7 +916,7 @@ function CompleteAndBillModal({
             </div>
           </div>
 
-          {/* Discount */}
+          {/* Discount (per item) */}
           <div className="space-y-2">
             <p className="text-sm font-medium text-foreground">Discount</p>
 
@@ -881,65 +927,31 @@ function CompleteAndBillModal({
                 Checking membership...
               </div>
             ) : membershipInfo ? (
-              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5 mb-2">
+              <div className="rounded-lg bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30 px-4 py-2.5">
                 <div className="flex items-center justify-between">
-                  <div className="flex items-center gap-2">
-                    <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
-                      👑 {membershipInfo.membershipName}
-                    </span>
-                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-amber-100 dark:bg-amber-900/30 px-2 py-0.5 text-xs font-medium text-amber-700 dark:text-amber-400">
+                    👑 {membershipInfo.membershipName}
+                  </span>
                   <span className="text-sm font-semibold text-amber-700 dark:text-amber-300">
-                    {membershipInfo.discountPct}% off
+                    {membershipInfo.discountPct}% applied per item
                   </span>
                 </div>
               </div>
             ) : null}
 
-            {/* Additional discount */}
-            <div className="space-y-1.5">
-              <p className="text-xs text-muted-foreground">
-                {membershipInfo ? 'Additional discount (adds on top of membership)' : 'Apply discount'}
-              </p>
-              <div className="flex items-center gap-2 sm:gap-3 flex-wrap">
-                {[0, 5, 10, 15, 20].map((pct) => (
-                  <button
-                    key={pct}
-                    type="button"
-                    onClick={() => setAdditionalDiscountPct(pct)}
-                    className={`rounded-xl border px-3 py-2.5 text-sm font-medium transition-all min-h-[44px] min-w-[48px] ${
-                      additionalDiscountPct === pct
-                        ? 'border-pink-500 bg-pink-50 text-pink-600 dark:bg-pink-900/20 dark:border-pink-700'
-                        : 'border-border text-muted-foreground hover:border-pink-300'
-                    }`}
-                  >
-                    {pct === 0 ? 'None' : `+${pct}%`}
-                  </button>
-                ))}
-                <input
-                  type="number"
-                  min={0}
-                  max={100}
-                  value={additionalDiscountPct || ''}
-                  onChange={(e) => setAdditionalDiscountPct(Math.min(100, Math.max(0, Number(e.target.value) || 0)))}
-                  placeholder="Custom"
-                  className="w-20 rounded-xl border border-border px-3 py-2.5 text-sm text-center min-h-[44px]"
-                />
-              </div>
-            </div>
+            <p className="text-xs text-muted-foreground">
+              Set a discount per item using the &quot;%&quot; box on each service / product above.
+            </p>
 
             {/* Total discount summary */}
-            {totalDiscountPct > 0 && subtotal > 0 && (
-              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 space-y-1.5">
-                {membershipInfo && additionalDiscountPct > 0 && (
-                  <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
-                    <span>Membership ({membershipInfo.discountPct}%) + Additional ({additionalDiscountPct}%)</span>
-                    <span className="font-medium">= {totalDiscountPct}% total</span>
-                  </div>
-                )}
+            {discountAmount > 0 && subtotal > 0 && (
+              <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 space-y-1">
+                <div className="flex items-center justify-between text-xs text-emerald-600 dark:text-emerald-400">
+                  <span>Total discount</span>
+                  <span className="font-medium">− ₹{discountAmount.toLocaleString('en-IN')}</span>
+                </div>
                 <div className="flex items-center justify-between">
-                  <span className="text-sm text-emerald-700 dark:text-emerald-400">
-                    {totalDiscountPct}% total discount
-                  </span>
+                  <span className="text-sm text-emerald-700 dark:text-emerald-400">Payable</span>
                   <span className="text-sm font-bold text-emerald-700 dark:text-emerald-400">
                     ₹{discountedTotal.toLocaleString('en-IN')}
                   </span>

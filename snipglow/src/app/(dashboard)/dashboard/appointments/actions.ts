@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
+import { calculatePerItemInvoiceTotal, blendedDiscountPct } from '@/lib/utils';
 import type {
   ActionResult,
   Appointment,
@@ -262,9 +263,10 @@ export async function completeAndGenerateBill(
   appointmentId: string,
   paymentMethod: 'cash' | 'upi' | 'card',
   serviceIds?: string[],
-  customDiscountPct?: number,
+  defaultDiscountPct?: number,
   employeeId?: string,
-  products?: { product_id: string; quantity: number }[]
+  products?: { product_id: string; quantity: number; discount_pct?: number }[],
+  serviceDiscounts?: Record<string, number>,
 ): Promise<ActionResult<{ invoiceId: string; invoiceNumber: string }>> {
   const supabase = await createClient();
 
@@ -357,9 +359,10 @@ export async function completeAndGenerateBill(
     }
   }
 
-  // 3. Check for active membership discount or use custom discount
-  let discountPct = customDiscountPct ?? 0;
-  if (!customDiscountPct || customDiscountPct === 0) {
+  // 3. Determine the fallback discount % (membership or a manual default).
+  //    Per-item discounts (serviceDiscounts / product.discount_pct) override it.
+  let fallbackPct = defaultDiscountPct ?? 0;
+  if (!defaultDiscountPct || defaultDiscountPct === 0) {
     const today = new Date().toISOString().split('T')[0];
     const { data: activeMembership } = await supabase
       .from('customer_memberships')
@@ -372,20 +375,38 @@ export async function completeAndGenerateBill(
 
     if (activeMembership) {
       const membership = activeMembership.memberships as unknown as { discount_pct: number } | null;
-      discountPct = membership?.discount_pct ?? 0;
+      fallbackPct = membership?.discount_pct ?? 0;
     }
   }
 
-  // 4. Calculate totals from all services + products
-  const servicesSubtotal = services.reduce((sum, svc) => sum + svc.price, 0);
-  const productsSubtotal = Array.from(qtyByProduct.entries()).reduce((sum, [pid, qty]) => {
+  // 4. Calculate per-item totals (each service/product can carry its own discount).
+  const serviceLineInputs = services.map((svc) => ({
+    price: svc.price,
+    quantity: 1,
+    discountPct: serviceDiscounts?.[svc.id] ?? fallbackPct,
+  }));
+  const productEntries = Array.from(qtyByProduct.entries());
+  const productLineInputs = productEntries.map(([pid, qty]) => {
     const pr = productRows.find((r) => r.id === pid);
-    return sum + (pr ? Number(pr.selling_price) * qty : 0);
-  }, 0);
-  const subtotal = servicesSubtotal + productsSubtotal;
-  const discountAmount = Math.round((subtotal * discountPct) / 100);
-  const taxableAmount = subtotal - discountAmount;
-  const total = taxableAmount;
+    const requested = products?.find((p) => p.product_id === pid)?.discount_pct;
+    return {
+      price: pr ? Number(pr.selling_price) : 0,
+      quantity: qty,
+      discountPct: requested ?? fallbackPct,
+    };
+  });
+
+  const totals = calculatePerItemInvoiceTotal({
+    lineItems: [...serviceLineInputs, ...productLineInputs],
+    gstRate: 0,
+  });
+  const subtotal = totals.subtotal;
+  const discountAmount = totals.discountAmount;
+  const total = totals.total;
+  const billDiscountPct = blendedDiscountPct(subtotal, discountAmount);
+  // Per-line results, index-aligned: services first, then products.
+  const serviceLines = totals.lines.slice(0, serviceLineInputs.length);
+  const productLines = totals.lines.slice(serviceLineInputs.length);
 
   // 5. Mark appointment as completed, persist the final service list + the
   //    staff who performed it, so the appointments list and calendar reflect
@@ -418,7 +439,7 @@ export async function completeAndGenerateBill(
       invoice_number: '',
       subtotal,
       discount_amount: discountAmount,
-      discount_pct: discountPct,
+      discount_pct: billDiscountPct,
       gst_amount: 0,
       gst_rate: 0,
       total,
@@ -441,7 +462,7 @@ export async function completeAndGenerateBill(
   // there are dropped for the whole batch. If service rows (which come first)
   // omitted item_type/product_id, the product rows would silently lose those
   // columns and never appear in Revenue analytics.
-  const lineItems = services.map((svc) => ({
+  const lineItems = services.map((svc, idx) => ({
     invoice_id: invoice.id,
     service_id: svc.id,
     product_id: null as string | null,
@@ -449,12 +470,14 @@ export async function completeAndGenerateBill(
     service_name: svc.name,
     unit_price: svc.price,
     quantity: 1,
-    line_total: svc.price,
+    discount_pct: serviceLines[idx]?.discountPct ?? 0,
+    discount_amount: serviceLines[idx]?.discountAmount ?? 0,
+    line_total: serviceLines[idx]?.net ?? svc.price,
   }));
 
   // Product line items (item_type='product', name stored in service_name so
   // the PDF / receipt render unchanged).
-  const productLineItems = Array.from(qtyByProduct.entries()).map(([pid, qty]) => {
+  const productLineItems = productEntries.map(([pid, qty], idx) => {
     const pr = productRows.find((r) => r.id === pid)!;
     return {
       invoice_id: invoice.id,
@@ -464,7 +487,9 @@ export async function completeAndGenerateBill(
       service_name: pr.name,
       unit_price: Number(pr.selling_price),
       quantity: qty,
-      line_total: Number(pr.selling_price) * qty,
+      discount_pct: productLines[idx]?.discountPct ?? 0,
+      discount_amount: productLines[idx]?.discountAmount ?? 0,
+      line_total: productLines[idx]?.net ?? Number(pr.selling_price) * qty,
     };
   });
 
@@ -511,7 +536,7 @@ export async function completeAndGenerateBill(
     const pr = productRows.find((r) => r.id === pid)!;
     return { name: pr.name, price: Number(pr.selling_price), quantity: qty };
   });
-  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, discountPct, discountAmount, total, paymentMethod, productReceiptItems);
+  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, billDiscountPct, discountAmount, total, paymentMethod, productReceiptItems);
 
   revalidatePath('/dashboard/appointments');
   revalidatePath('/dashboard/billing');
