@@ -68,6 +68,15 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
       }
     : null;
 
+  // WhatsApp booking link — mirrors exactly what the tenant sees in their
+  // dashboard Settings (derived from tenant_code + salon name).
+  const bookingShortCode = String(tenant.tenant_code ?? '').replace('-', '').toUpperCase();
+  const bookingMessage = `Hi! I'd like to book an appointment at ${String(tenant.name ?? '').trim()} [${bookingShortCode}]`;
+  const bookingWaUrl = `https://wa.me/919448895147?text=${encodeURIComponent(bookingMessage)}`;
+  const bookingLandingUrl = bookingShortCode
+    ? `https://www.snipandglow.com/book/${bookingShortCode.toLowerCase()}`
+    : '';
+
   return (
     <div className="space-y-6">
       {/* Header */}
@@ -97,6 +106,40 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <Field label="Subscription Start" value={formatISTDate(tenant.subscription_start)} />
           <Field label="Subscription End" value={formatISTDate(tenant.subscription_end)} />
         </Grid>
+      </Section>
+
+      {/* WhatsApp Booking Link — what the tenant shares with customers */}
+      <Section title="WhatsApp Booking Link">
+        <div className="space-y-4 text-sm">
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">Booking Code</p>
+            <p className="font-mono font-semibold text-foreground">{bookingShortCode || '—'}</p>
+          </div>
+          <div>
+            <p className="text-xs text-muted-foreground mb-1">WhatsApp Booking Link (what the tenant shares)</p>
+            <a
+              href={bookingWaUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="font-mono text-emerald-600 hover:underline break-all select-all"
+            >
+              {bookingWaUrl}
+            </a>
+          </div>
+          {bookingLandingUrl && (
+            <div>
+              <p className="text-xs text-muted-foreground mb-1">Public Booking Page</p>
+              <a
+                href={bookingLandingUrl}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="font-mono text-emerald-600 hover:underline break-all select-all"
+              >
+                {bookingLandingUrl}
+              </a>
+            </div>
+          )}
+        </div>
       </Section>
 
       {/* Subscription plan — admin can change the tenant's plan tier */}
