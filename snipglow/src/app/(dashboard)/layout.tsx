@@ -2,7 +2,8 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { SubscriptionGuard } from '@/components/subscription-guard';
-import { getSubscriptionState } from '@/lib/subscription';
+import { RenewalReminderPopup } from '@/components/renewal-reminder-popup';
+import { getSubscriptionState, planLabel } from '@/lib/subscription';
 import type { UserRole, Branch } from '@/types';
 
 export default async function DashboardLayout({
@@ -30,6 +31,7 @@ export default async function DashboardLayout({
   let planTier = 'starter';
   let isExpired = false;
   let trialEndedAt: string | null = null;
+  let subscriptionEndDate: string | null = null;
 
   if (tenantId) {
     const [branchRes, tenantRes] = await Promise.all([
@@ -63,6 +65,7 @@ export default async function DashboardLayout({
       const state = getSubscriptionState(tenantRes.data as any);
       isExpired = state.isExpired;
       trialEndedAt = state.endDate ? state.endDate.toISOString() : null;
+      subscriptionEndDate = state.endDate ? state.endDate.toISOString() : null;
     }
   }
 
@@ -83,6 +86,12 @@ export default async function DashboardLayout({
       >
         {children}
       </SubscriptionGuard>
+      <RenewalReminderPopup
+        endDate={subscriptionEndDate}
+        isExpired={isExpired}
+        isOwner={role === 'owner'}
+        planLabel={planLabel(planTier)}
+      />
     </AppShell>
   );
 }

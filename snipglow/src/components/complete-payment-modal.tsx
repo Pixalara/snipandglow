@@ -14,7 +14,6 @@ import { requestSubscriptionRenewal } from '@/app/(dashboard)/dashboard/settings
 
 // Support contact for offline renewal (matches the homepage WhatsApp number).
 const SUPPORT_PHONE = '9449602995';
-const SUPPORT_UPI = 'snipandglow@upi'; // TODO: replace with the real UPI ID when available.
 
 export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [submitting, setSubmitting] = useState(false);
@@ -111,19 +110,6 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
 
             {/* Payment details */}
             <div className="mt-5 space-y-2.5">
-              <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
-                <div>
-                  <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Pay via UPI</p>
-                  <p className="text-sm font-semibold text-foreground">{SUPPORT_UPI}</p>
-                </div>
-                <button
-                  onClick={() => copy(SUPPORT_UPI, 'upi')}
-                  className="flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors"
-                >
-                  {copied === 'upi' ? <Check className="size-3.5 text-emerald-500" /> : <Copy className="size-3.5" />}
-                  {copied === 'upi' ? 'Copied' : 'Copy'}
-                </button>
-              </div>
               <div className="flex items-center justify-between rounded-xl border border-border px-4 py-3">
                 <div>
                   <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Or call / WhatsApp</p>
