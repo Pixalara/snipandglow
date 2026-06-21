@@ -362,14 +362,14 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       const flowId = process.env.WHATSAPP_FLOW_ID;
       const flowIdReturning = process.env.WHATSAPP_FLOW_ID_RETURNING;
 
-      // Fetch services for this tenant
+      // Fetch services for this tenant (WhatsApp Flow checkbox lists cap at ~20 items)
       const { data: svcList } = await admin
         .from('services')
         .select('id, name, price, duration_minutes')
         .eq('tenant_id', tenant.tenantId)
         .eq('is_active', true)
         .order('name')
-        .limit(10);
+        .limit(20);
 
       const services = (svcList ?? []).map((s: any) => ({
         id: s.id,
@@ -442,7 +442,7 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
         .eq('branch_id', tenant.branchId)
         .eq('is_active', true)
         .order('name')
-        .limit(10);
+        .limit(100);
 
       if (services && services.length > 0) {
         const list = services.map((s: any) => `• ${s.name} — ₹${s.price}`).join('\n');
@@ -503,14 +503,14 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       const { data: custResched } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Resched).eq('tenant_id', tenant.tenantId).single() as any);
 
       if (custResched && flowId) {
-        // Fetch services
+        // Fetch services (WhatsApp Flow checkbox lists cap at ~20 items)
         const { data: svcList } = await admin
           .from('services')
           .select('id, name, price, duration_minutes')
           .eq('tenant_id', tenant.tenantId)
           .eq('is_active', true)
           .order('name')
-          .limit(10);
+          .limit(20);
 
         const services = (svcList ?? []).map((s: any) => ({
           id: s.id,
