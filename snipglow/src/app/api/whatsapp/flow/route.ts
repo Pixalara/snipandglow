@@ -250,6 +250,11 @@ async function handleFlowInit(data: any) {
 }
 
 async function handleDataExchange(screen: string, data: any, flowToken: string) {
+  // Category-first flow: customer picked a category → return that category's
+  // services (+ dates/slots) on the BOOKING_SCREEN.
+  if (screen === 'CATEGORY_SCREEN') {
+    return await handleCategorySelected(data, flowToken);
+  }
   if (screen === 'BOOKING_SCREEN') {
     // If only date is selected (no time_slot yet), return filtered slots for that date
     if (data?.date && !data?.time_slot) {
@@ -257,7 +262,131 @@ async function handleDataExchange(screen: string, data: any, flowToken: string) 
     }
     return await processBooking(data, flowToken);
   }
-  return { version: '3.0', screen: 'BOOKING_SCREEN', data: {} };
+  return { version: '3.0', screen: screen || 'BOOKING_SCREEN', data: {} };
+}
+
+/**
+ * Shared helper: next 7 days + time slots filtered against blocked/booked slots
+ * across those dates (same logic used by the single-screen INIT path).
+ */
+async function computeDatesAndSlots(admin: any, tenantId: string) {
+  const dates: Array<{ id: string; title: string }> = [];
+  for (let i = 0; i < 7; i++) {
+    const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
+    const [todayIST] = nowIST.split(', ');
+    const d = new Date(todayIST + 'T00:00:00');
+    d.setDate(d.getDate() + i);
+    const dateStr = d.toISOString().split('T')[0];
+    const label = d.toLocaleDateString('en-IN', { weekday: 'short', day: 'numeric', month: 'short' });
+    dates.push({ id: dateStr, title: label });
+  }
+
+  const blockedSlotsByDate = new Map<string, Set<string>>();
+  const bookedSlotsByDate = new Map<string, Array<{ start: string; end: string }>>();
+  let maxPerSlot = 1;
+  let slotDurationMinutes = 30;
+
+  if (tenantId && dates.length > 0) {
+    const firstDate = dates[0].id;
+    const lastDate = dates[dates.length - 1].id;
+    const [tenantRes, apptsRes] = await Promise.all([
+      (admin.from('tenants' as any).select('settings').eq('id', tenantId).single() as any),
+      (admin
+        .from('appointments')
+        .select('appointment_date, start_time, end_time')
+        .eq('tenant_id', tenantId)
+        .gte('appointment_date', firstDate)
+        .lte('appointment_date', lastDate)
+        .in('status', ['booked', 'confirmed']) as any),
+    ]);
+    const tenantSettings = (tenantRes.data?.settings as any) ?? {};
+    maxPerSlot = tenantSettings.max_appointments_per_slot || 1;
+    slotDurationMinutes = tenantSettings.slot_duration_minutes || 30;
+    const blockedSlots: Array<{ date: string; slots: string[] }> = tenantSettings.blocked_slots || [];
+    for (const entry of blockedSlots) blockedSlotsByDate.set(entry.date, new Set(entry.slots));
+    if (apptsRes.data) {
+      for (const appt of apptsRes.data) {
+        const key = appt.appointment_date;
+        if (!bookedSlotsByDate.has(key)) bookedSlotsByDate.set(key, []);
+        bookedSlotsByDate.get(key)!.push({ start: appt.start_time, end: appt.end_time });
+      }
+    }
+  }
+
+  const allTimeSlots: Array<{ id: string; title: string }> = [];
+  for (let min = 9 * 60; min < 20 * 60; min += slotDurationMinutes) {
+    const hour = Math.floor(min / 60);
+    const m = min % 60;
+    const h = hour % 12 || 12;
+    const period = hour >= 12 ? 'PM' : 'AM';
+    const timeStr = `${String(hour).padStart(2, '0')}:${String(m).padStart(2, '0')}:00`;
+    const label = `${h}:${String(m).padStart(2, '0')} ${period}`;
+    allTimeSlots.push({ id: timeStr, title: label });
+  }
+
+  const allDates = dates.map((d) => d.id);
+  const filteredTimeSlots = allTimeSlots.filter((slot) => {
+    const slotHHMM = slot.id.substring(0, 5);
+    const slotMin = toMinutes(slotHHMM);
+    const slotEndMin = slotMin + slotDurationMinutes;
+    return allDates.some((dateStr) => {
+      if (blockedSlotsByDate.get(dateStr)?.has(slotHHMM)) return false;
+      const booked = bookedSlotsByDate.get(dateStr) || [];
+      const overlapCount = booked.filter((appt) => {
+        const apptStart = toMinutes(appt.start);
+        const apptEnd = toMinutes(appt.end);
+        return slotMin < apptEnd && slotEndMin > apptStart;
+      }).length;
+      return overlapCount < maxPerSlot;
+    });
+  });
+
+  return {
+    dates: dates.length > 0 ? dates : [{ id: 'none', title: 'No dates available' }],
+    time_slots: filteredTimeSlots.length > 0 ? filteredTimeSlots : [{ id: 'none', title: 'No slots available' }],
+  };
+}
+
+/**
+ * Category-first flow: after the customer selects a service category on
+ * CATEGORY_SCREEN, return only that category's services (+ dates/slots) so the
+ * checkbox list stays well within WhatsApp's per-list limit even for salons
+ * with a large menu. Navigates the flow to BOOKING_SCREEN.
+ */
+async function handleCategorySelected(data: any, flowToken: string) {
+  let tokenData: any = {};
+  try { tokenData = JSON.parse(flowToken); } catch {}
+  const tenantId = tokenData.tenant_id || data?.tenant_id || '';
+  const branchId = tokenData.branch_id || data?.branch_id || '';
+  const category = data?.category || '';
+
+  const admin = createAdminClient();
+
+  let svcQuery = admin
+    .from('services')
+    .select('id, name, price')
+    .eq('is_active', true)
+    .order('name')
+    .limit(20);
+  if (tenantId) svcQuery = svcQuery.eq('tenant_id', tenantId);
+  if (branchId) svcQuery = svcQuery.eq('branch_id', branchId);
+  if (category) svcQuery = svcQuery.eq('category', category);
+
+  const { data: services } = await svcQuery;
+  const { dates, time_slots } = await computeDatesAndSlots(admin, tenantId);
+
+  return {
+    version: '3.0',
+    screen: 'BOOKING_SCREEN',
+    data: {
+      category,
+      services: (services && services.length > 0)
+        ? services.map((s: any) => ({ id: s.id, title: `${s.name} - Rs.${s.price}` }))
+        : [{ id: 'none', title: 'No services in this category' }],
+      dates,
+      time_slots,
+    },
+  };
 }
 
 /**

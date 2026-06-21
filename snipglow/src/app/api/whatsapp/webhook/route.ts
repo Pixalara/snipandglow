@@ -380,6 +380,58 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       const phoneE164Book = `+${phone}`;
       const { data: existingCustomer } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Book).eq('tenant_id', tenant.tenantId).single() as any);
 
+      // ── Category-first flow (preferred for salons with large menus) ──
+      // Activates only when the category flow IDs are configured; otherwise we
+      // fall through to the legacy single-screen flow below (non-breaking).
+      const catFlowId = existingCustomer
+        ? process.env.WHATSAPP_FLOW_ID_CATEGORIES_RETURNING
+        : process.env.WHATSAPP_FLOW_ID_CATEGORIES;
+      if (catFlowId) {
+        const { data: catRows } = await admin
+          .from('services')
+          .select('category')
+          .eq('tenant_id', tenant.tenantId)
+          .eq('is_active', true)
+          .not('category', 'is', null);
+        const categories = [...new Set((catRows ?? []).map((r: any) => r.category).filter(Boolean))]
+          .sort()
+          .map((c: string) => ({ id: c, title: c }));
+
+        const catFlowToken = existingCustomer
+          ? JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName, customer_id: existingCustomer.id, customer_name: existingCustomer.name })
+          : JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName });
+
+        const catBody = existingCustomer
+          ? `Welcome back, *${existingCustomer.name}*! 👋\nBook your next appointment at *${tenant.salonName}*`
+          : `Book your appointment at *${tenant.salonName}*`;
+
+        await sendMessage(tenant.credentials, phone, {
+          type: 'interactive',
+          interactive: {
+            type: 'flow',
+            body: { text: catBody },
+            action: {
+              name: 'flow',
+              parameters: {
+                flow_message_version: '3',
+                flow_id: catFlowId,
+                flow_cta: existingCustomer ? 'Quick Book' : 'Book Now',
+                mode: 'published',
+                flow_action: 'navigate',
+                flow_action_payload: {
+                  screen: 'CATEGORY_SCREEN',
+                  data: {
+                    categories: categories.length > 0 ? categories : [{ id: 'none', title: 'No categories available' }],
+                  },
+                },
+                flow_token: catFlowToken,
+              },
+            },
+          },
+        });
+        break;
+      }
+
       // Pick the right flow: returning customer flow if available, else regular
       const useFlowId = (existingCustomer && flowIdReturning) ? flowIdReturning : flowId;
 
@@ -503,6 +555,46 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
       const { data: custResched } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Resched).eq('tenant_id', tenant.tenantId).single() as any);
 
       if (custResched && flowId) {
+        // ── Category-first reschedule flow (env-gated, non-breaking) ──
+        const catFlowIdResched = process.env.WHATSAPP_FLOW_ID_CATEGORIES_RETURNING;
+        if (catFlowIdResched) {
+          const { data: catRows } = await admin
+            .from('services')
+            .select('category')
+            .eq('tenant_id', tenant.tenantId)
+            .eq('is_active', true)
+            .not('category', 'is', null);
+          const categories = [...new Set((catRows ?? []).map((r: any) => r.category).filter(Boolean))]
+            .sort()
+            .map((c: string) => ({ id: c, title: c }));
+
+          await sendMessage(tenant.credentials, phone, {
+            type: 'interactive',
+            interactive: {
+              type: 'flow',
+              body: { text: `📅 *Reschedule your appointment* at *${tenant.salonName}*\n\nPick a service, date and time:` },
+              action: {
+                name: 'flow',
+                parameters: {
+                  flow_message_version: '3',
+                  flow_id: catFlowIdResched,
+                  flow_cta: 'Reschedule Now',
+                  mode: 'published',
+                  flow_action: 'navigate',
+                  flow_action_payload: {
+                    screen: 'CATEGORY_SCREEN',
+                    data: {
+                      categories: categories.length > 0 ? categories : [{ id: 'none', title: 'No categories available' }],
+                    },
+                  },
+                  flow_token: JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName, customer_id: custResched.id, customer_name: custResched.name, is_reschedule: true }),
+                },
+              },
+            },
+          });
+          break;
+        }
+
         // Fetch services (WhatsApp Flow checkbox lists cap at ~20 items)
         const { data: svcList } = await admin
           .from('services')
