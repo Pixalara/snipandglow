@@ -373,11 +373,25 @@ export async function adminSetSubscriptionEnd(
   // Stamp a start date if the tenant never had one.
   const start = (tenant as any).subscription_start || new Date().toISOString();
 
+  // Flip status to match the chosen date:
+  //  • past / today  → expired (locks the dashboard so you can test the gate)
+  //  • future        → keep trial/active as-is; re-open an expired/cancelled
+  //                    account as a trial so it regains access.
+  const currentStatus = (tenant as any).subscription_status as string;
+  const isPast = parsed.getTime() <= Date.now();
+  let newStatus = currentStatus;
+  if (isPast) {
+    newStatus = 'expired';
+  } else if (currentStatus === 'expired' || currentStatus === 'cancelled') {
+    newStatus = 'trial';
+  }
+
   const { error } = await (admin
     .from('tenants' as any)
     .update({
       subscription_end: parsed.toISOString(),
       subscription_start: start,
+      subscription_status: newStatus,
       // Allow the trial-expiry alert to fire again for the new date.
       trial_expiry_alert_sent: false,
     } as any)
@@ -397,6 +411,8 @@ export async function adminSetSubscriptionEnd(
       tenant_name: (tenant as any).name,
       previous_end: (tenant as any).subscription_end,
       new_end: parsed.toISOString(),
+      previous_status: currentStatus,
+      new_status: newStatus,
     },
   });
 
