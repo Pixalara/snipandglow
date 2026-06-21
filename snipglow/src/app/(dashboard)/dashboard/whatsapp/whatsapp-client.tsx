@@ -90,8 +90,6 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-500/5" />
       </div>
 
-      <WhatsAppConnectCard planTier={planTier} />
-
       <WhatsAppLogsSection />
     </div>
   );

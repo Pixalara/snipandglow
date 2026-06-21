@@ -15,8 +15,10 @@ interface SubscriptionGuardProps {
   children: React.ReactNode;
 }
 
-// Pages that remain accessible even when expired (so the owner can pay/manage).
-const ALWAYS_ACCESSIBLE = ['/dashboard', '/dashboard/settings'];
+// Only the dashboard home stays accessible when expired (so the owner can see
+// the renewal prompt and complete payment). Everything else — including Settings
+// — is locked until the subscription is renewed.
+const ALWAYS_ACCESSIBLE = ['/dashboard'];
 
 export function SubscriptionGuard({
   subscriptionStatus,
