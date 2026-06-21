@@ -2379,7 +2379,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          access_key: '75debe40-e347-41ce-a203-93266c993232',
+          access_key: '9b7f9972-8fc2-468f-80a6-029eb5af4a91',
           subject: `New Demo Booking - ${name}`,
           name,
           phone,
@@ -2611,7 +2611,7 @@ function ContactSalesModal({ onClose }: { onClose: () => void }) {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          access_key: '75debe40-e347-41ce-a203-93266c993232',
+          access_key: '9b7f9972-8fc2-468f-80a6-029eb5af4a91',
           subject: `Pro/Growth Plan Inquiry - ${businessName || name}`,
           name,
           phone,

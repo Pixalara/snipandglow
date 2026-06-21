@@ -14,7 +14,8 @@ import type { ActionResult } from '@/types';
 // =============================================================================
 
 const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
-const WEB3FORMS_ACCESS_KEY = '75debe40-e347-41ce-a203-93266c993232';
+// Platform Web3Forms key → delivers to snipandglow.sales@pixalara.com.
+const WEB3FORMS_ACCESS_KEY = '9b7f9972-8fc2-468f-80a6-029eb5af4a91';
 
 export async function requestSubscriptionRenewal(): Promise<ActionResult<{ emailPayload: Record<string, string> }>> {
   const supabase = await createClient();

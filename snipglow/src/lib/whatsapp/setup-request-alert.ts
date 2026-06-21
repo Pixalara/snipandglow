@@ -10,8 +10,8 @@
 // =============================================================================
 
 const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
-// Reuses the platform Web3Forms key already used for demo/support notifications.
-const WEB3FORMS_ACCESS_KEY = '75debe40-e347-41ce-a203-93266c993232';
+// Reuses the platform Web3Forms key → snipandglow.sales@pixalara.com.
+const WEB3FORMS_ACCESS_KEY = '9b7f9972-8fc2-468f-80a6-029eb5af4a91';
 
 export interface SetupRequestAlert {
   salonName: string;

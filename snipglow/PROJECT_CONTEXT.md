@@ -210,7 +210,7 @@ d:\Snip and Glow\snipandglow\snipglow\
 - Domain: snipandglow.com
 
 ### External Integrations
-- Web3Forms (key: `75debe40-e347-41ce-a203-93266c993232`) — Demo bookings + Support ticket notifications
+- Web3Forms (key: `9b7f9972-8fc2-468f-80a6-029eb5af4a91` → snipandglow.sales@pixalara.com) — Demo bookings + Support ticket notifications
 - Supabase Auth — Google OAuth
 - WhatsApp Business API — Ready for integration (Meta Embedded Signup flow built)
 - QR Code Generator — Links to qrcode.pixalara.io

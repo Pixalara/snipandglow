@@ -79,7 +79,7 @@ export async function createSupportTicket(input: CreateTicketInput): Promise<Act
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        access_key: '75debe40-e347-41ce-a203-93266c993232',
+        access_key: '9b7f9972-8fc2-468f-80a6-029eb5af4a91',
         subject: `🎫 Support Ticket: ${input.subject}`,
         from_name: `${userName} (${salonName})`,
         message: `
