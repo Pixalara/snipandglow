@@ -16,7 +16,7 @@ import type { ActionResult } from '@/types';
 const WEB3FORMS_ENDPOINT = 'https://api.web3forms.com/submit';
 const WEB3FORMS_ACCESS_KEY = '75debe40-e347-41ce-a203-93266c993232';
 
-export async function requestSubscriptionRenewal(): Promise<ActionResult<void>> {
+export async function requestSubscriptionRenewal(): Promise<ActionResult<{ emailPayload: Record<string, string> }>> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
@@ -41,28 +41,32 @@ export async function requestSubscriptionRenewal(): Promise<ActionResult<void>> 
   const adminBase = process.env.NEXT_PUBLIC_APP_URL || '';
   const adminLink = adminBase ? `${adminBase}/admin/tenants/${tenantId}` : `/admin/tenants/${tenantId}`;
 
+  // Structured payload mirroring the (working) client-side demo/contact forms.
+  const emailPayload: Record<string, string> = {
+    access_key: WEB3FORMS_ACCESS_KEY,
+    subject: `💳 Subscription Renewal Request — ${tenant.name}`,
+    from_name: 'SnipandGlow Renewals',
+    salon: `${tenant.name}${tenant.tenant_code ? ` (${tenant.tenant_code})` : ''}`,
+    owner: tenant.owner_name || '—',
+    phone: tenant.phone || '—',
+    current_plan: tenant.plan_tier || 'starter',
+    current_status: tenant.subscription_status || '—',
+    requested_by: user.email || tenant.phone || 'owner',
+    admin_link: adminLink,
+  };
+
+  // Best-effort server-side send (now response-checked + logged). The modal also
+  // submits this client-side, which is the reliable path Web3Forms accepts.
   try {
-    await fetch(WEB3FORMS_ENDPOINT, {
+    const resp = await fetch(WEB3FORMS_ENDPOINT, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        access_key: WEB3FORMS_ACCESS_KEY,
-        subject: `💳 Subscription Renewal Request — ${tenant.name}`,
-        from_name: 'SnipandGlow Renewals',
-        message: `
-Subscription Renewal Request
-━━━━━━━━━━━━━━━━━━
-Salon: ${tenant.name}${tenant.tenant_code ? ` (${tenant.tenant_code})` : ''}
-Owner: ${tenant.owner_name || '—'}
-Phone: ${tenant.phone || '—'}
-Current plan: ${tenant.plan_tier || 'starter'}
-Current status: ${tenant.subscription_status}
-Requested by: ${user.email || tenant.phone || 'owner'}
-━━━━━━━━━━━━━━━━━━
-Activate / extend here: ${adminLink}
-        `.trim(),
-      }),
+      body: JSON.stringify(emailPayload),
     });
+    const result = await resp.json().catch(() => null);
+    if (!resp.ok || !result?.success) {
+      console.error('[requestSubscriptionRenewal] Web3Forms rejected:', resp.status, result);
+    }
   } catch (err) {
     console.error('[requestSubscriptionRenewal] alert failed:', err);
     // Non-fatal: still record the request so the team can follow up.
@@ -81,5 +85,5 @@ Activate / extend here: ${adminLink}
     console.error('[requestSubscriptionRenewal] settings update failed:', err);
   }
 
-  return { success: true, data: undefined };
+  return { success: true, data: { emailPayload } };
 }

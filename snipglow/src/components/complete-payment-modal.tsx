@@ -28,9 +28,28 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
     setSubmitting(true);
     setError('');
     const res = await requestSubscriptionRenewal();
-    setSubmitting(false);
-    if (res.success) setSent(true);
-    else setError(res.error);
+    if (res.success) {
+      // Send the team notification email from the browser — Web3Forms reliably
+      // accepts requests with a real page Origin (server-side calls can be
+      // silently dropped). The server already recorded the request.
+      try {
+        const payload = res.data?.emailPayload;
+        if (payload) {
+          await fetch('https://api.web3forms.com/submit', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(payload),
+          });
+        }
+      } catch {
+        /* non-fatal: the request is already recorded for the admin */
+      }
+      setSubmitting(false);
+      setSent(true);
+    } else {
+      setSubmitting(false);
+      setError(res.error);
+    }
   }
 
   function copy(text: string, key: string) {
