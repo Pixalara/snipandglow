@@ -489,20 +489,55 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     case 'services_prices': {
       const { data: services } = await admin
         .from('services')
-        .select('name, price, duration_minutes')
+        .select('name, price, category')
         .eq('tenant_id', tenant.tenantId)
         .eq('branch_id', tenant.branchId)
         .eq('is_active', true)
-        .order('name')
-        .limit(100);
+        .order('category', { ascending: true })
+        .order('name', { ascending: true })
+        .limit(300);
 
       if (services && services.length > 0) {
-        const list = services.map((s: any) => `• ${s.name} — ₹${s.price}`).join('\n');
+        // Group by category for readability
+        const byCategory = new Map<string, string[]>();
+        for (const s of services as any[]) {
+          const cat = s.category || 'Other';
+          if (!byCategory.has(cat)) byCategory.set(cat, []);
+          byCategory.get(cat)!.push(`• ${s.name} — ₹${s.price}`);
+        }
+
+        // Build category blocks, then chunk into messages within WhatsApp's
+        // 4096-char text limit (an interactive body is only 1024 chars, which
+        // is why a long menu must be sent as plain text).
+        const header = `*${tenant.salonName} — Services & Prices*`;
+        const blocks: string[] = [];
+        for (const [cat, items] of byCategory) {
+          blocks.push(`*${cat}*\n${items.join('\n')}`);
+        }
+
+        const MAX = 3500;
+        const messages: string[] = [];
+        let current = header;
+        for (const block of blocks) {
+          if ((current + '\n\n' + block).length > MAX) {
+            if (current.trim()) messages.push(current.trim());
+            current = '';
+          }
+          current += (current ? '\n\n' : '') + block;
+        }
+        if (current.trim()) messages.push(current.trim());
+
+        // Send the menu as plain text message(s)
+        for (const msg of messages) {
+          await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: msg } });
+        }
+
+        // Follow up with a short Book Now button (well within the 1024 limit)
         await sendMessage(tenant.credentials, phone, {
           type: 'interactive',
           interactive: {
             type: 'button',
-            body: { text: `*${tenant.salonName} — Services & Prices:*\n\n${list}\n\nWant to book?` },
+            body: { text: 'Want to book your appointment?' },
             action: {
               buttons: [
                 { type: 'reply', reply: { id: 'book_appointment', title: 'Book Now' } },
