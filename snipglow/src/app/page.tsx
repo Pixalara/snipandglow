@@ -1925,15 +1925,19 @@ export default function HomePage() {
           <div className="space-y-4 reveal">
             <FaqItem
               question="What is SnipandGlow?"
-              answer="SnipandGlow is an all-in-one salon and spa management platform built for Indian businesses. It handles appointments, WhatsApp automation, billing, customer CRM, staff scheduling, payroll, memberships, analytics, and more - all from one dashboard. Available on three plans: Essentials (₹799/mo), Pro (₹1,199/mo), and Growth (₹1,499/mo, multi-branch)."
+              answer="SnipandGlow is an all-in-one salon and spa management platform built for Indian businesses. It handles appointments, WhatsApp automation, billing, customer CRM, staff scheduling, payroll, memberships, analytics, and more - all from one dashboard. Available on three plans, each with a monthly or discounted yearly option: Essentials (₹999/mo or ₹799/mo billed yearly), Pro (₹1,999/mo or ₹1,399/mo billed yearly), and Growth (₹2,999/mo or ₹1,799/mo billed yearly, multi-branch)."
             />
             <FaqItem
               question="How long is the free trial?"
               answer="You get a full 15-day free trial with access to all features - no credit card required. If SnipandGlow doesn't work for you within those 15 days, you get a full refund, no questions asked."
             />
             <FaqItem
+              question="Can I pay monthly, or do I have to commit to a year?"
+              answer="Both options are available on every plan - you choose at checkout. Monthly billing is the standard list price with no commitment (Essentials ₹999/mo, Pro ₹1,999/mo, Growth ₹2,999/mo) and you can cancel anytime. Yearly billing is billed once for the full year and unlocks a sizeable discount: Essentials drops to ₹799/mo (save 20%, ₹9,588/year), Pro to ₹1,399/mo (save 30%, ₹16,788/year), and Growth to ₹1,799/mo (save 40%, ₹21,588/year). You can switch between monthly and yearly anytime from your dashboard, and the admin team can update your billing cycle for you on request."
+            />
+            <FaqItem
               question="What is the difference between Essentials, Pro, and Growth plans?"
-              answer="Essentials (₹799/mo) covers all core operations - appointments, billing, WhatsApp automation, CRM, analytics, memberships, payroll - for a single branch, using the shared SnipandGlow WhatsApp number. Pro (₹1,199/mo) adds your own WhatsApp Business API (messages from your salon's own number), WhatsApp marketing broadcasts, 50+ pre-approved templates, and priority support - still single branch. Growth (₹1,499/mo) adds multi-branch management on top of everything in Pro, ideal for salon chains."
+              answer="Essentials (₹999/mo, or ₹799/mo billed yearly) covers all core operations - appointments, billing, WhatsApp automation, CRM, analytics, memberships, payroll - for a single branch, using the shared SnipandGlow WhatsApp number. Pro (₹1,999/mo, or ₹1,399/mo billed yearly) adds your own WhatsApp Business API (messages from your salon's own number), WhatsApp marketing broadcasts, 50+ pre-approved templates, and priority support - still single branch. Growth (₹2,999/mo, or ₹1,799/mo billed yearly) adds multi-branch management on top of everything in Pro, ideal for salon chains."
             />
             <FaqItem
               question="How does WhatsApp work on each plan?"
@@ -1985,7 +1989,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
-              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is purpose-built for Indian salons - WhatsApp-first, GST billing, UPI tracking, free setup, and honest pricing. Essentials at ₹799/mo covers everything a single salon needs. Pro at ₹1,199/mo adds your own WhatsApp API and broadcast marketing. Growth at ₹1,499/mo adds multi-branch for expanding chains."
+              answer="Most salon software is built for Western markets and costs ₹3,000–5,000/mo. SnipandGlow is purpose-built for Indian salons - WhatsApp-first, GST billing, UPI tracking, and honest pricing. Essentials starts at just ₹799/mo (billed yearly) and covers everything a single salon needs. Pro adds your own WhatsApp API and broadcast marketing, while Growth adds multi-branch for expanding chains. Every plan offers a no-commitment monthly option or a discounted yearly option (save up to 40%)."
             />
             <FaqItem
               question="Do my customers need to download any app to book?"
