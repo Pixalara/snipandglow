@@ -182,7 +182,7 @@ export default async function BillingPage() {
             <p className="mt-1 text-xs text-violet-100/90">{totalCount} invoice{totalCount !== 1 ? 's' : ''} all time</p>
           </div>
           <div className="absolute -right-5 -bottom-6 opacity-20">
-            <Receipt className="size-24" />
+            <IndianRupee className="size-24" />
           </div>
         </div>
 
