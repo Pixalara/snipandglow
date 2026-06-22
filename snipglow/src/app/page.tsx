@@ -1648,7 +1648,7 @@ export default function HomePage() {
           {(() => {
             const rows = [
               { factor: 'Market Fit', us: 'Designed with experienced salonists for Indian salons', them: 'Often built for Western salon workflows' },
-              { factor: 'Appointment Booking', us: 'Customers book through WhatsApp or a simple booking link', them: 'Often requires app download, account creation, or website visit' },
+              { factor: 'Appointment Booking', us: 'Customers book through WhatsApp', them: 'Often requires app download, account creation, or website visit' },
               { factor: 'Customer Effort', us: 'No app, no login, no installation', them: 'Extra steps reduce booking intent' },
               { factor: 'Base Plan Value', us: 'Most essential features included from the start', them: 'Key features often locked in premium plans' },
               { factor: 'Pricing Flexibility', us: 'Monthly and yearly plans available', them: 'Often pushes annual-only billing' },
