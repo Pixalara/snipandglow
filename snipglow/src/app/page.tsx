@@ -350,7 +350,7 @@ export default function HomePage() {
             <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 -mt-4 text-xs text-slate-500">
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> No credit card</span>
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Setup in 10 mins</span>
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> 15-day refund</span>
+              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> 7-day refund</span>
               <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Cancel anytime</span>
             </div>
           </div>
@@ -1613,8 +1613,8 @@ export default function HomePage() {
               <p className="text-xs text-slate-500 mt-1">The price you see is exactly what you pay. No surprises.</p>
             </div>
             <div className="text-center rounded-xl border border-slate-200 p-4">
-              <p className="font-bold text-slate-900 text-sm">15-day full refund</p>
-              <p className="text-xs text-slate-500 mt-1">If SnipandGlow doesn&apos;t work for you, we&apos;ll refund every rupee.</p>
+              <p className="font-bold text-slate-900 text-sm">7-day full refund</p>
+              <p className="text-xs text-slate-500 mt-1">No payment during your trial. After you pay, cancel within 7 days and we&apos;ll refund every rupee.</p>
             </div>
           </div>
 
@@ -1929,7 +1929,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="How long is the free trial?"
-              answer="You get a full 15-day free trial with access to all features - no credit card required. If SnipandGlow doesn't work for you within those 15 days, you get a full refund, no questions asked."
+              answer="You get a full 15-day free trial with access to all features - no credit card required, and no payment is taken during the trial. After the trial, when you make your first payment, you get a 7-day grace period: if SnipandGlow isn't right for you, cancel within those 7 days for a full refund, no questions asked. This applies to both monthly and yearly plans."
             />
             <FaqItem
               question="Can I pay monthly, or do I have to commit to a year?"
@@ -1985,7 +1985,7 @@ export default function HomePage() {
             />
             <FaqItem
               question="Can I cancel anytime?"
-              answer="Yes, no lock-in contracts. Cancel anytime from the dashboard. Cancellations within the first 15 days qualify for a full refund."
+              answer="Yes, no lock-in contracts. Cancel anytime from the dashboard. No payment is taken during your free trial, and after your first payment you have a 7-day grace period for a full refund, no questions asked - on both monthly and yearly plans."
             />
             <FaqItem
               question="How is SnipandGlow different from other salon software?"
