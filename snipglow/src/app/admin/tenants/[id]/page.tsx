@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { formatISTDate } from '@/lib/datetime';
+import { formatINR } from '@/lib/utils';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AdminGstEditor } from './gst-editor';
@@ -24,7 +25,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   if (!tenant) notFound();
 
   // Fetch related data in parallel
-  const [branchesRes, staffRes, servicesRes, productsRes, customersRes, appointmentsRes, waSettingsRes, setupReqRes] = await Promise.all([
+  const [branchesRes, staffRes, servicesRes, productsRes, customersRes, appointmentsRes, waSettingsRes, setupReqRes, invoicesRes] = await Promise.all([
     admin.from('branches').select('id, name, address, is_default, is_active').eq('tenant_id', tenantId),
     admin.from('employees').select('id, name, phone, email, role, is_active').eq('tenant_id', tenantId),
     admin.from('services').select('id, name, category, price, duration_minutes, is_active').eq('tenant_id', tenantId),
@@ -33,6 +34,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
     admin.from('appointments').select('id, appointment_date, start_time, status, source, created_at').eq('tenant_id', tenantId).order('appointment_date', { ascending: false }).limit(20),
     (admin.from('tenant_whatsapp_settings' as any).select('*').eq('tenant_id', tenantId).maybeSingle() as any),
     (admin.from('whatsapp_setup_requests' as any).select('contact_phone, contact_name, notes, status, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(1).maybeSingle() as any),
+    admin.from('invoices').select('total, created_at').eq('tenant_id', tenantId),
   ]);
 
   await logAdminAction({
@@ -50,6 +52,34 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   const products = productsRes.data ?? [];
   const customers = customersRes.data ?? [];
   const appointments = appointmentsRes.data ?? [];
+
+  // ─── Invoice / billing statistics (all dates in IST) ─────────────────────
+  const invoiceList = (invoicesRes.data ?? []) as Array<{ total: number | null; created_at: string | null }>;
+  const istToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
+  const monthStart = istToday.slice(0, 7) + '-01';
+  const istDateOf = (ts: string | null) =>
+    ts ? new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : '';
+
+  let totalInvoiced = 0;
+  let todayCount = 0;
+  let todayAmount = 0;
+  let monthCount = 0;
+  let monthAmount = 0;
+  for (const inv of invoiceList) {
+    const amt = inv.total ?? 0;
+    totalInvoiced += amt;
+    const d = istDateOf(inv.created_at);
+    if (d === istToday) {
+      todayCount += 1;
+      todayAmount += amt;
+    }
+    if (d >= monthStart) {
+      monthCount += 1;
+      monthAmount += amt;
+    }
+  }
+  const totalInvoices = invoiceList.length;
+
   const waView = toAdminWhatsAppView(waSettingsRes.data);
   const setupReqData = (setupReqRes?.data as {
     contact_phone: string;
@@ -106,6 +136,17 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <Field label="Subscription Start" value={formatISTDate(tenant.subscription_start)} />
           <Field label="Subscription End" value={formatISTDate(tenant.subscription_end)} />
         </Grid>
+      </Section>
+
+      {/* Billing Overview — invoices generated & amount invoiced by this tenant */}
+      <Section title="Billing Overview">
+        <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
+          <StatTile label="Total Invoices" value={String(totalInvoices)} accent="text-violet-600 dark:text-violet-400" />
+          <StatTile label="Total Amount Invoiced" value={formatINR(totalInvoiced)} accent="text-violet-600 dark:text-violet-400" />
+          <StatTile label="This Month" value={formatINR(monthAmount)} sub={`${monthCount} invoice${monthCount !== 1 ? 's' : ''}`} accent="text-blue-600 dark:text-blue-400" />
+          <StatTile label="Today" value={formatINR(todayAmount)} sub={`${todayCount} invoice${todayCount !== 1 ? 's' : ''}`} accent="text-emerald-600 dark:text-emerald-400" />
+          <StatTile label="Avg / Invoice" value={formatINR(totalInvoices > 0 ? Math.round(totalInvoiced / totalInvoices) : 0)} accent="text-amber-600 dark:text-amber-400" />
+        </div>
       </Section>
 
       {/* WhatsApp Booking Link — what the tenant shares with customers */}
@@ -262,6 +303,16 @@ function Field({ label, value }: { label: string; value: string }) {
     <div>
       <p className="text-xs text-muted-foreground">{label}</p>
       <p className="text-sm text-foreground font-medium mt-0.5">{value}</p>
+    </div>
+  );
+}
+
+function StatTile({ label, value, sub, accent }: { label: string; value: string; sub?: string; accent: string }) {
+  return (
+    <div className="rounded-xl border border-border bg-background p-3.5">
+      <p className={`text-lg font-bold leading-tight ${accent}`}>{value}</p>
+      <p className="text-xs font-medium text-foreground/80 mt-1">{label}</p>
+      {sub && <p className="text-xs text-muted-foreground">{sub}</p>}
     </div>
   );
 }
