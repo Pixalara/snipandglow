@@ -1766,148 +1766,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== WHY SNIP & GLOW — COMPARISON ===== */}
-      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #fdf2f8 50%, #fafafa 100%)' }}>
-        {/* Soft brand glow */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-72 w-[36rem] rounded-full bg-pink-200/30 blur-3xl pointer-events-none" />
-
-        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
-          {/* Header */}
-          <div className="text-center mb-10 sm:mb-12 reveal">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-pink-100 shadow-sm mb-4">
-              <Scissors className="h-3.5 w-3.5 text-pink-600" />
-              <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-violet-600 uppercase tracking-wider">
-                Why salons choose Snip &amp; Glow
-              </span>
-            </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 tracking-tight max-w-3xl mx-auto">
-              Built for Indian salons, not copied from Western workflows.
-            </h2>
-            <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
-              Most salon tools are either too complex, too expensive, or built for markets where customers
-              behave differently. Snip &amp; Glow is designed for how Indian salons actually run - and how
-              their customers already prefer to book.
-            </p>
-          </div>
-
-          {(() => {
-            const rows = [
-              { factor: 'Market Fit', us: 'Designed with experienced salonists for Indian salons', them: 'Often built for Western salon workflows' },
-              { factor: 'Appointment Booking', us: 'Customers book through WhatsApp', them: 'Often requires app download, account creation, or website visit' },
-              { factor: 'Customer Effort', us: 'No app, no login, no installation', them: 'Extra steps reduce booking intent' },
-              { factor: 'Base Plan Value', us: 'Most essential features included from the start', them: 'Key features often locked in premium plans' },
-              { factor: 'Pricing Flexibility', us: 'Monthly and yearly plans available', them: 'Often pushes annual-only billing' },
-              { factor: 'Plan Fairness', us: 'Honest pricing with fewer artificial restrictions', them: 'Features commonly split across multiple tiers' },
-              { factor: 'WhatsApp Workflow', us: 'Built around how Indian customers already communicate', them: 'Often treats WhatsApp as an add-on' },
-              { factor: 'Best For', us: 'Indian salons, parlours, spas & grooming businesses', them: 'Generic salons with less India-specific support' },
-            ];
-            return (
-              <>
-                {/* ── Desktop / tablet: comparison table ── */}
-                <div className="hidden md:block reveal">
-                  <table className="w-full border-separate border-spacing-0">
-                    <caption className="sr-only">Snip &amp; Glow compared with other salon software</caption>
-                    <thead>
-                      <tr>
-                        <th scope="col" className="text-left align-bottom p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 w-[34%]">
-                          Decision factor
-                        </th>
-                        <th scope="col" className="p-4 rounded-t-2xl text-white bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-200/60 w-[33%]">
-                          <span className="flex items-center justify-center gap-2 text-base font-bold">
-                            <Scissors className="h-4 w-4" /> Snip &amp; Glow
-                          </span>
-                          <span className="mt-1 block text-[11px] font-medium text-pink-50/90">Built for Indian salons</span>
-                        </th>
-                        <th scope="col" className="p-4 align-bottom text-base font-semibold text-slate-500 w-[33%]">
-                          Other Salon Software
-                        </th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {rows.map((r, i) => (
-                        <tr key={r.factor} className="align-top">
-                          <th scope="row" className="text-left p-4 border-b border-slate-100 text-sm font-semibold text-slate-900">
-                            {r.factor}
-                          </th>
-                          <td className={`p-4 bg-pink-50/70 border-b border-pink-100 ${i === rows.length - 1 ? 'rounded-b-2xl' : ''}`}>
-                            <span className="flex items-start gap-2.5 text-sm text-slate-800 leading-snug">
-                              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-500" />
-                              {r.us}
-                            </span>
-                          </td>
-                          <td className="p-4 border-b border-slate-100">
-                            <span className="flex items-start gap-2.5 text-sm text-slate-500 leading-snug">
-                              <X className="h-4 w-4 shrink-0 mt-0.5 text-slate-300" />
-                              {r.them}
-                            </span>
-                          </td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                {/* ── Mobile: stacked comparison cards ── */}
-                <div className="md:hidden space-y-4 reveal">
-                  {rows.map((r) => (
-                    <div key={r.factor} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
-                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{r.factor}</p>
-                      <div className="mt-3 rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50 to-violet-50 p-3">
-                        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-violet-600">
-                          <Scissors className="h-3 w-3 text-pink-600" /> Snip &amp; Glow
-                        </p>
-                        <p className="mt-1.5 flex items-start gap-2 text-sm text-slate-800 leading-snug">
-                          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-500" />
-                          {r.us}
-                        </p>
-                      </div>
-                      <div className="mt-2 px-3 pt-2">
-                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Other salon software</p>
-                        <p className="mt-1.5 flex items-start gap-2 text-sm text-slate-500 leading-snug">
-                          <X className="h-4 w-4 shrink-0 mt-0.5 text-slate-300" />
-                          {r.them}
-                        </p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </>
-            );
-          })()}
-
-          {/* Conversion block */}
-          <div className="mt-10 sm:mt-12 reveal">
-            <div className="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-10 sm:px-12 sm:py-12 text-center">
-              <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-pink-500/20 blur-3xl pointer-events-none" />
-              <div className="absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl pointer-events-none" />
-              <div className="relative">
-                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white max-w-2xl mx-auto tracking-tight">
-                  Let customers book on WhatsApp, not through friction.
-                </h3>
-                <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed">
-                  Stop forcing customers into apps they don&apos;t want. Let them book the way they already communicate.
-                </p>
-                <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
-                  <Link
-                    href="/signup"
-                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/25"
-                  >
-                    Start with Snip &amp; Glow
-                    <ArrowRight className="h-4 w-4" />
-                  </Link>
-                  <a
-                    href="#pricing"
-                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-slate-600 text-slate-200 text-sm font-semibold hover:border-slate-400 hover:text-white transition-colors"
-                  >
-                    View Pricing
-                  </a>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      </section>
-
       {/* ===== PRO & GROWTH REQUIREMENTS ===== */}
       <section className="py-8 sm:py-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #f0f4ff 50%, #fafafa 100%)' }}>
         {/* Subtle dot pattern */}
@@ -2057,6 +1915,148 @@ export default function HomePage() {
               <MessageCircle className="h-3.5 w-3.5" />
               Chat with Setup Team
             </a>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== WHY SNIP & GLOW — COMPARISON ===== */}
+      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #fdf2f8 50%, #fafafa 100%)' }}>
+        {/* Soft brand glow */}
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-72 w-[36rem] rounded-full bg-pink-200/30 blur-3xl pointer-events-none" />
+
+        <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
+          {/* Header */}
+          <div className="text-center mb-10 sm:mb-12 reveal">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-pink-100 shadow-sm mb-4">
+              <Scissors className="h-3.5 w-3.5 text-pink-600" />
+              <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-violet-600 uppercase tracking-wider">
+                Why salons choose Snip &amp; Glow
+              </span>
+            </div>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 tracking-tight max-w-3xl mx-auto">
+              Built for Indian salons, not copied from Western workflows.
+            </h2>
+            <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
+              Most salon tools are either too complex, too expensive, or built for markets where customers
+              behave differently. Snip &amp; Glow is designed for how Indian salons actually run - and how
+              their customers already prefer to book.
+            </p>
+          </div>
+
+          {(() => {
+            const rows = [
+              { factor: 'Market Fit', us: 'Designed with experienced salonists for Indian salons', them: 'Often built for Western salon workflows' },
+              { factor: 'Appointment Booking', us: 'Customers book through WhatsApp', them: 'Often requires app download, account creation, or website visit' },
+              { factor: 'Customer Effort', us: 'No app, no login, no installation', them: 'Extra steps reduce booking intent' },
+              { factor: 'Base Plan Value', us: 'Most essential features included from the start', them: 'Key features often locked in premium plans' },
+              { factor: 'Pricing Flexibility', us: 'Monthly and yearly plans available', them: 'Often pushes annual-only billing' },
+              { factor: 'Plan Fairness', us: 'Honest pricing with fewer artificial restrictions', them: 'Features commonly split across multiple tiers' },
+              { factor: 'WhatsApp Workflow', us: 'Built around how Indian customers already communicate', them: 'Often treats WhatsApp as an add-on' },
+              { factor: 'Best For', us: 'Indian salons, parlours, spas & grooming businesses', them: 'Generic salons with less India-specific support' },
+            ];
+            return (
+              <>
+                {/* ── Desktop / tablet: comparison table ── */}
+                <div className="hidden md:block reveal">
+                  <table className="w-full border-separate border-spacing-0">
+                    <caption className="sr-only">Snip &amp; Glow compared with other salon software</caption>
+                    <thead>
+                      <tr>
+                        <th scope="col" className="text-left align-bottom p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 w-[34%]">
+                          Decision factor
+                        </th>
+                        <th scope="col" className="p-4 rounded-t-2xl text-white bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-200/60 w-[33%]">
+                          <span className="flex items-center justify-center gap-2 text-base font-bold">
+                            <Scissors className="h-4 w-4" /> Snip &amp; Glow
+                          </span>
+                          <span className="mt-1 block text-[11px] font-medium text-pink-50/90">Built for Indian salons</span>
+                        </th>
+                        <th scope="col" className="p-4 align-bottom text-base font-semibold text-slate-500 w-[33%]">
+                          Other Salon Software
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {rows.map((r, i) => (
+                        <tr key={r.factor} className="align-top">
+                          <th scope="row" className="text-left p-4 border-b border-slate-100 text-sm font-semibold text-slate-900">
+                            {r.factor}
+                          </th>
+                          <td className={`p-4 bg-pink-50/70 border-b border-pink-100 ${i === rows.length - 1 ? 'rounded-b-2xl' : ''}`}>
+                            <span className="flex items-start gap-2.5 text-sm text-slate-800 leading-snug">
+                              <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-500" />
+                              {r.us}
+                            </span>
+                          </td>
+                          <td className="p-4 border-b border-slate-100">
+                            <span className="flex items-start gap-2.5 text-sm text-slate-500 leading-snug">
+                              <X className="h-4 w-4 shrink-0 mt-0.5 text-slate-300" />
+                              {r.them}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                {/* ── Mobile: stacked comparison cards ── */}
+                <div className="md:hidden space-y-4 reveal">
+                  {rows.map((r) => (
+                    <div key={r.factor} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+                      <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{r.factor}</p>
+                      <div className="mt-3 rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50 to-violet-50 p-3">
+                        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-violet-600">
+                          <Scissors className="h-3 w-3 text-pink-600" /> Snip &amp; Glow
+                        </p>
+                        <p className="mt-1.5 flex items-start gap-2 text-sm text-slate-800 leading-snug">
+                          <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-500" />
+                          {r.us}
+                        </p>
+                      </div>
+                      <div className="mt-2 px-3 pt-2">
+                        <p className="text-[11px] font-semibold uppercase tracking-wide text-slate-400">Other salon software</p>
+                        <p className="mt-1.5 flex items-start gap-2 text-sm text-slate-500 leading-snug">
+                          <X className="h-4 w-4 shrink-0 mt-0.5 text-slate-300" />
+                          {r.them}
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </>
+            );
+          })()}
+
+          {/* Conversion block */}
+          <div className="mt-10 sm:mt-12 reveal">
+            <div className="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-10 sm:px-12 sm:py-12 text-center">
+              <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-pink-500/20 blur-3xl pointer-events-none" />
+              <div className="absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl pointer-events-none" />
+              <div className="relative">
+                <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white max-w-2xl mx-auto tracking-tight">
+                  Let customers book on WhatsApp, not through friction.
+                </h3>
+                <p className="mt-3 text-sm sm:text-base text-slate-300 max-w-xl mx-auto leading-relaxed">
+                  Stop forcing customers into apps they don&apos;t want. Let them book the way they already communicate.
+                </p>
+                <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
+                  <Link
+                    href="/signup"
+                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/25"
+                  >
+                    Start with Snip &amp; Glow
+                    <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <a
+                    href="#pricing"
+                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 rounded-xl border border-slate-600 text-slate-200 text-sm font-semibold hover:border-slate-400 hover:text-white transition-colors"
+                  >
+                    View Pricing
+                  </a>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </section>
