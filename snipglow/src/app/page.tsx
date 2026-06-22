@@ -2122,10 +2122,6 @@ export default function HomePage() {
               answer="Yes. All data is encrypted at rest and in transit, hosted on secure cloud servers, and each salon's data is completely isolated. We never share or sell customer data. Access tokens for connected WhatsApp numbers are stored with AES-256 encryption."
             />
             <FaqItem
-              question="Can I import my existing customer data?"
-              answer="Yes. Our team migrates your existing customer database during onboarding - from Excel sheets, another software, or paper records - at no additional cost."
-            />
-            <FaqItem
               question="Can I cancel anytime?"
               answer="Yes, no lock-in contracts. Cancel anytime from the dashboard. No payment is taken during your free trial, and after your first payment you have a 7-day grace period for a full refund, no questions asked - on both monthly and yearly plans."
             />
