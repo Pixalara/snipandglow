@@ -5,7 +5,7 @@ import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
 import { DiscountSettingsCard } from '../settings/settings-client';
 import { formatINR } from '@/lib/utils';
-import { Receipt, Plus, IndianRupee, CalendarDays, CalendarRange, Package, Scissors } from 'lucide-react';
+import { Receipt, Plus, IndianRupee, CalendarDays, CalendarRange, Package, Scissors, Smartphone, Banknote, CreditCard } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
 
 // =============================================================================
@@ -139,6 +139,17 @@ export default async function BillingPage() {
 
   const totalCount = rows.length;
 
+  // ─── Payment-method split (by invoiced value, all time) ──────────────────
+  let upiAmount = 0;
+  let cashAmount = 0;
+  let cardAmount = 0;
+  for (const inv of invoices ?? []) {
+    const amt = inv.total ?? 0;
+    if (inv.payment_method === 'upi') upiAmount += amt;
+    else if (inv.payment_method === 'cash') cashAmount += amt;
+    else if (inv.payment_method === 'card') cardAmount += amt;
+  }
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -220,6 +231,9 @@ export default async function BillingPage() {
         />
       </div>
 
+      {/* Payment Methods Breakdown */}
+      <PaymentMethodsCard upi={upiAmount} cash={cashAmount} card={cardAmount} />
+
       {/* Default Discount Settings */}
       <DiscountSettingsCard
         discountEnabled={discountEnabled}
@@ -262,4 +276,95 @@ function StatCard({
     </div>
   );
 }
+
+// =============================================================================
+// Payment Methods Card — segmented bar with Google-color gradients
+// =============================================================================
+
+function PaymentMethodsCard({ upi, cash, card }: { upi: number; cash: number; card: number }) {
+  const total = upi + cash + card;
+
+  const methods = [
+    {
+      key: 'upi',
+      label: 'UPI',
+      amount: upi,
+      icon: <Smartphone className="size-3.5" />,
+      bar: 'bg-gradient-to-r from-[#34A853] to-[#1e8e3e]',
+      dot: 'bg-gradient-to-br from-[#34A853] to-[#1e8e3e]',
+      text: 'text-[#1e8e3e]',
+    },
+    {
+      key: 'cash',
+      label: 'Cash',
+      amount: cash,
+      icon: <Banknote className="size-3.5" />,
+      bar: 'bg-gradient-to-r from-[#FBBC05] to-[#F59E0B]',
+      dot: 'bg-gradient-to-br from-[#FBBC05] to-[#F59E0B]',
+      text: 'text-[#d97706]',
+    },
+    {
+      key: 'card',
+      label: 'Card',
+      amount: card,
+      icon: <CreditCard className="size-3.5" />,
+      bar: 'bg-gradient-to-r from-[#4285F4] to-[#1a73e8]',
+      dot: 'bg-gradient-to-br from-[#4285F4] to-[#1a73e8]',
+      text: 'text-[#1a73e8]',
+    },
+  ];
+
+  const pct = (v: number) => (total > 0 ? (v / total) * 100 : 0);
+
+  return (
+    <div className="rounded-2xl border border-border bg-card p-5">
+      <div className="flex items-center justify-between mb-4">
+        <div>
+          <h3 className="text-sm font-semibold text-foreground">Payment Methods</h3>
+          <p className="text-xs text-muted-foreground">Share of total invoiced value</p>
+        </div>
+        <span className="text-sm font-bold text-foreground">{formatINR(total)}</span>
+      </div>
+
+      {/* Segmented gradient bar */}
+      {total > 0 ? (
+        <div className="flex h-4 w-full overflow-hidden rounded-full bg-muted gap-0.5">
+          {methods
+            .filter((m) => m.amount > 0)
+            .map((m) => (
+              <div
+                key={m.key}
+                className={`h-full ${m.bar} transition-all`}
+                style={{ width: `${pct(m.amount)}%`, minWidth: '6px' }}
+                title={`${m.label}: ${formatINR(m.amount)}`}
+              />
+            ))}
+        </div>
+      ) : (
+        <div className="flex h-4 w-full items-center justify-center rounded-full bg-muted">
+          <span className="text-[10px] text-muted-foreground">No payments recorded yet</span>
+        </div>
+      )}
+
+      {/* Legend */}
+      <div className="mt-4 grid grid-cols-3 gap-3">
+        {methods.map((m) => (
+          <div key={m.key} className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-muted/30 p-2.5">
+            <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-white ${m.dot}`}>
+              {m.icon}
+            </div>
+            <div className="min-w-0">
+              <div className="flex items-baseline gap-1.5">
+                <span className="text-sm font-bold text-foreground">{Math.round(pct(m.amount))}%</span>
+                <span className="text-xs font-medium text-muted-foreground">{m.label}</span>
+              </div>
+              <p className={`text-xs font-medium truncate ${m.text}`}>{formatINR(m.amount)}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 
