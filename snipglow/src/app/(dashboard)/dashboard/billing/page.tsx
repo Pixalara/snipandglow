@@ -4,7 +4,8 @@ import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
 import { DiscountSettingsCard } from '../settings/settings-client';
-import { Receipt, Plus } from 'lucide-react';
+import { formatINR } from '@/lib/utils';
+import { Receipt, Plus, IndianRupee, CalendarDays, CalendarRange, Package, Scissors } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
 
 // =============================================================================
@@ -92,6 +93,52 @@ export default async function BillingPage() {
     payment_status: (inv.payment_status as PaymentStatus) ?? 'paid',
   }));
 
+  // ─── Billing statistics ──────────────────────────────────────────────────
+  // All dates handled in IST so "today" / "this month" match the salon's clock.
+  const istToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD
+  const monthStart = istToday.slice(0, 7) + '-01';
+  const istDateOf = (ts: string) =>
+    ts ? new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : '';
+
+  let todayCount = 0;
+  let todayAmount = 0;
+  let monthCount = 0;
+  let monthAmount = 0;
+  let totalAmount = 0;
+  const monthInvoiceIds: string[] = [];
+
+  for (const inv of invoices ?? []) {
+    const d = istDateOf(inv.created_at ?? '');
+    const amt = inv.total ?? 0;
+    totalAmount += amt;
+    if (d === istToday) {
+      todayCount += 1;
+      todayAmount += amt;
+    }
+    if (d >= monthStart) {
+      monthCount += 1;
+      monthAmount += amt;
+      monthInvoiceIds.push(inv.id);
+    }
+  }
+
+  // Split this month's billed value into product vs service sales.
+  let monthProductSales = 0;
+  let monthServiceSales = 0;
+  if (monthInvoiceIds.length > 0) {
+    const { data: items } = await supabase
+      .from('invoice_items')
+      .select('line_total, item_type, invoice_id')
+      .in('invoice_id', monthInvoiceIds);
+    for (const it of items ?? []) {
+      const line = (it as { line_total: number | null }).line_total ?? 0;
+      if ((it as { item_type: string | null }).item_type === 'product') monthProductSales += line;
+      else monthServiceSales += line;
+    }
+  }
+
+  const totalCount = rows.length;
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -122,6 +169,57 @@ export default async function BillingPage() {
         <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-violet-400/5" />
       </div>
 
+      {/* Billing Statistics */}
+      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+        {/* Hero — Total invoiced (spans 2) */}
+        <div className="col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 p-5 text-white shadow-lg shadow-violet-500/20">
+          <div className="relative z-10">
+            <div className="flex items-center gap-2 text-violet-100">
+              <IndianRupee className="size-4" />
+              <span className="text-xs font-medium uppercase tracking-wide">Total Amount Invoiced</span>
+            </div>
+            <p className="mt-2 text-2xl sm:text-3xl font-bold leading-tight">{formatINR(totalAmount)}</p>
+            <p className="mt-1 text-xs text-violet-100/90">{totalCount} invoice{totalCount !== 1 ? 's' : ''} all time</p>
+          </div>
+          <div className="absolute -right-5 -bottom-6 opacity-20">
+            <Receipt className="size-24" />
+          </div>
+        </div>
+
+        <StatCard
+          icon={<CalendarDays className="size-4" />}
+          label="Today"
+          value={formatINR(todayAmount)}
+          sub={`${todayCount} invoice${todayCount !== 1 ? 's' : ''}`}
+          iconBg="bg-emerald-100 dark:bg-emerald-900/30"
+          iconColor="text-emerald-600 dark:text-emerald-400"
+        />
+        <StatCard
+          icon={<CalendarRange className="size-4" />}
+          label="This Month"
+          value={formatINR(monthAmount)}
+          sub={`${monthCount} invoice${monthCount !== 1 ? 's' : ''}`}
+          iconBg="bg-blue-100 dark:bg-blue-900/30"
+          iconColor="text-blue-600 dark:text-blue-400"
+        />
+        <StatCard
+          icon={<Package className="size-4" />}
+          label="Product Sales"
+          value={formatINR(monthProductSales)}
+          sub="This month"
+          iconBg="bg-amber-100 dark:bg-amber-900/30"
+          iconColor="text-amber-600 dark:text-amber-400"
+        />
+        <StatCard
+          icon={<Scissors className="size-4" />}
+          label="Service Sales"
+          value={formatINR(monthServiceSales)}
+          sub="This month"
+          iconBg="bg-pink-100 dark:bg-pink-900/30"
+          iconColor="text-pink-600 dark:text-pink-400"
+        />
+      </div>
+
       {/* Default Discount Settings */}
       <DiscountSettingsCard
         discountEnabled={discountEnabled}
@@ -133,3 +231,35 @@ export default async function BillingPage() {
     </div>
   );
 }
+
+// =============================================================================
+// Stat Card — compact billing metric tile
+// =============================================================================
+
+function StatCard({
+  icon,
+  label,
+  value,
+  sub,
+  iconBg,
+  iconColor,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+  sub: string;
+  iconBg: string;
+  iconColor: string;
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-sm">
+      <div className={`flex size-8 items-center justify-center rounded-lg ${iconBg} ${iconColor}`}>
+        {icon}
+      </div>
+      <p className="mt-2.5 text-lg font-bold text-foreground leading-tight">{value}</p>
+      <p className="text-xs font-medium text-foreground/80 mt-0.5">{label}</p>
+      <p className="text-xs text-muted-foreground">{sub}</p>
+    </div>
+  );
+}
+
