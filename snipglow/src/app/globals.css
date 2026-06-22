@@ -516,6 +516,28 @@ a, button {
     width: 100%;
   }
 }
+
+/* ─── Testimonials Marquee (two rows, opposite directions) ──────────────── */
+.testimonial-track {
+  display: flex;
+  width: max-content;
+  animation: marqueeScroll 70s linear infinite;
+  will-change: transform;
+}
+.testimonial-track.reverse {
+  animation-direction: reverse;
+}
+.testimonial-row:hover .testimonial-track {
+  animation-play-state: paused;
+}
+@media (prefers-reduced-motion: reduce) {
+  .testimonial-track {
+    animation: none;
+  }
+  .testimonial-row {
+    overflow-x: auto;
+  }
+}
 @media (prefers-reduced-motion: reduce) {
   .reveal, .reveal-left, .reveal-right, .reveal-scale {
     opacity: 1 !important;

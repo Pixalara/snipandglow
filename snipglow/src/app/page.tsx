@@ -1103,46 +1103,171 @@ export default function HomePage() {
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5 reveal">
-            {[
+          {(() => {
+            type Review = { name: string; salon: string; city: string; initials: string; color: string; quote: string; metric: string };
+            const row1: Review[] = [
               {
                 name: 'Neha Thakur', salon: 'Glow & Grace Salon', city: 'Shimla',
                 initials: 'NT', color: 'bg-pink-100 text-pink-700',
-                quote: 'Half my clients used to forget their slots in tourist season. The automatic WhatsApp reminders cut our no-shows by almost 70% in the first month. Setup was done for us in a single afternoon.',
+                quote: 'Half my clients used to forget their slots in tourist season. The automatic WhatsApp reminders cut our no-shows by almost 70% in the first month.',
                 metric: 'No-shows down ~70%',
               },
               {
                 name: 'Rohan Mehta', salon: 'Urban Mane Studio', city: 'Bangalore',
                 initials: 'RM', color: 'bg-violet-100 text-violet-700',
-                quote: 'We tried two expensive Western tools before this. SnipandGlow is WhatsApp-first, which is exactly how our clients book. Billing and GST invoices that used to take an hour now take seconds.',
+                quote: 'We tried two expensive Western tools before this. SnipandGlow is WhatsApp-first, exactly how our clients book. GST invoices now take seconds.',
                 metric: 'Saves 3 hrs/day',
               },
               {
                 name: 'Pooja Sharma', salon: 'Roop Sundari Beauty Lounge', city: 'Jaipur',
                 initials: 'PS', color: 'bg-fuchsia-100 text-fuchsia-700',
-                quote: 'The festival broadcast campaigns are a game changer. One Teej offer message to our customer list filled the whole weekend. We made back the yearly cost in a single campaign.',
+                quote: 'One Teej offer message to our customer list filled the whole weekend. We made back the yearly cost in a single campaign.',
                 metric: '1 campaign = booked weekend',
               },
               {
+                name: 'Manpreet Kaur', salon: 'Blush Beauty Studio', city: 'Ludhiana',
+                initials: 'MK', color: 'bg-teal-100 text-teal-700',
+                quote: 'Booking on WhatsApp is so simple. My clients love that they don\u2019t have to call anymore.',
+                metric: 'Easy WhatsApp booking',
+              },
+              {
+                name: 'Imran Sheikh', salon: 'Kings Grooming Lounge', city: 'Lucknow',
+                initials: 'IS', color: 'bg-rose-100 text-rose-700',
+                quote: 'No-shows reduced a lot after reminders started going out. Very useful for us.',
+                metric: 'Fewer no-shows',
+              },
+              {
+                name: 'Lakshmi Iyer', salon: 'Tresses Salon', city: 'Chennai',
+                initials: 'LI', color: 'bg-indigo-100 text-indigo-700',
+                quote: 'Bills go to clients on WhatsApp instantly. Looks neat and professional.',
+                metric: 'Instant bills',
+              },
+              {
+                name: 'Deepak Yadav', salon: 'Style Hub Men\u2019s Salon', city: 'Kanpur',
+                initials: 'DY', color: 'bg-cyan-100 text-cyan-700',
+                quote: 'Setup was free and the team did everything for me. I just started using it.',
+                metric: 'Free setup',
+              },
+              {
+                name: 'Ritika Bansal', salon: 'Velvet Touch Beauty', city: 'Chandigarh',
+                initials: 'RB', color: 'bg-pink-100 text-pink-700',
+                quote: 'The win-back message brought back many old clients. Slow days are much better now.',
+                metric: 'Old clients return',
+              },
+              {
+                name: 'Faizan Ahmed', salon: 'Sharp Cuts Studio', city: 'Bhopal',
+                initials: 'FA', color: 'bg-violet-100 text-violet-700',
+                quote: 'Very simple to use. My staff learned the whole thing in one day only.',
+                metric: 'Easy for staff',
+              },
+              {
+                name: 'Sneha Pillai', salon: 'Aura Salon & Spa', city: 'Kochi',
+                initials: 'SP', color: 'bg-fuchsia-100 text-fuchsia-700',
+                quote: 'After every visit clients get a feedback message. We get many good Google reviews now.',
+                metric: 'More Google reviews',
+              },
+              {
+                name: 'Gaurav Chauhan', salon: 'The Barber\u2019s Den', city: 'Dehradun',
+                initials: 'GC', color: 'bg-emerald-100 text-emerald-700',
+                quote: 'I am not good with apps but this is very easy. The daily report helps me a lot.',
+                metric: 'Simple daily reports',
+              },
+              {
+                name: 'Anjali Nair', salon: 'Glamour Point', city: 'Thiruvananthapuram',
+                initials: 'AN', color: 'bg-amber-100 text-amber-700',
+                quote: 'Festival offer message filled my weekend. I made my money back very fast.',
+                metric: 'Booked weekends',
+              },
+              {
+                name: 'Vikas Gupta', salon: 'Crown Salon', city: 'Agra',
+                initials: 'VG', color: 'bg-blue-100 text-blue-700',
+                quote: 'Membership feature is nice. My regular clients visit more often now.',
+                metric: 'Loyal regulars',
+              },
+            ];
+            const row2: Review[] = [
+              {
                 name: 'Sandeep Verma', salon: 'Trends Unisex Salon', city: 'Hisar',
                 initials: 'SV', color: 'bg-emerald-100 text-emerald-700',
-                quote: 'In a small town, trust matters. Clients love booking on WhatsApp without calling, and the confirmation message looks professional. My walk-ins now turn into regulars.',
+                quote: 'In a small town, trust matters. Clients love booking on WhatsApp without calling, and my walk-ins now turn into regulars.',
                 metric: 'More repeat clients',
               },
               {
                 name: 'Sai Priya', salon: 'Mirror Image Salon & Spa', city: 'Hyderabad',
                 initials: 'SP', color: 'bg-amber-100 text-amber-700',
-                quote: 'The membership and win-back automation keeps our chairs full on slow days. Inactive clients get a gentle nudge after 30 days and a good number come right back.',
+                quote: 'The win-back automation keeps our chairs full on slow days. Inactive clients get a nudge and many come right back.',
                 metric: '+28% retention',
               },
               {
                 name: 'Aanya Kapoor', salon: 'The Bombay Cut', city: 'South Delhi',
                 initials: 'AK', color: 'bg-blue-100 text-blue-700',
-                quote: 'My premium clients expect a polished experience. Branded WhatsApp messages from our own number, instant invoices, and 5-star reviews going straight to Google — it all just runs on autopilot.',
-                metric: 'More 5★ Google reviews',
+                quote: 'Branded messages from our own number, instant invoices, and 5-star reviews going to Google \u2014 it all just runs on autopilot.',
+                metric: 'More 5\u2605 Google reviews',
               },
-            ].map((t) => (
-              <div key={t.name} className="flex flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm hover:shadow-md transition-shadow reveal-scale">
+              {
+                name: 'Shweta Joshi', salon: 'Bloom Beauty Bar', city: 'Nagpur',
+                initials: 'SJ', color: 'bg-teal-100 text-teal-700',
+                quote: 'No hidden charges at all. Honest price, very good for a small salon like mine.',
+                metric: 'Honest pricing',
+              },
+              {
+                name: 'Karan Malhotra', salon: 'Fade Factory', city: 'Amritsar',
+                initials: 'KM', color: 'bg-rose-100 text-rose-700',
+                quote: 'Clients book even at night on WhatsApp. In the morning my day is already full.',
+                metric: 'After-hours bookings',
+              },
+              {
+                name: 'Divya Menon', salon: 'Serene Spa & Salon', city: 'Mangalore',
+                initials: 'DM', color: 'bg-indigo-100 text-indigo-700',
+                quote: 'Reminders and feedback run on their own. I just focus on my clients now.',
+                metric: 'Runs on autopilot',
+              },
+              {
+                name: 'Suresh Reddy', salon: 'Gentlemen\u2019s Studio', city: 'Vijayawada',
+                initials: 'SR', color: 'bg-cyan-100 text-cyan-700',
+                quote: 'Reports show my best services and busy hours. Helps me plan staff properly.',
+                metric: 'Smart insights',
+              },
+              {
+                name: 'Nisha Rana', salon: 'Pretty Petals Salon', city: 'Jammu',
+                initials: 'NR', color: 'bg-pink-100 text-pink-700',
+                quote: 'Whole setup was done in one afternoon. Support replies very fast on WhatsApp.',
+                metric: 'Quick support',
+              },
+              {
+                name: 'Arjun Saxena', salon: 'Urban Edge Salon', city: 'Indore',
+                initials: 'AS', color: 'bg-violet-100 text-violet-700',
+                quote: 'Invoices are GST ready in seconds. Saves me so much time during billing.',
+                metric: 'Faster billing',
+              },
+              {
+                name: 'Pallavi Deshmukh', salon: 'Glow Theory', city: 'Pune',
+                initials: 'PD', color: 'bg-fuchsia-100 text-fuchsia-700',
+                quote: 'Birthday wishes go to clients on their own. They feel special and come back.',
+                metric: 'Happy clients',
+              },
+              {
+                name: 'Mohit Aggarwal', salon: 'Trim & Trends', city: 'Rohtak',
+                initials: 'MA', color: 'bg-emerald-100 text-emerald-700',
+                quote: 'Best part is no app for clients. They book on the same WhatsApp they already use.',
+                metric: 'No app needed',
+              },
+              {
+                name: 'Reshma Shaikh', salon: 'Elegance Beauty Lounge', city: 'Aurangabad',
+                initials: 'RS', color: 'bg-amber-100 text-amber-700',
+                quote: 'All my client data is safe in one place now. No more lost notebooks.',
+                metric: 'Data in one place',
+              },
+              {
+                name: 'Tanvi Patel', salon: 'Mirror Mirror Salon', city: 'Surat',
+                initials: 'TP', color: 'bg-blue-100 text-blue-700',
+                quote: 'Started in the free trial, no payment first. Once I saw the results, I stayed.',
+                metric: 'Risk-free start',
+              },
+            ];
+
+            const card = (t: Review, key: string) => (
+              <div key={key} className="flex w-[300px] sm:w-[340px] shrink-0 mr-5 flex-col rounded-2xl border border-slate-100 bg-white p-6 shadow-sm">
                 <div className="flex mb-3">
                   {[...Array(5)].map((_, i) => (
                     <Star key={i} className="h-4 w-4 text-amber-400" fill="currentColor" />
@@ -1164,8 +1289,28 @@ export default function HomePage() {
                   </div>
                 </div>
               </div>
-            ))}
-          </div>
+            );
+
+            return (
+              <div className="relative reveal">
+                {/* edge fades */}
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 sm:w-24 bg-gradient-to-r from-[#fdf2f8] to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 sm:w-24 bg-gradient-to-l from-[#fdf2f8] to-transparent" />
+                <div className="flex flex-col gap-5">
+                  <div className="testimonial-row overflow-hidden">
+                    <div className="testimonial-track">
+                      {[...row1, ...row1].map((t, i) => card(t, `r1-${i}`))}
+                    </div>
+                  </div>
+                  <div className="testimonial-row overflow-hidden">
+                    <div className="testimonial-track reverse" style={{ animationDuration: '62s' }}>
+                      {[...row2, ...row2].map((t, i) => card(t, `r2-${i}`))}
+                    </div>
+                  </div>
+                </div>
+              </div>
+            );
+          })()}
         </div>
       </section>
 
