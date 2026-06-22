@@ -181,7 +181,7 @@ export default async function BillingPage() {
       </div>
 
       {/* Billing Statistics */}
-      <div className="grid grid-cols-2 gap-3 lg:grid-cols-6">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
         {/* Hero — Total invoiced (spans 2) */}
         <div className="col-span-2 relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-600 to-fuchsia-600 p-5 text-white shadow-lg shadow-violet-500/20">
           <div className="relative z-10">
@@ -347,7 +347,7 @@ function PaymentMethodsCard({ upi, cash, card }: { upi: number; cash: number; ca
       )}
 
       {/* Legend */}
-      <div className="mt-4 grid grid-cols-3 gap-3">
+      <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
         {methods.map((m) => (
           <div key={m.key} className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-muted/30 p-2.5">
             <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-white ${m.dot}`}>
