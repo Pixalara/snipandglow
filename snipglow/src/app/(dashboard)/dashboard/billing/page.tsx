@@ -3,7 +3,6 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
-import { DiscountSettingsCard } from '../settings/settings-client';
 import { formatINR } from '@/lib/utils';
 import { Receipt, Plus, IndianRupee, CalendarDays, CalendarRange, Package, Scissors, Smartphone, Banknote, CreditCard } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
@@ -21,21 +20,6 @@ export default async function BillingPage() {
   }
 
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
-  const tenantId = user.user_metadata?.tenant_id;
-
-  // Fetch discount settings from tenant
-  let discountEnabled = false;
-  let discountValue = 0;
-  if (tenantId) {
-    const { data: tenant } = await supabase
-      .from('tenants')
-      .select('settings')
-      .eq('id', tenantId)
-      .single();
-    const settings = (tenant?.settings as Record<string, unknown>) ?? {};
-    discountEnabled = (settings.discount_enabled as boolean) ?? false;
-    discountValue = (settings.discount_value as number) ?? 0;
-  }
 
   // Fetch invoices (RLS enforces tenant/branch scoping)
   const { data: invoices, error } = await supabase
@@ -233,12 +217,6 @@ export default async function BillingPage() {
 
       {/* Payment Methods Breakdown */}
       <PaymentMethodsCard upi={upiAmount} cash={cashAmount} card={cardAmount} />
-
-      {/* Default Discount Settings */}
-      <DiscountSettingsCard
-        discountEnabled={discountEnabled}
-        discountValue={discountValue}
-      />
 
       {/* Invoice Table (Client Component) */}
       <InvoicesTable invoices={rows} />

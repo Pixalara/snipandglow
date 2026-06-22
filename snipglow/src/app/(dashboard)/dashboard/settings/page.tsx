@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin/auth';
-import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard, DiscountSettingsCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -272,6 +272,12 @@ export default async function SettingsPage() {
         currentTradeName={gstTradeName}
         locked={gstLocked}
         isPlatformAdmin={isPlatformAdmin}
+      />
+
+      {/* Default Discount */}
+      <DiscountSettingsCard
+        discountEnabled={discountEnabled}
+        discountValue={discountValue}
       />
 
       {/* WhatsApp Booking Link */}
