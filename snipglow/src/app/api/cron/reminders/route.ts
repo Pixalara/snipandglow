@@ -52,6 +52,16 @@ export async function GET(request: NextRequest) {
 
   for (const appt of appts24h ?? []) {
     try {
+      // Re-verify status right before sending. The bulk query above can be
+      // slightly stale (a customer may cancel/reschedule between selection and
+      // send), so this guarantees a cancelled appointment never gets a reminder.
+      const { data: fresh24 } = await (admin
+        .from('appointments' as any)
+        .select('status')
+        .eq('id', appt.id)
+        .single() as any);
+      if (!fresh24 || (fresh24.status !== 'booked' && fresh24.status !== 'confirmed')) continue;
+
       const { data: customer } = await admin.from('customers').select('name, phone').eq('id', appt.customer_id).single();
       if (!customer?.phone) continue;
 
@@ -117,6 +127,15 @@ export async function GET(request: NextRequest) {
 
     for (const appt of appts3h ?? []) {
       try {
+        // Re-verify status right before sending (guards against a cancellation
+        // or reschedule that happened after this batch was selected).
+        const { data: fresh3 } = await (admin
+          .from('appointments' as any)
+          .select('status')
+          .eq('id', appt.id)
+          .single() as any);
+        if (!fresh3 || (fresh3.status !== 'booked' && fresh3.status !== 'confirmed')) continue;
+
         const { data: customer } = await admin.from('customers').select('name, phone').eq('id', appt.customer_id).single();
         if (!customer?.phone) continue;
 
