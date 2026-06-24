@@ -1,6 +1,7 @@
 'use client';
 
 import { useEffect, useLayoutEffect, useRef, useState, type ReactNode } from 'react';
+import { createPortal } from 'react-dom';
 import { MoreVertical } from 'lucide-react';
 
 // =============================================================================
@@ -95,7 +96,7 @@ export function RowActionsMenu({ actions, align = 'right' }: RowActionsMenuProps
         <MoreVertical className="size-4" />
       </button>
 
-      {open && (
+      {open && typeof document !== 'undefined' && createPortal(
         <>
           {/* Click-away backdrop */}
           <div className="fixed inset-0 z-[60]" onClick={() => setOpen(false)} />
@@ -123,7 +124,8 @@ export function RowActionsMenu({ actions, align = 'right' }: RowActionsMenuProps
               </button>
             ))}
           </div>
-        </>
+        </>,
+        document.body
       )}
     </div>
   );
