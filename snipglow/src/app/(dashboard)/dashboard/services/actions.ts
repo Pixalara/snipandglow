@@ -53,7 +53,7 @@ export async function createService(input: CreateServiceInput): Promise<ActionRe
     return { success: false, error: 'Failed to create service. Please try again.' };
   }
 
-  revalidatePath('/services');
+  revalidatePath('/dashboard/services');
   return { success: true, data: data as Service };
 }
 
@@ -99,14 +99,17 @@ export async function updateService(id: string, input: UpdateServiceInput): Prom
     return { success: false, error: 'Failed to update service. Please try again.' };
   }
 
-  revalidatePath('/services');
+  revalidatePath('/dashboard/services');
   return { success: true, data: data as Service };
 }
 
 /**
  * Soft-delete a service by setting is_active = false.
- * First checks if the service is referenced by active (non-cancelled) appointments
- * or any invoices. If referenced, returns an informational error instead of deleting.
+ *
+ * We always deactivate (soft-delete) — never hard-delete — so that historical
+ * invoices and past appointments that reference this service keep their data
+ * intact. Deactivating simply removes it from the active catalog and from new
+ * bookings, which is exactly the "delete" behaviour the UI promises.
  */
 export async function softDeleteService(id: string): Promise<ActionResult<void>> {
   const supabase = await createClient();
@@ -114,34 +117,6 @@ export async function softDeleteService(id: string): Promise<ActionResult<void>>
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  // Check if service is referenced by active appointments (non-cancelled)
-  const { count: appointmentCount } = await supabase
-    .from('appointments')
-    .select('id', { count: 'exact', head: true })
-    .eq('service_id', id)
-    .neq('status', 'cancelled');
-
-  if (appointmentCount && appointmentCount > 0) {
-    return {
-      success: false,
-      error: `This service is linked to ${appointmentCount} active appointment${appointmentCount > 1 ? 's' : ''}. It has been deactivated but cannot be permanently removed.`,
-    };
-  }
-
-  // Check if service is referenced by any invoices (via invoice_items)
-  const { count: invoiceCount } = await supabase
-    .from('invoice_items')
-    .select('id', { count: 'exact', head: true })
-    .eq('service_id', id);
-
-  if (invoiceCount && invoiceCount > 0) {
-    return {
-      success: false,
-      error: `This service appears on ${invoiceCount} invoice${invoiceCount > 1 ? 's' : ''}. It has been deactivated but cannot be permanently removed.`,
-    };
-  }
-
-  // Soft-delete: set is_active = false
   const { error } = await supabase
     .from('services')
     .update({ is_active: false })
@@ -151,6 +126,6 @@ export async function softDeleteService(id: string): Promise<ActionResult<void>>
     return { success: false, error: 'Failed to delete service. Please try again.' };
   }
 
-  revalidatePath('/services');
+  revalidatePath('/dashboard/services');
   return { success: true, data: undefined };
 }

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { formatINR } from '@/lib/utils';
 import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
@@ -43,6 +44,7 @@ interface ServicesClientProps {
 }
 
 export function ServicesClient({ grouped, role }: ServicesClientProps) {
+  const router = useRouter();
   const [showForm, setShowForm] = useState(false);
   const [editingService, setEditingService] = useState<Service | undefined>(undefined);
   const [deleteTarget, setDeleteTarget] = useState<Service | null>(null);
@@ -74,6 +76,7 @@ export function ServicesClient({ grouped, role }: ServicesClientProps) {
     }
 
     setDeleteTarget(null);
+    router.refresh();
   }
 
   const categories = Object.keys(grouped);
