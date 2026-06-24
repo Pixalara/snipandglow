@@ -15,6 +15,7 @@ import {
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import type { AppointmentRow } from './page';
 import type { AppointmentStatus, TimeSlot } from '@/types';
 
@@ -161,6 +162,7 @@ function AppointmentDetailPopup({ appointment, onClose, onComplete, onReschedule
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [error, setError] = useState('');
+  const [confirmingCancel, setConfirmingCancel] = useState(false);
   const canAct = appointment.status === 'booked' || appointment.status === 'confirmed';
   const dateLabel = new Date(appointment.appointment_date + 'T12:00:00+05:30')
     .toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', weekday: 'long', day: 'numeric', month: 'short', year: 'numeric' });
@@ -244,12 +246,31 @@ function AppointmentDetailPopup({ appointment, onClose, onComplete, onReschedule
                 <CircleCheck className="size-4" /> Complete & Bill
               </Button>
             </div>
-            <Button variant="outline" className="w-full rounded-xl gap-1.5 text-red-700 border-red-200 hover:bg-red-50" onClick={handleCancel} disabled={isPending}>
+            <Button variant="outline" className="w-full rounded-xl gap-1.5 text-red-700 border-red-200 hover:bg-red-50" onClick={() => setConfirmingCancel(true)} disabled={isPending}>
               <XCircle className="size-4" /> {isPending ? 'Cancelling...' : 'Cancel Appointment'}
             </Button>
           </div>
         )}
       </div>
+
+      {/* Cancel confirmation */}
+      <ConfirmDialog
+        open={confirmingCancel}
+        title="Cancel this appointment?"
+        message={
+          <>
+            This will cancel <span className="font-medium text-foreground">{appointment.customer_name}</span>&apos;s
+            appointment on {dateLabel} and notify them on WhatsApp. This cannot be undone.
+          </>
+        }
+        confirmLabel="Yes, Cancel"
+        cancelLabel="Keep It"
+        pending={isPending}
+        pendingLabel="Cancelling..."
+        error={error}
+        onConfirm={handleCancel}
+        onClose={() => setConfirmingCancel(false)}
+      />
     </div>
   );
 }

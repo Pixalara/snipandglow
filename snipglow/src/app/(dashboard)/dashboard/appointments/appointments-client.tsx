@@ -7,6 +7,7 @@ import { formatDateIN, formatTimeIST, calculatePerItemInvoiceTotal } from '@/lib
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
+import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
@@ -211,12 +212,24 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
   const [rescheduleTarget, setRescheduleTarget] = useState<AppointmentRow | null>(null);
   const [completeTarget, setCompleteTarget] = useState<AppointmentRow | null>(null);
   const [editTarget, setEditTarget] = useState<AppointmentRow | null>(null);
+  const [cancelTarget, setCancelTarget] = useState<AppointmentRow | null>(null);
 
   function handleStatusChange(id: string, newStatus: AppointmentStatus) {
     setActionId(id);
     startTransition(async () => {
       await updateAppointmentStatus(id, newStatus);
       setActionId(null);
+    });
+  }
+
+  function handleConfirmCancel() {
+    if (!cancelTarget) return;
+    const id = cancelTarget.id;
+    setActionId(id);
+    startTransition(async () => {
+      await updateAppointmentStatus(id, 'cancelled');
+      setActionId(null);
+      setCancelTarget(null);
     });
   }
 
@@ -312,7 +325,7 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
           { label: 'Edit', icon: <Pencil className="size-3.5" />, onClick: () => setEditTarget(row) },
           { label: 'Reschedule', icon: <CalendarClock className="size-3.5" />, onClick: () => setRescheduleTarget(row) },
           { label: 'Mark complete', icon: <CircleCheck className="size-3.5" />, disabled: loading, onClick: () => setCompleteTarget(row) },
-          { label: 'Cancel', icon: <XCircle className="size-3.5" />, danger: true, disabled: loading, onClick: () => handleStatusChange(row.id, 'cancelled') },
+          { label: 'Cancel', icon: <XCircle className="size-3.5" />, danger: true, disabled: loading, onClick: () => setCancelTarget(row) },
         ];
         return <RowActionsMenu actions={actions} />;
       },
@@ -373,6 +386,26 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
           onClose={() => setEditTarget(null)}
         />
       )}
+
+      {/* Cancel Confirmation */}
+      <ConfirmDialog
+        open={!!cancelTarget}
+        title="Cancel this appointment?"
+        message={
+          cancelTarget ? (
+            <>
+              This will cancel <span className="font-medium text-foreground">{cancelTarget.customer_name}</span>&apos;s
+              appointment on {formatDateIN(cancelTarget.appointment_date)} and notify them on WhatsApp. This cannot be undone.
+            </>
+          ) : ''
+        }
+        confirmLabel="Yes, Cancel"
+        cancelLabel="Keep It"
+        pending={isPending && actionId === cancelTarget?.id}
+        pendingLabel="Cancelling..."
+        onConfirm={handleConfirmCancel}
+        onClose={() => setCancelTarget(null)}
+      />
     </>
   );
 }
