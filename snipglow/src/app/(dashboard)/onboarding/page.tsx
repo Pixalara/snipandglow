@@ -30,6 +30,8 @@ export default function OnboardingPage() {
   // Step 2 fields
   const [branchName, setBranchName] = useState('');
   const [branchAddress, setBranchAddress] = useState('');
+  const [state, setState] = useState('');
+  const [pincode, setPincode] = useState('');
   const [openTime, setOpenTime] = useState('09:00');
   const [closeTime, setCloseTime] = useState('21:00');
 
@@ -61,7 +63,9 @@ export default function OnboardingPage() {
       ownerName,
       phone,
       branchName: branchName || salonName,
-      branchAddress: branchAddress || undefined,
+      branchAddress,
+      state,
+      pincode,
       openTime,
       closeTime,
       services: services.length > 0 ? services : undefined,
@@ -149,13 +153,38 @@ export default function OnboardingPage() {
                 />
               </div>
               <div className="space-y-2">
-                <Label htmlFor="branchAddress">Address</Label>
+                <Label htmlFor="branchAddress">Address <span className="text-destructive">*</span></Label>
                 <Input
                   id="branchAddress"
                   value={branchAddress}
                   onChange={(e) => setBranchAddress(e.target.value)}
-                  placeholder="Street, City, State"
+                  placeholder="Shop no., street, area, city"
+                  required
                 />
+              </div>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="state">State <span className="text-destructive">*</span></Label>
+                  <Input
+                    id="state"
+                    value={state}
+                    onChange={(e) => setState(e.target.value)}
+                    placeholder="e.g. Maharashtra"
+                    required
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="pincode">Pincode <span className="text-destructive">*</span></Label>
+                  <Input
+                    id="pincode"
+                    inputMode="numeric"
+                    maxLength={6}
+                    value={pincode}
+                    onChange={(e) => setPincode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                    placeholder="6-digit pincode"
+                    required
+                  />
+                </div>
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -240,7 +269,10 @@ export default function OnboardingPage() {
           {step < 3 ? (
             <Button
               onClick={() => setStep((s) => s + 1)}
-              disabled={step === 1 && (!salonName || !ownerName || !phone)}
+              disabled={
+                (step === 1 && (!salonName || !ownerName || !phone)) ||
+                (step === 2 && (!branchAddress.trim() || !state.trim() || !/^\d{6}$/.test(pincode)))
+              }
             >
               Next
             </Button>

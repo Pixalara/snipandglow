@@ -10,7 +10,9 @@ export async function completeOnboarding(data: {
   ownerName: string;
   phone: string;
   branchName: string;
-  branchAddress?: string;
+  branchAddress: string;
+  state: string;
+  pincode: string;
   openTime: string;
   closeTime: string;
   services?: { name: string; category: string; duration_minutes: number; price: number }[];
@@ -26,6 +28,19 @@ export async function completeOnboarding(data: {
     if (!user) {
       return { success: false, error: 'Not authenticated' };
     }
+
+    // ─── Validate mandatory location fields ──────────────────────────────
+    const address = (data.branchAddress ?? '').trim();
+    const state = (data.state ?? '').trim();
+    const pincode = (data.pincode ?? '').trim();
+    if (!address) return { success: false, error: 'Address is required.' };
+    if (!state) return { success: false, error: 'State is required.' };
+    if (!/^\d{6}$/.test(pincode)) return { success: false, error: 'Please enter a valid 6-digit pincode.' };
+
+    const addressTC = toTitleCase(address);
+    const stateTC = toTitleCase(state);
+    // Readable single-line address stored on the branch.
+    const fullAddress = `${addressTC}, ${stateTC} - ${pincode}`;
 
     // Build operating hours (same for all days)
     const operatingHours: Record<string, { open: string; close: string }> = {};
@@ -50,7 +65,9 @@ export async function completeOnboarding(data: {
         subscription_start: trialStart.toISOString(),
         subscription_end: trialEnd.toISOString(),
         plan_tier: 'starter',
-        settings: {},
+        // Persist structured location so it's available for billing/WhatsApp
+        // verification without parsing the branch address string.
+        settings: { address: addressTC, state: stateTC, pincode },
       })
       .select('id')
       .single();
@@ -65,7 +82,7 @@ export async function completeOnboarding(data: {
       .insert({
         tenant_id: tenant.id,
         name: toTitleCase(data.branchName),
-        address: data.branchAddress ? toTitleCase(data.branchAddress) : null,
+        address: fullAddress,
         operating_hours: operatingHours,
         is_default: true,
         is_active: true,
