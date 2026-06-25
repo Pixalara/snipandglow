@@ -2,8 +2,9 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { Phone, Smartphone, CheckCircle2, Shield } from 'lucide-react';
+import { Phone, Smartphone, CheckCircle2, Shield, AlertTriangle } from 'lucide-react';
 
 // =============================================================================
 // Phone Verification Page
@@ -23,6 +24,8 @@ export default function VerifyPhonePage() {
   const [userName, setUserName] = useState('');
   const [userEmail, setUserEmail] = useState('');
   const [checking, setChecking] = useState(true);
+  // Set when the email/number already belongs to an existing account.
+  const [existing, setExisting] = useState<{ email: string; reason: 'email' | 'phone' } | null>(null);
 
   // Check if user is authenticated and if phone is already verified
   useEffect(() => {
@@ -47,6 +50,19 @@ export default function VerifyPhonePage() {
       setUserName(user.user_metadata?.name || user.email?.split('@')[0] || 'there');
       setUserEmail(user.email || '');
       setChecking(false);
+
+      // Detect if this Google email already belongs to an existing account.
+      try {
+        const res = await fetch('/api/auth/check-existing', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({}),
+        });
+        const data = await res.json();
+        if (data?.exists) setExisting({ email: data.email, reason: data.reason });
+      } catch {
+        // Non-fatal: never block on a check error.
+      }
     }
     checkUser();
   }, [router]);
@@ -63,6 +79,20 @@ export default function VerifyPhonePage() {
 
     setPhoneLoading(true);
     try {
+      // Block duplicate signups: if this WhatsApp number (or email) already
+      // belongs to an account, prompt the user to sign in instead.
+      const checkRes = await fetch('/api/auth/check-existing', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ phone: cleaned }),
+      });
+      const checkData = await checkRes.json();
+      if (checkData?.exists) {
+        setExisting({ email: checkData.email, reason: checkData.reason });
+        setPhoneLoading(false);
+        return;
+      }
+
       const res = await fetch('/api/auth/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -139,6 +169,43 @@ export default function VerifyPhonePage() {
 
   return (
     <div className="space-y-8">
+      {/* Existing-account popup — blocks duplicate signup */}
+      {existing && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setExisting(null)} aria-hidden="true" />
+          <div role="alertdialog" aria-modal="true" className="relative w-full max-w-sm rounded-2xl border border-slate-200 bg-white shadow-2xl p-6 space-y-4 text-center">
+            <div className="flex size-12 items-center justify-center rounded-full bg-amber-100 mx-auto">
+              <AlertTriangle className="size-6 text-amber-600" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-slate-900">Account already exists</h2>
+              <p className="text-sm text-slate-500 mt-1.5 leading-relaxed">
+                {existing.reason === 'email' ? (
+                  <>An account is already registered with this Google email (<span className="font-medium text-slate-700">{existing.email}</span>). Please sign in instead.</>
+                ) : (
+                  <>This WhatsApp number is already linked to an existing account (<span className="font-medium text-slate-700">{existing.email}</span>). Please sign in instead.</>
+                )}
+              </p>
+            </div>
+            <div className="flex flex-col gap-2 pt-1">
+              <Link
+                href="/login"
+                className="w-full flex items-center justify-center h-11 rounded-xl bg-emerald-600 text-white font-semibold text-sm hover:bg-emerald-700 transition-colors"
+              >
+                Sign in
+              </Link>
+              <button
+                type="button"
+                onClick={() => setExisting(null)}
+                className="w-full h-10 rounded-xl text-sm text-slate-500 hover:text-slate-700 transition-colors"
+              >
+                {existing.reason === 'email' ? 'Close' : 'Use a different number'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* Header */}
       <div className="text-center space-y-2">
         <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-green-100 to-emerald-100 border border-green-200 mx-auto mb-2">
