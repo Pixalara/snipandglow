@@ -53,6 +53,9 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
   const customers = customersRes.data ?? [];
   const appointments = appointmentsRes.data ?? [];
 
+  // Owner login email lives on the owner's employee record (created at onboarding).
+  const ownerEmail = ((staff.find((s: any) => s.role === 'owner')?.email as string) || '').trim() || '—';
+
   // ─── Invoice / billing statistics (all dates in IST) ─────────────────────
   const invoiceList = (invoicesRes.data ?? []) as Array<{ total: number | null; created_at: string | null }>;
   const istToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' });
@@ -129,6 +132,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         <Grid>
           <Field label="Owner" value={tenant.owner_name || '—'} />
           <Field label="Phone" value={tenant.phone || '—'} />
+          <Field label="Email" value={ownerEmail} />
           <Field label="Plan" value={planLabel(tenant.plan_tier)} />
           <Field label="Billing Cycle" value={billingCycleLabel(getBillingCycle(tenant.settings))} />
           <Field label="Status" value={tenant.subscription_status} />
