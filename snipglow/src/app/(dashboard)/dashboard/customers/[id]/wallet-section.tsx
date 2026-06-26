@@ -89,12 +89,24 @@ function AddWalletModal({
 
   const numericAmount = Math.round(Number(amount));
   const exceedsLimit = fy != null && numericAmount > fy.remaining;
-  const valid = numericAmount > 0 && !exceedsLimit;
+  const valid = numericAmount > 0;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!valid || isPending) return;
     setError('');
+
+    // Annual cap guard — show a clear popup instead of silently blocking.
+    if (fy && numericAmount > fy.remaining) {
+      const msg =
+        fy.remaining <= 0
+          ? `Annual top-up limit of ${formatINR(fy.limit)} (Apr–Mar) is already reached for this customer.`
+          : `You can only add up to ${formatINR(fy.remaining)} more this financial year (limit ${formatINR(fy.limit)}).`;
+      setError(msg);
+      toast.error(msg);
+      return;
+    }
+
     startTransition(async () => {
       const result = await addWalletBalance({
         customerId,
