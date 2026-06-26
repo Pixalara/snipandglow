@@ -1400,6 +1400,7 @@ export default function HomePage() {
               { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
               { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges - all sent automatically.', color: 'bg-green-100 text-green-600' },
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
+              { icon: Wallet, title: 'Customer Wallet', desc: 'Prepaid balance per customer — top up, auto-deduct on bills, with instant WhatsApp receipts.', color: 'bg-emerald-100 text-emerald-600' },
               { icon: Package, title: 'Product Inventory', desc: 'Track retail products, stock levels, and purchase costs. Sell products on any bill — stock updates automatically.', color: 'bg-teal-100 text-teal-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
