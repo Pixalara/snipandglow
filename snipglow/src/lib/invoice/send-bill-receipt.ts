@@ -19,6 +19,7 @@ import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { generateInvoicePdfBuffer } from '@/lib/invoice/generate-pdf';
 import { uploadInvoicePdf } from '@/lib/invoice/upload-invoice';
+import { formatINR } from '@/lib/utils';
 import type { InvoiceDocument } from '@/app/(dashboard)/dashboard/billing/actions';
 
 export interface BillReceiptItem {
@@ -340,5 +341,127 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
     } as any) as any);
   } catch (err) {
     console.error('[BillReceipt] Failed to send bill receipt via WhatsApp:', err);
+  }
+}
+
+// =============================================================================
+// Wallet recharge receipt — sends the approved `wallet_recharge_v1` template
+// (document header = recharge PDF + 5 body params). Falls back to the approved
+// text `bill_receipt_v1` if the recharge template send fails, so a top-up
+// receipt is never silently dropped. No feedback ask (a top-up is not a visit).
+// =============================================================================
+export async function sendWalletRechargeReceipt(input: {
+  tenantId: string;
+  customerId: string;
+  invoiceNumber: string;
+  amount: number;
+  newBalance: number;
+}): Promise<void> {
+  const { tenantId, customerId, invoiceNumber, amount, newBalance } = input;
+
+  try {
+    const admin = createAdminClient();
+    const credentials = getPlatformCredentials();
+    if (!credentials) return;
+
+    const { data: customer } = await admin
+      .from('customers')
+      .select('name, phone')
+      .eq('id', customerId)
+      .single();
+    if (!customer?.phone) return;
+
+    const { data: tenant } = await (admin.from('tenants' as any).select('name').eq('id', tenantId).single() as any);
+    const salonName = ((tenant?.name as string) || 'the salon').trim();
+    const phone = customer.phone.replace(/\D/g, '');
+
+    // Generate + upload the recharge PDF (best-effort, time-bounded).
+    const { url: pdfUrl, error: pdfErr } = await generateAndUploadPdf(tenantId, invoiceNumber);
+
+    let sendResult: { success: boolean; error?: string } = { success: false, error: pdfErr ?? 'no PDF' };
+
+    if (pdfUrl) {
+      // wallet_recharge_v1: {{1}} name, {{2}} salon, {{3}} amount, {{4}} balance, {{5}} receipt no.
+      sendResult = await sendMessage(credentials, phone, {
+        type: 'template',
+        template: {
+          name: 'wallet_recharge_v1',
+          language: { code: 'en' },
+          components: [
+            {
+              type: 'header',
+              parameters: [
+                {
+                  type: 'document',
+                  document: { link: pdfUrl, filename: `Receipt-${invoiceNumber}.pdf` },
+                },
+              ],
+            },
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: customer.name },
+                { type: 'text', text: salonName },
+                { type: 'text', text: amount.toLocaleString('en-IN') },
+                { type: 'text', text: newBalance.toLocaleString('en-IN') },
+                { type: 'text', text: invoiceNumber },
+              ],
+            },
+          ],
+        },
+      });
+    }
+
+    // Fallback: approved text bill_receipt_v1 so the customer always gets a receipt.
+    if (!sendResult.success) {
+      sendResult = await sendMessage(credentials, phone, {
+        type: 'template',
+        template: {
+          name: 'bill_receipt_v1',
+          language: { code: 'en' },
+          components: [
+            {
+              type: 'body',
+              parameters: [
+                { type: 'text', text: customer.name },
+                { type: 'text', text: salonName },
+                { type: 'text', text: invoiceNumber },
+                { type: 'text', text: `Wallet Recharge — New Balance ${formatINR(newBalance)}` },
+                { type: 'text', text: String(amount) },
+                { type: 'text', text: 'WALLET' },
+              ],
+            },
+          ],
+        },
+      });
+    }
+
+    await (admin.from('whatsapp_sessions').insert({
+      tenant_id: tenantId,
+      message_id: `wallet_${Date.now()}`,
+      phone,
+      direction: 'outbound',
+      template_name: 'wallet_recharge_v1',
+      status: 'sent',
+      metadata: {
+        customer_name: customer.name,
+        amount,
+        new_balance: newBalance,
+        pdf_url: pdfUrl ?? null,
+        send_error: sendResult.error ?? null,
+      },
+    } as any) as any);
+
+    try {
+      await (admin
+        .from('invoices' as any)
+        .update({ delivery_status: sendResult.success ? 'delivered' : 'failed' } as any)
+        .eq('invoice_number', invoiceNumber)
+        .eq('tenant_id', tenantId) as any);
+    } catch (deliveryErr) {
+      console.error('[WalletRecharge] delivery_status update failed:', deliveryErr);
+    }
+  } catch (err) {
+    console.error('[WalletRecharge] receipt send failed:', err);
   }
 }

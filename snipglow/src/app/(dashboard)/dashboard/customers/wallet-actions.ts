@@ -2,8 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
-import { formatINR } from '@/lib/utils';
-import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
+import { sendWalletRechargeReceipt } from '@/lib/invoice/send-bill-receipt';
 import type { ActionResult, WalletTransaction, PaymentMethod } from '@/types';
 
 // =============================================================================
@@ -94,24 +93,16 @@ export async function addWalletBalance(input: {
   const newBalance = Number(result.balance ?? 0);
   const invoiceNumber = result.invoice_number ?? '';
 
-  // Send the customer a receipt (best-effort). Embed the new balance into the
-  // line label so the existing WhatsApp template conveys it; skip the
-  // post-visit feedback ask (a top-up is not a service visit).
+  // Send the customer a wallet-recharge receipt via the approved
+  // `wallet_recharge_v1` template (PDF header + amount/balance/receipt), with a
+  // fallback to bill_receipt_v1. Best-effort — never blocks the top-up.
   try {
-    await sendBillReceiptWithPdf({
+    await sendWalletRechargeReceipt({
       tenantId,
       customerId: input.customerId,
-      items: [
-        {
-          service_name: `Wallet Recharge — New Balance ${formatINR(newBalance)}`,
-          unit_price: amount,
-          quantity: 1,
-        },
-      ],
       invoiceNumber,
-      total: amount,
-      paymentMethod: input.paymentMethod,
-      skipFeedback: true,
+      amount,
+      newBalance,
     });
   } catch (e) {
     console.error('Wallet recharge receipt send failed (non-fatal):', e);
