@@ -1523,6 +1523,7 @@ export default function HomePage() {
                     { title: 'Up to 5 Staff Logins', desc: 'Give 5 team members their own secure dashboard access' },
                     { title: 'Customer Management', desc: 'Loyalty tiers, memberships & visit history' },
                     { title: 'Product Inventory', desc: 'Track retail products, stock levels and sell them on any bill' },
+                    { title: 'Customer Wallet', desc: 'Prepaid balance per customer - top up, auto-deduct on bills & WhatsApp receipts' },
                     { title: 'WhatsApp Automation', desc: 'Confirmations, reminders & feedback' },
                     { title: 'Zero WhatsApp Costs', desc: 'All Meta conversation charges are covered by SnipandGlow - you pay nothing extra' },
                     { title: 'Analytics & Reports', desc: 'Revenue, insights & staff performance dashboard' },
