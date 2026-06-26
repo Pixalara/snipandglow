@@ -29,9 +29,9 @@ export function WalletSection({
 
   return (
     <div className="rounded-lg border border-border bg-card p-5">
-      <div className="flex items-center justify-between gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
             <Wallet className="size-5 text-violet-600 dark:text-violet-400" />
           </div>
           <div>
@@ -39,7 +39,7 @@ export function WalletSection({
             <p className="text-2xl font-bold text-foreground leading-tight">{formatINR(balance)}</p>
           </div>
         </div>
-        <Button onClick={() => setOpen(true)} className="rounded-xl gap-1.5">
+        <Button onClick={() => setOpen(true)} className="w-full sm:w-auto rounded-xl gap-1.5">
           <Plus className="size-4" />
           Add Balance
         </Button>

@@ -725,7 +725,7 @@ export default function NewBillingPage() {
             {/* Use Wallet Balance */}
             {selectedCustomer && walletBalance > 0 && (
               <div className="space-y-2 rounded-lg border border-violet-200 dark:border-violet-800/30 bg-violet-50/50 dark:bg-violet-900/10 p-3">
-                <label className="flex items-center gap-2 cursor-pointer">
+                <label className="flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer">
                   <input
                     type="checkbox"
                     checked={useWallet}
@@ -737,7 +737,7 @@ export default function NewBillingPage() {
                     className="size-4 rounded border-border text-primary focus:ring-primary/30"
                   />
                   <span className="text-sm font-medium text-foreground">Use wallet balance</span>
-                  <span className="ml-auto text-xs text-muted-foreground">
+                  <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
                     Available: <span className="font-semibold text-foreground">{formatINR(walletBalance)}</span>
                   </span>
                 </label>

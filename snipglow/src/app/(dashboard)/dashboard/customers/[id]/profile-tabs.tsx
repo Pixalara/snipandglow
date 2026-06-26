@@ -18,7 +18,7 @@ export function ProfileTabs({ visitHistory, billingHistory, walletHistory }: Pro
 
   const tabClass = (active: boolean) =>
     cn(
-      'flex-1 rounded-md px-4 py-2 text-sm font-medium transition-colors',
+      'flex-1 rounded-md px-2 sm:px-4 py-2 text-sm font-medium transition-colors whitespace-nowrap',
       active ? 'bg-background text-foreground shadow-sm' : 'text-muted-foreground hover:text-foreground'
     );
 
@@ -27,10 +27,12 @@ export function ProfileTabs({ visitHistory, billingHistory, walletHistory }: Pro
       {/* Tab Buttons */}
       <div className="flex gap-1 rounded-lg border border-border bg-muted/50 p-1">
         <button onClick={() => setActiveTab('visits')} className={tabClass(activeTab === 'visits')}>
-          Visit History
+          <span className="sm:hidden">Visits</span>
+          <span className="hidden sm:inline">Visit History</span>
         </button>
         <button onClick={() => setActiveTab('billing')} className={tabClass(activeTab === 'billing')}>
-          Billing History
+          <span className="sm:hidden">Billing</span>
+          <span className="hidden sm:inline">Billing History</span>
         </button>
         <button onClick={() => setActiveTab('wallet')} className={tabClass(activeTab === 'wallet')}>
           Wallet
