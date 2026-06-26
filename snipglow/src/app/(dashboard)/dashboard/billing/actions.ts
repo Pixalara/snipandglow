@@ -310,7 +310,8 @@ export async function createInvoice(
     billDiscountPct,
     totals.discountAmount,
     totals.total,
-    input.payment_method
+    input.payment_method,
+    walletUse
   );
 
   revalidatePath('/dashboard/billing');
@@ -422,7 +423,8 @@ async function sendBillReceiptWhatsApp(
   discountPct: number,
   discountAmount: number,
   total: number,
-  paymentMethod: string
+  paymentMethod: string,
+  walletAmount: number = 0
 ) {
   await sendBillReceiptWithPdf({
     tenantId,
@@ -431,6 +433,7 @@ async function sendBillReceiptWhatsApp(
     invoiceNumber,
     total,
     paymentMethod,
+    walletAmount,
   });
 }
 

@@ -40,6 +40,11 @@ export interface SendBillReceiptInput {
    * session. Used for wallet top-ups, which are deposits, not service visits.
    */
   skipFeedback?: boolean;
+  /**
+   * Portion of this bill settled from the customer's wallet. When > 0 the
+   * receipt's payment line shows the split (e.g. "Wallet ₹100 + CASH ₹462").
+   */
+  walletAmount?: number;
 }
 
 const PDF_TIMEOUT_MS = 8000;
@@ -156,7 +161,7 @@ async function generateAndUploadPdf(
  * the awaiting_feedback session. Best-effort: never throws.
  */
 export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promise<void> {
-  const { tenantId, customerId, items, invoiceNumber, total, paymentMethod, skipFeedback } = input;
+  const { tenantId, customerId, items, invoiceNumber, total, paymentMethod, skipFeedback, walletAmount } = input;
 
   try {
     console.log('[BillReceipt] Starting for customer:', customerId, 'tenant:', tenantId);
@@ -191,13 +196,25 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
 
     const phone = customer.phone.replace(/\D/g, '');
     const serviceList = items.map((s) => s.service_name).join(', ');
+
+    // Payment line: show the wallet split when the wallet covered part/all of it.
+    const walletAmt = Math.max(0, walletAmount ?? 0);
+    const externalPaid = Math.max(0, total - walletAmt);
+    let paymentLabel = paymentMethod.toUpperCase();
+    if (walletAmt > 0) {
+      paymentLabel =
+        walletAmt >= total
+          ? `Wallet \u20B9${walletAmt.toLocaleString('en-IN')}`
+          : `Wallet \u20B9${walletAmt.toLocaleString('en-IN')} + ${paymentMethod.toUpperCase()} \u20B9${externalPaid.toLocaleString('en-IN')}`;
+    }
+
     const bodyParameters = [
       { type: 'text', text: customer.name },
       { type: 'text', text: salonName },
       { type: 'text', text: invoiceNumber },
       { type: 'text', text: serviceList },
       { type: 'text', text: String(total) },
-      { type: 'text', text: paymentMethod.toUpperCase() },
+      { type: 'text', text: paymentLabel },
     ];
 
     let sendResult: { success: boolean; error?: string; messageId?: string };
