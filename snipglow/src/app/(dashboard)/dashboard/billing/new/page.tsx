@@ -165,6 +165,8 @@ export default function NewBillingPage() {
   const requestedWallet = useWallet ? Number(walletAmountInput || 0) : 0;
   const walletApplied = clampWalletUse(requestedWallet, totals.total, walletBalance);
   const payable = Math.max(0, totals.total - walletApplied);
+  // True when the wallet covers the entire bill — no external payment is needed.
+  const fullyWallet = totals.total > 0 && walletApplied > 0 && payable === 0;
 
   // When the default discount becomes known (membership loads / settings),
   // apply it to any line that hasn't been given its own discount yet.
@@ -696,30 +698,38 @@ export default function NewBillingPage() {
 
             {/* Payment Method */}
             <div className="space-y-2">
-              <p className="text-sm font-medium text-foreground">Payment Method</p>
-              <div className="flex flex-wrap gap-2 sm:gap-3" role="radiogroup" aria-label="Payment method">
-                {(['cash', 'upi', 'card'] as PaymentMethod[]).map((method) => (
-                  <label
-                    key={method}
-                    className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 sm:py-2 text-sm transition-colors min-h-[44px] ${
-                      paymentMethod === method
-                        ? 'border-primary bg-primary/5 text-primary font-medium'
-                        : 'border-border text-muted-foreground hover:border-foreground/30'
-                    }`}
-                  >
-                    <input
-                      type="radio"
-                      name="payment-method"
-                      value={method}
-                      checked={paymentMethod === method}
-                      onChange={() => setPaymentMethod(method)}
-                      className="sr-only"
-                      aria-label={method.toUpperCase()}
-                    />
-                    <span className="capitalize">{method === 'upi' ? 'UPI' : method.charAt(0).toUpperCase() + method.slice(1)}</span>
-                  </label>
-                ))}
-              </div>
+              <p className="text-sm font-medium text-foreground">
+                {fullyWallet ? 'Payment' : walletApplied > 0 ? 'Payment Method (for remaining amount)' : 'Payment Method'}
+              </p>
+              {fullyWallet ? (
+                <div className="rounded-lg border border-emerald-200 dark:border-emerald-800/30 bg-emerald-50 dark:bg-emerald-900/10 px-3 py-2.5 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                  Fully paid by wallet — no other payment needed.
+                </div>
+              ) : (
+                <div className="flex flex-wrap gap-2 sm:gap-3" role="radiogroup" aria-label="Payment method">
+                  {(['cash', 'upi', 'card'] as PaymentMethod[]).map((method) => (
+                    <label
+                      key={method}
+                      className={`inline-flex cursor-pointer items-center gap-2 rounded-lg border px-3 py-2.5 sm:py-2 text-sm transition-colors min-h-[44px] ${
+                        paymentMethod === method
+                          ? 'border-primary bg-primary/5 text-primary font-medium'
+                          : 'border-border text-muted-foreground hover:border-foreground/30'
+                      }`}
+                    >
+                      <input
+                        type="radio"
+                        name="payment-method"
+                        value={method}
+                        checked={paymentMethod === method}
+                        onChange={() => setPaymentMethod(method)}
+                        className="sr-only"
+                        aria-label={method.toUpperCase()}
+                      />
+                      <span className="capitalize">{method === 'upi' ? 'UPI' : method.charAt(0).toUpperCase() + method.slice(1)}</span>
+                    </label>
+                  ))}
+                </div>
+              )}
             </div>
 
             {/* Use Wallet Balance */}
