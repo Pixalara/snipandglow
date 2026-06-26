@@ -28,18 +28,21 @@ export function WalletSection({
   const [open, setOpen] = useState(false);
 
   return (
-    <div className="rounded-lg border border-border bg-card p-5">
+    <div className="rounded-2xl border border-emerald-200/60 dark:border-emerald-800/30 bg-gradient-to-br from-emerald-50 to-teal-50/40 dark:from-emerald-900/15 dark:to-teal-900/10 p-5">
       <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <div className="flex items-center gap-3">
-          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
-            <Wallet className="size-5 text-violet-600 dark:text-violet-400" />
+          <div className="flex size-11 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/40 shadow-sm shadow-emerald-200/50">
+            <Wallet className="size-5 text-emerald-600 dark:text-emerald-400" />
           </div>
           <div>
-            <p className="text-xs font-medium text-muted-foreground">Wallet Balance</p>
-            <p className="text-2xl font-bold text-foreground leading-tight">{formatINR(balance)}</p>
+            <p className="text-xs font-medium text-emerald-700/80 dark:text-emerald-400/80">Wallet Balance</p>
+            <p className="text-2xl font-bold text-emerald-700 dark:text-emerald-300 leading-tight">{formatINR(balance)}</p>
           </div>
         </div>
-        <Button onClick={() => setOpen(true)} className="w-full sm:w-auto rounded-xl gap-1.5">
+        <Button
+          onClick={() => setOpen(true)}
+          className="w-full sm:w-auto rounded-xl gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
+        >
           <Plus className="size-4" />
           Add Balance
         </Button>
@@ -108,8 +111,8 @@ function AddWalletModal({
       <div className="relative z-10 w-full sm:max-w-md rounded-t-2xl sm:rounded-2xl border border-border bg-card p-6 shadow-xl max-h-[90vh] overflow-y-auto">
         <div className="flex items-center justify-between mb-4">
           <div className="flex items-center gap-3">
-            <div className="flex size-10 items-center justify-center rounded-full bg-violet-100 dark:bg-violet-900/20">
-              <Wallet className="size-5 text-violet-600 dark:text-violet-400" />
+            <div className="flex size-10 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/20">
+              <Wallet className="size-5 text-emerald-600 dark:text-emerald-400" />
             </div>
             <div>
               <h2 className="text-lg font-semibold text-foreground">Add Wallet Balance</h2>
@@ -198,7 +201,7 @@ function AddWalletModal({
             <Button type="button" variant="outline" className="rounded-xl" onClick={onClose} disabled={isPending}>
               Cancel
             </Button>
-            <Button type="submit" className="rounded-xl" disabled={!valid || isPending}>
+            <Button type="submit" className="rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white" disabled={!valid || isPending}>
               {isPending ? 'Adding…' : 'Add & Send Receipt'}
             </Button>
           </div>

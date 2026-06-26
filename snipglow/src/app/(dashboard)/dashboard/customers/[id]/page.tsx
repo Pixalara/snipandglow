@@ -204,6 +204,9 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
         activeMembership={activeMembership}
       />
 
+      {/* Wallet balance + Add Balance */}
+      <WalletSection customerId={id} customerName={customer.name} balance={walletBalance} />
+
       {/* Loyalty & Stats Card */}
       <LoyaltyStatsCard
         totalVisits={customer.total_visits ?? 0}
@@ -211,9 +214,6 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
         lastVisitAt={customer.last_visit_at ?? null}
         createdAt={customer.created_at ?? ''}
       />
-
-      {/* Wallet balance + Add Balance */}
-      <WalletSection customerId={id} customerName={customer.name} balance={walletBalance} />
 
       {/* Tabs: Visit History, Billing History & Wallet (Client Components) */}
       <ProfileTabs
