@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useTransition } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { Wallet, Plus, X } from 'lucide-react';
@@ -8,7 +8,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatINR } from '@/lib/utils';
-import { addWalletBalance } from '../wallet-actions';
+import { addWalletBalance, getWalletFyRechargeTotal } from '../wallet-actions';
 import type { PaymentMethod } from '@/types';
 
 // =============================================================================
@@ -77,9 +77,19 @@ function AddWalletModal({
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
+  const [fy, setFy] = useState<{ used: number; limit: number; remaining: number } | null>(null);
+
+  useEffect(() => {
+    let active = true;
+    getWalletFyRechargeTotal(customerId)
+      .then((r) => { if (active) setFy(r); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [customerId]);
 
   const numericAmount = Math.round(Number(amount));
-  const valid = numericAmount > 0;
+  const exceedsLimit = fy != null && numericAmount > fy.remaining;
+  const valid = numericAmount > 0 && !exceedsLimit;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -144,6 +154,13 @@ function AddWalletModal({
               onChange={(e) => setAmount(e.target.value)}
               autoFocus
             />
+            {fy && (
+              <p className={`text-xs ${exceedsLimit ? 'text-red-600 dark:text-red-400' : 'text-muted-foreground'}`}>
+                {exceedsLimit
+                  ? `Exceeds the remaining annual limit (₹${fy.remaining.toLocaleString('en-IN')} left).`
+                  : `Annual top-up limit ${formatINR(fy.limit)} (Apr–Mar) · ${formatINR(fy.remaining)} left this year`}
+              </p>
+            )}
           </div>
 
           <div className="space-y-2">

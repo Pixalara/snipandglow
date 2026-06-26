@@ -12,6 +12,9 @@ function r(n: number): number {
   return Math.round(Number.isFinite(n) ? n : 0);
 }
 
+/** Maximum wallet top-up allowed per customer per Indian financial year (Apr–Mar). */
+export const WALLET_ANNUAL_LIMIT = 50000;
+
 /**
  * The amount that may actually be drawn from the wallet for a bill:
  * never more than the bill total, never more than the available balance,

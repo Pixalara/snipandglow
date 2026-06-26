@@ -3,7 +3,40 @@
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
 import { sendWalletRechargeReceipt } from '@/lib/invoice/send-bill-receipt';
+import { WALLET_ANNUAL_LIMIT } from '@/lib/wallet';
 import type { ActionResult, WalletTransaction, PaymentMethod } from '@/types';
+
+/** Start of the current Indian financial year (1 Apr) as an IST ISO timestamp. */
+function fyStartISO(): string {
+  const istNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const year = istNow.getFullYear();
+  const month = istNow.getMonth() + 1; // 1–12
+  const fyYear = month >= 4 ? year : year - 1;
+  return `${fyYear}-04-01T00:00:00+05:30`;
+}
+
+/**
+ * How much has been loaded into this customer's wallet during the current
+ * Indian financial year, plus the limit and remaining allowance.
+ */
+export async function getWalletFyRechargeTotal(
+  customerId: string
+): Promise<{ used: number; limit: number; remaining: number }> {
+  const limit = WALLET_ANNUAL_LIMIT;
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { used: 0, limit, remaining: limit };
+
+  const { data } = await (supabase as any)
+    .from('wallet_transactions')
+    .select('amount')
+    .eq('customer_id', customerId)
+    .eq('type', 'credit')
+    .gte('created_at', fyStartISO());
+
+  const used = (data ?? []).reduce((s: number, t: any) => s + Number(t.amount || 0), 0);
+  return { used, limit, remaining: Math.max(0, limit - used) };
+}
 
 // =============================================================================
 // Customer Wallet — server actions
@@ -72,6 +105,18 @@ export async function addWalletBalance(input: {
     return { success: false, error: 'Select a valid payment method.' };
   }
 
+  // Friendly annual-cap pre-check (the RPC enforces this authoritatively too).
+  const fy = await getWalletFyRechargeTotal(input.customerId);
+  if (amount > fy.remaining) {
+    return {
+      success: false,
+      error:
+        fy.remaining <= 0
+          ? `Annual top-up limit of ₹${fy.limit.toLocaleString('en-IN')} (Apr–Mar) already reached for this customer.`
+          : `Annual top-up limit reached. Only ₹${fy.remaining.toLocaleString('en-IN')} can be added this financial year (max ₹${fy.limit.toLocaleString('en-IN')}).`,
+    };
+  }
+
   const { data, error } = await (supabase as any).rpc('wallet_recharge', {
     p_customer_id: input.customerId,
     p_amount: amount,
@@ -81,6 +126,12 @@ export async function addWalletBalance(input: {
 
   if (error) {
     const msg = String(error.message || '');
+    if (msg.includes('WALLET_LIMIT_EXCEEDED')) {
+      return {
+        success: false,
+        error: `Annual top-up limit of ₹${WALLET_ANNUAL_LIMIT.toLocaleString('en-IN')} (Apr–Mar) reached for this customer.`,
+      };
+    }
     if (msg.includes('FORBIDDEN')) return { success: false, error: 'You do not have permission to add wallet balance.' };
     if (msg.includes('CUSTOMER_NOT_FOUND')) return { success: false, error: 'Customer not found.' };
     if (msg.includes('INVALID_AMOUNT')) return { success: false, error: 'Enter a valid amount greater than zero.' };
