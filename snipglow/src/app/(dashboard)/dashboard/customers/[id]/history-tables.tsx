@@ -22,6 +22,16 @@ export interface BillingHistoryRow {
   created_at: string;
 }
 
+/** Serializable wallet ledger row */
+export interface WalletTxRow {
+  id: string;
+  type: string;
+  amount: number;
+  balance_after: number;
+  description: string | null;
+  created_at: string;
+}
+
 export function VisitHistoryTable({ appointments }: { appointments: VisitRow[] }) {
   const columns: Column<VisitRow>[] = [
     {
@@ -144,5 +154,70 @@ function DeliveryStatusBadge({ status }: { status: string }) {
     <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${className}`}>
       {label}
     </span>
+  );
+}
+
+// =============================================================================
+// Wallet History Table
+// =============================================================================
+
+const WALLET_TYPE_META: Record<string, { label: string; className: string; sign: string }> = {
+  credit: { label: 'Top-up', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', sign: '+' },
+  refund: { label: 'Refund', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', sign: '+' },
+  debit: { label: 'Used', className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400', sign: '−' },
+  adjustment: { label: 'Adjustment', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', sign: '' },
+};
+
+export function WalletHistoryTable({ transactions }: { transactions: WalletTxRow[] }) {
+  const columns: Column<WalletTxRow>[] = [
+    {
+      key: 'type',
+      header: 'Type',
+      render: (row) => {
+        const meta = WALLET_TYPE_META[row.type] ?? { label: row.type, className: 'bg-gray-100 text-gray-700', sign: '' };
+        return (
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${meta.className}`}>
+            {meta.label}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'amount',
+      header: 'Amount',
+      render: (row) => {
+        const meta = WALLET_TYPE_META[row.type];
+        const isCredit = row.type === 'credit' || row.type === 'refund';
+        return (
+          <span className={`font-medium ${isCredit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+            {meta?.sign ?? ''}{formatINR(row.amount)}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'balance_after',
+      header: 'Balance',
+      render: (row) => <span className="font-medium text-foreground">{formatINR(row.balance_after)}</span>,
+    },
+    {
+      key: 'description',
+      header: 'Note',
+      render: (row) => <span className="text-muted-foreground">{row.description ?? '—'}</span>,
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (row) => <span className="text-muted-foreground">{formatDateIN(row.created_at)}</span>,
+    },
+  ];
+
+  return (
+    <DataTable
+      columns={columns}
+      data={transactions}
+      getRowKey={(row) => row.id}
+      emptyMessage="No wallet activity yet"
+    />
   );
 }

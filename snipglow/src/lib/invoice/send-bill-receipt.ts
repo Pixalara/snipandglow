@@ -34,6 +34,11 @@ export interface SendBillReceiptInput {
   invoiceNumber: string;
   total: number;
   paymentMethod: string;
+  /**
+   * Skip the post-bill feedback ("rate your visit") request + awaiting_feedback
+   * session. Used for wallet top-ups, which are deposits, not service visits.
+   */
+  skipFeedback?: boolean;
 }
 
 const PDF_TIMEOUT_MS = 8000;
@@ -50,30 +55,38 @@ async function buildInvoiceDocument(
 
   const { data: invFull } = await (admin
     .from('invoices' as any)
-    .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id')
+    .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id, invoice_type, wallet_amount')
     .eq('invoice_number', invoiceNumber)
     .eq('tenant_id', tenantId)
     .maybeSingle() as any);
 
   if (!invFull) return null;
 
-  const [itemsRes, custRes, tenantRes, branchRes] = await Promise.all([
+  const [itemsRes, custRes, tenantRes, branchRes, walletRes] = await Promise.all([
     admin.from('invoice_items').select('service_name, unit_price, quantity, discount_pct, discount_amount, line_total').eq('invoice_id', invFull.id),
     admin.from('customers').select('name, phone, email').eq('id', invFull.customer_id).single(),
     admin.from('tenants').select('name, phone, settings').eq('id', tenantId).single(),
     invFull.branch_id
       ? admin.from('branches').select('name, address, phone').eq('id', invFull.branch_id).single()
       : Promise.resolve({ data: null }),
+    admin.from('customer_wallets' as any).select('balance').eq('customer_id', invFull.customer_id).maybeSingle(),
   ]);
 
   const settings = ((tenantRes.data?.settings as Record<string, unknown>) ?? {});
   const custData = (custRes.data as { name: string; phone: string | null; email: string | null } | null);
   const branchData = (branchRes.data as { name: string; address: string | null; phone: string | null } | null);
+  const walletAmount = Number(invFull.wallet_amount ?? 0);
+  const invoiceType = (invFull.invoice_type as 'service' | 'wallet_recharge') ?? 'service';
+  const walletBalanceAfter = (walletRes as any)?.data ? Number((walletRes as any).data.balance) : null;
 
   return {
     invoice_number: invFull.invoice_number,
     created_at: invFull.created_at ?? new Date().toISOString(),
-    payment_method: invFull.payment_method ?? 'cash',
+    // For a fully-wallet-paid service bill, show "Wallet" as the method.
+    payment_method:
+      invoiceType === 'service' && walletAmount > 0 && walletAmount >= Number(invFull.total ?? 0)
+        ? 'wallet'
+        : (invFull.payment_method ?? 'cash'),
     payment_status: invFull.payment_status ?? 'paid',
     subtotal: invFull.subtotal ?? 0,
     discount_pct: invFull.discount_pct ?? 0,
@@ -81,6 +94,9 @@ async function buildInvoiceDocument(
     gst_rate: invFull.gst_rate ?? 0,
     gst_amount: invFull.gst_amount ?? 0,
     total: invFull.total ?? 0,
+    invoice_type: invoiceType,
+    wallet_amount: walletAmount,
+    wallet_balance_after: walletBalanceAfter,
     items: (itemsRes.data ?? []).map((it: any) => ({
       service_name: it.service_name,
       unit_price: it.unit_price,
@@ -139,7 +155,7 @@ async function generateAndUploadPdf(
  * the awaiting_feedback session. Best-effort: never throws.
  */
 export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promise<void> {
-  const { tenantId, customerId, items, invoiceNumber, total, paymentMethod } = input;
+  const { tenantId, customerId, items, invoiceNumber, total, paymentMethod, skipFeedback } = input;
 
   try {
     console.log('[BillReceipt] Starting for customer:', customerId, 'tenant:', tenantId);
@@ -263,6 +279,11 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
     }
 
     // Feedback request (single rating ask).
+    // Skipped for wallet top-ups (no service visit happened).
+    if (skipFeedback) {
+      return;
+    }
+
     // The bill above carries a PDF document header — WhatsApp must fetch and
     // process that media before delivering it, whereas this feedback template is
     // plain text and delivers instantly. Without a pause the feedback message

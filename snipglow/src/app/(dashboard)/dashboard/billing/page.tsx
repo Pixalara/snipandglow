@@ -22,9 +22,9 @@ export default async function BillingPage() {
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
 
   // Fetch invoices (RLS enforces tenant/branch scoping)
-  const { data: invoices, error } = await supabase
+  const { data: invoices, error } = await (supabase as any)
     .from('invoices')
-    .select('id, invoice_number, created_at, total, payment_method, payment_status, customer_id')
+    .select('id, invoice_number, created_at, total, payment_method, payment_status, customer_id, invoice_type')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -49,7 +49,7 @@ export default async function BillingPage() {
   }
 
   // Fetch customer names separately
-  const customerIds = [...new Set((invoices ?? []).map((inv) => inv.customer_id).filter(Boolean))];
+  const customerIds = [...new Set(((invoices ?? []) as any[]).map((inv: any) => inv.customer_id).filter(Boolean))] as string[];
   const customerNameMap: Record<string, string> = {};
 
   if (customerIds.length > 0) {
@@ -66,7 +66,7 @@ export default async function BillingPage() {
   }
 
   // Map rows (all serializable)
-  const rows: InvoiceRow[] = (invoices ?? []).map((inv) => ({
+  const rows: InvoiceRow[] = (invoices ?? []).map((inv: any) => ({
     id: inv.id,
     invoice_number: inv.invoice_number,
     customer_name: customerNameMap[inv.customer_id ?? ''] ?? '—',
@@ -92,6 +92,9 @@ export default async function BillingPage() {
   const monthInvoiceIds: string[] = [];
 
   for (const inv of invoices ?? []) {
+    // Wallet top-ups are deposits, not service/product sales — exclude from the
+    // revenue/sales stats (they still appear in the invoice list below).
+    if ((inv as any).invoice_type === 'wallet_recharge') continue;
     const d = istDateOf(inv.created_at ?? '');
     const amt = inv.total ?? 0;
     totalAmount += amt;

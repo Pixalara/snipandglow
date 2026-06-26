@@ -161,14 +161,15 @@ export async function getRevenueData(
 
   // Fetch all data in parallel
   const [invoicesRes, appointmentsRes, customersRes, expensesRes, newCustomersRes] = await Promise.all([
-    admin
+    (admin as any)
       .from('invoices')
       .select('id, total, payment_method, payment_status, created_at')
       .eq('tenant_id', tenantId)
       .eq('branch_id', branchId)
       .gte('created_at', startISO)
       .lte('created_at', endISO)
-      .eq('payment_status', 'paid'),
+      .eq('payment_status', 'paid')
+      .neq('invoice_type', 'wallet_recharge'),
     admin
       .from('appointments')
       .select('id, appointment_date, start_time, status, customer_id')

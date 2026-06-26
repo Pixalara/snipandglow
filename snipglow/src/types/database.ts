@@ -249,6 +249,10 @@ export interface Invoice {
   delivery_status: DeliveryStatus;
   pdf_storage_path: string | null;
   created_at: string;
+  /** 'service' (default) or 'wallet_recharge' (a prepaid wallet top-up). */
+  invoice_type?: 'service' | 'wallet_recharge';
+  /** Portion of this bill paid from the customer's wallet (0 when none). */
+  wallet_amount?: number;
 }
 
 /** A line item within an Invoice */
@@ -295,6 +299,40 @@ export interface CustomerMembership {
   start_date: string;
   end_date: string;
   status: MembershipStatus;
+  created_at: string;
+}
+
+// =============================================================================
+// Customer Wallet Types
+// =============================================================================
+
+/** Wallet ledger entry direction. */
+export type WalletTransactionType = 'credit' | 'debit' | 'refund' | 'adjustment';
+
+/** A customer's prepaid wallet balance (single source of truth). */
+export interface CustomerWallet {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  customer_id: string;
+  balance: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** An append-only wallet ledger entry. */
+export interface WalletTransaction {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  customer_id: string;
+  invoice_id: string | null;
+  type: WalletTransactionType;
+  amount: number;
+  /** Wallet balance immediately after this entry was applied. */
+  balance_after: number;
+  description: string | null;
+  created_by: string | null;
   created_at: string;
 }
 
@@ -531,6 +569,12 @@ export interface CreateInvoiceInput {
   payment_method: PaymentMethod;
   discount_pct?: number;
   gst_rate?: number;
+  /**
+   * Amount to pay from the customer's wallet (0/undefined = no wallet use).
+   * The invoice total still reflects the full bill value; this records how much
+   * of it was settled from the wallet. Re-validated and debited server-side.
+   */
+  wallet_amount?: number;
 }
 
 /** Input for a single invoice line item */

@@ -245,6 +245,38 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
                   <Text style={styles.grandTotalText}>Total</Text>
                   <Text style={styles.grandTotalText}>{formatINR(doc.total)}</Text>
                 </View>
+
+                {/* Wallet breakdown (service bill paid partly/fully from wallet) */}
+                {doc.invoice_type !== 'wallet_recharge' && (doc.wallet_amount ?? 0) > 0 ? (
+                  <View style={{ marginTop: 6 }}>
+                    <View style={styles.totalLine}>
+                      <Text style={styles.discountLabel}>Wallet Used</Text>
+                      <Text style={styles.discountValue}>- {formatINR(doc.wallet_amount ?? 0)}</Text>
+                    </View>
+                    <View style={styles.totalLine}>
+                      <Text style={styles.totalLabel}>Paid ({doc.payment_method})</Text>
+                      <Text style={styles.totalValue}>
+                        {formatINR(Math.max(0, (doc.total ?? 0) - (doc.wallet_amount ?? 0)))}
+                      </Text>
+                    </View>
+                    {doc.wallet_balance_after != null ? (
+                      <View style={styles.totalLine}>
+                        <Text style={styles.totalLabel}>Wallet Balance</Text>
+                        <Text style={styles.totalValue}>{formatINR(doc.wallet_balance_after)}</Text>
+                      </View>
+                    ) : null}
+                  </View>
+                ) : null}
+
+                {/* Wallet recharge: show the resulting balance */}
+                {doc.invoice_type === 'wallet_recharge' && doc.wallet_balance_after != null ? (
+                  <View style={{ marginTop: 6 }}>
+                    <View style={styles.totalLine}>
+                      <Text style={styles.totalLabel}>New Wallet Balance</Text>
+                      <Text style={styles.totalValue}>{formatINR(doc.wallet_balance_after)}</Text>
+                    </View>
+                  </View>
+                ) : null}
               </View>
             </View>
           </View>

@@ -6,9 +6,11 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { calculatePerItemInvoiceTotal, formatINR } from '@/lib/utils';
+import { clampWalletUse } from '@/lib/wallet';
 import { searchCustomers, getActiveServices } from '../../appointments/actions';
 import { createInvoice, getCustomerActiveMembership, getTenantGstSettings, getBillableProducts, type BillableProduct } from '../actions';
 import { getAvailableMemberships } from '../../customers/actions';
+import { getCustomerWalletBalance } from '../../customers/wallet-actions';
 import type { Service, PaymentMethod, Membership, CreateInvoiceItemInput } from '@/types';
 
 // =============================================================================
@@ -63,6 +65,11 @@ export default function NewBillingPage() {
   const [gstRate, setGstRate] = useState(0);
   const [defaultDiscount, setDefaultDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+
+  // Wallet state
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
+  const [walletAmountInput, setWalletAmountInput] = useState('');
 
   // UI state
   const [error, setError] = useState('');
@@ -128,6 +135,19 @@ export default function NewBillingPage() {
     }
   }, [selectedCustomer, fetchMembership]);
 
+  // Fetch wallet balance when a customer is selected.
+  useEffect(() => {
+    if (!selectedCustomer) {
+      setWalletBalance(0);
+      setUseWallet(false);
+      setWalletAmountInput('');
+      return;
+    }
+    getCustomerWalletBalance(selectedCustomer.id)
+      .then((b) => setWalletBalance(b))
+      .catch(() => setWalletBalance(0));
+  }, [selectedCustomer]);
+
   // Per-item discounts. Membership / tenant-default % becomes the default
   // discount on each line (the user can override any line).
   const membershipDiscount = activeMembership?.discount_pct ?? 0;
@@ -140,6 +160,11 @@ export default function NewBillingPage() {
     })),
     gstRate: gstEnabled ? gstRate : 0,
   });
+
+  // Wallet application (display + clamp only; the server re-validates & debits).
+  const requestedWallet = useWallet ? Number(walletAmountInput || 0) : 0;
+  const walletApplied = clampWalletUse(requestedWallet, totals.total, walletBalance);
+  const payable = Math.max(0, totals.total - walletApplied);
 
   // When the default discount becomes known (membership loads / settings),
   // apply it to any line that hasn't been given its own discount yet.
@@ -165,6 +190,9 @@ export default function NewBillingPage() {
     setCustomerSearch('');
     setCustomerResults([]);
     setActiveMembership(null);
+    setWalletBalance(0);
+    setUseWallet(false);
+    setWalletAmountInput('');
   }
 
   function handleAddLineItem() {
@@ -311,6 +339,7 @@ export default function NewBillingPage() {
         items,
         payment_method: paymentMethod,
         gst_rate: gstEnabled ? gstRate : 0,
+        wallet_amount: walletApplied > 0 ? walletApplied : undefined,
       });
 
       setSubmitting(false);
@@ -373,6 +402,9 @@ export default function NewBillingPage() {
                   setLineItems([]);
                   setActiveMembership(null);
                   setPaymentMethod('cash');
+                  setWalletBalance(0);
+                  setUseWallet(false);
+                  setWalletAmountInput('');
                 }}
               >
                 Create another bill
@@ -690,6 +722,52 @@ export default function NewBillingPage() {
               </div>
             </div>
 
+            {/* Use Wallet Balance */}
+            {selectedCustomer && walletBalance > 0 && (
+              <div className="space-y-2 rounded-lg border border-violet-200 dark:border-violet-800/30 bg-violet-50/50 dark:bg-violet-900/10 p-3">
+                <label className="flex items-center gap-2 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useWallet}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setUseWallet(on);
+                      if (on) setWalletAmountInput(String(Math.min(walletBalance, totals.total)));
+                    }}
+                    className="size-4 rounded border-border text-primary focus:ring-primary/30"
+                  />
+                  <span className="text-sm font-medium text-foreground">Use wallet balance</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    Available: <span className="font-semibold text-foreground">{formatINR(walletBalance)}</span>
+                  </span>
+                </label>
+                {useWallet && (
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="wallet-use-amount" className="text-xs text-muted-foreground whitespace-nowrap">
+                      Wallet ₹:
+                    </label>
+                    <input
+                      id="wallet-use-amount"
+                      type="number"
+                      min={0}
+                      max={Math.min(walletBalance, totals.total)}
+                      value={walletAmountInput}
+                      onChange={(e) => setWalletAmountInput(e.target.value)}
+                      className="h-8 w-28 rounded-lg border border-input bg-transparent px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                      aria-label="Wallet amount to apply"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setWalletAmountInput(String(Math.min(walletBalance, totals.total)))}
+                      className="text-xs font-medium text-primary hover:underline"
+                    >
+                      Max
+                    </button>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Per-item discounts are entered per line above. The customer's
                 membership / default discount is auto-applied as each line's
                 default and can be overridden per item. */}
@@ -742,6 +820,22 @@ export default function NewBillingPage() {
                     {formatINR(totals.total)}
                   </span>
                 </div>
+
+                {walletApplied > 0 && (
+                  <div className="mt-2 space-y-2">
+                    <div className="flex items-center justify-between text-sm">
+                      <span className="text-violet-600 dark:text-violet-400">Wallet Used</span>
+                      <span className="text-violet-600 dark:text-violet-400">−{formatINR(walletApplied)}</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-base font-semibold text-foreground">Payable Now</span>
+                      <span className="text-lg font-bold text-foreground">{formatINR(payable)}</span>
+                    </div>
+                    <p className="text-xs text-muted-foreground">
+                      Wallet balance after: {formatINR(Math.max(0, walletBalance - walletApplied))}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
           </CardContent>

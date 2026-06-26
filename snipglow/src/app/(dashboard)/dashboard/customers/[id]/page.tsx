@@ -5,11 +5,14 @@ import { formatINR, formatDateIN } from '@/lib/utils';
 import { getLoyaltyTier, getAverageSpend, getVisitFrequency, getDaysSinceLastVisit } from '@/lib/loyalty';
 import { ProfileTabs } from './profile-tabs';
 import { EditCustomerButton } from './edit-customer-button';
+import { WalletSection } from './wallet-section';
 import {
   VisitHistoryTable,
   BillingHistoryTable,
+  WalletHistoryTable,
   type VisitRow,
   type BillingHistoryRow,
+  type WalletTxRow,
 } from './history-tables';
 
 // =============================================================================
@@ -60,7 +63,7 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
   }
 
   // Fetch all data in parallel
-  const [appointmentsRes, invoicesRes, membershipRes] = await Promise.all([
+  const [appointmentsRes, invoicesRes, membershipRes, walletRes, walletTxRes] = await Promise.all([
     supabase
       .from('appointments')
       .select('id, appointment_date, start_time, service_id, employee_id')
@@ -80,7 +83,28 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
       .eq('customer_id', id)
       .eq('status', 'active')
       .maybeSingle(),
+    (supabase as any)
+      .from('customer_wallets')
+      .select('balance')
+      .eq('customer_id', id)
+      .maybeSingle(),
+    (supabase as any)
+      .from('wallet_transactions')
+      .select('id, type, amount, balance_after, description, created_at')
+      .eq('customer_id', id)
+      .order('created_at', { ascending: false })
+      .limit(100),
   ]);
+
+  const walletBalance = (walletRes as any)?.data ? Number((walletRes as any).data.balance) || 0 : 0;
+  const walletRows: WalletTxRow[] = ((walletTxRes as any)?.data ?? []).map((t: any) => ({
+    id: t.id,
+    type: t.type,
+    amount: t.amount,
+    balance_after: t.balance_after,
+    description: t.description ?? null,
+    created_at: t.created_at ?? '',
+  }));
 
   const apptList = appointmentsRes.data ?? [];
   const svcIds = [...new Set(apptList.map((a) => a.service_id).filter(Boolean))];
@@ -188,10 +212,14 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
         createdAt={customer.created_at ?? ''}
       />
 
-      {/* Tabs: Visit History & Billing History (Client Components) */}
+      {/* Wallet balance + Add Balance */}
+      <WalletSection customerId={id} customerName={customer.name} balance={walletBalance} />
+
+      {/* Tabs: Visit History, Billing History & Wallet (Client Components) */}
       <ProfileTabs
         visitHistory={<VisitHistoryTable appointments={visitRows} />}
         billingHistory={<BillingHistoryTable invoices={billingRows} />}
+        walletHistory={<WalletHistoryTable transactions={walletRows} />}
       />
     </div>
   );

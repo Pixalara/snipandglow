@@ -67,6 +67,25 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
         </div>`
       : '';
 
+  const walletUsed = doc.wallet_amount ?? 0;
+  const isRecharge = doc.invoice_type === 'wallet_recharge';
+  const walletRows =
+    !isRecharge && walletUsed > 0
+      ? `<div style="margin-top:6px;">
+          <div style="display:flex;justify-content:space-between;color:#e11d48;padding:3px 0;">
+            <span>Wallet Used</span><span style="font-weight:600;">- ${formatINR(walletUsed)}</span>
+          </div>
+          <div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;">
+            <span>Paid (${escapeHtml(doc.payment_method)})</span><span style="font-weight:600;color:#000;">${formatINR(Math.max(0, doc.total - walletUsed))}</span>
+          </div>
+          ${doc.wallet_balance_after != null ? `<div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;"><span>Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span></div>` : ''}
+        </div>`
+      : isRecharge && doc.wallet_balance_after != null
+        ? `<div style="margin-top:6px;display:flex;justify-content:space-between;color:#404040;padding:3px 0;">
+            <span>New Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span>
+          </div>`
+        : '';
+
   const salon = doc.salon;
   const cust = doc.customer;
 
@@ -136,6 +155,7 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
           <div style="display:flex;justify-content:space-between;align-items:center;background:linear-gradient(135deg,#7c3aed 0%,#db2777 100%);color:#ffffff;border-radius:8px;padding:11px 14px;font-size:16px;font-weight:800;">
             <span>Total</span><span>${formatINR(doc.total)}</span>
           </div>
+          ${walletRows}
         </div>
       </div>
     </div>
