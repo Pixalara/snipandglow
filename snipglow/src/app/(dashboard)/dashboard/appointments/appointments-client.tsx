@@ -12,6 +12,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
 import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices, getActiveEmployees, getActiveProducts, getCustomerMembershipDiscount } from './actions';
+import { getCustomerWalletBalance } from '../customers/wallet-actions';
 import {
   Calendar,
   List,
@@ -27,6 +28,7 @@ import {
   CircleCheck,
   CalendarClock,
   Pencil,
+  Wallet,
 } from 'lucide-react';
 import type { AppointmentRow, AppointmentStats } from './page';
 import type { AppointmentStatus, UserRole, TimeSlot } from '@/types';
@@ -198,7 +200,7 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
       <AppointmentStatsBar stats={stats} />
 
       {view === 'list' ? (
-        <AppointmentListView appointments={filtered} />
+        <AppointmentListView appointments={filtered} role={role} />
       ) : (
         <CalendarView appointments={filtered} />
       )}
@@ -264,7 +266,7 @@ function AppointmentStatsBar({ stats }: { stats: AppointmentStats }) {
 // List View with Actions + Reschedule Modal
 // =============================================================================
 
-function AppointmentListView({ appointments }: { appointments: AppointmentRow[] }) {
+function AppointmentListView({ appointments, role }: { appointments: AppointmentRow[]; role: UserRole }) {
   const [isPending, startTransition] = useTransition();
   const [actionId, setActionId] = useState<string | null>(null);
   const [rescheduleTarget, setRescheduleTarget] = useState<AppointmentRow | null>(null);
@@ -433,6 +435,7 @@ function AppointmentListView({ appointments }: { appointments: AppointmentRow[] 
       {completeTarget && (
         <CompleteAndBillModal
           appointment={completeTarget}
+          role={role}
           onClose={() => setCompleteTarget(null)}
         />
       )}
@@ -631,9 +634,11 @@ function RescheduleModal({
 
 function CompleteAndBillModal({
   appointment,
+  role,
   onClose,
 }: {
   appointment: AppointmentRow;
+  role: UserRole;
   onClose: () => void;
 }) {
   const [isPending, startTransition] = useTransition();
@@ -644,6 +649,10 @@ function CompleteAndBillModal({
   const [loadingMembership, setLoadingMembership] = useState(true);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState<{ invoiceNumber: string } | null>(null);
+  // Wallet — owner/manager only (matches the wallet_debit_for_invoice RPC).
+  const canUseWallet = role === 'owner' || role === 'manager';
+  const [walletBalance, setWalletBalance] = useState(0);
+  const [useWallet, setUseWallet] = useState(false);
 
   // Refresh server data (list + calendar reflect the completed/updated appt)
   // when closing after a successful bill.
@@ -676,6 +685,16 @@ function CompleteAndBillModal({
     }
     fetchMembership();
   }, [appointment.customer_id]);
+
+  // Fetch wallet balance (owner/manager only — staff can't debit wallets).
+  useEffect(() => {
+    if (!canUseWallet || !appointment.customer_id) return;
+    let active = true;
+    getCustomerWalletBalance(appointment.customer_id)
+      .then((bal) => { if (active) setWalletBalance(bal); })
+      .catch(() => {});
+    return () => { active = false; };
+  }, [appointment.customer_id, canUseWallet]);
 
   // Load services catalog + staff list (owner shown first for default selection).
   useEffect(() => {
@@ -723,6 +742,11 @@ function CompleteAndBillModal({
   });
   const discountAmount = billTotals.discountAmount;
   const discountedTotal = billTotals.total;
+
+  // Wallet application: cover as much of the payable as the balance allows.
+  const walletApplied = useWallet && canUseWallet ? Math.min(walletBalance, discountedTotal) : 0;
+  const remainingPayable = Math.max(0, discountedTotal - walletApplied);
+  const fullyWallet = walletApplied > 0 && remainingPayable === 0;
 
   function setServiceDiscount(id: string, pct: number) {
     const v = Math.min(100, Math.max(0, Number.isFinite(pct) ? pct : 0));
@@ -785,6 +809,7 @@ function CompleteAndBillModal({
         selectedEmployeeId,
         selectedProducts.map((p) => ({ product_id: p.id, quantity: p.quantity, discount_pct: p.discount_pct ?? membershipDiscountPct })),
         serviceDiscountsToSend,
+        walletApplied,
       );
       if (result.success) {
         setSuccess({ invoiceNumber: result.data.invoiceNumber });
@@ -1057,32 +1082,72 @@ function CompleteAndBillModal({
             </div>
           )}
 
-          {/* Payment Method */}
-          <div className="space-y-2">
-            <p className="text-sm font-medium text-foreground">Payment Method</p>
-            <div className="flex gap-3" role="radiogroup" aria-label="Payment method">
-              {(['cash', 'upi', 'card'] as const).map((method) => (
-                <label
-                  key={method}
-                  className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all ${
-                    paymentMethod === method
-                      ? 'border-primary bg-primary/5 text-primary font-medium shadow-sm'
-                      : 'border-border text-muted-foreground hover:border-foreground/30'
-                  }`}
-                >
-                  <input
-                    type="radio"
-                    name="payment-method"
-                    value={method}
-                    checked={paymentMethod === method}
-                    onChange={() => setPaymentMethod(method)}
-                    className="sr-only"
-                  />
-                  <span className="capitalize">{method === 'upi' ? 'UPI' : method.charAt(0).toUpperCase() + method.slice(1)}</span>
-                </label>
-              ))}
+          {/* Wallet balance option (owner/manager only) */}
+          {canUseWallet && walletBalance > 0 && (
+            <div className="space-y-2">
+              <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-emerald-200/70 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-900/10 px-4 py-3">
+                <span className="flex items-center gap-2.5">
+                  <span className="flex size-8 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/40">
+                    <Wallet className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  </span>
+                  <span>
+                    <span className="block text-sm font-medium text-foreground">Use wallet balance</span>
+                    <span className="block text-xs text-muted-foreground">Available ₹{walletBalance.toLocaleString('en-IN')}</span>
+                  </span>
+                </span>
+                <input
+                  type="checkbox"
+                  checked={useWallet}
+                  onChange={(e) => setUseWallet(e.target.checked)}
+                  className="size-4 accent-emerald-600"
+                  aria-label="Use wallet balance"
+                />
+              </label>
+              {walletApplied > 0 && (
+                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 space-y-1">
+                  <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400">
+                    <span>Paid from wallet</span>
+                    <span className="font-medium">− ₹{walletApplied.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm text-foreground">{fullyWallet ? 'Fully covered by wallet' : 'Remaining to pay'}</span>
+                    <span className="text-sm font-bold text-foreground">₹{remainingPayable.toLocaleString('en-IN')}</span>
+                  </div>
+                </div>
+              )}
             </div>
-          </div>
+          )}
+
+          {/* Payment Method — for the amount NOT covered by the wallet */}
+          {!fullyWallet && (
+            <div className="space-y-2">
+              <p className="text-sm font-medium text-foreground">
+                {walletApplied > 0 ? `Payment Method (for remaining ₹${remainingPayable.toLocaleString('en-IN')})` : 'Payment Method'}
+              </p>
+              <div className="flex gap-3" role="radiogroup" aria-label="Payment method">
+                {(['cash', 'upi', 'card'] as const).map((method) => (
+                  <label
+                    key={method}
+                    className={`inline-flex flex-1 cursor-pointer items-center justify-center gap-2 rounded-xl border px-3 py-2.5 text-sm transition-all ${
+                      paymentMethod === method
+                        ? 'border-primary bg-primary/5 text-primary font-medium shadow-sm'
+                        : 'border-border text-muted-foreground hover:border-foreground/30'
+                    }`}
+                  >
+                    <input
+                      type="radio"
+                      name="payment-method"
+                      value={method}
+                      checked={paymentMethod === method}
+                      onChange={() => setPaymentMethod(method)}
+                      className="sr-only"
+                    />
+                    <span className="capitalize">{method === 'upi' ? 'UPI' : method.charAt(0).toUpperCase() + method.slice(1)}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          )}
 
           {/* Info */}
           <p className="text-xs text-muted-foreground">

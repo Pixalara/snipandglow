@@ -7,6 +7,7 @@ import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
 import { calculatePerItemInvoiceTotal, blendedDiscountPct } from '@/lib/utils';
+import { clampWalletUse } from '@/lib/wallet';
 import type {
   ActionResult,
   Appointment,
@@ -267,6 +268,7 @@ export async function completeAndGenerateBill(
   employeeId?: string,
   products?: { product_id: string; quantity: number; discount_pct?: number }[],
   serviceDiscounts?: Record<string, number>,
+  walletAmount?: number,
 ): Promise<ActionResult<{ invoiceId: string; invoiceNumber: string }>> {
   const supabase = await createClient();
 
@@ -408,27 +410,29 @@ export async function completeAndGenerateBill(
   const serviceLines = totals.lines.slice(0, serviceLineInputs.length);
   const productLines = totals.lines.slice(serviceLineInputs.length);
 
-  // 5. Mark appointment as completed, persist the final service list + the
-  //    staff who performed it, so the appointments list and calendar reflect
-  //    exactly what was billed (cross-sell additions + correct stylist).
-  const finalServiceIds = services.map((s) => s.id);
-  const completionUpdate: Record<string, unknown> = {
-    status: 'completed',
-    service_id: finalServiceIds[0],
-    whatsapp_flow_ref: JSON.stringify(finalServiceIds),
-  };
-  if (performedByEmployeeId) completionUpdate.employee_id = performedByEmployeeId;
-
-  const { error: updateError } = await supabase
-    .from('appointments')
-    .update(completionUpdate as never)
-    .eq('id', appointmentId);
-
-  if (updateError) {
-    return { success: false, error: 'Failed to complete appointment.' };
+  // 4b. Wallet usage (optional). Re-read the balance server-side (never trust
+  //     the client) and clamp; the authoritative debit happens atomically after
+  //     the invoice is created (below). Wallet debit is owner/manager only.
+  let walletUse = 0;
+  if (walletAmount && walletAmount > 0) {
+    const role = user.user_metadata?.role;
+    if (role !== 'owner' && role !== 'manager') {
+      return { success: false, error: 'Only owners or managers can apply wallet balance.' };
+    }
+    const { data: walletRow } = await (supabase as any)
+      .from('customer_wallets')
+      .select('balance')
+      .eq('customer_id', appointment.customer_id)
+      .maybeSingle();
+    const balance = walletRow ? Number(walletRow.balance) : 0;
+    walletUse = clampWalletUse(walletAmount, total, balance);
+    if (walletUse <= 0) {
+      return { success: false, error: 'Customer has no wallet balance to apply.' };
+    }
   }
 
-  // 6. Create invoice
+  // 5. Create the invoice first, so the wallet debit can attach to it and roll
+  //    back cleanly on failure — before we mark the appointment completed.
   const { data: invoice, error: invoiceError } = await supabase
     .from('invoices')
     .insert({
@@ -452,7 +456,50 @@ export async function completeAndGenerateBill(
 
   if (invoiceError) {
     console.error('Invoice creation error:', invoiceError);
-    return { success: false, error: 'Appointment completed but failed to generate bill.' };
+    return { success: false, error: 'Failed to generate bill.' };
+  }
+
+  // 5b. Apply wallet balance atomically (row-locked, no overdraw). If it fails,
+  //     delete the just-created invoice so the balance and bill never disagree.
+  if (walletUse > 0) {
+    const { error: debitErr } = await (supabase as any).rpc('wallet_debit_for_invoice', {
+      p_invoice_id: invoice.id,
+      p_amount: walletUse,
+    });
+    if (debitErr) {
+      await supabase.from('invoices').delete().eq('id', invoice.id);
+      const msg = String(debitErr.message || '');
+      if (msg.includes('INSUFFICIENT_WALLET_BALANCE')) {
+        return { success: false, error: 'Insufficient wallet balance.' };
+      }
+      if (msg.includes('FORBIDDEN')) {
+        return { success: false, error: 'Only owners or managers can apply wallet balance.' };
+      }
+      console.error('completeAndGenerateBill wallet debit error:', debitErr);
+      return { success: false, error: 'Failed to apply wallet balance. Please try again.' };
+    }
+  }
+
+  // 6. Mark appointment as completed, persist the final service list + the
+  //    staff who performed it, so the appointments list and calendar reflect
+  //    exactly what was billed (cross-sell additions + correct stylist).
+  const finalServiceIds = services.map((s) => s.id);
+  const completionUpdate: Record<string, unknown> = {
+    status: 'completed',
+    service_id: finalServiceIds[0],
+    whatsapp_flow_ref: JSON.stringify(finalServiceIds),
+  };
+  if (performedByEmployeeId) completionUpdate.employee_id = performedByEmployeeId;
+
+  const { error: updateError } = await supabase
+    .from('appointments')
+    .update(completionUpdate as never)
+    .eq('id', appointmentId);
+
+  if (updateError) {
+    // The bill (and any wallet debit) already succeeded — don't fail the whole
+    // operation over the status flag; just log it.
+    console.error('completeAndGenerateBill appointment completion error (bill already generated):', updateError);
   }
 
   // 7. Create invoice line items for ALL services.
@@ -536,10 +583,13 @@ export async function completeAndGenerateBill(
     const pr = productRows.find((r) => r.id === pid)!;
     return { name: pr.name, price: Number(pr.selling_price), quantity: qty };
   });
-  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, billDiscountPct, discountAmount, total, paymentMethod, productReceiptItems);
+  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, billDiscountPct, discountAmount, total, paymentMethod, productReceiptItems, walletUse);
 
   revalidatePath('/dashboard/appointments');
   revalidatePath('/dashboard/billing');
+  if (walletUse > 0) {
+    revalidatePath(`/dashboard/customers/${appointment.customer_id}`);
+  }
   return { success: true, data: { invoiceId: invoice.id, invoiceNumber: invoice.invoice_number } };
 }
 
@@ -1049,7 +1099,8 @@ async function notifyCustomerBillReceipt(
   discountAmount: number,
   total: number,
   paymentMethod: string,
-  productItems: { name: string; price: number; quantity: number }[] = []
+  productItems: { name: string; price: number; quantity: number }[] = [],
+  walletAmount: number = 0
 ) {
   // Delegate to the shared bill-receipt sender so this path stays in lockstep
   // with the billing-page path (PDF attached via bill_receipt_v2, feedback
@@ -1064,5 +1115,6 @@ async function notifyCustomerBillReceipt(
     invoiceNumber,
     total,
     paymentMethod,
+    walletAmount,
   });
 }
