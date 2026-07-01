@@ -122,7 +122,63 @@ export default async function AppointmentsPage() {
     total_amount: getServiceTotal(apt, svcMap),
   }));
 
-  return <AppointmentsClient appointments={rows} role={role} />;
+  // ─── Appointment analytics (today / this week / this month) ──────────────
+  // Counted with dedicated queries (not from `rows`, which is capped/windowed)
+  // so the totals stay accurate. All windows use the salon's IST calendar and
+  // count every appointment scheduled in the range, regardless of status.
+  const stats = await getAppointmentStats(supabase);
+
+  return <AppointmentsClient appointments={rows} role={role} stats={stats} />;
+}
+
+/** Appointment volume counts for the analytics bar. */
+export interface AppointmentStats {
+  today: number;
+  week: number;
+  month: number;
+}
+
+/**
+ * Count appointments scheduled today / this week (Mon–Sun) / this month using
+ * the salon's IST calendar. RLS scopes the counts to the tenant/branch.
+ */
+async function getAppointmentStats(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+): Promise<AppointmentStats> {
+  // IST "now" as a Date whose local fields hold IST wall-clock values.
+  const istNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
+  const y = istNow.getFullYear();
+  const m = istNow.getMonth();
+  const d = istNow.getDate();
+  const dow = istNow.getDay(); // 0=Sun … 6=Sat
+
+  const fmt = (dt: Date) =>
+    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
+
+  const todayStr = fmt(istNow);
+  // Monday-based week.
+  const mondayOffset = (dow + 6) % 7;
+  const weekStart = fmt(new Date(y, m, d - mondayOffset));
+  const weekEnd = fmt(new Date(y, m, d - mondayOffset + 6));
+  const monthStart = fmt(new Date(y, m, 1));
+  const monthEnd = fmt(new Date(y, m + 1, 0));
+
+  const countIn = async (from: string, to: string): Promise<number> => {
+    const { count } = await supabase
+      .from('appointments')
+      .select('id', { count: 'exact', head: true })
+      .gte('appointment_date', from)
+      .lte('appointment_date', to);
+    return count ?? 0;
+  };
+
+  const [today, week, month] = await Promise.all([
+    countIn(todayStr, todayStr),
+    countIn(weekStart, weekEnd),
+    countIn(monthStart, monthEnd),
+  ]);
+
+  return { today, week, month };
 }
 
 /** Get the resolved list of service IDs for an appointment (multi-service aware). */

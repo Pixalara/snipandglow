@@ -28,7 +28,7 @@ import {
   CalendarClock,
   Pencil,
 } from 'lucide-react';
-import type { AppointmentRow } from './page';
+import type { AppointmentRow, AppointmentStats } from './page';
 import type { AppointmentStatus, UserRole, TimeSlot } from '@/types';
 
 // =============================================================================
@@ -38,6 +38,7 @@ import type { AppointmentStatus, UserRole, TimeSlot } from '@/types';
 interface AppointmentsClientProps {
   appointments: AppointmentRow[];
   role: UserRole;
+  stats: AppointmentStats;
 }
 
 type ViewMode = 'list' | 'calendar';
@@ -86,7 +87,7 @@ function getMaxDate(): string {
   return d.toISOString().split('T')[0];
 }
 
-export function AppointmentsClient({ appointments, role }: AppointmentsClientProps) {
+export function AppointmentsClient({ appointments, role, stats }: AppointmentsClientProps) {
   const [view, setView] = useState<ViewMode>('list');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
   // List-view date filter (calendar has its own rolling window).
@@ -193,11 +194,68 @@ export function AppointmentsClient({ appointments, role }: AppointmentsClientPro
         <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-blue-400/5" />
       </div>
 
+      {/* Analytics Bar */}
+      <AppointmentStatsBar stats={stats} />
+
       {view === 'list' ? (
         <AppointmentListView appointments={filtered} />
       ) : (
         <CalendarView appointments={filtered} />
       )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Appointment Stats Bar — today / this week / this month volume
+// =============================================================================
+
+function AppointmentStatsBar({ stats }: { stats: AppointmentStats }) {
+  const cards = [
+    {
+      key: 'today',
+      label: 'Today',
+      value: stats.today,
+      icon: <CalendarCheck className="size-4" />,
+      iconBg: 'bg-emerald-100 dark:bg-emerald-900/30',
+      iconColor: 'text-emerald-600 dark:text-emerald-400',
+    },
+    {
+      key: 'week',
+      label: 'This Week',
+      value: stats.week,
+      icon: <CalendarDays className="size-4" />,
+      iconBg: 'bg-blue-100 dark:bg-blue-900/30',
+      iconColor: 'text-blue-600 dark:text-blue-400',
+    },
+    {
+      key: 'month',
+      label: 'This Month',
+      value: stats.month,
+      icon: <CalendarClock className="size-4" />,
+      iconBg: 'bg-violet-100 dark:bg-violet-900/30',
+      iconColor: 'text-violet-600 dark:text-violet-400',
+    },
+  ];
+
+  return (
+    <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
+      {cards.map((c) => (
+        <div
+          key={c.key}
+          className="flex items-center gap-3 rounded-2xl border border-border bg-card p-4 transition-all hover:shadow-sm"
+        >
+          <div className={`flex size-10 shrink-0 items-center justify-center rounded-xl ${c.iconBg} ${c.iconColor}`}>
+            {c.icon}
+          </div>
+          <div className="min-w-0">
+            <p className="text-2xl font-bold leading-tight text-foreground">{c.value}</p>
+            <p className="text-xs font-medium text-muted-foreground">
+              {c.label} · {c.value === 1 ? 'appointment' : 'appointments'}
+            </p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }
