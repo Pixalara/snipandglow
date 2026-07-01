@@ -72,21 +72,30 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
   const [deleteError, setDeleteError] = useState('');
   const [isDeleting, setIsDeleting] = useState(false);
   const [filterCategory, setFilterCategory] = useState<string>('all');
+  const [filterMonth, setFilterMonth] = useState<string>('');
 
-  // Filter expenses
+  // Filter expenses by category + (optional) month.
   const filteredExpenses = useMemo(() => {
-    if (filterCategory === 'all') return expenses;
-    return expenses.filter((e) => e.category === filterCategory);
-  }, [expenses, filterCategory]);
+    return expenses.filter((e) => {
+      if (filterCategory !== 'all' && e.category !== filterCategory) return false;
+      if (filterMonth && !e.expense_date.startsWith(filterMonth)) return false;
+      return true;
+    });
+  }, [expenses, filterCategory, filterMonth]);
 
-  // Monthly total
+  // Summary card reflects the selected month (defaults to the current month).
+  const now = new Date();
+  const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
+  const summaryMonth = filterMonth || currentMonth;
   const monthlyTotal = useMemo(() => {
-    const now = new Date();
-    const currentMonth = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}`;
     return expenses
-      .filter((e) => e.expense_date.startsWith(currentMonth))
+      .filter((e) => e.expense_date.startsWith(summaryMonth))
       .reduce((sum, e) => sum + Number(e.amount), 0);
-  }, [expenses]);
+  }, [expenses, summaryMonth]);
+  const summaryMonthLabel = new Date(`${summaryMonth}-01T12:00:00+05:30`).toLocaleDateString('en-IN', {
+    month: 'short',
+    year: 'numeric',
+  });
 
   function handleEdit(expense: ExpenseRow) {
     setEditingExpense(expense);
@@ -218,7 +227,7 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
       {/* Monthly Summary */}
       <div className="grid gap-4 grid-cols-1 sm:grid-cols-3">
         <div className="rounded-xl border border-border bg-card p-4 hover:shadow-md hover:-translate-y-0.5 transition-all">
-          <p className="text-xs font-medium text-muted-foreground">This Month&apos;s Total</p>
+          <p className="text-xs font-medium text-muted-foreground">{filterMonth ? `${summaryMonthLabel} Total` : "This Month's Total"}</p>
           <div className="flex items-center gap-1 mt-1">
             <IndianRupee className="size-4 text-orange-600" />
             <span className="text-2xl font-bold text-foreground">{monthlyTotal.toLocaleString('en-IN')}</span>
@@ -252,6 +261,25 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
             <option key={key} value={key}>{label}</option>
           ))}
         </select>
+        <div className="flex w-full items-center gap-2 sm:w-auto">
+          <input
+            type="month"
+            value={filterMonth}
+            max={currentMonth}
+            onChange={(e) => setFilterMonth(e.target.value)}
+            aria-label="Filter expenses by month"
+            className="w-full sm:w-auto rounded-lg border border-border bg-card px-3 py-2 text-sm text-foreground"
+          />
+          {filterMonth && (
+            <button
+              type="button"
+              onClick={() => setFilterMonth('')}
+              className="shrink-0 rounded-lg border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              Clear
+            </button>
+          )}
+        </div>
         <div className="sm:ml-auto w-full sm:w-auto">
           <ExportButton
             filename="expenses"
@@ -277,11 +305,11 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
           </div>
           <h3 className="text-base font-semibold text-foreground">No expenses found</h3>
           <p className="text-sm text-muted-foreground mt-1 max-w-sm">
-            {filterCategory !== 'all'
-              ? 'No expenses in this category. Try a different filter.'
+            {filterCategory !== 'all' || filterMonth
+              ? 'No expenses match the current filters. Try a different category or month.'
               : 'Start tracking your salon expenses to get insights into your spending.'}
           </p>
-          {filterCategory === 'all' && (
+          {filterCategory === 'all' && !filterMonth && (
             <RoleGuard role={role} action="create" resource="expenses">
               <Button onClick={() => setShowForm(true)} className="mt-4 rounded-xl gap-1.5" variant="outline">
                 <Plus className="size-4" />
