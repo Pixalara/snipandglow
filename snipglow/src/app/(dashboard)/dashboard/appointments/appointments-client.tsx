@@ -89,16 +89,44 @@ function getMaxDate(): string {
   return d.toISOString().split('T')[0];
 }
 
+/** Mon–Sun date range (YYYY-MM-DD) for an <input type="week"> value like "2026-W27". */
+function weekRangeFromInput(weekStr: string): { start: string; end: string } | null {
+  const m = /^(\d{4})-W(\d{2})$/.exec(weekStr);
+  if (!m) return null;
+  const year = Number(m[1]);
+  const week = Number(m[2]);
+  // ISO: Jan 4th is always in week 1; week starts Monday.
+  const jan4 = new Date(year, 0, 4);
+  const jan4Dow = (jan4.getDay() + 6) % 7; // Mon=0 … Sun=6
+  const week1Monday = new Date(jan4);
+  week1Monday.setDate(jan4.getDate() - jan4Dow);
+  const monday = new Date(week1Monday);
+  monday.setDate(week1Monday.getDate() + (week - 1) * 7);
+  const sunday = new Date(monday);
+  sunday.setDate(monday.getDate() + 6);
+  const fmt = (d: Date) =>
+    `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+  return { start: fmt(monday), end: fmt(sunday) };
+}
+
 export function AppointmentsClient({ appointments, role, stats }: AppointmentsClientProps) {
   const [view, setView] = useState<ViewMode>('list');
   const [statusFilter, setStatusFilter] = useState<AppointmentStatus | 'all'>('all');
-  // List-view date filter (calendar has its own rolling window).
+  // List-view date filters (calendar has its own rolling window).
   const [dateFilter, setDateFilter] = useState<string>('');
+  const [monthFilter, setMonthFilter] = useState<string>('');
+  const [weekFilter, setWeekFilter] = useState<string>('');
+
+  const weekRange = weekFilter ? weekRangeFromInput(weekFilter) : null;
 
   const filtered = appointments.filter((apt) => {
     if (statusFilter !== 'all' && apt.status !== statusFilter) return false;
-    // Date filter only applies to the list view.
-    if (view === 'list' && dateFilter && apt.appointment_date !== dateFilter) return false;
+    // Date/month/week filters only apply to the list view.
+    if (view === 'list') {
+      if (dateFilter && apt.appointment_date !== dateFilter) return false;
+      if (monthFilter && !apt.appointment_date.startsWith(monthFilter)) return false;
+      if (weekRange && !(apt.appointment_date >= weekRange.start && apt.appointment_date <= weekRange.end)) return false;
+    }
     return true;
   });
 
@@ -120,9 +148,9 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Date filter — list view only */}
+            {/* Date / month / week filters — list view only */}
             {view === 'list' && (
-              <div className="flex items-center gap-1.5">
+              <div className="flex flex-wrap items-center gap-1.5">
                 <input
                   type="date"
                   value={dateFilter}
@@ -130,10 +158,24 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
                   className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
                   aria-label="Filter by date"
                 />
-                {dateFilter && (
+                <input
+                  type="month"
+                  value={monthFilter}
+                  onChange={(e) => setMonthFilter(e.target.value)}
+                  className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  aria-label="Filter by month"
+                />
+                <input
+                  type="week"
+                  value={weekFilter}
+                  onChange={(e) => setWeekFilter(e.target.value)}
+                  className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+                  aria-label="Filter by week"
+                />
+                {(dateFilter || monthFilter || weekFilter) && (
                   <button
                     type="button"
-                    onClick={() => setDateFilter('')}
+                    onClick={() => { setDateFilter(''); setMonthFilter(''); setWeekFilter(''); }}
                     className="h-10 rounded-xl border border-border px-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
                   >
                     Clear

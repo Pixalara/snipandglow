@@ -139,8 +139,11 @@ export interface AppointmentStats {
 }
 
 /**
- * Count appointments scheduled today / this week (Mon–Sun) / this month using
- * the salon's IST calendar. RLS scopes the counts to the tenant/branch.
+ * Count ACTIVE appointments (booked/confirmed) scheduled today / this week
+ * (Mon–Sun) / this month using the salon's IST calendar. Cancelled and
+ * completed appointments are excluded so the bar reflects what's still on the
+ * schedule (and updates automatically as appointments are completed/cancelled).
+ * RLS scopes the counts to the tenant/branch.
  */
 async function getAppointmentStats(
   supabase: Awaited<ReturnType<typeof createClient>>,
@@ -167,6 +170,7 @@ async function getAppointmentStats(
     const { count } = await supabase
       .from('appointments')
       .select('id', { count: 'exact', head: true })
+      .in('status', ['booked', 'confirmed'])
       .gte('appointment_date', from)
       .lte('appointment_date', to);
     return count ?? 0;
