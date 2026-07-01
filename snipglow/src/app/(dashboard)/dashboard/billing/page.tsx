@@ -335,9 +335,9 @@ function PaymentMethodsCard({ upi, cash, card, wallet, monthLabel }: { upi: numb
       label: 'Wallet',
       amount: wallet,
       icon: <Wallet className="size-3.5" />,
-      bar: 'bg-gradient-to-r from-[#10b981] to-[#0d9488]',
-      dot: 'bg-gradient-to-br from-[#10b981] to-[#0d9488]',
-      text: 'text-[#0d9488]',
+      bar: 'bg-gradient-to-r from-[#EC4899] to-[#DB2777]',
+      dot: 'bg-gradient-to-br from-[#EC4899] to-[#DB2777]',
+      text: 'text-[#DB2777]',
     },
   ];
 
