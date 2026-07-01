@@ -653,6 +653,7 @@ function CompleteAndBillModal({
   const canUseWallet = role === 'owner' || role === 'manager';
   const [walletBalance, setWalletBalance] = useState(0);
   const [useWallet, setUseWallet] = useState(false);
+  const [walletInput, setWalletInput] = useState('');
 
   // Refresh server data (list + calendar reflect the completed/updated appt)
   // when closing after a successful bill.
@@ -743,8 +744,15 @@ function CompleteAndBillModal({
   const discountAmount = billTotals.discountAmount;
   const discountedTotal = billTotals.total;
 
-  // Wallet application: cover as much of the payable as the balance allows.
-  const walletApplied = useWallet && canUseWallet ? Math.min(walletBalance, discountedTotal) : 0;
+  // Wallet application: the amount to draw from the wallet is editable so the
+  // customer can split the bill (e.g. part wallet, rest cash). Defaults to
+  // covering as much as possible; clamped to the balance and the payable.
+  const maxWallet = Math.min(walletBalance, discountedTotal);
+  const parsedWallet = walletInput.trim() === '' ? maxWallet : Math.round(Number(walletInput));
+  const walletApplied =
+    useWallet && canUseWallet && Number.isFinite(parsedWallet)
+      ? Math.max(0, Math.min(parsedWallet, maxWallet))
+      : 0;
   const remainingPayable = Math.max(0, discountedTotal - walletApplied);
   const fullyWallet = walletApplied > 0 && remainingPayable === 0;
 
@@ -1098,13 +1106,46 @@ function CompleteAndBillModal({
                 <input
                   type="checkbox"
                   checked={useWallet}
-                  onChange={(e) => setUseWallet(e.target.checked)}
+                  onChange={(e) => {
+                    setUseWallet(e.target.checked);
+                    // Default to full coverage; user can lower it to split the bill.
+                    setWalletInput(e.target.checked ? String(maxWallet) : '');
+                  }}
                   className="size-4 accent-emerald-600"
                   aria-label="Use wallet balance"
                 />
               </label>
-              {walletApplied > 0 && (
-                <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-2.5 space-y-1">
+
+              {useWallet && (
+                <div className="rounded-xl border border-border bg-muted/30 px-4 py-3 space-y-2.5">
+                  <div className="flex items-center justify-between gap-3">
+                    <label htmlFor="wallet-amount" className="text-sm text-foreground">Amount from wallet</label>
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-sm text-muted-foreground">₹</span>
+                      <input
+                        id="wallet-amount"
+                        type="number"
+                        min={0}
+                        max={maxWallet}
+                        step="1"
+                        inputMode="numeric"
+                        value={walletInput}
+                        onChange={(e) => setWalletInput(e.target.value)}
+                        className="h-9 w-28 rounded-lg border border-input bg-transparent px-2 text-right text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center justify-between text-xs">
+                    <button
+                      type="button"
+                      onClick={() => setWalletInput(String(maxWallet))}
+                      className="font-medium text-emerald-600 hover:text-emerald-700 dark:text-emerald-400"
+                    >
+                      Use max (₹{maxWallet.toLocaleString('en-IN')})
+                    </button>
+                    <span className="text-muted-foreground">Up to ₹{maxWallet.toLocaleString('en-IN')}</span>
+                  </div>
+                  <div className="border-t border-border/60" />
                   <div className="flex items-center justify-between text-xs text-emerald-700 dark:text-emerald-400">
                     <span>Paid from wallet</span>
                     <span className="font-medium">− ₹{walletApplied.toLocaleString('en-IN')}</span>
