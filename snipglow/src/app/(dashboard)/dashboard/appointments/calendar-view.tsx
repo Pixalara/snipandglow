@@ -53,12 +53,19 @@ function toDateKey(date: Date): string {
 }
 const dayNames = ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'];
 
-export function CalendarView({ appointments }: { appointments: AppointmentRow[] }) {
+export function CalendarView({ appointments, focusDate }: { appointments: AppointmentRow[]; focusDate?: string }) {
   const todayDate = useMemo(() => startOfToday(), []);
   const today = toDateKey(todayDate);
   // Rolling window: starts today by default; the date filter lets the owner
   // jump the 7-day window to any start date.
   const [startKey, setStartKey] = useState<string>(today);
+
+  // When a Date/Month/Week filter is chosen in the toolbar, jump the calendar's
+  // 7-day window to that date (exact date, week's Monday, or month's 1st).
+  useEffect(() => {
+    if (focusDate) setStartKey(focusDate);
+  }, [focusDate]);
+
   const weekStart = useMemo(() => new Date(startKey + 'T00:00:00'), [startKey]);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
   const [selected, setSelected] = useState<AppointmentRow | null>(null);

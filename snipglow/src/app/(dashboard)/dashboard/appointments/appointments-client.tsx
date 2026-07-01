@@ -121,7 +121,8 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
 
   const filtered = appointments.filter((apt) => {
     if (statusFilter !== 'all' && apt.status !== statusFilter) return false;
-    // Date/month/week filters only apply to the list view.
+    // Date/month/week filters narrow the LIST rows. In calendar view they
+    // instead drive which week is shown (via focusDate below).
     if (view === 'list') {
       if (dateFilter && apt.appointment_date !== dateFilter) return false;
       if (monthFilter && !apt.appointment_date.startsWith(monthFilter)) return false;
@@ -129,6 +130,10 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
     }
     return true;
   });
+
+  // The date the calendar's 7-day window should jump to when a filter is set:
+  // an exact date wins, else the selected week's Monday, else the month's 1st.
+  const calendarFocusDate = dateFilter || weekRange?.start || (monthFilter ? `${monthFilter}-01` : '');
 
   return (
     <div className="space-y-6">
@@ -205,55 +210,53 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
       {/* Analytics Bar */}
       <AppointmentStatsBar stats={stats} />
 
-      {/* Date / month / week filters — list view only */}
-      {view === 'list' && (
-        <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Date</label>
-            <input
-              type="date"
-              value={dateFilter}
-              onChange={(e) => setDateFilter(e.target.value)}
-              className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="Filter by date"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Month</label>
-            <input
-              type="month"
-              value={monthFilter}
-              onChange={(e) => setMonthFilter(e.target.value)}
-              className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="Filter by month"
-            />
-          </div>
-          <div className="flex flex-col gap-1">
-            <label className="text-xs font-medium text-muted-foreground">Week</label>
-            <input
-              type="week"
-              value={weekFilter}
-              onChange={(e) => setWeekFilter(e.target.value)}
-              className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-              aria-label="Filter by week"
-            />
-          </div>
-          {(dateFilter || monthFilter || weekFilter) && (
-            <button
-              type="button"
-              onClick={() => { setDateFilter(''); setMonthFilter(''); setWeekFilter(''); }}
-              className="h-10 rounded-xl border border-border px-4 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-            >
-              Clear filters
-            </button>
-          )}
+      {/* Date / month / week filters — filter the list; drive the calendar's week */}
+      <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-muted-foreground">Date</label>
+          <input
+            type="date"
+            value={dateFilter}
+            onChange={(e) => setDateFilter(e.target.value)}
+            className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label="Filter by date"
+          />
         </div>
-      )}
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-muted-foreground">Month</label>
+          <input
+            type="month"
+            value={monthFilter}
+            onChange={(e) => setMonthFilter(e.target.value)}
+            className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label="Filter by month"
+          />
+        </div>
+        <div className="flex flex-col gap-1">
+          <label className="text-xs font-medium text-muted-foreground">Week</label>
+          <input
+            type="week"
+            value={weekFilter}
+            onChange={(e) => setWeekFilter(e.target.value)}
+            className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+            aria-label="Filter by week"
+          />
+        </div>
+        {(dateFilter || monthFilter || weekFilter) && (
+          <button
+            type="button"
+            onClick={() => { setDateFilter(''); setMonthFilter(''); setWeekFilter(''); }}
+            className="h-10 rounded-xl border border-border px-4 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+          >
+            Clear filters
+          </button>
+        )}
+      </div>
 
       {view === 'list' ? (
         <AppointmentListView appointments={filtered} role={role} />
       ) : (
-        <CalendarView appointments={filtered} />
+        <CalendarView appointments={filtered} focusDate={calendarFocusDate} />
       )}
     </div>
   );
