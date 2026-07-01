@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
 import { formatINR } from '@/lib/utils';
-import { Receipt, Plus, IndianRupee, CalendarDays, CalendarRange, Package, Scissors, Smartphone, Banknote, CreditCard } from 'lucide-react';
+import { Receipt, Plus, IndianRupee, CalendarDays, CalendarRange, Package, Scissors, Smartphone, Banknote, CreditCard, Wallet } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
 
 // =============================================================================
@@ -24,7 +24,7 @@ export default async function BillingPage() {
   // Fetch invoices (RLS enforces tenant/branch scoping)
   const { data: invoices, error } = await (supabase as any)
     .from('invoices')
-    .select('id, invoice_number, created_at, total, payment_method, payment_status, customer_id, invoice_type')
+    .select('id, invoice_number, created_at, total, payment_method, payment_status, customer_id, invoice_type, wallet_amount')
     .order('created_at', { ascending: false });
 
   if (error) {
@@ -73,6 +73,7 @@ export default async function BillingPage() {
     customer_id: inv.customer_id ?? '',
     created_at: inv.created_at ?? '',
     total: inv.total,
+    wallet_amount: Number(inv.wallet_amount ?? 0),
     payment_method: inv.payment_method as PaymentMethod,
     payment_status: (inv.payment_status as PaymentStatus) ?? 'paid',
   }));
@@ -127,14 +128,22 @@ export default async function BillingPage() {
   const totalCount = rows.length;
 
   // ─── Payment-method split (by invoiced value, all time) ──────────────────
+  // Split each service/product bill into its wallet portion + the external
+  // (cash/upi/card) portion. Wallet top-up invoices are excluded — they're
+  // deposits that show as "Wallet" when the balance is later spent.
   let upiAmount = 0;
   let cashAmount = 0;
   let cardAmount = 0;
+  let walletAmount = 0;
   for (const inv of invoices ?? []) {
-    const amt = inv.total ?? 0;
-    if (inv.payment_method === 'upi') upiAmount += amt;
-    else if (inv.payment_method === 'cash') cashAmount += amt;
-    else if (inv.payment_method === 'card') cardAmount += amt;
+    if ((inv as any).invoice_type === 'wallet_recharge') continue;
+    const t = inv.total ?? 0;
+    const wallet = Number((inv as any).wallet_amount ?? 0);
+    const external = Math.max(0, t - wallet);
+    walletAmount += wallet;
+    if (inv.payment_method === 'upi') upiAmount += external;
+    else if (inv.payment_method === 'cash') cashAmount += external;
+    else if (inv.payment_method === 'card') cardAmount += external;
   }
 
   return (
@@ -219,7 +228,7 @@ export default async function BillingPage() {
       </div>
 
       {/* Payment Methods Breakdown */}
-      <PaymentMethodsCard upi={upiAmount} cash={cashAmount} card={cardAmount} />
+      <PaymentMethodsCard upi={upiAmount} cash={cashAmount} card={cardAmount} wallet={walletAmount} />
 
       {/* Invoice Table (Client Component) */}
       <InvoicesTable invoices={rows} />
@@ -262,8 +271,8 @@ function StatCard({
 // Payment Methods Card — segmented bar with Google-color gradients
 // =============================================================================
 
-function PaymentMethodsCard({ upi, cash, card }: { upi: number; cash: number; card: number }) {
-  const total = upi + cash + card;
+function PaymentMethodsCard({ upi, cash, card, wallet }: { upi: number; cash: number; card: number; wallet: number }) {
+  const total = upi + cash + card + wallet;
 
   const methods = [
     {
@@ -292,6 +301,15 @@ function PaymentMethodsCard({ upi, cash, card }: { upi: number; cash: number; ca
       bar: 'bg-gradient-to-r from-[#4285F4] to-[#1a73e8]',
       dot: 'bg-gradient-to-br from-[#4285F4] to-[#1a73e8]',
       text: 'text-[#1a73e8]',
+    },
+    {
+      key: 'wallet',
+      label: 'Wallet',
+      amount: wallet,
+      icon: <Wallet className="size-3.5" />,
+      bar: 'bg-gradient-to-r from-[#10b981] to-[#0d9488]',
+      dot: 'bg-gradient-to-br from-[#10b981] to-[#0d9488]',
+      text: 'text-[#0d9488]',
     },
   ];
 
@@ -328,7 +346,7 @@ function PaymentMethodsCard({ upi, cash, card }: { upi: number; cash: number; ca
       )}
 
       {/* Legend */}
-      <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-3 sm:gap-3">
+      <div className="mt-4 grid grid-cols-1 gap-2.5 sm:grid-cols-2 lg:grid-cols-4 sm:gap-3">
         {methods.map((m) => (
           <div key={m.key} className="flex items-center gap-2.5 rounded-xl border border-border/60 bg-muted/30 p-2.5">
             <div className={`flex size-8 shrink-0 items-center justify-center rounded-lg text-white ${m.dot}`}>

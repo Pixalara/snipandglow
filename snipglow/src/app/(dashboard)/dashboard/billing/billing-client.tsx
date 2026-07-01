@@ -16,6 +16,7 @@ import {
   Pencil,
   CheckCircle2,
   FileText,
+  Wallet,
 } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus } from '@/types';
 
@@ -27,6 +28,8 @@ export interface InvoiceRow {
   customer_id: string;
   created_at: string;
   total: number;
+  /** Portion of this bill paid from the customer's wallet (0 when none). */
+  wallet_amount?: number;
   payment_method: PaymentMethod;
   payment_status: PaymentStatus;
 }
@@ -93,6 +96,26 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
       key: 'payment_method',
       header: 'Payment',
       render: (row) => {
+        const walletUsed = row.wallet_amount ?? 0;
+        // Fully paid from wallet.
+        if (walletUsed > 0 && walletUsed >= row.total) {
+          return (
+            <span className="inline-flex items-center gap-1.5 text-xs font-medium text-emerald-600 dark:text-emerald-400 uppercase">
+              <Wallet className="size-3.5" />
+              Wallet
+            </span>
+          );
+        }
+        // Split payment: wallet + an external method.
+        if (walletUsed > 0) {
+          return (
+            <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground uppercase">
+              <Wallet className="size-3.5 text-emerald-600 dark:text-emerald-400" />
+              Wallet + {row.payment_method}
+            </span>
+          );
+        }
+        // No wallet — external method only.
         const Icon = paymentIcons[row.payment_method] ?? CreditCard;
         return (
           <span className="inline-flex items-center gap-1.5 text-xs text-muted-foreground uppercase">
