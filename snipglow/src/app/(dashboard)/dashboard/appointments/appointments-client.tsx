@@ -148,42 +148,6 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
           </div>
 
           <div className="flex items-center gap-2 flex-wrap">
-            {/* Date / month / week filters — list view only */}
-            {view === 'list' && (
-              <div className="flex flex-wrap items-center gap-1.5">
-                <input
-                  type="date"
-                  value={dateFilter}
-                  onChange={(e) => setDateFilter(e.target.value)}
-                  className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  aria-label="Filter by date"
-                />
-                <input
-                  type="month"
-                  value={monthFilter}
-                  onChange={(e) => setMonthFilter(e.target.value)}
-                  className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  aria-label="Filter by month"
-                />
-                <input
-                  type="week"
-                  value={weekFilter}
-                  onChange={(e) => setWeekFilter(e.target.value)}
-                  className="h-10 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
-                  aria-label="Filter by week"
-                />
-                {(dateFilter || monthFilter || weekFilter) && (
-                  <button
-                    type="button"
-                    onClick={() => { setDateFilter(''); setMonthFilter(''); setWeekFilter(''); }}
-                    className="h-10 rounded-xl border border-border px-3 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
-                  >
-                    Clear
-                  </button>
-                )}
-              </div>
-            )}
-
             <div className="relative">
               <Filter className="absolute left-3 top-1/2 -translate-y-1/2 size-3.5 text-muted-foreground pointer-events-none" />
               <select
@@ -240,6 +204,51 @@ export function AppointmentsClient({ appointments, role, stats }: AppointmentsCl
 
       {/* Analytics Bar */}
       <AppointmentStatsBar stats={stats} />
+
+      {/* Date / month / week filters — list view only */}
+      {view === 'list' && (
+        <div className="flex flex-wrap items-end gap-3 rounded-2xl border border-border bg-card p-4">
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Date</label>
+            <input
+              type="date"
+              value={dateFilter}
+              onChange={(e) => setDateFilter(e.target.value)}
+              className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Filter by date"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Month</label>
+            <input
+              type="month"
+              value={monthFilter}
+              onChange={(e) => setMonthFilter(e.target.value)}
+              className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Filter by month"
+            />
+          </div>
+          <div className="flex flex-col gap-1">
+            <label className="text-xs font-medium text-muted-foreground">Week</label>
+            <input
+              type="week"
+              value={weekFilter}
+              onChange={(e) => setWeekFilter(e.target.value)}
+              className="h-10 w-full sm:w-44 rounded-xl border border-border bg-background px-3 text-sm font-medium text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
+              aria-label="Filter by week"
+            />
+          </div>
+          {(dateFilter || monthFilter || weekFilter) && (
+            <button
+              type="button"
+              onClick={() => { setDateFilter(''); setMonthFilter(''); setWeekFilter(''); }}
+              className="h-10 rounded-xl border border-border px-4 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted/50 transition-colors"
+            >
+              Clear filters
+            </button>
+          )}
+        </div>
+      )}
 
       {view === 'list' ? (
         <AppointmentListView appointments={filtered} role={role} />
