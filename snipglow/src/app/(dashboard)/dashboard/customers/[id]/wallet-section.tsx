@@ -74,6 +74,7 @@ function AddWalletModal({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [amount, setAmount] = useState('');
+  const [promo, setPromo] = useState('');
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [note, setNote] = useState('');
   const [error, setError] = useState('');
@@ -88,8 +89,11 @@ function AddWalletModal({
   }, [customerId]);
 
   const numericAmount = Math.round(Number(amount));
+  const numericPromo = promo.trim() === '' ? 0 : Math.round(Number(promo));
+  const validPromo = Number.isFinite(numericPromo) && numericPromo >= 0;
+  const totalCredited = numericAmount + (validPromo ? numericPromo : 0);
   const exceedsLimit = fy != null && numericAmount > fy.remaining;
-  const valid = numericAmount > 0;
+  const valid = numericAmount > 0 && validPromo;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -113,10 +117,13 @@ function AddWalletModal({
         amount: numericAmount,
         paymentMethod,
         note: note.trim() || undefined,
+        promoAmount: numericPromo > 0 ? numericPromo : undefined,
       });
       if (result.success) {
         toast.success(
-          `${formatINR(numericAmount)} added. New balance ${formatINR(result.data.balance)}.`
+          numericPromo > 0
+            ? `${formatINR(numericAmount)} + ${formatINR(numericPromo)} bonus added. New balance ${formatINR(result.data.balance)}.`
+            : `${formatINR(numericAmount)} added. New balance ${formatINR(result.data.balance)}.`
         );
         onClose();
         router.refresh();
@@ -175,6 +182,23 @@ function AddWalletModal({
             )}
           </div>
 
+          <div className="space-y-1.5">
+            <Label htmlFor="wallet-promo">Promotional bonus (₹, optional)</Label>
+            <Input
+              id="wallet-promo"
+              type="number"
+              min={0}
+              step="1"
+              inputMode="numeric"
+              placeholder="e.g. 2000"
+              value={promo}
+              onChange={(e) => setPromo(e.target.value)}
+            />
+            <p className="text-xs text-muted-foreground">
+              Extra free balance gifted to the customer. Added on top of the paid amount and does not count toward the annual limit.
+            </p>
+          </div>
+
           <div className="space-y-2">
             <Label>Payment Method</Label>
             <div className="flex gap-2" role="radiogroup" aria-label="Payment method">
@@ -214,9 +238,28 @@ function AddWalletModal({
           </div>
 
           {valid && (
-            <div className="rounded-xl bg-muted/50 p-3 text-sm flex items-center justify-between">
-              <span className="text-muted-foreground">New balance</span>
-              <span className="font-semibold text-foreground">{formatINR(currentBalance + numericAmount)}</span>
+            <div className="rounded-xl bg-muted/50 p-3 text-sm space-y-1.5">
+              {numericPromo > 0 && (
+                <>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Paid amount</span>
+                    <span>{formatINR(numericAmount)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-fuchsia-600 dark:text-fuchsia-400">
+                    <span>Promotional bonus</span>
+                    <span>+ {formatINR(numericPromo)}</span>
+                  </div>
+                  <div className="flex items-center justify-between text-muted-foreground">
+                    <span>Credited to wallet</span>
+                    <span>{formatINR(totalCredited)}</span>
+                  </div>
+                  <div className="border-t border-border/60" />
+                </>
+              )}
+              <div className="flex items-center justify-between">
+                <span className="text-muted-foreground">New balance</span>
+                <span className="font-semibold text-foreground">{formatINR(currentBalance + totalCredited)}</span>
+              </div>
             </div>
           )}
 

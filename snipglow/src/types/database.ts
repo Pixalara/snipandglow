@@ -306,8 +306,8 @@ export interface CustomerMembership {
 // Customer Wallet Types
 // =============================================================================
 
-/** Wallet ledger entry direction. */
-export type WalletTransactionType = 'credit' | 'debit' | 'refund' | 'adjustment';
+/** Wallet ledger entry direction. `promo` = promotional bonus (not paid money). */
+export type WalletTransactionType = 'credit' | 'debit' | 'refund' | 'adjustment' | 'promo';
 
 /** A customer's prepaid wallet balance (single source of truth). */
 export interface CustomerWallet {

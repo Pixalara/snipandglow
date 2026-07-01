@@ -86,6 +86,7 @@ export async function addWalletBalance(input: {
   amount: number;
   paymentMethod: PaymentMethod;
   note?: string;
+  promoAmount?: number;
 }): Promise<ActionResult<{ balance: number; invoiceNumber: string }>> {
   const supabase = await createClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -101,11 +102,19 @@ export async function addWalletBalance(input: {
   if (amount > 1_000_000) {
     return { success: false, error: 'Amount is too large.' };
   }
+  const promoAmount = Math.round(Number(input.promoAmount ?? 0));
+  if (!Number.isFinite(promoAmount) || promoAmount < 0) {
+    return { success: false, error: 'Enter a valid promotional amount.' };
+  }
+  if (promoAmount > 1_000_000) {
+    return { success: false, error: 'Promotional amount is too large.' };
+  }
   if (!['cash', 'upi', 'card'].includes(input.paymentMethod)) {
     return { success: false, error: 'Select a valid payment method.' };
   }
 
-  // Friendly annual-cap pre-check (the RPC enforces this authoritatively too).
+  // Friendly annual-cap pre-check — the cap applies to PAID money only, not the
+  // promotional bonus (the RPC enforces this authoritatively too).
   const fy = await getWalletFyRechargeTotal(input.customerId);
   if (amount > fy.remaining) {
     return {
@@ -122,6 +131,7 @@ export async function addWalletBalance(input: {
     p_amount: amount,
     p_payment_method: input.paymentMethod,
     p_note: input.note?.trim() || null,
+    p_promo: promoAmount,
   });
 
   if (error) {
@@ -135,6 +145,7 @@ export async function addWalletBalance(input: {
     if (msg.includes('FORBIDDEN')) return { success: false, error: 'You do not have permission to add wallet balance.' };
     if (msg.includes('CUSTOMER_NOT_FOUND')) return { success: false, error: 'Customer not found.' };
     if (msg.includes('INVALID_AMOUNT')) return { success: false, error: 'Enter a valid amount greater than zero.' };
+    if (msg.includes('INVALID_PROMO')) return { success: false, error: 'Enter a valid promotional amount.' };
     if (msg.includes('INVALID_PAYMENT_METHOD')) return { success: false, error: 'Select a valid payment method.' };
     console.error('wallet_recharge error:', error);
     return { success: false, error: 'Failed to add wallet balance. Please try again.' };
@@ -146,13 +157,14 @@ export async function addWalletBalance(input: {
 
   // Send the customer a wallet-recharge receipt via the approved
   // `wallet_recharge_v1` template (PDF header + amount/balance/receipt), with a
-  // fallback to bill_receipt_v1. Best-effort — never blocks the top-up.
+  // fallback to bill_receipt_v1. Best-effort — never blocks the top-up. The
+  // "amount added" shown is the total credited (paid + any promotional bonus).
   try {
     await sendWalletRechargeReceipt({
       tenantId,
       customerId: input.customerId,
       invoiceNumber,
-      amount,
+      amount: amount + promoAmount,
       newBalance,
     });
   } catch (e) {

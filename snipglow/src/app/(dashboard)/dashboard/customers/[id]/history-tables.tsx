@@ -164,6 +164,7 @@ function DeliveryStatusBadge({ status }: { status: string }) {
 const WALLET_TYPE_META: Record<string, { label: string; className: string; sign: string }> = {
   credit: { label: 'Top-up', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', sign: '+' },
   refund: { label: 'Refund', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400', sign: '+' },
+  promo: { label: 'Bonus', className: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400', sign: '+' },
   debit: { label: 'Used', className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400', sign: '−' },
   adjustment: { label: 'Adjustment', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400', sign: '' },
 };
@@ -187,7 +188,7 @@ export function WalletHistoryTable({ transactions }: { transactions: WalletTxRow
       header: 'Amount',
       render: (row) => {
         const meta = WALLET_TYPE_META[row.type];
-        const isCredit = row.type === 'credit' || row.type === 'refund';
+        const isCredit = row.type === 'credit' || row.type === 'refund' || row.type === 'promo';
         return (
           <span className={`font-medium ${isCredit ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
             {meta?.sign ?? ''}{formatINR(row.amount)}
