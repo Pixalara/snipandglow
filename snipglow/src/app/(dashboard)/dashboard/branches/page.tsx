@@ -49,13 +49,13 @@ export default async function BranchesPage() {
       const [apptRes, custRes, invRes] = await Promise.all([
         supabase.from('appointments').select('id', { count: 'exact', head: true }).eq('branch_id', branchId),
         supabase.from('customers').select('id', { count: 'exact', head: true }).eq('branch_id', branchId),
-        supabase.from('invoices').select('total').eq('branch_id', branchId).eq('payment_status', 'paid'),
+        (supabase as any).from('invoices').select('total').eq('branch_id', branchId).eq('payment_status', 'paid').neq('invoice_type', 'wallet_recharge'),
       ]);
       return {
         branch_id: branchId,
         appointment_count: apptRes.count ?? 0,
         customer_count: custRes.count ?? 0,
-        revenue: (invRes.data ?? []).reduce((sum, inv) => sum + (inv.total ?? 0), 0),
+        revenue: (invRes.data ?? []).reduce((sum: number, inv: any) => sum + (inv.total ?? 0), 0),
       };
     })
   );

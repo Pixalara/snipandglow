@@ -52,13 +52,15 @@ export async function getBranchStats(): Promise<ActionResult<BranchStats[]>> {
       .select('*', { count: 'exact', head: true })
       .eq('branch_id', branch.id);
 
-    // Sum revenue from invoices
-    const { data: invoices } = await supabase
+    // Sum revenue from invoices (exclude wallet top-ups — they are deposits,
+    // not service revenue; the spend is counted when the wallet is billed).
+    const { data: invoices } = await (supabase as any)
       .from('invoices')
       .select('total')
-      .eq('branch_id', branch.id);
+      .eq('branch_id', branch.id)
+      .neq('invoice_type', 'wallet_recharge');
 
-    const revenue = (invoices ?? []).reduce((sum, inv) => sum + (inv.total ?? 0), 0);
+    const revenue = (invoices ?? []).reduce((sum: number, inv: any) => sum + (inv.total ?? 0), 0);
 
     stats.push({
       branch_id: branch.id,

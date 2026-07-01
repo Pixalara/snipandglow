@@ -677,11 +677,13 @@ export async function getStaffPerformance(days: number = 30): Promise<StaffPerfo
   for (const e of emps ?? []) empMap.set(e.id, { name: e.name, role: e.role });
 
   // Invoices in range, joined to their appointment's employee_id.
-  const { data: invoices } = await (admin
+  // Exclude wallet top-ups — they are prepaid deposits, not service revenue.
+  const { data: invoices } = await (admin as any)
     .from('invoices')
     .select('id, total, customer_id, created_at, appointment_id')
     .eq('tenant_id', tenantId)
-    .gte('created_at', sinceIso) as any);
+    .neq('invoice_type', 'wallet_recharge')
+    .gte('created_at', sinceIso);
 
   const apptIds = [...new Set((invoices ?? []).map((i: any) => i.appointment_id).filter(Boolean))] as string[];
   const apptEmpMap = new Map<string, string>();

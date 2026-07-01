@@ -34,7 +34,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
     admin.from('appointments').select('id, appointment_date, start_time, status, source, created_at').eq('tenant_id', tenantId).order('appointment_date', { ascending: false }).limit(20),
     (admin.from('tenant_whatsapp_settings' as any).select('*').eq('tenant_id', tenantId).maybeSingle() as any),
     (admin.from('whatsapp_setup_requests' as any).select('contact_phone, contact_name, notes, status, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(1).maybeSingle() as any),
-    admin.from('invoices').select('total, created_at').eq('tenant_id', tenantId),
+    (admin as any).from('invoices').select('total, created_at').eq('tenant_id', tenantId).neq('invoice_type', 'wallet_recharge'),
   ]);
 
   await logAdminAction({
