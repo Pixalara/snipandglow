@@ -80,9 +80,10 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
           </div>
           ${doc.wallet_balance_after != null ? `<div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;"><span>Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span></div>` : ''}
         </div>`
-      : isRecharge && doc.wallet_balance_after != null
-        ? `<div style="margin-top:6px;display:flex;justify-content:space-between;color:#404040;padding:3px 0;">
-            <span>New Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span>
+      : isRecharge
+        ? `<div style="margin-top:6px;">
+            ${(doc.wallet_promo ?? 0) > 0 ? `<div style="display:flex;justify-content:space-between;color:#a21caf;padding:3px 0;"><span>Promotional Bonus</span><span style="font-weight:600;">+ ${formatINR(doc.wallet_promo ?? 0)}</span></div>` : ''}
+            ${doc.wallet_balance_after != null ? `<div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;"><span>New Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span></div>` : ''}
           </div>`
         : '';
 

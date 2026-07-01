@@ -268,13 +268,22 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
                   </View>
                 ) : null}
 
-                {/* Wallet recharge: show the resulting balance */}
-                {doc.invoice_type === 'wallet_recharge' && doc.wallet_balance_after != null ? (
+                {/* Wallet recharge: show promotional bonus + resulting balance */}
+                {doc.invoice_type === 'wallet_recharge' &&
+                ((doc.wallet_promo ?? 0) > 0 || doc.wallet_balance_after != null) ? (
                   <View style={{ marginTop: 6 }}>
-                    <View style={styles.totalLine}>
-                      <Text style={styles.totalLabel}>New Wallet Balance</Text>
-                      <Text style={styles.totalValue}>{formatINR(doc.wallet_balance_after)}</Text>
-                    </View>
+                    {(doc.wallet_promo ?? 0) > 0 ? (
+                      <View style={styles.totalLine}>
+                        <Text style={styles.totalLabel}>Promotional Bonus</Text>
+                        <Text style={styles.totalValue}>+ {formatINR(doc.wallet_promo ?? 0)}</Text>
+                      </View>
+                    ) : null}
+                    {doc.wallet_balance_after != null ? (
+                      <View style={styles.totalLine}>
+                        <Text style={styles.totalLabel}>New Wallet Balance</Text>
+                        <Text style={styles.totalValue}>{formatINR(doc.wallet_balance_after)}</Text>
+                      </View>
+                    ) : null}
                   </View>
                 ) : null}
               </View>

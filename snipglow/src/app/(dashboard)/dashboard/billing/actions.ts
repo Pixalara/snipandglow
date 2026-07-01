@@ -481,6 +481,8 @@ export interface InvoiceDocument {
   wallet_amount?: number;
   /** Customer's wallet balance after this invoice (null if unknown). */
   wallet_balance_after?: number | null;
+  /** Promotional bonus credited on this wallet recharge (0 when none). */
+  wallet_promo?: number;
 }
 
 /**
@@ -510,8 +512,9 @@ export async function getInvoiceDocument(
     return { success: false, error: 'Invoice not found.' };
   }
 
-  // Fetch line items, customer, tenant, branch, and wallet balance in parallel
-  const [itemsRes, customerRes, tenantRes, branchRes, walletRes] = await Promise.all([
+  // Fetch line items, customer, tenant, branch, wallet balance, and any
+  // promotional bonus credited on this invoice — in parallel.
+  const [itemsRes, customerRes, tenantRes, branchRes, walletRes, promoRes] = await Promise.all([
     supabase
       .from('invoice_items')
       .select('service_name, unit_price, quantity, discount_pct, discount_amount, line_total')
@@ -526,6 +529,11 @@ export async function getInvoiceDocument(
     invoice.customer_id
       ? (supabase as any).from('customer_wallets').select('balance').eq('customer_id', invoice.customer_id).maybeSingle()
       : Promise.resolve({ data: null }),
+    (supabase as any)
+      .from('wallet_transactions')
+      .select('amount')
+      .eq('invoice_id', invoiceId)
+      .eq('type', 'promo'),
   ]);
 
   const settings = ((tenantRes.data?.settings as Record<string, unknown>) ?? {});
@@ -534,6 +542,8 @@ export async function getInvoiceDocument(
   const walletAmount = Number((invoice as any).wallet_amount ?? 0);
   const invoiceType = (((invoice as any).invoice_type as 'service' | 'wallet_recharge') ?? 'service');
   const walletBalanceAfter = (walletRes as any)?.data ? Number((walletRes as any).data.balance) : null;
+  const walletPromo = (((promoRes as any)?.data ?? []) as { amount: number }[])
+    .reduce((s, t) => s + Number(t.amount || 0), 0);
 
   const doc: InvoiceDocument = {
     invoice_number: invoice.invoice_number,
@@ -553,6 +563,7 @@ export async function getInvoiceDocument(
     invoice_type: invoiceType,
     wallet_amount: walletAmount,
     wallet_balance_after: walletBalanceAfter,
+    wallet_promo: walletPromo,
     items: (itemsRes.data ?? []).map((it: any) => ({
       service_name: it.service_name,
       unit_price: it.unit_price,
