@@ -509,11 +509,21 @@ a, button {
   animation-play-state: paused;
 }
 
+/* Soft fade at both edges for a modern marquee look */
+.benefit-marquee-mask {
+  -webkit-mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+  mask-image: linear-gradient(to right, transparent, #000 6%, #000 94%, transparent);
+}
+
 @media (prefers-reduced-motion: reduce) {
   .benefit-marquee {
     animation: none;
     flex-wrap: wrap;
     width: 100%;
+  }
+  .benefit-marquee-mask {
+    -webkit-mask-image: none;
+    mask-image: none;
   }
 }
 

@@ -298,32 +298,35 @@ export default function HomePage() {
             </div>
 
             {/* Benefit cards - infinite horizontal scroll marquee */}
-            <div className="relative overflow-hidden lg:overflow-visible lg:w-[calc(200%+4rem)]">
+            <div className="relative overflow-hidden benefit-marquee-mask">
               <div className="flex gap-3 benefit-marquee">
                 {[
-                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', gradient: 'from-pink-500/10 to-rose-500/5', border: 'border-pink-200/60', iconBg: 'bg-pink-100', titleColor: 'text-pink-700' },
-                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', gradient: 'from-violet-500/10 to-purple-500/5', border: 'border-violet-200/60', iconBg: 'bg-violet-100', titleColor: 'text-violet-700' },
-                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', gradient: 'from-amber-500/10 to-yellow-500/5', border: 'border-amber-200/60', iconBg: 'bg-amber-100', titleColor: 'text-amber-700' },
-                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', gradient: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-200/60', iconBg: 'bg-emerald-100', titleColor: 'text-emerald-700' },
-                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', gradient: 'from-green-500/10 to-teal-500/5', border: 'border-green-200/60', iconBg: 'bg-green-100', titleColor: 'text-green-700' },
-                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', gradient: 'from-blue-500/10 to-indigo-500/5', border: 'border-blue-200/60', iconBg: 'bg-blue-100', titleColor: 'text-blue-700' },
+                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
+                  { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
+                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
+                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
+                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
+                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
+                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
                   // Duplicate for seamless loop
-                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', gradient: 'from-pink-500/10 to-rose-500/5', border: 'border-pink-200/60', iconBg: 'bg-pink-100', titleColor: 'text-pink-700' },
-                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', gradient: 'from-violet-500/10 to-purple-500/5', border: 'border-violet-200/60', iconBg: 'bg-violet-100', titleColor: 'text-violet-700' },
-                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', gradient: 'from-amber-500/10 to-yellow-500/5', border: 'border-amber-200/60', iconBg: 'bg-amber-100', titleColor: 'text-amber-700' },
-                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', gradient: 'from-emerald-500/10 to-teal-500/5', border: 'border-emerald-200/60', iconBg: 'bg-emerald-100', titleColor: 'text-emerald-700' },
-                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', gradient: 'from-green-500/10 to-teal-500/5', border: 'border-green-200/60', iconBg: 'bg-green-100', titleColor: 'text-green-700' },
-                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', gradient: 'from-blue-500/10 to-indigo-500/5', border: 'border-blue-200/60', iconBg: 'bg-blue-100', titleColor: 'text-blue-700' },
-                ].map(({ icon, title, desc, gradient, border, iconBg, titleColor }, i) => (
+                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
+                  { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
+                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
+                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
+                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
+                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
+                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
+                ].map(({ icon, title, desc, accent, ring, titleColor }, i) => (
                   <div
                     key={i}
-                    className={`relative shrink-0 w-[155px] sm:w-[175px] rounded-2xl border ${border} bg-gradient-to-br ${gradient} p-4 overflow-hidden`}
+                    className={`group relative shrink-0 w-[160px] sm:w-[185px] rounded-2xl border border-white/80 bg-white/80 backdrop-blur-sm p-4 shadow-sm ring-1 ${ring} hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
                   >
-                    <div className={`inline-flex h-9 w-9 items-center justify-center rounded-xl ${iconBg} text-lg mb-3 shadow-sm`}>
-                      {icon}
+                    <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-lg mb-3 shadow-md shadow-slate-200/60`}>
+                      <span className="drop-shadow-sm">{icon}</span>
                     </div>
                     <p className={`text-sm font-bold ${titleColor} leading-tight mb-1`}>{title}</p>
                     <p className="text-xs text-slate-500 leading-snug">{desc}</p>
+                    <div className={`absolute inset-x-0 bottom-0 h-1 rounded-b-2xl bg-gradient-to-r ${accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
                   </div>
                 ))}
               </div>
@@ -672,11 +675,27 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
 
-            {/* Interactive no-show loss calculator */}
-            <div className="w-full max-w-md">
-              <NoShowCalculator onCta={() => setShowDemoModal(true)} />
+      {/* ===== NO-SHOW LOSS CALCULATOR ===== */}
+      <section className="py-10 sm:py-14 bg-gradient-to-br from-pink-100/70 via-violet-100/60 to-white overflow-hidden">
+        <div className="mx-auto max-w-3xl px-4 sm:px-6">
+          <div className="text-center mb-6">
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium mb-3">
+              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
+              The hidden cost of no-shows
             </div>
+            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
+              See how much no-shows are costing you
+            </h2>
+            <p className="text-slate-600 mt-2 text-sm sm:text-base max-w-xl mx-auto">
+              Drag the sliders to estimate your monthly loss, then let SnipandGlow win it back with automatic WhatsApp reminders.
+            </p>
+          </div>
+          <div className="max-w-md mx-auto">
+            <NoShowCalculator onCta={() => setShowDemoModal(true)} />
           </div>
         </div>
       </section>
