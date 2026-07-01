@@ -297,40 +297,7 @@ export default function HomePage() {
               ))}
             </div>
 
-            {/* Benefit cards - infinite horizontal scroll marquee */}
-            <div className="relative overflow-hidden benefit-marquee-mask">
-              <div className="flex gap-3 benefit-marquee">
-                {[
-                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
-                  { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
-                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
-                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
-                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
-                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
-                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
-                  // Duplicate for seamless loop
-                  { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
-                  { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
-                  { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
-                  { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
-                  { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
-                  { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
-                  { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
-                ].map(({ icon, title, desc, accent, ring, titleColor }, i) => (
-                  <div
-                    key={i}
-                    className={`group relative shrink-0 w-[160px] sm:w-[185px] rounded-2xl border border-white/80 bg-white/80 backdrop-blur-sm p-4 shadow-sm ring-1 ${ring} hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
-                  >
-                    <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-lg mb-3 shadow-md shadow-slate-200/60`}>
-                      <span className="drop-shadow-sm">{icon}</span>
-                    </div>
-                    <p className={`text-sm font-bold ${titleColor} leading-tight mb-1`}>{title}</p>
-                    <p className="text-xs text-slate-500 leading-snug">{desc}</p>
-                    <div className={`absolute inset-x-0 bottom-0 h-1 rounded-b-2xl bg-gradient-to-r ${accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
-                  </div>
-                ))}
-              </div>
-            </div>
+            {/* Benefit cards marquee moved below the hero grid for full-width roll */}
 
             {/* CTAs */}
             <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
@@ -675,6 +642,45 @@ export default function HomePage() {
                 </div>
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      {/* ===== BENEFIT CARDS — full-width infinite marquee ===== */}
+      <section className="py-6 sm:py-8 bg-white border-b border-slate-100 overflow-hidden">
+        <div className="relative w-full overflow-hidden benefit-marquee-mask">
+          <div className="flex gap-3 benefit-marquee px-2">
+            {[
+              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
+              { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
+              { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
+              { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
+              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
+              { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
+              { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
+              { icon: '📦', title: 'Product Inventory', desc: 'Track stock & sell retail on any bill', accent: 'from-teal-500 to-cyan-500', ring: 'ring-teal-100', titleColor: 'text-teal-700' },
+              // Duplicate for seamless loop
+              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
+              { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
+              { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
+              { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
+              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
+              { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
+              { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
+              { icon: '📦', title: 'Product Inventory', desc: 'Track stock & sell retail on any bill', accent: 'from-teal-500 to-cyan-500', ring: 'ring-teal-100', titleColor: 'text-teal-700' },
+            ].map(({ icon, title, desc, accent, ring, titleColor }, i) => (
+              <div
+                key={i}
+                className={`group relative shrink-0 w-[160px] sm:w-[185px] rounded-2xl border border-white/80 bg-white/80 backdrop-blur-sm p-4 shadow-sm ring-1 ${ring} hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
+              >
+                <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-lg mb-3 shadow-md shadow-slate-200/60`}>
+                  <span className="drop-shadow-sm">{icon}</span>
+                </div>
+                <p className={`text-sm font-bold ${titleColor} leading-tight mb-1`}>{title}</p>
+                <p className="text-xs text-slate-500 leading-snug">{desc}</p>
+                <div className={`absolute inset-x-0 bottom-0 h-1 rounded-b-2xl bg-gradient-to-r ${accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
+              </div>
+            ))}
           </div>
         </div>
       </section>
