@@ -49,7 +49,7 @@ export default async function AnalyticsPage({ searchParams }: AnalyticsPageProps
     );
   }
 
-  const period = (params.period as PeriodType) || 'mtd';
+  const period = (params.period as PeriodType) || 'month';
   const data = await getRevenueData(period, params.start, params.end);
 
   if (!data) {

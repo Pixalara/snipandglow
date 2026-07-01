@@ -41,7 +41,9 @@ const periodLabels: Record<PeriodType, string> = {
 };
 
 // Presets shown as tabs (legacy values still resolve from URLs, just not listed).
-const periods: PeriodType[] = ['today', 'week', 'this_month', 'mtd', 'ytd', 'custom'];
+// 'month' = rolling Last 30 Days (the default) so the dashboard always shows
+// recent activity — even on the 1st of a month when "This Month" is still empty.
+const periods: PeriodType[] = ['today', 'week', 'month', 'this_month', 'ytd', 'custom'];
 
 function formatRangeLabel(start: string, end: string): string {
   const fmt = (s: string) =>
