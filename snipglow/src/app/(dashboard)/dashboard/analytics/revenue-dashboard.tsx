@@ -80,6 +80,18 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
     router.push(`/dashboard/analytics?period=custom&start=${s}&end=${e}`);
   }
 
+  // Jump the whole dashboard to a single calendar month (reuses the custom range).
+  function handleMonthChange(ym: string) {
+    if (!/^\d{4}-\d{2}$/.test(ym)) return;
+    const [y, m] = ym.split('-').map(Number);
+    const start = `${ym}-01`;
+    const lastDay = new Date(y, m, 0).getDate(); // day 0 of next month = last day
+    const end = `${ym}-${String(lastDay).padStart(2, '0')}`;
+    router.push(`/dashboard/analytics?period=custom&start=${start}&end=${end}`);
+  }
+
+  const maxMonth = todayStr.slice(0, 7);
+
   function handleExport() {
     const wb = XLSX.utils.book_new();
     const money = '"\u20B9"#,##0'; // ₹ formatted, thousands separated
@@ -198,21 +210,33 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-indigo-500/5" />
       </div>
 
-      {/* Period Selector */}
-      <div className="flex gap-1 rounded-xl border border-border bg-muted/50 p-1 overflow-x-auto">
-        {periods.map((p) => (
-          <button
-            key={p}
-            onClick={() => handlePeriodChange(p)}
-            className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
-              currentPeriod === p
-                ? 'bg-background text-foreground shadow-sm'
-                : 'text-muted-foreground hover:text-foreground'
-            }`}
-          >
-            {periodLabels[p]}
-          </button>
-        ))}
+      {/* Period Selector + Month Jump */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
+        <div className="flex flex-1 gap-1 rounded-xl border border-border bg-muted/50 p-1 overflow-x-auto">
+          {periods.map((p) => (
+            <button
+              key={p}
+              onClick={() => handlePeriodChange(p)}
+              className={`flex-shrink-0 rounded-lg px-3 py-1.5 text-sm font-medium transition-colors ${
+                currentPeriod === p
+                  ? 'bg-background text-foreground shadow-sm'
+                  : 'text-muted-foreground hover:text-foreground'
+              }`}
+            >
+              {periodLabels[p]}
+            </button>
+          ))}
+        </div>
+        <div className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3 h-11 sm:h-9">
+          <Calendar className="size-4 text-muted-foreground shrink-0" />
+          <input
+            type="month"
+            max={maxMonth}
+            onChange={(e) => handleMonthChange(e.target.value)}
+            aria-label="Jump to a month"
+            className="bg-transparent text-sm text-foreground outline-none"
+          />
+        </div>
       </div>
 
       {/* Custom Date Range Picker */}

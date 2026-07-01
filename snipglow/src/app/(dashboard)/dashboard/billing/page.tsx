@@ -3,6 +3,7 @@ import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { RoleGuard } from '@/components/role-guard';
 import { InvoicesTable, type InvoiceRow } from './billing-client';
+import { BillingMonthFilter } from './billing-month-filter';
 import { formatINR } from '@/lib/utils';
 import { Receipt, Plus, IndianRupee, CalendarDays, CalendarRange, Package, Scissors, Smartphone, Banknote, CreditCard, Wallet } from 'lucide-react';
 import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
@@ -11,7 +12,17 @@ import type { PaymentMethod, PaymentStatus, UserRole } from '@/types';
 // Invoice List Page — Server Component
 // =============================================================================
 
-export default async function BillingPage() {
+interface BillingPageProps {
+  searchParams: Promise<{ month?: string }>;
+}
+
+/** e.g. "2026-07" → "Jul 2026" */
+function formatMonthLabel(ym: string): string {
+  return new Date(`${ym}-01T12:00:00+05:30`).toLocaleDateString('en-IN', { month: 'short', year: 'numeric' });
+}
+
+export default async function BillingPage({ searchParams }: BillingPageProps) {
+  const params = await searchParams;
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -79,11 +90,23 @@ export default async function BillingPage() {
   }));
 
   // ─── Billing statistics ──────────────────────────────────────────────────
-  // All dates handled in IST so "today" / "this month" match the salon's clock.
+  // All dates handled in IST so "today" / the selected month match the salon's clock.
   const istToday = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }); // YYYY-MM-DD
-  const monthStart = istToday.slice(0, 7) + '-01';
+  const currentMonth = istToday.slice(0, 7); // YYYY-MM
+  const selectedMonth = params.month && /^\d{4}-\d{2}$/.test(params.month) ? params.month : currentMonth;
+  const monthLabel = formatMonthLabel(selectedMonth);
+
+  // Closed range [monthStart, nextMonthStart) for the selected month.
+  const monthStart = `${selectedMonth}-01`;
+  const [selY, selM] = selectedMonth.split('-').map(Number);
+  const nextMonthStart = selM === 12 ? `${selY + 1}-01-01` : `${selY}-${String(selM + 1).padStart(2, '0')}-01`;
+
   const istDateOf = (ts: string) =>
     ts ? new Date(ts).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }) : '';
+  const inSelectedMonth = (ts: string) => {
+    const d = istDateOf(ts);
+    return d >= monthStart && d < nextMonthStart;
+  };
 
   let todayCount = 0;
   let todayAmount = 0;
@@ -103,7 +126,7 @@ export default async function BillingPage() {
       todayCount += 1;
       todayAmount += amt;
     }
-    if (d >= monthStart) {
+    if (d >= monthStart && d < nextMonthStart) {
       monthCount += 1;
       monthAmount += amt;
       monthInvoiceIds.push(inv.id);
@@ -127,16 +150,18 @@ export default async function BillingPage() {
 
   const totalCount = rows.length;
 
-  // ─── Payment-method split (by invoiced value, all time) ──────────────────
+  // ─── Payment-method split (by invoiced value, selected month) ────────────
   // Split each service/product bill into its wallet portion + the external
   // (cash/upi/card) portion. Wallet top-up invoices are excluded — they're
-  // deposits that show as "Wallet" when the balance is later spent.
+  // deposits that show as "Wallet" when the balance is later spent. Scoped to
+  // the selected month so the bar reflects that month's payment mix.
   let upiAmount = 0;
   let cashAmount = 0;
   let cardAmount = 0;
   let walletAmount = 0;
   for (const inv of invoices ?? []) {
     if ((inv as any).invoice_type === 'wallet_recharge') continue;
+    if (!inSelectedMonth(inv.created_at ?? '')) continue;
     const t = inv.total ?? 0;
     const wallet = Number((inv as any).wallet_amount ?? 0);
     const external = Math.max(0, t - wallet);
@@ -162,15 +187,18 @@ export default async function BillingPage() {
               </p>
             </div>
           </div>
-          <RoleGuard role={role} action="create" resource="billing">
-            <Link
-              href="/dashboard/billing/new"
-              className="inline-flex h-11 sm:h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
-            >
-              <Plus className="size-4" />
-              New Bill
-            </Link>
-          </RoleGuard>
+          <div className="flex items-center gap-2">
+            <BillingMonthFilter selectedMonth={selectedMonth} />
+            <RoleGuard role={role} action="create" resource="billing">
+              <Link
+                href="/dashboard/billing/new"
+                className="inline-flex h-11 sm:h-9 shrink-0 items-center justify-center gap-1.5 rounded-xl bg-primary px-4 text-sm font-medium text-primary-foreground transition-colors hover:bg-primary/90"
+              >
+                <Plus className="size-4" />
+                New Bill
+              </Link>
+            </RoleGuard>
+          </div>
         </div>
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-violet-500/5" />
         <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-violet-400/5" />
@@ -203,7 +231,7 @@ export default async function BillingPage() {
         />
         <StatCard
           icon={<CalendarRange className="size-4" />}
-          label="This Month"
+          label={monthLabel}
           value={formatINR(monthAmount)}
           sub={`${monthCount} invoice${monthCount !== 1 ? 's' : ''}`}
           iconBg="bg-blue-100 dark:bg-blue-900/30"
@@ -213,7 +241,7 @@ export default async function BillingPage() {
           icon={<Package className="size-4" />}
           label="Product Sales"
           value={formatINR(monthProductSales)}
-          sub="This month"
+          sub={monthLabel}
           iconBg="bg-amber-100 dark:bg-amber-900/30"
           iconColor="text-amber-600 dark:text-amber-400"
         />
@@ -221,14 +249,14 @@ export default async function BillingPage() {
           icon={<Scissors className="size-4" />}
           label="Service Sales"
           value={formatINR(monthServiceSales)}
-          sub="This month"
+          sub={monthLabel}
           iconBg="bg-pink-100 dark:bg-pink-900/30"
           iconColor="text-pink-600 dark:text-pink-400"
         />
       </div>
 
       {/* Payment Methods Breakdown */}
-      <PaymentMethodsCard upi={upiAmount} cash={cashAmount} card={cardAmount} wallet={walletAmount} />
+      <PaymentMethodsCard upi={upiAmount} cash={cashAmount} card={cardAmount} wallet={walletAmount} monthLabel={monthLabel} />
 
       {/* Invoice Table (Client Component) */}
       <InvoicesTable invoices={rows} />
@@ -271,7 +299,7 @@ function StatCard({
 // Payment Methods Card — segmented bar with Google-color gradients
 // =============================================================================
 
-function PaymentMethodsCard({ upi, cash, card, wallet }: { upi: number; cash: number; card: number; wallet: number }) {
+function PaymentMethodsCard({ upi, cash, card, wallet, monthLabel }: { upi: number; cash: number; card: number; wallet: number; monthLabel: string }) {
   const total = upi + cash + card + wallet;
 
   const methods = [
@@ -320,7 +348,7 @@ function PaymentMethodsCard({ upi, cash, card, wallet }: { upi: number; cash: nu
       <div className="flex items-center justify-between mb-4">
         <div>
           <h3 className="text-sm font-semibold text-foreground">Payment Methods</h3>
-          <p className="text-xs text-muted-foreground">Share of total invoiced value</p>
+          <p className="text-xs text-muted-foreground">Share of invoiced value · {monthLabel}</p>
         </div>
         <span className="text-sm font-bold text-foreground">{formatINR(total)}</span>
       </div>
