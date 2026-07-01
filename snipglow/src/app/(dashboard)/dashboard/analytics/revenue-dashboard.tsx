@@ -227,14 +227,14 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
             </button>
           ))}
         </div>
-        <div className="inline-flex shrink-0 items-center gap-2 rounded-xl border border-border bg-card px-3 h-11 sm:h-9">
+        <div className="flex w-full items-center gap-2 rounded-xl border border-border bg-card px-3 h-11 sm:h-9 sm:w-auto">
           <Calendar className="size-4 text-muted-foreground shrink-0" />
           <input
             type="month"
             max={maxMonth}
             onChange={(e) => handleMonthChange(e.target.value)}
             aria-label="Jump to a month"
-            className="bg-transparent text-sm text-foreground outline-none"
+            className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none sm:flex-none"
           />
         </div>
       </div>

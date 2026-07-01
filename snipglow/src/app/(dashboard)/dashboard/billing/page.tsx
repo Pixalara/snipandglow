@@ -187,7 +187,7 @@ export default async function BillingPage({ searchParams }: BillingPageProps) {
               </p>
             </div>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-center gap-2 sm:w-auto">
             <BillingMonthFilter selectedMonth={selectedMonth} />
             <RoleGuard role={role} action="create" resource="billing">
               <Link

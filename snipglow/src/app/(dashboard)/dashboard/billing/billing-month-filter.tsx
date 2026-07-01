@@ -14,7 +14,7 @@ export function BillingMonthFilter({ selectedMonth }: { selectedMonth: string })
   const maxMonth = new Date().toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }).slice(0, 7);
 
   return (
-    <div className="inline-flex items-center gap-2 rounded-xl border border-border bg-card px-3 h-11 sm:h-9">
+    <div className="inline-flex min-w-0 flex-1 items-center gap-2 rounded-xl border border-border bg-card px-3 h-11 sm:h-9 sm:flex-none">
       <CalendarRange className="size-4 text-muted-foreground shrink-0" />
       <input
         type="month"
@@ -25,7 +25,7 @@ export function BillingMonthFilter({ selectedMonth }: { selectedMonth: string })
           if (v) router.push(`/dashboard/billing?month=${v}`);
         }}
         aria-label="Filter billing by month"
-        className="bg-transparent text-sm text-foreground outline-none"
+        className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none sm:flex-none"
       />
     </div>
   );
