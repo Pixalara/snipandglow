@@ -100,13 +100,21 @@ export function renderAnnouncementEmail(
       <td align="center" style="padding:24px 12px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,0.08);">
           <tr>
-            <td style="background:linear-gradient(135deg,#ec4899 0%,#d946ef 50%,#8b5cf6 100%);padding:28px 32px;">
+            <td style="background:linear-gradient(135deg,#ec4899 0%,#d946ef 50%,#8b5cf6 100%);padding:26px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
                 <td style="vertical-align:middle;">
-                  <img src="${BRAND.logo}" width="40" height="40" alt="${BRAND.name}" style="border-radius:10px;display:inline-block;vertical-align:middle;" />
-                  <span style="font:800 20px/40px Arial,Helvetica,sans-serif;color:#ffffff;vertical-align:middle;margin-left:10px;">${BRAND.name}</span>
+                  <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block;vertical-align:middle;"><tr>
+                    <td style="background:#ffffff;border-radius:12px;padding:7px;box-shadow:0 2px 8px rgba(0,0,0,0.18);" valign="middle">
+                      <img src="${BRAND.logo}" width="30" height="30" alt="${BRAND.name}" style="display:block;border-radius:7px;" />
+                    </td>
+                    <td style="padding-left:12px;" valign="middle">
+                      <span style="font:800 21px/1 Arial,Helvetica,sans-serif;color:#ffffff;letter-spacing:-0.2px;">SnipandGlow</span>
+                    </td>
+                  </tr></table>
                 </td>
-                <td align="right" style="vertical-align:middle;font:600 12px/1 Arial,Helvetica,sans-serif;color:#ffffff;opacity:0.9;">Product Update</td>
+                <td align="right" style="vertical-align:middle;">
+                  <span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font:700 10px/1 Arial,Helvetica,sans-serif;letter-spacing:0.8px;text-transform:uppercase;padding:6px 11px;border-radius:999px;">Product Update</span>
+                </td>
               </tr></table>
             </td>
           </tr>
