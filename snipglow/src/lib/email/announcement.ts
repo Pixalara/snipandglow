@@ -22,6 +22,7 @@ export interface AnnouncementCampaign {
   subject: string;
   eyebrow: string;
   headline: string;
+  greeting: string;
   intro: string;
   bullets: AnnouncementBullet[];
   ctaLabel: string;
@@ -34,6 +35,7 @@ export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
   subject: 'New in SnipandGlow: Customer Wallet for your salon',
   eyebrow: 'New feature \u00b7 Customer Wallet',
   headline: 'Let your clients prepay & spend from a salon wallet',
+  greeting: 'Hi {salon},',
   intro:
     'we\u2019ve just rolled out Customer Wallet in SnipandGlow. Now clients can load balance in advance and you can auto-apply it on any bill \u2014 perfect for advance packages and loyal regulars.',
   bullets: [
@@ -57,6 +59,7 @@ export function renderAnnouncementEmail(
 ): { subject: string; html: string; text: string } {
   const { salonName } = opts;
   const greetName = salonName && salonName.trim() ? `${esc(salonName.trim())} team` : 'there';
+  const greetingLine = esc(campaign.greeting || 'Hi {salon},').replace('{salon}', greetName);
   const cta = campaign.ctaUrl || BRAND.site;
   const subject = campaign.subject || 'An update from SnipandGlow';
   const preheader = (campaign.intro || '').slice(0, 140);
@@ -122,7 +125,7 @@ export function renderAnnouncementEmail(
             <td style="padding:34px 32px 8px 32px;">
               ${campaign.eyebrow ? `<div style="display:inline-block;background:#fdf2f8;color:#a21caf;font:700 11px/1 Arial,Helvetica,sans-serif;letter-spacing:0.5px;padding:7px 12px;border-radius:999px;text-transform:uppercase;">${esc(campaign.eyebrow)}</div>` : ''}
               <h1 style="font:800 26px/1.25 Arial,Helvetica,sans-serif;color:#0f172a;margin:16px 0 10px 0;">${esc(campaign.headline)}</h1>
-              <p style="font:400 15px/1.6 Arial,Helvetica,sans-serif;color:#475569;margin:0;">Hi ${greetName}, ${esc(campaign.intro)}</p>
+              <p style="font:400 15px/1.6 Arial,Helvetica,sans-serif;color:#475569;margin:0;">${greetingLine} ${esc(campaign.intro)}</p>
             </td>
           </tr>
           ${bulletsBlock}
@@ -155,7 +158,7 @@ export function renderAnnouncementEmail(
   const text = [
     subject,
     '',
-    `Hi ${salonName && salonName.trim() ? salonName.trim() + ' team' : 'there'}, ${campaign.intro}`,
+    `${(campaign.greeting || 'Hi {salon},').replace('{salon}', salonName && salonName.trim() ? salonName.trim() + ' team' : 'there')} ${campaign.intro}`,
     '',
     ...(campaign.bullets || [])
       .filter((b) => b.title || b.body)

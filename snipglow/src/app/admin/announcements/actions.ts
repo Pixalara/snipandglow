@@ -116,6 +116,7 @@ function normalizeCampaign(c: Partial<AnnouncementCampaign> | undefined): Announ
     subject: (src.subject ?? '').trim().slice(0, 200) || DEFAULT_CAMPAIGN.subject,
     eyebrow: (src.eyebrow ?? '').trim().slice(0, 80),
     headline: (src.headline ?? '').trim().slice(0, 160) || DEFAULT_CAMPAIGN.headline,
+    greeting: (src.greeting ?? '').trim().slice(0, 120) || DEFAULT_CAMPAIGN.greeting,
     intro: (src.intro ?? '').trim().slice(0, 600) || DEFAULT_CAMPAIGN.intro,
     bullets,
     ctaLabel: (src.ctaLabel ?? '').trim().slice(0, 60) || DEFAULT_CAMPAIGN.ctaLabel,

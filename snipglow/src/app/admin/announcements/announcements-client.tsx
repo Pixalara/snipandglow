@@ -152,7 +152,11 @@ export function AnnouncementsClient({
             <input className={inputCls} value={campaign.headline} onChange={(e) => setField('headline', e.target.value)} />
           </div>
           <div>
-            <label className={labelCls}>Intro (shown after “Hi [Salon] team,”)</label>
+            <label className={labelCls}>Greeting <span className="text-muted-foreground/70">({'{salon}'} = salon name)</span></label>
+            <input className={inputCls} value={campaign.greeting} onChange={(e) => setField('greeting', e.target.value)} placeholder="Hi {salon}," />
+          </div>
+          <div>
+            <label className={labelCls}>Intro (shown right after the greeting)</label>
             <textarea className={inputCls} rows={3} value={campaign.intro} onChange={(e) => setField('intro', e.target.value)} />
           </div>
 
