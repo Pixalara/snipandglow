@@ -3,7 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { isEmailConfigured, sendEmail } from '@/lib/email/smtp';
-import { renderWalletEmail } from '@/lib/email/wallet-announcement';
+import { renderAnnouncementEmail, DEFAULT_CAMPAIGN, type AnnouncementCampaign } from '@/lib/email/announcement';
 
 // =============================================================================
 // Admin — feature announcement emails
@@ -103,14 +103,36 @@ export async function getWalletRecipients(): Promise<{ configured: boolean; reci
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
+/** Coerce/validate a campaign coming from the client; falls back to defaults. */
+function normalizeCampaign(c: Partial<AnnouncementCampaign> | undefined): AnnouncementCampaign {
+  const src = c ?? {};
+  const bullets = Array.isArray(src.bullets)
+    ? src.bullets
+        .slice(0, 8)
+        .map((b) => ({ title: String(b?.title ?? '').slice(0, 120), body: String(b?.body ?? '').slice(0, 300) }))
+        .filter((b) => b.title || b.body)
+    : DEFAULT_CAMPAIGN.bullets;
+  return {
+    subject: (src.subject ?? '').trim().slice(0, 200) || DEFAULT_CAMPAIGN.subject,
+    eyebrow: (src.eyebrow ?? '').trim().slice(0, 80),
+    headline: (src.headline ?? '').trim().slice(0, 160) || DEFAULT_CAMPAIGN.headline,
+    intro: (src.intro ?? '').trim().slice(0, 600) || DEFAULT_CAMPAIGN.intro,
+    bullets,
+    ctaLabel: (src.ctaLabel ?? '').trim().slice(0, 60) || DEFAULT_CAMPAIGN.ctaLabel,
+    ctaUrl: (src.ctaUrl ?? '').trim().slice(0, 400) || DEFAULT_CAMPAIGN.ctaUrl,
+    footerNote: (src.footerNote ?? '').trim().slice(0, 200) || undefined,
+  };
+}
+
 /**
- * Send the Customer Wallet announcement.
+ * Send a feature announcement using the provided (editable) campaign content.
  * - testEmail set  → sends ONE preview to that address (ignores tenantIds).
  * - otherwise      → sends to the selected tenantIds (emails re-resolved server-side).
  */
-export async function sendWalletAnnouncement(input: {
+export async function sendAnnouncement(input: {
   tenantIds?: string[];
   testEmail?: string;
+  campaign?: Partial<AnnouncementCampaign>;
 }): Promise<{ success: boolean; error?: string; sent: number; failed: number; results?: { email: string; ok: boolean; detail?: string }[] }> {
   const user = await requireAdmin();
 
@@ -118,11 +140,13 @@ export async function sendWalletAnnouncement(input: {
     return { success: false, error: 'Email is not configured. Set SMTP_EMAIL and SMTP_PASSWORD.', sent: 0, failed: 0 };
   }
 
+  const campaign = normalizeCampaign(input.campaign);
+
   // ── Test mode ────────────────────────────────────────────────────────────
   if (input.testEmail) {
     const to = input.testEmail.trim();
     if (!EMAIL_RE.test(to)) return { success: false, error: 'Enter a valid test email.', sent: 0, failed: 0 };
-    const { subject, html, text } = renderWalletEmail({ salonName: 'Your Salon' });
+    const { subject, html, text } = renderAnnouncementEmail(campaign, { salonName: 'Your Salon' });
     try {
       await sendEmail({ to, subject, html, text });
       return { success: true, sent: 1, failed: 0, results: [{ email: to, ok: true }] };
@@ -148,7 +172,7 @@ export async function sendWalletAnnouncement(input: {
 
   for (let i = 0; i < targets.length; i++) {
     const r = targets[i];
-    const { subject, html, text } = renderWalletEmail({ salonName: r.salonName });
+    const { subject, html, text } = renderAnnouncementEmail(campaign, { salonName: r.salonName });
     try {
       await sendEmail({ to: r.email, subject, html, text });
       results.push({ email: r.email, ok: true });
@@ -165,7 +189,7 @@ export async function sendWalletAnnouncement(input: {
     adminEmail: user.email || '',
     action: 'send_announcement',
     targetType: 'email_campaign',
-    metadata: { campaign: 'customer_wallet', selected: ids.length, sent, failed },
+    metadata: { subject: campaign.subject, selected: ids.length, sent, failed },
   });
 
   return { success: failed === 0, sent, failed, results, error: failed > 0 ? `${failed} email(s) failed.` : undefined };
