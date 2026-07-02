@@ -2,7 +2,7 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
-import { isEmailConfigured, sendEmail } from '@/lib/email/smtp';
+import { isEmailConfigured, missingEmailEnv, sendEmail } from '@/lib/email/smtp';
 import { renderAnnouncementEmail, DEFAULT_CAMPAIGN, type AnnouncementCampaign } from '@/lib/email/announcement';
 
 // =============================================================================
@@ -62,7 +62,7 @@ async function getOwnerEmailsByTenant(admin: ReturnType<typeof createAdminClient
  * Build the full recipient list from Supabase: every tenant that has a real,
  * mailable email (owner login email preferred, salon contact email as fallback).
  */
-export async function getWalletRecipients(): Promise<{ configured: boolean; recipients: Recipient[] }> {
+export async function getWalletRecipients(): Promise<{ configured: boolean; missingEnv: string[]; recipients: Recipient[] }> {
   await requireAdmin();
   const admin = createAdminClient();
 
@@ -98,7 +98,7 @@ export async function getWalletRecipients(): Promise<{ configured: boolean; reci
     });
   }
 
-  return { configured: isEmailConfigured(), recipients };
+  return { configured: isEmailConfigured(), missingEnv: missingEmailEnv(), recipients };
 }
 
 const sleep = (ms: number) => new Promise((r) => setTimeout(r, ms));

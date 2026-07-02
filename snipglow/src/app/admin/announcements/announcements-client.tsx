@@ -15,9 +15,11 @@ import {
 
 export function AnnouncementsClient({
   configured,
+  missingEnv = [],
   recipients,
 }: {
   configured: boolean;
+  missingEnv?: string[];
   recipients: Recipient[];
 }) {
   // ── Campaign content (editable) ────────────────────────────────────────────
@@ -127,7 +129,7 @@ export function AnnouncementsClient({
         <div className="flex items-start gap-2 rounded-xl border border-amber-300/60 bg-amber-50 dark:bg-amber-900/15 p-3">
           <AlertTriangle className="size-4 text-amber-600 shrink-0 mt-0.5" />
           <p className="text-sm text-amber-800 dark:text-amber-300">
-            Email is not configured. Set <code>SMTP_EMAIL</code> and <code>SMTP_PASSWORD</code> (and optionally <code>MAIL_FROM</code>) in the environment to enable sending.
+            Email is not configured. {missingEnv.length > 0 ? `Missing in this deployment: ${missingEnv.join(', ')}.` : 'Set SMTP_EMAIL and SMTP_PASSWORD.'} Add them for the <strong>Production</strong> environment in Vercel, then redeploy.
           </p>
         </div>
       )}

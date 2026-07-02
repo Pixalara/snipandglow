@@ -8,7 +8,7 @@ import { AnnouncementsClient } from './announcements-client';
 
 export default async function AdminAnnouncementsPage() {
   const user = await requireAdmin();
-  const { configured, recipients } = await getWalletRecipients();
+  const { configured, missingEnv, recipients } = await getWalletRecipients();
 
   await logAdminAction({
     adminUserId: user.id,
@@ -16,5 +16,5 @@ export default async function AdminAnnouncementsPage() {
     action: 'view_announcements',
   });
 
-  return <AnnouncementsClient configured={configured} recipients={recipients} />;
+  return <AnnouncementsClient configured={configured} missingEnv={missingEnv} recipients={recipients} />;
 }

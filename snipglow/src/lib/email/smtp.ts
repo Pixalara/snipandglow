@@ -16,6 +16,14 @@ export function isEmailConfigured(): boolean {
   return Boolean(process.env.SMTP_EMAIL && process.env.SMTP_PASSWORD);
 }
 
+/** Which required env keys are missing (for admin diagnostics; no values leaked). */
+export function missingEmailEnv(): string[] {
+  const missing: string[] = [];
+  if (!process.env.SMTP_EMAIL) missing.push('SMTP_EMAIL');
+  if (!process.env.SMTP_PASSWORD) missing.push('SMTP_PASSWORD');
+  return missing;
+}
+
 export function getMailFrom(): string {
   // Prefer an explicit MAIL_FROM; otherwise default to the SnipandGlow brand
   // name on the configured (or updates@pixalara.com) mailbox.
