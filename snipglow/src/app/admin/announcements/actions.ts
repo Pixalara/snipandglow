@@ -298,3 +298,43 @@ export async function getCampaignRecipients(campaignId: string): Promise<Campaig
     return [];
   }
 }
+
+/**
+ * Resolve a campaign's recipients from an audit-log entry: by campaign id when
+ * available, otherwise by matching subject + nearest timestamp (older logs that
+ * predate campaign-id linking).
+ */
+export async function findCampaignRecipients(input: {
+  campaignId?: string | null;
+  subject?: string | null;
+  at?: string | null;
+}): Promise<CampaignRecipientRow[]> {
+  await requireAdmin();
+  try {
+    const admin = createAdminClient();
+    let id = input.campaignId || null;
+
+    if (!id && input.subject) {
+      const { data } = await (admin
+        .from('email_campaigns' as any)
+        .select('id, created_at')
+        .eq('subject', input.subject)
+        .order('created_at', { ascending: false })
+        .limit(10) as any);
+      const rows = (data ?? []) as { id: string; created_at: string }[];
+      if (rows.length) {
+        if (input.at) {
+          const t = new Date(input.at).getTime();
+          rows.sort(
+            (a, b) => Math.abs(new Date(a.created_at).getTime() - t) - Math.abs(new Date(b.created_at).getTime() - t)
+          );
+        }
+        id = rows[0].id;
+      }
+    }
+    if (!id) return [];
+    return await getCampaignRecipients(id);
+  } catch {
+    return [];
+  }
+}

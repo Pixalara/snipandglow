@@ -1,9 +1,10 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { X, Mail } from 'lucide-react';
+import { X, Mail, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react';
 import { formatISTDateTime } from '@/lib/datetime';
+import { findCampaignRecipients, type CampaignRecipientRow } from '../announcements/actions';
 
 export interface AuditLog {
   id: string;
@@ -26,6 +27,27 @@ function actionClass(action: string): string {
 
 export function AuditLogClient({ logs }: { logs: AuditLog[] }) {
   const [active, setActive] = useState<AuditLog | null>(null);
+  const [recipients, setRecipients] = useState<CampaignRecipientRow[] | null>(null);
+  const [loadingRecipients, setLoadingRecipients] = useState(false);
+
+  // When an announcement log is opened, fetch its recipient list.
+  useEffect(() => {
+    let alive = true;
+    setRecipients(null);
+    if (active && active.action === 'send_announcement') {
+      const meta = (active.metadata ?? {}) as Record<string, unknown>;
+      setLoadingRecipients(true);
+      findCampaignRecipients({
+        campaignId: (meta.campaignId as string) || active.target_id || null,
+        subject: (meta.subject as string) ?? null,
+        at: active.created_at,
+      })
+        .then((rows) => { if (alive) setRecipients(rows); })
+        .catch(() => { if (alive) setRecipients([]); })
+        .finally(() => { if (alive) setLoadingRecipients(false); });
+    }
+    return () => { alive = false; };
+  }, [active]);
 
   return (
     <div className="rounded-xl border border-border bg-card overflow-hidden">
@@ -89,13 +111,38 @@ export function AuditLogClient({ logs }: { logs: AuditLog[] }) {
               {active.ip_address && <Field label="IP" value={active.ip_address} />}
 
               {active.action === 'send_announcement' && (
-                <div className="rounded-xl border border-fuchsia-300/50 bg-fuchsia-50 dark:bg-fuchsia-900/15 p-3">
-                  <p className="text-xs text-fuchsia-800 dark:text-fuchsia-300">
-                    This is an email campaign. To see the exact recipients and delivery status, open the full campaign log.
-                  </p>
-                  <Link href="/admin/announcements" className="mt-2 inline-flex items-center gap-1.5 text-xs font-semibold text-fuchsia-700 dark:text-fuchsia-300 hover:underline">
-                    <Mail className="size-3.5" /> Go to Announcements → Campaign history
-                  </Link>
+                <div>
+                  <div className="flex items-center justify-between mb-1.5">
+                    <p className="text-xs font-medium text-muted-foreground">Recipients {recipients ? `(${recipients.length})` : ''}</p>
+                    <Link href="/admin/announcements" className="inline-flex items-center gap-1 text-xs font-medium text-fuchsia-600 dark:text-fuchsia-300 hover:underline">
+                      <Mail className="size-3.5" /> Campaign history
+                    </Link>
+                  </div>
+                  {loadingRecipients ? (
+                    <p className="text-xs text-muted-foreground flex items-center gap-2 py-2"><Loader2 className="size-4 animate-spin" /> Loading recipients…</p>
+                  ) : recipients && recipients.length > 0 ? (
+                    <div className="max-h-56 overflow-y-auto rounded-xl border border-border">
+                      <table className="w-full text-xs">
+                        <tbody className="divide-y divide-border">
+                          {recipients.map((r, i) => (
+                            <tr key={`${r.email}-${i}`}>
+                              <td className="px-3 py-2 w-6">
+                                {r.status === 'sent'
+                                  ? <CheckCircle2 className="size-3.5 text-emerald-500" />
+                                  : <AlertTriangle className="size-3.5 text-red-500" />}
+                              </td>
+                              <td className="px-1 py-2 text-foreground">{r.salonName ?? '—'}</td>
+                              <td className="px-3 py-2 text-muted-foreground text-right break-all">{r.email}</td>
+                            </tr>
+                          ))}
+                        </tbody>
+                      </table>
+                    </div>
+                  ) : (
+                    <p className="text-xs text-muted-foreground py-2">
+                      No stored recipient list for this entry. Open Campaign history for details.
+                    </p>
+                  )}
                 </div>
               )}
 
