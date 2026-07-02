@@ -48,6 +48,8 @@ export function AnnouncementsClient({
   const [previewOpen, setPreviewOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
+  const [sendLog, setSendLog] = useState<{ email: string; ok: boolean; detail?: string }[]>([]);
+  const [lastSendAt, setLastSendAt] = useState<string | null>(null);
 
   const previewHtml = useMemo(
     () => renderAnnouncementEmail(campaign, { salonName: 'Your Salon' }).html,
@@ -91,6 +93,7 @@ export function AnnouncementsClient({
     startTransition(async () => {
       const res = await sendAnnouncement({ testEmail, campaign });
       setResult({ ok: res.success, msg: res.success ? `Test email sent to ${testEmail}.` : res.error || 'Failed to send test.' });
+      if (res.results?.length) { setSendLog(res.results); setLastSendAt(new Date().toLocaleString('en-IN')); }
     });
   }
   function handleSend() {
@@ -103,6 +106,7 @@ export function AnnouncementsClient({
         ok: res.success,
         msg: res.success ? `Sent to ${res.sent} recipient(s).` : `${res.error ?? 'Some emails failed.'} Sent ${res.sent}, failed ${res.failed}.`,
       });
+      if (res.results?.length) { setSendLog(res.results); setLastSendAt(new Date().toLocaleString('en-IN')); }
       if (res.sent > 0) setSelected(new Set());
     });
   }
@@ -312,6 +316,58 @@ export function AnnouncementsClient({
           Send to {selected.size} tenant{selected.size !== 1 ? 's' : ''}
         </button>
       </div>
+
+      {/* Send log (latest run) */}
+      {sendLog.length > 0 && (
+        <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 p-4 border-b border-border">
+            <div>
+              <p className="text-sm font-semibold text-foreground">Send log</p>
+              <p className="text-xs text-muted-foreground">
+                {lastSendAt ? `Last run: ${lastSendAt} · ` : ''}
+                {sendLog.filter((r) => r.ok).length} delivered · {sendLog.filter((r) => !r.ok).length} failed
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => { setSendLog([]); setLastSendAt(null); }}
+              className="self-start sm:self-auto rounded-lg border border-border px-3 py-1.5 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted"
+            >
+              Clear log
+            </button>
+          </div>
+          <div className="max-h-[40vh] overflow-y-auto">
+            <table className="w-full text-sm">
+              <thead className="sticky top-0 bg-card">
+                <tr className="border-b border-border text-left">
+                  <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase">Status</th>
+                  <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase">Email</th>
+                  <th className="px-4 py-2.5 text-xs font-medium text-muted-foreground uppercase">Detail</th>
+                </tr>
+              </thead>
+              <tbody className="divide-y divide-border">
+                {sendLog.map((r, i) => (
+                  <tr key={`${r.email}-${i}`} className="hover:bg-accent/40 transition-colors">
+                    <td className="px-4 py-2.5">
+                      {r.ok ? (
+                        <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-medium">
+                          <CheckCircle2 className="size-3.5" /> Delivered
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 text-xs font-medium">
+                          <AlertTriangle className="size-3.5" /> Failed
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-2.5 text-foreground">{r.email}</td>
+                    <td className="px-4 py-2.5 text-muted-foreground truncate max-w-[360px]">{r.detail ?? (r.ok ? 'Sent' : '—')}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
 
       {/* Full-screen email preview modal */}
       {previewOpen && (
