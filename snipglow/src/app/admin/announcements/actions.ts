@@ -193,5 +193,104 @@ export async function sendAnnouncement(input: {
     metadata: { subject: campaign.subject, selected: ids.length, sent, failed },
   });
 
+  // Persist a reviewable campaign record + per-recipient results (best-effort).
+  try {
+    const admin = createAdminClient();
+    const { data: row } = await (admin
+      .from('email_campaigns' as any)
+      .insert({
+        subject: campaign.subject,
+        campaign: campaign as any,
+        mode: 'bulk',
+        sent_by: user.email || null,
+        total_count: targets.length,
+        sent_count: sent,
+        failed_count: failed,
+      } as any)
+      .select('id')
+      .single() as any);
+    if (row?.id) {
+      const rows = targets.map((t, i) => ({
+        campaign_id: row.id,
+        tenant_id: t.tenantId,
+        salon_name: t.salonName,
+        email: t.email,
+        status: results[i]?.ok ? 'sent' : 'failed',
+        detail: results[i]?.detail ?? null,
+      }));
+      await (admin.from('email_campaign_recipients' as any).insert(rows as any) as any);
+    }
+  } catch (e) {
+    console.error('[Announcements] Failed to persist campaign history (non-fatal):', e);
+  }
+
   return { success: failed === 0, sent, failed, results, error: failed > 0 ? `${failed} email(s) failed.` : undefined };
+}
+
+// =============================================================================
+// Campaign history (persistent, admin-only)
+// =============================================================================
+
+export interface CampaignSummary {
+  id: string;
+  subject: string;
+  mode: string;
+  sentBy: string | null;
+  total: number;
+  sent: number;
+  failed: number;
+  createdAt: string;
+}
+
+export interface CampaignRecipientRow {
+  email: string;
+  salonName: string | null;
+  status: string;
+  detail: string | null;
+}
+
+/** Recent campaigns, newest first. */
+export async function getCampaignHistory(limit = 25): Promise<CampaignSummary[]> {
+  await requireAdmin();
+  try {
+    const admin = createAdminClient();
+    const { data } = await (admin
+      .from('email_campaigns' as any)
+      .select('id, subject, mode, sent_by, total_count, sent_count, failed_count, created_at')
+      .order('created_at', { ascending: false })
+      .limit(limit) as any);
+    return ((data ?? []) as any[]).map((r) => ({
+      id: r.id,
+      subject: r.subject,
+      mode: r.mode,
+      sentBy: r.sent_by,
+      total: r.total_count ?? 0,
+      sent: r.sent_count ?? 0,
+      failed: r.failed_count ?? 0,
+      createdAt: r.created_at,
+    }));
+  } catch {
+    return [];
+  }
+}
+
+/** Per-recipient results for one campaign. */
+export async function getCampaignRecipients(campaignId: string): Promise<CampaignRecipientRow[]> {
+  await requireAdmin();
+  try {
+    const admin = createAdminClient();
+    const { data } = await (admin
+      .from('email_campaign_recipients' as any)
+      .select('email, salon_name, status, detail')
+      .eq('campaign_id', campaignId)
+      .order('status', { ascending: true }) as any);
+    return ((data ?? []) as any[]).map((r) => ({
+      email: r.email,
+      salonName: r.salon_name,
+      status: r.status,
+      detail: r.detail,
+    }));
+  } catch {
+    return [];
+  }
 }

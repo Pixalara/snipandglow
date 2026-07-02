@@ -1,8 +1,8 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { Mail, Send, Search, CheckCircle2, AlertTriangle, Loader2, Plus, Trash2, RotateCcw, Eye, ExternalLink, X } from 'lucide-react';
-import { sendAnnouncement, type Recipient } from './actions';
+import { Mail, Send, Search, CheckCircle2, AlertTriangle, Loader2, Plus, Trash2, RotateCcw, Eye, ExternalLink, X, History, ChevronDown, ChevronRight } from 'lucide-react';
+import { sendAnnouncement, getCampaignHistory, getCampaignRecipients, type Recipient, type CampaignSummary, type CampaignRecipientRow } from './actions';
 import {
   renderAnnouncementEmail,
   DEFAULT_CAMPAIGN,
@@ -17,10 +17,12 @@ export function AnnouncementsClient({
   configured,
   missingEnv = [],
   recipients,
+  history: initialHistory,
 }: {
   configured: boolean;
   missingEnv?: string[];
   recipients: Recipient[];
+  history: CampaignSummary[];
 }) {
   // ── Campaign content (editable) ────────────────────────────────────────────
   const [campaign, setCampaign] = useState<AnnouncementCampaign>({ ...DEFAULT_CAMPAIGN, bullets: DEFAULT_CAMPAIGN.bullets.map((b) => ({ ...b })) });
@@ -50,6 +52,28 @@ export function AnnouncementsClient({
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const [sendLog, setSendLog] = useState<{ email: string; ok: boolean; detail?: string }[]>([]);
   const [lastSendAt, setLastSendAt] = useState<string | null>(null);
+  const [history, setHistory] = useState<CampaignSummary[]>(initialHistory);
+  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expandedRows, setExpandedRows] = useState<Record<string, CampaignRecipientRow[]>>({});
+  const [loadingRows, setLoadingRows] = useState(false);
+
+  async function refreshHistory() {
+    try { setHistory(await getCampaignHistory()); } catch { /* ignore */ }
+  }
+
+  async function toggleExpand(id: string) {
+    if (expanded === id) { setExpanded(null); return; }
+    setExpanded(id);
+    if (!expandedRows[id]) {
+      setLoadingRows(true);
+      try {
+        const rows = await getCampaignRecipients(id);
+        setExpandedRows((prev) => ({ ...prev, [id]: rows }));
+      } finally {
+        setLoadingRows(false);
+      }
+    }
+  }
 
   const previewHtml = useMemo(
     () => renderAnnouncementEmail(campaign, { salonName: 'Your Salon' }).html,
@@ -107,7 +131,7 @@ export function AnnouncementsClient({
         msg: res.success ? `Sent to ${res.sent} recipient(s).` : `${res.error ?? 'Some emails failed.'} Sent ${res.sent}, failed ${res.failed}.`,
       });
       if (res.results?.length) { setSendLog(res.results); setLastSendAt(new Date().toLocaleString('en-IN')); }
-      if (res.sent > 0) setSelected(new Set());
+      if (res.sent > 0) { setSelected(new Set()); refreshHistory(); }
     });
   }
 
@@ -368,6 +392,82 @@ export function AnnouncementsClient({
           </div>
         </div>
       )}
+
+      {/* Campaign history (persistent) */}
+      <div className="rounded-2xl border border-border bg-card overflow-hidden">
+        <div className="flex items-center gap-2 p-4 border-b border-border">
+          <History className="size-4 text-fuchsia-500" />
+          <p className="text-sm font-semibold text-foreground">Campaign history</p>
+          <span className="text-xs text-muted-foreground">({history.length})</span>
+        </div>
+        {history.length === 0 ? (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">No campaigns sent yet.</p>
+        ) : (
+          <div className="divide-y divide-border">
+            {history.map((h) => (
+              <div key={h.id}>
+                <button
+                  type="button"
+                  onClick={() => toggleExpand(h.id)}
+                  className="w-full flex items-center gap-3 px-4 py-3 text-left hover:bg-accent/40 transition-colors"
+                >
+                  {expanded === h.id ? <ChevronDown className="size-4 text-muted-foreground shrink-0" /> : <ChevronRight className="size-4 text-muted-foreground shrink-0" />}
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-medium text-foreground truncate">{h.subject}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {new Date(h.createdAt).toLocaleString('en-IN')}{h.sentBy ? ` · by ${h.sentBy}` : ''}
+                    </p>
+                  </div>
+                  <div className="flex items-center gap-2 shrink-0 text-xs">
+                    <span className="rounded-full bg-emerald-500/15 text-emerald-600 dark:text-emerald-400 px-2 py-0.5 font-medium">{h.sent} sent</span>
+                    {h.failed > 0 && <span className="rounded-full bg-red-500/15 text-red-600 dark:text-red-400 px-2 py-0.5 font-medium">{h.failed} failed</span>}
+                    <span className="text-muted-foreground">/ {h.total}</span>
+                  </div>
+                </button>
+                {expanded === h.id && (
+                  <div className="bg-muted/20 border-t border-border">
+                    {loadingRows && !expandedRows[h.id] ? (
+                      <p className="px-4 py-4 text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Loading recipients…</p>
+                    ) : (
+                      <div className="max-h-[40vh] overflow-y-auto">
+                        <table className="w-full text-sm">
+                          <thead className="sticky top-0 bg-muted/40">
+                            <tr className="text-left">
+                              <th className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase">Status</th>
+                              <th className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase">Salon</th>
+                              <th className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase">Email</th>
+                              <th className="px-4 py-2 text-xs font-medium text-muted-foreground uppercase">Detail</th>
+                            </tr>
+                          </thead>
+                          <tbody className="divide-y divide-border">
+                            {(expandedRows[h.id] ?? []).map((r, i) => (
+                              <tr key={`${r.email}-${i}`}>
+                                <td className="px-4 py-2">
+                                  {r.status === 'sent' ? (
+                                    <span className="inline-flex items-center gap-1.5 text-emerald-600 dark:text-emerald-400 text-xs font-medium"><CheckCircle2 className="size-3.5" /> Sent</span>
+                                  ) : (
+                                    <span className="inline-flex items-center gap-1.5 text-red-600 dark:text-red-400 text-xs font-medium"><AlertTriangle className="size-3.5" /> Failed</span>
+                                  )}
+                                </td>
+                                <td className="px-4 py-2 text-foreground">{r.salonName ?? '—'}</td>
+                                <td className="px-4 py-2 text-muted-foreground">{r.email}</td>
+                                <td className="px-4 py-2 text-muted-foreground truncate max-w-[320px]">{r.detail ?? '—'}</td>
+                              </tr>
+                            ))}
+                            {(expandedRows[h.id] ?? []).length === 0 && (
+                              <tr><td colSpan={4} className="px-4 py-4 text-center text-sm text-muted-foreground">No recipient records.</td></tr>
+                            )}
+                          </tbody>
+                        </table>
+                      </div>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
 
       {/* Full-screen email preview modal */}
       {previewOpen && (

@@ -1,5 +1,5 @@
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
-import { getWalletRecipients } from './actions';
+import { getWalletRecipients, getCampaignHistory } from './actions';
 import { AnnouncementsClient } from './announcements-client';
 
 // =============================================================================
@@ -8,7 +8,10 @@ import { AnnouncementsClient } from './announcements-client';
 
 export default async function AdminAnnouncementsPage() {
   const user = await requireAdmin();
-  const { configured, missingEnv, recipients } = await getWalletRecipients();
+  const [{ configured, missingEnv, recipients }, history] = await Promise.all([
+    getWalletRecipients(),
+    getCampaignHistory(),
+  ]);
 
   await logAdminAction({
     adminUserId: user.id,
@@ -16,5 +19,5 @@ export default async function AdminAnnouncementsPage() {
     action: 'view_announcements',
   });
 
-  return <AnnouncementsClient configured={configured} missingEnv={missingEnv} recipients={recipients} />;
+  return <AnnouncementsClient configured={configured} missingEnv={missingEnv} recipients={recipients} history={history} />;
 }
