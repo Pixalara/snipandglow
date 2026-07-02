@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee, MessageCircle, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee, MessageCircle, Mail, Menu, X } from 'lucide-react';
 import { AdminThemeToggle } from './admin-theme-toggle';
 import { AdminClock } from './admin-clock';
 
@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Tenants', href: '/admin/tenants', icon: Building2 },
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
+  { label: 'Announcements', href: '/admin/announcements', icon: Mail },
   { label: 'Support Tickets', href: '/admin/support', icon: Headphones },
   { label: 'WhatsApp Setup', href: '/admin/whatsapp-setup', icon: MessageCircle, badgeKey: 'pendingSetupRequests' as const },
   { label: 'WhatsApp Health', href: '/admin/whatsapp', icon: Zap },
