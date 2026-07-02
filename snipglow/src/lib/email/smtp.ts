@@ -17,7 +17,16 @@ export function isEmailConfigured(): boolean {
 }
 
 export function getMailFrom(): string {
-  return process.env.MAIL_FROM || `SnipandGlow <${process.env.SMTP_EMAIL ?? ''}>`;
+  // Prefer an explicit MAIL_FROM; otherwise default to the SnipandGlow brand
+  // name on the configured (or updates@pixalara.com) mailbox.
+  if (process.env.MAIL_FROM) return process.env.MAIL_FROM;
+  const addr = process.env.SMTP_EMAIL || 'updates@pixalara.com';
+  return `SnipandGlow <${addr}>`;
+}
+
+/** Address replies should go to (defaults to MAIL_FROM's mailbox). */
+export function getReplyTo(): string {
+  return process.env.MAIL_REPLY_TO || process.env.SMTP_EMAIL || 'updates@pixalara.com';
 }
 
 let cached: Transporter | null = null;
@@ -45,11 +54,13 @@ export async function sendEmail(opts: {
   html: string;
   text?: string;
   from?: string;
+  replyTo?: string;
 }): Promise<string> {
   const transporter = getTransporter();
   const info = await transporter.sendMail({
     from: opts.from || getMailFrom(),
     to: opts.to,
+    replyTo: opts.replyTo || getReplyTo(),
     subject: opts.subject,
     html: opts.html,
     text: opts.text,

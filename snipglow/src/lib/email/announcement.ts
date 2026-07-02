@@ -8,7 +8,7 @@ const BRAND = {
   name: 'SnipandGlow',
   site: 'https://snipandglow.com',
   logo: 'https://snipandglow.com/android-chrome-512x512.png',
-  supportEmail: 'hello@snipandglow.com',
+  supportEmail: 'updates@pixalara.com',
   company: 'Pixalara LLP',
   address: 'Bengaluru, Karnataka, India',
 };
