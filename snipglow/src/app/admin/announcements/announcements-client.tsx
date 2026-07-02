@@ -1,7 +1,7 @@
 'use client';
 
 import { useMemo, useState, useTransition } from 'react';
-import { Mail, Send, Search, CheckCircle2, AlertTriangle, Loader2, Plus, Trash2, RotateCcw } from 'lucide-react';
+import { Mail, Send, Search, CheckCircle2, AlertTriangle, Loader2, Plus, Trash2, RotateCcw, Eye, ExternalLink, X } from 'lucide-react';
 import { sendAnnouncement, type Recipient } from './actions';
 import {
   renderAnnouncementEmail,
@@ -43,6 +43,7 @@ export function AnnouncementsClient({
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [testEmail, setTestEmail] = useState('');
   const [confirmOpen, setConfirmOpen] = useState(false);
+  const [previewOpen, setPreviewOpen] = useState(false);
   const [isPending, startTransition] = useTransition();
   const [result, setResult] = useState<{ ok: boolean; msg: string } | null>(null);
 
@@ -50,6 +51,14 @@ export function AnnouncementsClient({
     () => renderAnnouncementEmail(campaign, { salonName: 'Your Salon' }).html,
     [campaign]
   );
+
+  function openInNewTab() {
+    const blob = new Blob([previewHtml], { type: 'text/html' });
+    const url = URL.createObjectURL(blob);
+    window.open(url, '_blank', 'noopener,noreferrer');
+    // Revoke shortly after so the new tab has time to load.
+    setTimeout(() => URL.revokeObjectURL(url), 10000);
+  }
 
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
@@ -187,7 +196,17 @@ export function AnnouncementsClient({
 
         {/* Live preview */}
         <div className="rounded-2xl border border-border bg-card p-4 sm:p-5">
-          <p className="text-sm font-semibold text-foreground mb-3">Live preview</p>
+          <div className="flex items-center justify-between mb-3">
+            <p className="text-sm font-semibold text-foreground">Live preview</p>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setPreviewOpen(true)} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+                <Eye className="size-3.5" /> Full view
+              </button>
+              <button type="button" onClick={openInNewTab} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+                <ExternalLink className="size-3.5" /> New tab
+              </button>
+            </div>
+          </div>
           <div className="rounded-xl overflow-hidden border border-border bg-[#f1f5f9]">
             <iframe title="Email preview" srcDoc={previewHtml} className="w-full h-[560px] bg-white" />
           </div>
@@ -287,6 +306,33 @@ export function AnnouncementsClient({
           Send to {selected.size} tenant{selected.size !== 1 ? 's' : ''}
         </button>
       </div>
+
+      {/* Full-screen email preview modal */}
+      {previewOpen && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={() => setPreviewOpen(false)} />
+          <div className="relative z-10 flex h-[90vh] w-full max-w-3xl flex-col rounded-2xl border border-border bg-card shadow-2xl overflow-hidden">
+            <div className="flex items-center justify-between border-b border-border px-4 py-3 shrink-0">
+              <div className="flex items-center gap-2">
+                <Eye className="size-4 text-fuchsia-500" />
+                <p className="text-sm font-semibold text-foreground">Email preview</p>
+                <span className="text-xs text-muted-foreground truncate max-w-[280px]">{campaign.subject}</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={openInNewTab} className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1.5 text-xs font-medium text-foreground hover:bg-muted">
+                  <ExternalLink className="size-3.5" /> New tab
+                </button>
+                <button type="button" onClick={() => setPreviewOpen(false)} className="flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground" aria-label="Close preview">
+                  <X className="size-4" />
+                </button>
+              </div>
+            </div>
+            <div className="flex-1 overflow-auto bg-[#f1f5f9]">
+              <iframe title="Full email preview" srcDoc={previewHtml} className="w-full h-full min-h-[600px] bg-white" />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Confirm modal */}
       {confirmOpen && (
