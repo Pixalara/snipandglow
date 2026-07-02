@@ -185,15 +185,9 @@ export async function sendAnnouncement(input: {
     if (i < targets.length - 1) await sleep(250); // polite throttle
   }
 
-  await logAdminAction({
-    adminUserId: user.id,
-    adminEmail: user.email || '',
-    action: 'send_announcement',
-    targetType: 'email_campaign',
-    metadata: { subject: campaign.subject, selected: ids.length, sent, failed },
-  });
-
-  // Persist a reviewable campaign record + per-recipient results (best-effort).
+  // Persist a reviewable campaign record + per-recipient results (best-effort),
+  // then log the admin action referencing that campaign id.
+  let campaignId: string | null = null;
   try {
     const admin = createAdminClient();
     const { data: row } = await (admin
@@ -210,6 +204,7 @@ export async function sendAnnouncement(input: {
       .select('id')
       .single() as any);
     if (row?.id) {
+      campaignId = row.id;
       const rows = targets.map((t, i) => ({
         campaign_id: row.id,
         tenant_id: t.tenantId,
@@ -223,6 +218,15 @@ export async function sendAnnouncement(input: {
   } catch (e) {
     console.error('[Announcements] Failed to persist campaign history (non-fatal):', e);
   }
+
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'send_announcement',
+    targetType: 'email_campaign',
+    targetId: campaignId ?? undefined,
+    metadata: { campaignId, subject: campaign.subject, selected: ids.length, sent, failed },
+  });
 
   return { success: failed === 0, sent, failed, results, error: failed > 0 ? `${failed} email(s) failed.` : undefined };
 }
