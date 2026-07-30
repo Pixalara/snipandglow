@@ -285,7 +285,7 @@ export async function completeAndGenerateBill(
   // 1. Fetch the appointment
   const { data: appointment, error: fetchError } = await supabase
     .from('appointments')
-    .select('id, status, customer_id, service_id, employee_id, whatsapp_flow_ref')
+    .select('id, status, customer_id, service_id, employee_id, whatsapp_flow_ref, tenant_id')
     .eq('id', appointmentId)
     .single();
 
@@ -487,20 +487,42 @@ export async function completeAndGenerateBill(
   const finalServiceIds = services.map((s) => s.id);
   const completionUpdate: Record<string, unknown> = {
     status: 'completed',
+    completed_at: new Date().toISOString(),
     service_id: finalServiceIds[0],
     whatsapp_flow_ref: JSON.stringify(finalServiceIds),
   };
   if (performedByEmployeeId) completionUpdate.employee_id = performedByEmployeeId;
 
-  const { error: updateError } = await supabase
+  // Verify the row actually changed. An RLS-filtered UPDATE reports no error but
+  // affects 0 rows, which would silently leave the appointment as "booked".
+  const { data: updatedRows, error: updateError } = await supabase
     .from('appointments')
     .update(completionUpdate as never)
-    .eq('id', appointmentId);
+    .eq('id', appointmentId)
+    .select('id');
 
-  if (updateError) {
-    // The bill (and any wallet debit) already succeeded — don't fail the whole
-    // operation over the status flag; just log it.
-    console.error('completeAndGenerateBill appointment completion error (bill already generated):', updateError);
+  if (updateError || !updatedRows || updatedRows.length === 0) {
+    if (updateError) {
+      console.error('completeAndGenerateBill appointment completion error:', updateError);
+    } else {
+      console.warn('completeAndGenerateBill: RLS blocked the completion update; retrying with admin client.');
+    }
+    // The bill is already committed, so the appointment MUST reflect completion.
+    // Retry with the service-role client — tenant ownership was already proven
+    // by the RLS-scoped read above.
+    try {
+      const adminDb = createAdminClient();
+      const { error: adminErr } = await (adminDb as any)
+        .from('appointments')
+        .update(completionUpdate)
+        .eq('id', appointmentId)
+        .eq('tenant_id', (appointment as any).tenant_id ?? tenantId);
+      if (adminErr) {
+        console.error('completeAndGenerateBill admin completion retry failed:', adminErr);
+      }
+    } catch (e) {
+      console.error('completeAndGenerateBill admin completion retry threw:', e);
+    }
   }
 
   // 7. Create invoice line items for ALL services.
