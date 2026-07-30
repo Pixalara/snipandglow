@@ -235,25 +235,46 @@ export default async function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <Link
-                href="https://snipandglow.com/#pricing"
-                target="_blank"
-                className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl bg-gradient-to-r from-blue-600 to-indigo-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-blue-500 hover:to-indigo-500 transition-all"
-              >
-                <Crown className="size-4" />
-                Subscribe Now — ₹{planMonthly.toLocaleString('en-IN')}/mo
-              </Link>
+              <div className="flex flex-col sm:flex-row gap-2">
+                <RenewButton label={`Subscribe Now — ₹${planMonthly.toLocaleString('en-IN')}/mo`} />
+                <Link
+                  href="https://snipandglow.com/#pricing"
+                  target="_blank"
+                  className="inline-flex items-center justify-center gap-2 w-full sm:w-auto rounded-xl border border-border bg-card px-6 py-3 text-sm font-medium text-foreground hover:bg-muted transition-all"
+                >
+                  Compare plans
+                </Link>
+              </div>
             </div>
           )}
 
-          {/* Active State */}
+          {/* Active State — renew early so access never lapses */}
           {isActive && (
-            <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800/30 dark:bg-emerald-900/10 px-4 py-3">
-              <div className="flex items-center gap-2">
-                <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
-                <p className="text-sm text-emerald-800 dark:text-emerald-200">
-                  Your subscription is active. All features are unlocked.
-                </p>
+            <div className="space-y-3">
+              <div className="rounded-xl border border-emerald-200 bg-emerald-50 dark:border-emerald-800/30 dark:bg-emerald-900/10 px-4 py-3">
+                <div className="flex items-center gap-2">
+                  <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                  <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                    Your subscription is active. All features are unlocked.
+                  </p>
+                </div>
+              </div>
+
+              <div className="rounded-xl border border-border bg-muted/30 p-5">
+                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div>
+                    <p className="text-sm font-semibold text-foreground">Renew early</p>
+                    <p className="text-sm text-muted-foreground mt-1">
+                      Pay ahead of time and stay covered without interruption. Your remaining days
+                      are never lost — the new period is added on top of{' '}
+                      {subscriptionEnd
+                        ? subscriptionEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                        : 'your current end date'}
+                      .
+                    </p>
+                  </div>
+                  <RenewButton label="Renew Now" variant="outline" icon="refresh" />
+                </div>
               </div>
             </div>
           )}
