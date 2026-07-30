@@ -30,6 +30,7 @@ export default async function DashboardLayout({
   let subscriptionStatus = 'active';
   let planTier = 'starter';
   let isExpired = false;
+  let isTrial = false;
   let trialEndedAt: string | null = null;
   let subscriptionEndDate: string | null = null;
 
@@ -64,6 +65,7 @@ export default async function DashboardLayout({
       planTier = (tenantRes.data as any).plan_tier ?? 'starter';
       const state = getSubscriptionState(tenantRes.data as any);
       isExpired = state.isExpired;
+      isTrial = state.isTrial;
       trialEndedAt = state.endDate ? state.endDate.toISOString() : null;
       subscriptionEndDate = state.endDate ? state.endDate.toISOString() : null;
     }
@@ -82,6 +84,7 @@ export default async function DashboardLayout({
       <SubscriptionGuard
         subscriptionStatus={subscriptionStatus}
         isExpired={isExpired}
+        isTrial={isTrial}
         trialEndedAt={trialEndedAt}
       >
         {children}
