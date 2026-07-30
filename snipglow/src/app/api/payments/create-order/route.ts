@@ -3,6 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getRazorpay, isRazorpayConfigured } from '@/lib/razorpay/client';
 import { getBillingCycle, planMonthlyPrice, planYearlyTotal } from '@/lib/subscription';
+import { isAdminEmail } from '@/lib/admin/auth';
 
 // Razorpay SDK + crypto need the Node runtime.
 export const runtime = 'nodejs';
@@ -56,7 +57,20 @@ export async function POST(req: Request) {
     const planTier = (tenant.plan_tier as string) || 'starter';
     const months = cycle === 'yearly' ? 12 : 1;
     const rupees = cycle === 'yearly' ? planYearlyTotal(planTier) : planMonthlyPrice(planTier, 'monthly');
-    const amountPaise = Math.round(rupees * 100);
+    let amountPaise = Math.round(rupees * 100);
+
+    // ── Live-mode smoke test (platform admins only) ────────────────────────
+    // With live keys every charge is real money. To verify the end-to-end flow
+    // without paying a full plan price, a PLATFORM ADMIN may pay a token amount
+    // (default ₹1) when PAYMENT_TEST_AMOUNT_PAISE is set. Never available to
+    // regular salon owners — they always pay the real plan price.
+    let isTestCharge = false;
+    const testPaise = parseInt(process.env.PAYMENT_TEST_AMOUNT_PAISE || '0', 10);
+    if (testPaise > 0 && isAdminEmail(user.email)) {
+      amountPaise = Math.max(100, testPaise); // Razorpay minimum is ₹1
+      isTestCharge = true;
+      console.warn(`[create-order] TEST CHARGE ₹${amountPaise / 100} for admin ${user.email}`);
+    }
 
     if (!Number.isFinite(amountPaise) || amountPaise <= 0) {
       return NextResponse.json({ error: 'Could not determine the amount payable.' }, { status: 400 });
@@ -75,6 +89,7 @@ export async function POST(req: Request) {
         plan_tier: planTier,
         billing_cycle: cycle,
         months: String(months),
+        ...(isTestCharge ? { test_charge: 'true' } : {}),
       },
     });
 
@@ -92,6 +107,7 @@ export async function POST(req: Request) {
         months,
         status: 'created',
         created_by: user.email ?? null,
+        notes: isTestCharge ? { test_charge: true, real_amount_paise: Math.round(rupees * 100) } : {},
       } as any) as any);
 
     if (insertErr) {

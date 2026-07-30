@@ -62,6 +62,7 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
   const [paid, setPaid] = useState(false);
   const [error, setError] = useState('');
   const [unavailable, setUnavailable] = useState(false);
+  const [amountLabel, setAmountLabel] = useState('');
 
   // Warm the Checkout script so the first tap opens instantly.
   useEffect(() => { if (open) void loadCheckout(); }, [open]);
@@ -93,6 +94,9 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
       }
 
       const order = (await res.json()) as OrderResponse;
+      setAmountLabel(
+        `₹${(order.amount / 100).toLocaleString('en-IN')} · ${order.cycle === 'yearly' ? '12 months' : '1 month'}`
+      );
       const ready = await loadCheckout();
       if (!ready || !window.Razorpay) {
         setError('Could not load the payment window. Check your connection and try again.');
@@ -193,6 +197,9 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
                 Pay securely with UPI, card, net banking or wallet. Your salon keeps running without
                 interruption the moment payment is complete.
               </p>
+              {amountLabel && (
+                <p className="mt-3 text-2xl font-bold text-foreground">{amountLabel}</p>
+              )}
             </div>
 
             {unavailable ? (
