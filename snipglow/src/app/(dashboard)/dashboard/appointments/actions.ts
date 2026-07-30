@@ -233,18 +233,22 @@ export async function updateAppointmentStatus(
   }
 
   // 3. Update the status (and set completed_at if completed)
-  const updatePayload: { status: typeof newStatus; completed_at?: string } = { status: newStatus };
   if (newStatus === 'completed') {
-    updatePayload.completed_at = new Date().toISOString();
-  }
+    const ok = await markAppointmentCompleted(supabase, id, (appointment as any).tenant_id);
+    if (!ok) {
+      return { success: false, error: 'Failed to update appointment status. Please try again.' };
+    }
+  } else {
+    const { data: rows, error: updateError } = await supabase
+      .from('appointments')
+      .update({ status: newStatus } as any)
+      .eq('id', id)
+      .select('id');
 
-  const { error: updateError } = await supabase
-    .from('appointments')
-    .update(updatePayload as any)
-    .eq('id', id);
-
-  if (updateError) {
-    return { success: false, error: 'Failed to update appointment status. Please try again.' };
+    if (updateError || !rows || rows.length === 0) {
+      if (updateError) console.error('[updateAppointmentStatus] update failed:', updateError);
+      return { success: false, error: 'Failed to update appointment status. Please try again.' };
+    }
   }
 
   // 4. Send WhatsApp notification to customer on cancellation
@@ -255,6 +259,64 @@ export async function updateAppointmentStatus(
   // 5. Revalidate /appointments path
   revalidatePath('/dashboard/appointments');
   return { success: true, data: undefined };
+}
+
+/**
+ * Flip an appointment to 'completed' reliably.
+ *
+ * Why this is defensive: a Supabase UPDATE filtered out by RLS returns NO error
+ * but affects 0 rows, and an unknown column aborts the whole statement. Either
+ * way the appointment would silently stay "booked" — which previously let staff
+ * bill the same appointment twice. So we verify rows changed, then retry with the
+ * service-role client (tenant ownership is verified by the caller's RLS read),
+ * and finally fall back to a status-only update if extra fields were the problem.
+ */
+async function markAppointmentCompleted(
+  supabase: Awaited<ReturnType<typeof createClient>>,
+  appointmentId: string,
+  tenantId: string,
+  extra: Record<string, unknown> = {}
+): Promise<boolean> {
+  const payload: Record<string, unknown> = {
+    status: 'completed',
+    completed_at: new Date().toISOString(),
+    ...extra,
+  };
+
+  const { data, error } = await supabase
+    .from('appointments')
+    .update(payload as never)
+    .eq('id', appointmentId)
+    .select('id');
+
+  if (!error && data && data.length > 0) return true;
+  if (error) console.error('[markAppointmentCompleted] RLS-client update failed:', error);
+
+  // Retry with the service role, scoped to this tenant.
+  try {
+    const adminDb = createAdminClient();
+    const { data: aData, error: aErr } = await (adminDb as any)
+      .from('appointments')
+      .update(payload)
+      .eq('id', appointmentId)
+      .eq('tenant_id', tenantId)
+      .select('id');
+    if (!aErr && aData && aData.length > 0) return true;
+    if (aErr) console.error('[markAppointmentCompleted] admin update failed:', aErr);
+
+    // Last resort: status only (in case an extra column was the blocker).
+    const { data: sData, error: sErr } = await (adminDb as any)
+      .from('appointments')
+      .update({ status: 'completed' })
+      .eq('id', appointmentId)
+      .eq('tenant_id', tenantId)
+      .select('id');
+    if (!sErr && sData && sData.length > 0) return true;
+    if (sErr) console.error('[markAppointmentCompleted] status-only update failed:', sErr);
+  } catch (e) {
+    console.error('[markAppointmentCompleted] threw:', e);
+  }
+  return false;
 }
 
 /**
@@ -295,6 +357,27 @@ export async function completeAndGenerateBill(
 
   if (appointment.status !== 'confirmed' && appointment.status !== 'booked') {
     return { success: false, error: 'Only booked or confirmed appointments can be completed.' };
+  }
+
+  // 1b. Idempotency guard — never bill the same appointment twice.
+  // If the status update previously failed, the row can still look "booked"
+  // even though a bill exists. Detect that and repair the status instead of
+  // creating a duplicate invoice.
+  const { data: existingInvoice } = await supabase
+    .from('invoices')
+    .select('id, invoice_number')
+    .eq('appointment_id', appointmentId)
+    .limit(1)
+    .maybeSingle();
+
+  if (existingInvoice) {
+    await markAppointmentCompleted(supabase, appointmentId, (appointment as any).tenant_id ?? tenantId);
+    revalidatePath('/dashboard/appointments');
+    revalidatePath('/dashboard/billing');
+    return {
+      success: false,
+      error: `This appointment is already billed (invoice ${existingInvoice.invoice_number}). It has been marked completed.`,
+    };
   }
 
   // 2. Fetch all services for the bill
@@ -485,45 +568,16 @@ export async function completeAndGenerateBill(
   //    staff who performed it, so the appointments list and calendar reflect
   //    exactly what was billed (cross-sell additions + correct stylist).
   const finalServiceIds = services.map((s) => s.id);
-  const completionUpdate: Record<string, unknown> = {
-    status: 'completed',
-    completed_at: new Date().toISOString(),
-    service_id: finalServiceIds[0],
-    whatsapp_flow_ref: JSON.stringify(finalServiceIds),
-  };
-  if (performedByEmployeeId) completionUpdate.employee_id = performedByEmployeeId;
-
-  // Verify the row actually changed. An RLS-filtered UPDATE reports no error but
-  // affects 0 rows, which would silently leave the appointment as "booked".
-  const { data: updatedRows, error: updateError } = await supabase
-    .from('appointments')
-    .update(completionUpdate as never)
-    .eq('id', appointmentId)
-    .select('id');
-
-  if (updateError || !updatedRows || updatedRows.length === 0) {
-    if (updateError) {
-      console.error('completeAndGenerateBill appointment completion error:', updateError);
-    } else {
-      console.warn('completeAndGenerateBill: RLS blocked the completion update; retrying with admin client.');
+  await markAppointmentCompleted(
+    supabase,
+    appointmentId,
+    (appointment as any).tenant_id ?? tenantId,
+    {
+      service_id: finalServiceIds[0],
+      whatsapp_flow_ref: JSON.stringify(finalServiceIds),
+      ...(performedByEmployeeId ? { employee_id: performedByEmployeeId } : {}),
     }
-    // The bill is already committed, so the appointment MUST reflect completion.
-    // Retry with the service-role client — tenant ownership was already proven
-    // by the RLS-scoped read above.
-    try {
-      const adminDb = createAdminClient();
-      const { error: adminErr } = await (adminDb as any)
-        .from('appointments')
-        .update(completionUpdate)
-        .eq('id', appointmentId)
-        .eq('tenant_id', (appointment as any).tenant_id ?? tenantId);
-      if (adminErr) {
-        console.error('completeAndGenerateBill admin completion retry failed:', adminErr);
-      }
-    } catch (e) {
-      console.error('completeAndGenerateBill admin completion retry threw:', e);
-    }
-  }
+  );
 
   // 7. Create invoice line items for ALL services.
   // IMPORTANT: every object below MUST carry the SAME set of keys
