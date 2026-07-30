@@ -59,17 +59,27 @@ export async function POST(req: Request) {
     const rupees = cycle === 'yearly' ? planYearlyTotal(planTier) : planMonthlyPrice(planTier, 'monthly');
     let amountPaise = Math.round(rupees * 100);
 
-    // ── Live-mode smoke test (platform admins only) ────────────────────────
+    // ── Live-mode smoke test (allow-listed accounts only) ──────────────────
     // With live keys every charge is real money. To verify the end-to-end flow
-    // without paying a full plan price, a PLATFORM ADMIN may pay a token amount
-    // (default ₹1) when PAYMENT_TEST_AMOUNT_PAISE is set. Never available to
-    // regular salon owners — they always pay the real plan price.
+    // without paying a full plan price, an allow-listed account may pay a token
+    // amount (default ₹1) when PAYMENT_TEST_AMOUNT_PAISE is set.
+    //
+    // Allowed accounts = PAYMENT_TEST_EMAILS (comma-separated) plus any platform
+    // admin. PAYMENT_TEST_EMAILS lets you test from a normal owner login without
+    // granting it admin-panel access. Regular customers ALWAYS pay full price.
     let isTestCharge = false;
     const testPaise = parseInt(process.env.PAYMENT_TEST_AMOUNT_PAISE || '0', 10);
-    if (testPaise > 0 && isAdminEmail(user.email)) {
-      amountPaise = Math.max(100, testPaise); // Razorpay minimum is ₹1
-      isTestCharge = true;
-      console.warn(`[create-order] TEST CHARGE ₹${amountPaise / 100} for admin ${user.email}`);
+    if (testPaise > 0) {
+      const email = (user.email ?? '').toLowerCase().trim();
+      const allowList = (process.env.PAYMENT_TEST_EMAILS || '')
+        .split(',')
+        .map((e) => e.trim().toLowerCase())
+        .filter(Boolean);
+      if (email && (allowList.includes(email) || isAdminEmail(user.email))) {
+        amountPaise = Math.max(100, testPaise); // Razorpay minimum is ₹1
+        isTestCharge = true;
+        console.warn(`[create-order] TEST CHARGE ₹${amountPaise / 100} for ${email}`);
+      }
     }
 
     if (!Number.isFinite(amountPaise) || amountPaise <= 0) {
@@ -117,6 +127,7 @@ export async function POST(req: Request) {
 
     return NextResponse.json({
       orderId: order.id,
+      testCharge: isTestCharge,
       amount: amountPaise,
       currency: 'INR',
       keyId: process.env.RAZORPAY_KEY_ID,

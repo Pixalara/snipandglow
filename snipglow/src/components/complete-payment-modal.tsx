@@ -46,6 +46,7 @@ function loadCheckout(): Promise<boolean> {
 
 interface OrderResponse {
   orderId: string;
+  testCharge?: boolean;
   amount: number;
   currency: string;
   keyId: string;
@@ -95,7 +96,9 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
 
       const order = (await res.json()) as OrderResponse;
       setAmountLabel(
-        `₹${(order.amount / 100).toLocaleString('en-IN')} · ${order.cycle === 'yearly' ? '12 months' : '1 month'}`
+        `₹${(order.amount / 100).toLocaleString('en-IN')} · ${order.cycle === 'yearly' ? '12 months' : '1 month'}${
+          order.testCharge ? ' · TEST' : ''
+        }`
       );
       const ready = await loadCheckout();
       if (!ready || !window.Razorpay) {
