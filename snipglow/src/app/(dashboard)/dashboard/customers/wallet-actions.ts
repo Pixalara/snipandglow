@@ -2,6 +2,7 @@
 
 import { createClient } from '@/lib/supabase/server';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { sendWalletRechargeReceipt } from '@/lib/invoice/send-bill-receipt';
 import { WALLET_ANNUAL_LIMIT } from '@/lib/wallet';
 import type { ActionResult, WalletTransaction, PaymentMethod } from '@/types';
@@ -159,17 +160,20 @@ export async function addWalletBalance(input: {
   // `wallet_recharge_v1` template (PDF header + amount/balance/receipt), with a
   // fallback to bill_receipt_v1. Best-effort — never blocks the top-up. The
   // "amount added" shown is the total credited (paid + any promotional bonus).
-  try {
-    await sendWalletRechargeReceipt({
-      tenantId,
-      customerId: input.customerId,
-      invoiceNumber,
-      amount: amount + promoAmount,
-      newBalance,
-    });
-  } catch (e) {
-    console.error('Wallet recharge receipt send failed (non-fatal):', e);
-  }
+  const receipt = {
+    tenantId,
+    customerId: input.customerId,
+    invoiceNumber,
+    amount: amount + promoAmount,
+    newBalance,
+  };
+  after(async () => {
+    try {
+      await sendWalletRechargeReceipt(receipt);
+    } catch (e) {
+      console.error('Wallet recharge receipt send failed (non-fatal):', e);
+    }
+  });
 
   revalidatePath(`/dashboard/customers/${input.customerId}`);
   revalidatePath('/dashboard/billing');

@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
@@ -554,27 +555,30 @@ export async function completeAndGenerateBill(
       .select('id')
       .eq('auth_user_id', user.id)
       .maybeSingle();
-    for (const [pid, qty] of qtyByProduct) {
-      const pr = productRows.find((r) => r.id === pid);
-      if (!pr) continue;
-      const newStock = Math.max(0, Number(pr.stock_quantity) - qty);
-      const { error: stockErr } = await (supabase as any)
-        .from('products')
-        .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
-        .eq('id', pid);
-      if (stockErr) { console.error('completeAndGenerateBill stock decrement error:', stockErr); continue; }
-      await (supabase as any).from('inventory_movements').insert({
-        tenant_id: tenantId,
-        branch_id: pr.branch_id ?? branchId,
-        product_id: pid,
-        movement_type: 'sale',
-        quantity: -qty,
-        note: `Sold on invoice ${invoice.invoice_number}`,
-        reference_type: 'invoice',
-        reference_id: invoice.id,
-        created_by: emp?.id ?? null,
-      });
-    }
+    // Run per-product updates in parallel — they're independent rows.
+    await Promise.all(
+      Array.from(qtyByProduct).map(async ([pid, qty]) => {
+        const pr = productRows.find((r) => r.id === pid);
+        if (!pr) return;
+        const newStock = Math.max(0, Number(pr.stock_quantity) - qty);
+        const { error: stockErr } = await (supabase as any)
+          .from('products')
+          .update({ stock_quantity: newStock, updated_at: new Date().toISOString() })
+          .eq('id', pid);
+        if (stockErr) { console.error('completeAndGenerateBill stock decrement error:', stockErr); return; }
+        await (supabase as any).from('inventory_movements').insert({
+          tenant_id: tenantId,
+          branch_id: pr.branch_id ?? branchId,
+          product_id: pid,
+          movement_type: 'sale',
+          quantity: -qty,
+          note: `Sold on invoice ${invoice.invoice_number}`,
+          reference_type: 'invoice',
+          reference_id: invoice.id,
+          created_by: emp?.id ?? null,
+        });
+      })
+    );
     revalidatePath('/dashboard/inventory');
   }
 
@@ -583,7 +587,42 @@ export async function completeAndGenerateBill(
     const pr = productRows.find((r) => r.id === pid)!;
     return { name: pr.name, price: Number(pr.selling_price), quantity: qty };
   });
-  await notifyCustomerBillReceipt(tenantId, appointment.customer_id, services, invoice.invoice_number, subtotal, billDiscountPct, discountAmount, total, paymentMethod, productReceiptItems, walletUse);
+  // Send the receipt AFTER the response is flushed. Generating + uploading the
+  // PDF and calling WhatsApp takes several seconds; the bill is already saved,
+  // so we don't make the user wait for it. `after()` keeps the work alive on
+  // serverless once the response has been sent.
+  const receiptArgs = {
+    tenantId,
+    customerId: appointment.customer_id,
+    services,
+    invoiceNumber: invoice.invoice_number,
+    subtotal,
+    billDiscountPct,
+    discountAmount,
+    total,
+    paymentMethod,
+    productReceiptItems,
+    walletUse,
+  };
+  after(async () => {
+    try {
+      await notifyCustomerBillReceipt(
+        receiptArgs.tenantId,
+        receiptArgs.customerId,
+        receiptArgs.services,
+        receiptArgs.invoiceNumber,
+        receiptArgs.subtotal,
+        receiptArgs.billDiscountPct,
+        receiptArgs.discountAmount,
+        receiptArgs.total,
+        receiptArgs.paymentMethod,
+        receiptArgs.productReceiptItems,
+        receiptArgs.walletUse
+      );
+    } catch (e) {
+      console.error('[completeAndGenerateBill] receipt send failed (non-fatal):', e);
+    }
+  });
 
   revalidatePath('/dashboard/appointments');
   revalidatePath('/dashboard/billing');

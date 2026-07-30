@@ -3,6 +3,7 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { calculatePerItemInvoiceTotal, blendedDiscountPct } from '@/lib/utils';
 import { clampWalletUse } from '@/lib/wallet';
 import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
@@ -300,19 +301,40 @@ export async function createInvoice(
     revalidatePath('/dashboard/inventory');
   }
 
-  // Send bill receipt to customer via WhatsApp + feedback request
-  await sendBillReceiptWhatsApp(
+  // Send bill receipt to customer via WhatsApp + feedback request AFTER the
+  // response is flushed. PDF generation + upload + two WhatsApp calls take
+  // several seconds; the invoice is already committed, so the cashier doesn't
+  // need to wait for it.
+  const receipt = {
     tenantId,
-    input.customer_id,
-    input.items,
-    invoice.invoice_number,
-    totals.subtotal,
+    customerId: input.customer_id,
+    items: input.items,
+    invoiceNumber: invoice.invoice_number,
+    subtotal: totals.subtotal,
     billDiscountPct,
-    totals.discountAmount,
-    totals.total,
-    input.payment_method,
-    walletUse
-  );
+    discountAmount: totals.discountAmount,
+    total: totals.total,
+    paymentMethod: input.payment_method,
+    walletUse,
+  };
+  after(async () => {
+    try {
+      await sendBillReceiptWhatsApp(
+        receipt.tenantId,
+        receipt.customerId,
+        receipt.items,
+        receipt.invoiceNumber,
+        receipt.subtotal,
+        receipt.billDiscountPct,
+        receipt.discountAmount,
+        receipt.total,
+        receipt.paymentMethod,
+        receipt.walletUse
+      );
+    } catch (e) {
+      console.error('[createInvoice] receipt send failed (non-fatal):', e);
+    }
+  });
 
   revalidatePath('/dashboard/billing');
   if (walletUse > 0) {
