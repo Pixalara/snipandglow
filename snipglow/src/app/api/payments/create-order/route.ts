@@ -41,7 +41,7 @@ export async function POST(req: Request) {
     const admin = createAdminClient();
     const { data: tenant } = await (admin
       .from('tenants' as any)
-      .select('id, name, phone, plan_tier, settings')
+      .select('id, name, phone, plan_tier, settings, tenant_code')
       .eq('id', tenantId)
       .maybeSingle() as any);
 
@@ -71,14 +71,30 @@ export async function POST(req: Request) {
     const testPaise = parseInt(process.env.PAYMENT_TEST_AMOUNT_PAISE || '0', 10);
     if (testPaise > 0) {
       const email = (user.email ?? '').toLowerCase().trim();
-      const allowList = (process.env.PAYMENT_TEST_EMAILS || '')
-        .split(',')
-        .map((e) => e.trim().toLowerCase())
-        .filter(Boolean);
-      if (email && (allowList.includes(email) || isAdminEmail(user.email))) {
+      const csv = (v?: string) =>
+        (v || '').split(',').map((s) => s.trim().toLowerCase()).filter(Boolean);
+
+      const emailAllow = csv(process.env.PAYMENT_TEST_EMAILS);
+      // Tenant allow-list accepts either the UUID or the human code (e.g. SNG-001).
+      // This is the reliable option for phone-signup owners, whose auth email is
+      // synthetic (<phone>@phone.snipandglow.com) and won't match an email list.
+      const tenantAllow = csv(process.env.PAYMENT_TEST_TENANTS);
+      const code = String(tenant.tenant_code ?? '').toLowerCase();
+
+      const allowed =
+        (email && emailAllow.includes(email)) ||
+        tenantAllow.includes(tenantId.toLowerCase()) ||
+        (code && tenantAllow.includes(code)) ||
+        isAdminEmail(user.email);
+
+      if (allowed) {
         amountPaise = Math.max(100, testPaise); // Razorpay minimum is ₹1
         isTestCharge = true;
-        console.warn(`[create-order] TEST CHARGE ₹${amountPaise / 100} for ${email}`);
+        console.warn(`[create-order] TEST CHARGE ₹${amountPaise / 100} for ${email || tenantId}`);
+      } else {
+        console.warn(
+          `[create-order] test amount set but not allow-listed. authEmail=${email || '(none)'} tenant=${tenantId} code=${code}`
+        );
       }
     }
 
