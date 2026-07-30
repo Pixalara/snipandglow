@@ -13,6 +13,7 @@ import { Input } from '@/components/ui/input';
 import { CalendarView } from './calendar-view';
 import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices, getActiveEmployees, getActiveProducts, getCustomerMembershipDiscount } from './actions';
 import { getCustomerWalletBalance } from '../customers/wallet-actions';
+import { SearchableSelect } from '@/components/searchable-select';
 import {
   Calendar,
   List,
@@ -1002,23 +1003,20 @@ function CompleteAndBillModal({
                 );
               })}
             </div>
-            {/* Add service */}
+            {/* Add service — search or browse */}
             <div className="flex items-center gap-2">
-              <select
+              <SearchableSelect
+                className="flex-1"
                 value={addServiceId}
-                onChange={(e) => setAddServiceId(e.target.value)}
+                onChange={setAddServiceId}
                 disabled={loadingLists}
-                className="flex-1 h-11 rounded-xl border border-border bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-              >
-                <option value="">+ Add a service…</option>
-                {catalog
+                placeholder="Search or browse services…"
+                emptyText="No service found"
+                ariaLabel="Search or select a service"
+                options={catalog
                   .filter((s) => !selectedServiceIds.includes(s.id))
-                  .map((s) => (
-                    <option key={s.id} value={s.id}>
-                      {s.name} — ₹{s.price.toLocaleString('en-IN')}
-                    </option>
-                  ))}
-              </select>
+                  .map((s) => ({ value: s.id, label: s.name, hint: `₹${s.price.toLocaleString('en-IN')}` }))}
+              />
               <Button type="button" variant="outline" className="rounded-xl" onClick={addService} disabled={!addServiceId}>
                 Add
               </Button>
@@ -1067,21 +1065,23 @@ function CompleteAndBillModal({
                 );
               })}
               <div className="flex items-center gap-2">
-                <select
+                <SearchableSelect
+                  className="flex-1"
                   value={addProductId}
-                  onChange={(e) => setAddProductId(e.target.value)}
+                  onChange={setAddProductId}
                   disabled={loadingLists}
-                  className="flex-1 h-11 rounded-xl border border-border bg-transparent px-3 text-sm outline-none focus-visible:ring-2 focus-visible:ring-ring/50"
-                >
-                  <option value="">+ Add a product…</option>
-                  {productCatalog
+                  placeholder="Search or browse products…"
+                  emptyText="No product found"
+                  ariaLabel="Search or select a product"
+                  options={productCatalog
                     .filter((p) => !selectedProducts.some((sp) => sp.id === p.id))
-                    .map((p) => (
-                      <option key={p.id} value={p.id} disabled={p.stock <= 0}>
-                        {p.name} — ₹{p.price.toLocaleString('en-IN')}{p.stock <= 0 ? ' (Out of stock)' : ` (${p.stock} in stock)`}
-                      </option>
-                    ))}
-                </select>
+                    .map((p) => ({
+                      value: p.id,
+                      label: p.name,
+                      hint: `₹${p.price.toLocaleString('en-IN')}${p.stock <= 0 ? ' · Out of stock' : ` · ${p.stock} left`}`,
+                      disabled: p.stock <= 0,
+                    }))}
+                />
                 <Button type="button" variant="outline" className="rounded-xl" onClick={addProduct} disabled={!addProductId}>
                   Add
                 </Button>

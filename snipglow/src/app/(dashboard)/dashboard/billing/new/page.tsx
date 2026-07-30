@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { SearchableSelect } from '@/components/searchable-select';
 import { calculatePerItemInvoiceTotal, formatINR } from '@/lib/utils';
 import { clampWalletUse } from '@/lib/wallet';
 import { searchCustomers, getActiveServices } from '../../appointments/actions';
@@ -564,41 +565,34 @@ export default function NewBillingPage() {
                       >
                         Service {index + 1}
                       </label>
-                      <select
-                        id={`service-${item.id}`}
+                      <SearchableSelect
                         value={item.selectKey}
-                        onChange={(e) => handleServiceChange(item.id, e.target.value)}
-                        className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                        aria-label={`Select service or product for item ${index + 1}`}
-                      >
-                        <option value="">Select a service, product or plan...</option>
-                        <optgroup label="Services">
-                          {services.map((svc) => (
-                            <option key={svc.id} value={svc.id}>
-                              {svc.name} — {formatINR(svc.price)}
-                            </option>
-                          ))}
-                        </optgroup>
-                        {products.length > 0 && (
-                          <optgroup label="Products">
-                            {products.map((prod) => (
-                              <option key={`product-${prod.id}`} value={`product-${prod.id}`} disabled={prod.stock_quantity <= 0}>
-                                {prod.name} — {formatINR(Number(prod.selling_price))}
-                                {prod.stock_quantity <= 0 ? ' (Out of stock)' : ` (${prod.stock_quantity} in stock)`}
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                        {membershipPlans.length > 0 && (
-                          <optgroup label="Membership Plans">
-                            {membershipPlans.map((plan) => (
-                              <option key={`plan-${plan.id}`} value={`plan-${plan.id}`}>
-                                👑 {plan.name} — {formatINR(plan.price)} ({plan.validity_days} days)
-                              </option>
-                            ))}
-                          </optgroup>
-                        )}
-                      </select>
+                        onChange={(v) => handleServiceChange(item.id, v)}
+                        placeholder="Search or browse services, products & plans…"
+                        emptyText="No match found"
+                        ariaLabel={`Select service or product for item ${index + 1}`}
+                        options={[
+                          ...services.map((svc) => ({
+                            value: svc.id,
+                            label: svc.name,
+                            hint: formatINR(svc.price),
+                            group: 'Services',
+                          })),
+                          ...products.map((prod) => ({
+                            value: `product-${prod.id}`,
+                            label: prod.name,
+                            hint: `${formatINR(Number(prod.selling_price))}${prod.stock_quantity <= 0 ? ' · Out of stock' : ` · ${prod.stock_quantity} left`}`,
+                            disabled: prod.stock_quantity <= 0,
+                            group: 'Products',
+                          })),
+                          ...membershipPlans.map((plan) => ({
+                            value: `plan-${plan.id}`,
+                            label: `👑 ${plan.name}`,
+                            hint: `${formatINR(plan.price)} · ${plan.validity_days}d`,
+                            group: 'Membership Plans',
+                          })),
+                        ]}
+                      />
                     </div>
 
                     {/* Quantity */}
