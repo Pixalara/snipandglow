@@ -2,7 +2,7 @@
 
 import { useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { X, Crown, CheckCircle2, Phone, ShieldCheck, Loader2 } from 'lucide-react';
+import { Crown, CheckCircle2, Phone, ShieldCheck, Loader2 } from 'lucide-react';
 
 // =============================================================================
 // Complete Payment modal — live Razorpay Checkout.
@@ -165,14 +165,6 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
     <div className="fixed inset-0 z-[110] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} aria-hidden="true" />
       <div className="relative z-10 w-full max-w-md rounded-2xl border border-border bg-card p-6 sm:p-7 shadow-2xl max-h-[90vh] overflow-y-auto">
-        <button
-          onClick={onClose}
-          className="absolute right-4 top-4 flex size-8 items-center justify-center rounded-lg text-muted-foreground hover:bg-muted hover:text-foreground transition-colors"
-          aria-label="Close"
-        >
-          <X className="size-5" />
-        </button>
-
         {paid ? (
           <div className="flex flex-col items-center text-center">
             <div className="flex size-16 items-center justify-center rounded-2xl bg-emerald-100 dark:bg-emerald-900/30 mb-5">
@@ -245,6 +237,15 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
               <Phone className="size-4" />
               Need help? Message us
             </a>
+
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={busy}
+              className="mt-2 inline-flex items-center justify-center rounded-xl px-6 py-2.5 text-sm font-medium text-muted-foreground hover:text-foreground hover:bg-muted transition-colors disabled:opacity-50"
+            >
+              Later
+            </button>
           </div>
         )}
       </div>
