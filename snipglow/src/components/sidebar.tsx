@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import {
   LayoutDashboard,
@@ -113,8 +114,15 @@ export function Sidebar({ role, planTier, isOpen, onClose }: SidebarProps) {
         {/* Logo header */}
         <div className="flex h-14 items-center justify-between border-b border-sidebar-border px-4">
           <Link href="/dashboard" className="flex items-center gap-2 group">
-            <span className="flex size-8 items-center justify-center rounded-xl bg-gradient-to-br from-pink-500 via-fuchsia-500 to-violet-500 text-white shadow-sm transition-transform duration-300 group-hover:scale-105">
-              <Scissors className="size-4" />
+            <span className="relative flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-xl shadow-sm transition-transform duration-300 group-hover:scale-105">
+              <Image
+                src="/android-chrome-512x512.png"
+                alt="SnipandGlow"
+                width={32}
+                height={32}
+                priority
+                className="size-8 object-contain"
+              />
             </span>
             <span className="font-bold tracking-tight text-lg">
               <span className="text-sidebar-foreground">snipand</span>
