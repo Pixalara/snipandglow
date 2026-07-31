@@ -122,7 +122,7 @@ export function renderAnnouncementEmail(
                  line-height on divs, which made the glyph spill outside the box. -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="26" style="width:26px;border-collapse:collapse;">
               <tr>
-                <td align="center" valign="middle" height="26" style="width:26px;height:26px;border-radius:8px;background:#8b5cf6;background-image:linear-gradient(135deg,#ec4899,#8b5cf6);color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;text-align:center;vertical-align:middle;mso-line-height-rule:exactly;line-height:26px;">
+                <td align="center" valign="middle" height="26" style="width:26px;height:26px;border-radius:8px;background:#d946ef;background-image:linear-gradient(135deg,#ec4899,#a855f7);color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;text-align:center;vertical-align:middle;mso-line-height-rule:exactly;line-height:26px;">
                   <span style="color:#ffffff;font-size:13px;line-height:26px;">&#10003;</span>
                 </td>
               </tr>
@@ -181,7 +181,7 @@ export function renderAnnouncementEmail(
       <td align="center" style="padding:24px 12px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,0.08);">
           <tr>
-            <td class="sg-head" style="background:linear-gradient(135deg,#ec4899 0%,#d946ef 50%,#8b5cf6 100%);padding:26px 32px;">
+            <td class="sg-head" style="background:#d946ef;background-image:linear-gradient(135deg,#ec4899 0%,#d946ef 50%,#a855f7 100%);padding:26px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
                 <td style="vertical-align:middle;">
                   <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block;vertical-align:middle;"><tr>
@@ -219,7 +219,7 @@ export function renderAnnouncementEmail(
           <tr>
             <td class="sg-pad" style="padding:18px 32px 34px 32px;">
               <table class="sg-cta" role="presentation" cellpadding="0" cellspacing="0"><tr>
-                <td style="border-radius:12px;background:#8b5cf6;background-image:linear-gradient(135deg,#ec4899,#8b5cf6);">
+                <td style="border-radius:12px;background:#d946ef;background-image:linear-gradient(135deg,#ec4899,#a855f7);">
                   <a href="${esc(cta)}" style="display:inline-block;padding:14px 28px;font:700 15px/1 Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:12px;">${esc(campaign.ctaLabel || 'Open SnipandGlow')} &rarr;</a>
                 </td>
               </tr></table>

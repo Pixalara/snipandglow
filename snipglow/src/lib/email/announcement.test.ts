@@ -62,10 +62,14 @@ describe('announcement templates', () => {
     }
   });
 
-  it('gives gradients a solid colour fallback', () => {
+  it('falls back to brand fuchsia (not blue-violet) where gradients are unsupported', () => {
     const { html } = renderAnnouncementEmail(ONLINE_RENEWAL_CAMPAIGN, { salonName: 'X' });
-    // Clients that ignore linear-gradient still show a coloured tick/button.
-    expect(html).toContain('background:#8b5cf6;background-image:linear-gradient');
+    // Gmail's mobile app ignores linear-gradient and paints the solid `background`.
+    // It must be the fuchsia mid-tone so mobile matches desktop instead of looking blue.
+    const fallbacks = html.match(/background:#d946ef;background-image:linear-gradient/g) ?? [];
+    expect(fallbacks.length).toBeGreaterThanOrEqual(3); // header + ticks + CTA
+    // The old violet fallback read as blue on mobile - guard against it returning.
+    expect(html).not.toContain('background:#8b5cf6;');
   });
 
   it('escapes HTML in user-supplied copy', () => {
