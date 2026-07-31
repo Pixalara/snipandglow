@@ -6,6 +6,7 @@ import { sendAnnouncement, getCampaignHistory, getCampaignRecipients, type Recip
 import {
   renderAnnouncementEmail,
   DEFAULT_CAMPAIGN,
+  CAMPAIGN_PRESETS,
   type AnnouncementCampaign,
 } from '@/lib/email/announcement';
 
@@ -38,8 +39,9 @@ export function AnnouncementsClient({
   function removeBullet(i: number) {
     setCampaign((prev) => ({ ...prev, bullets: prev.bullets.filter((_, idx) => idx !== i) }));
   }
-  function resetToWallet() {
-    setCampaign({ ...DEFAULT_CAMPAIGN, bullets: DEFAULT_CAMPAIGN.bullets.map((b) => ({ ...b })) });
+  /** Load a ready-made campaign (deep-copied so edits don't mutate the preset). */
+  function loadPreset(preset: AnnouncementCampaign) {
+    setCampaign({ ...preset, bullets: preset.bullets.map((b) => ({ ...b })) });
   }
 
   // ── Selection / UI state ────────────────────────────────────────────────────
@@ -148,9 +150,28 @@ export function AnnouncementsClient({
           </h1>
           <p className="text-sm text-muted-foreground mt-1">Compose a feature email and send it to the tenants you choose.</p>
         </div>
-        <button type="button" onClick={resetToWallet} className="shrink-0 inline-flex items-center gap-1.5 rounded-xl border border-border px-3 py-2 text-xs font-medium text-muted-foreground hover:text-foreground hover:bg-muted">
-          <RotateCcw className="size-3.5" /> Wallet preset
-        </button>
+        <div className="flex shrink-0 flex-wrap items-center gap-2">
+          <span className="inline-flex items-center gap-1.5 text-xs font-medium text-muted-foreground">
+            <RotateCcw className="size-3.5" /> Load template:
+          </span>
+          {CAMPAIGN_PRESETS.map((p) => {
+            const active = campaign.subject === p.campaign.subject;
+            return (
+              <button
+                key={p.key}
+                type="button"
+                onClick={() => loadPreset(p.campaign)}
+                className={`inline-flex items-center rounded-xl border px-3 py-2 text-xs font-medium transition-colors ${
+                  active
+                    ? 'border-fuchsia-400 bg-fuchsia-50 text-fuchsia-700 dark:bg-fuchsia-900/20 dark:text-fuchsia-300'
+                    : 'border-border text-muted-foreground hover:bg-muted hover:text-foreground'
+                }`}
+              >
+                {p.label}
+              </button>
+            );
+          })}
+        </div>
       </div>
 
       {!configured && (

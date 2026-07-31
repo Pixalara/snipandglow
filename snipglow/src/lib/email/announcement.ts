@@ -30,6 +30,37 @@ export interface AnnouncementCampaign {
   footerNote?: string;
 }
 
+/** Preset: online renewals via Razorpay. */
+export const ONLINE_RENEWAL_CAMPAIGN: AnnouncementCampaign = {
+  subject: 'Renew SnipandGlow instantly — online payments are live',
+  eyebrow: 'New \u00b7 Online renewals',
+  headline: 'Renew in seconds, right from your dashboard',
+  greeting: 'Hi {salon},',
+  intro:
+    'no more calls, bank transfers or waiting for us to activate your account. You can now pay for your SnipandGlow subscription securely from your own portal \u2014 and the moment payment succeeds, your subscription is extended automatically.',
+  bullets: [
+    {
+      title: 'Renew from your own portal',
+      body: 'Go to Settings \u2192 Subscription and tap Renew. Pay by UPI, card, net banking or wallet \u2014 whatever suits you.',
+    },
+    {
+      title: 'Activated automatically \u2014 zero waiting',
+      body: 'Your subscription updates the instant payment succeeds. No follow-ups, no downtime, no locked features.',
+    },
+    {
+      title: 'Renew early, lose nothing',
+      body: 'Pay ahead of your due date and the new period is simply added on top \u2014 your remaining days are never wasted.',
+    },
+    {
+      title: 'Bank-grade & secure',
+      body: 'Payments are processed by Razorpay. We never see or store your card details, and you get an instant receipt.',
+    },
+  ],
+  ctaLabel: 'Renew from your dashboard',
+  ctaUrl: 'https://snipandglow.com/dashboard/settings',
+  footerNote: 'Find it under Settings \u2192 Subscription \u2192 Renew Now.',
+};
+
 /** Default preset — the Customer Wallet announcement. */
 export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
   subject: 'New in SnipandGlow: Customer Wallet for your salon',
@@ -48,6 +79,15 @@ export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
   ctaUrl: 'https://snipandglow.com/dashboard/customers',
   footerNote: 'Find it on any client\u2019s profile under Wallet \u2192 Add Balance.',
 };
+
+/**
+ * Ready-made campaigns the admin can load in one click. Add new feature
+ * announcements here and they appear as preset buttons in the admin UI.
+ */
+export const CAMPAIGN_PRESETS: { key: string; label: string; campaign: AnnouncementCampaign }[] = [
+  { key: 'wallet', label: 'Customer Wallet', campaign: DEFAULT_CAMPAIGN },
+  { key: 'online_renewal', label: 'Online Renewals', campaign: ONLINE_RENEWAL_CAMPAIGN },
+];
 
 function esc(s = ''): string {
   return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;');
