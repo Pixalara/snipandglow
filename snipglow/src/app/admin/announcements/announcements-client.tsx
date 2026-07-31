@@ -143,8 +143,8 @@ export function AnnouncementsClient({
   return (
     <div className="space-y-6">
       {/* Header */}
-      <div className="flex items-start justify-between gap-3">
-        <div>
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
+        <div className="min-w-0">
           <h1 className="text-2xl font-bold text-foreground flex items-center gap-2">
             <Mail className="size-6 text-fuchsia-500" /> Announcements
           </h1>
@@ -263,7 +263,7 @@ export function AnnouncementsClient({
             </div>
           </div>
           <div className="rounded-xl overflow-hidden border border-border bg-[#f1f5f9]">
-            <iframe title="Email preview" srcDoc={previewHtml} className="w-full h-[560px] bg-white" />
+            <iframe title="Email preview" srcDoc={previewHtml} className="w-full h-[360px] sm:h-[560px] bg-white" />
           </div>
           {/* Test send */}
           <div className="mt-4 flex flex-col sm:flex-row gap-2 sm:items-center">
@@ -310,7 +310,7 @@ export function AnnouncementsClient({
           <div className="text-sm text-muted-foreground">{selected.size} selected · {recipients.length} mailable</div>
         </div>
 
-        <div className="max-h-[52vh] overflow-y-auto">
+        <div className="max-h-[52vh] overflow-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-card">
               <tr className="border-b border-border text-left">
@@ -381,7 +381,7 @@ export function AnnouncementsClient({
               Clear log
             </button>
           </div>
-          <div className="max-h-[40vh] overflow-y-auto">
+          <div className="max-h-[40vh] overflow-auto">
             <table className="w-full text-sm">
               <thead className="sticky top-0 bg-card">
                 <tr className="border-b border-border text-left">
@@ -450,7 +450,7 @@ export function AnnouncementsClient({
                     {loadingRows && !expandedRows[h.id] ? (
                       <p className="px-4 py-4 text-sm text-muted-foreground flex items-center gap-2"><Loader2 className="size-4 animate-spin" /> Loading recipients…</p>
                     ) : (
-                      <div className="max-h-[40vh] overflow-y-auto">
+                      <div className="max-h-[40vh] overflow-auto">
                         <table className="w-full text-sm">
                           <thead className="sticky top-0 bg-muted/40">
                             <tr className="text-left">

@@ -55,7 +55,63 @@ export default async function AdminTenantsPage() {
       </div>
 
       <div className="rounded-xl border border-border bg-card overflow-hidden">
-        <div className="overflow-x-auto">
+        {/* Mobile: stacked cards — 13 columns can't work on a phone */}
+        <div className="divide-y divide-border lg:hidden">
+          {(tenants ?? []).map((t: any) => (
+            <Link
+              key={t.id}
+              href={`/admin/tenants/${t.id}`}
+              className="block p-4 transition-colors hover:bg-accent/40"
+            >
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-foreground">{t.name}</p>
+                  <p className="font-mono text-[11px] text-muted-foreground">{t.tenant_code}</p>
+                </div>
+                <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                  t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
+                  t.subscription_status === 'trial' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
+                  t.subscription_status === 'expired' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
+                  'bg-muted text-muted-foreground'
+                }`}>
+                  {t.subscription_status}
+                </span>
+              </div>
+
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-xs text-muted-foreground">
+                <span className="text-foreground/80">{t.owner_name || '—'}</span>
+                {t.phone && <span>{t.phone}</span>}
+                <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] text-foreground/80">
+                  {planLabel(t.plan_tier)}
+                </span>
+                <span>{billingCycleLabel(getBillingCycle(t.settings))}</span>
+              </div>
+
+              {/* Compact stat strip */}
+              <div className="mt-2.5 grid grid-cols-4 gap-2">
+                {[
+                  { label: 'Clients', value: customerCounts[t.id] || 0 },
+                  { label: 'Appts', value: appointmentCounts[t.id] || 0 },
+                  { label: 'Services', value: serviceCounts[t.id] || 0 },
+                  { label: 'Staff', value: staffCounts[t.id] || 0 },
+                ].map((s) => (
+                  <div key={s.label} className="rounded-lg bg-muted/50 px-2 py-1.5 text-center">
+                    <p className="text-sm font-semibold text-foreground leading-none">{s.value}</p>
+                    <p className="text-[10px] text-muted-foreground mt-0.5">{s.label}</p>
+                  </div>
+                ))}
+              </div>
+
+              <p className="mt-2 text-[11px] text-muted-foreground">Joined {formatISTDate(t.created_at)}</p>
+            </Link>
+          ))}
+          {(tenants ?? []).length === 0 && (
+            <p className="px-4 py-8 text-center text-sm text-muted-foreground">No tenants yet</p>
+          )}
+        </div>
+
+        {/* Desktop: full table */}
+        <div className="hidden overflow-x-auto lg:block">
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border text-left">

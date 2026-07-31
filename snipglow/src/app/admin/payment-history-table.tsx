@@ -40,7 +40,54 @@ export function PaymentHistoryTable({
   emptyText?: string;
 }) {
   return (
-    <div className="overflow-x-auto">
+    <>
+      {/* Mobile: stacked cards (a 6-column table is unusable on a phone) */}
+      <div className="divide-y divide-border sm:hidden">
+        {rows.map((r) => {
+          const notes = (r.notes ?? {}) as Record<string, unknown>;
+          return (
+            <div key={r.id} className="p-4">
+              <div className="flex items-start justify-between gap-3">
+                <div className="min-w-0">
+                  {showTenant && (
+                    <Link
+                      href={`/admin/tenants/${r.tenant_id}`}
+                      className="block truncate text-sm font-semibold text-foreground hover:text-blue-500"
+                    >
+                      {r.salon_name ?? '—'}
+                    </Link>
+                  )}
+                  <p className="text-xs text-muted-foreground">{formatISTDateTime(r.created_at)}</p>
+                </div>
+                <div className="shrink-0 text-right">
+                  <p className="text-sm font-bold text-foreground">₹{(r.amount / 100).toLocaleString('en-IN')}</p>
+                  <span className={`inline-block mt-0.5 text-[10px] px-2 py-0.5 rounded-full font-medium ${statusClass(r.status)}`}>
+                    {r.status}
+                  </span>
+                </div>
+              </div>
+              <div className="mt-2 flex flex-wrap items-center gap-x-3 gap-y-1 text-[11px] text-muted-foreground">
+                <span>{r.months} mo · {r.billing_cycle}</span>
+                {notes.custom_rate ? (
+                  <span className="rounded-full bg-amber-500/15 px-1.5 py-0.5 font-semibold text-amber-600 dark:text-amber-400">CUSTOM</span>
+                ) : null}
+                {notes.test_charge ? (
+                  <span className="rounded-full bg-blue-500/15 px-1.5 py-0.5 font-semibold text-blue-600 dark:text-blue-400">TEST</span>
+                ) : null}
+              </div>
+              <p className="mt-1.5 font-mono text-[10px] text-muted-foreground break-all">
+                {r.razorpay_payment_id ?? r.razorpay_order_id}
+              </p>
+            </div>
+          );
+        })}
+        {rows.length === 0 && (
+          <p className="px-4 py-8 text-center text-sm text-muted-foreground">{emptyText}</p>
+        )}
+      </div>
+
+      {/* Tablet & desktop: full table */}
+      <div className="hidden overflow-x-auto sm:block">
       <table className="w-full text-sm">
         <thead>
           <tr className="border-b border-border text-left">
@@ -114,6 +161,7 @@ export function PaymentHistoryTable({
           )}
         </tbody>
       </table>
-    </div>
+      </div>
+    </>
   );
 }

@@ -339,14 +339,15 @@ function Section({ title, children }: { title: string; children: React.ReactNode
 }
 
 function Grid({ children }: { children: React.ReactNode }) {
-  return <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{children}</div>;
+  // Single column on phones so long values (emails, IDs) stay readable.
+  return <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">{children}</div>;
 }
 
 function Field({ label, value }: { label: string; value: string }) {
   return (
-    <div>
+    <div className="min-w-0">
       <p className="text-xs text-muted-foreground">{label}</p>
-      <p className="text-sm text-foreground font-medium mt-0.5">{value}</p>
+      <p className="text-sm text-foreground font-medium mt-0.5 break-words">{value}</p>
     </div>
   );
 }
