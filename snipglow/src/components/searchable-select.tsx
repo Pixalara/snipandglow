@@ -1,14 +1,19 @@
 'use client';
 
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
+import { createPortal } from 'react-dom';
 import { ChevronDown, Search, X } from 'lucide-react';
 
 // =============================================================================
 // SearchableSelect — combobox that works BOTH ways:
 //   • Click the field / chevron  → browse the full list (classic dropdown)
-//   • Start typing               → instantly filter by name (search)
+//   • Start typing               → instantly filter by name OR category
 //
-// Groups are optional. Keyboard: ArrowUp/Down to move, Enter to pick, Esc to close.
+// The option list is rendered in a PORTAL with fixed positioning so it can never
+// be clipped by an ancestor's `overflow: hidden` (cards) or `overflow-y: auto`
+// (modal bodies) — which previously hid it behind the next section.
+//
+// Keyboard: ArrowUp/Down to move, Enter to pick, Esc to close.
 // =============================================================================
 
 export interface SelectOption {
@@ -31,12 +36,13 @@ interface Props {
   value: string;
   onChange: (value: string) => void;
   placeholder?: string;
-  /** Text shown when a search yields nothing. */
   emptyText?: string;
   disabled?: boolean;
   className?: string;
   ariaLabel?: string;
 }
+
+const MAX_LIST_H = 264; // px
 
 export function SearchableSelect({
   options,
@@ -51,19 +57,20 @@ export function SearchableSelect({
   const [open, setOpen] = useState(false);
   const [query, setQuery] = useState('');
   const [activeIdx, setActiveIdx] = useState(0);
+  const [rect, setRect] = useState<{ left: number; top: number; width: number; openUp: boolean } | null>(null);
+  const [mounted, setMounted] = useState(false);
+
   const wrapRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
 
+  useEffect(() => setMounted(true), []);
+
   const selected = options.find((o) => o.value === value) ?? null;
 
-  // Filter on the typed query (empty query => full list, i.e. dropdown mode).
-  // Matches name, category, and the hint text — so "hair" returns everything in
-  // the Hair category as well as anything with "hair" in the name.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
-    // Support multi-word queries: every term must match somewhere.
     const terms = q.split(/\s+/).filter(Boolean);
     return options.filter((o) => {
       const haystack = `${o.label} ${o.category ?? ''} ${o.hint ?? ''} ${o.group ?? ''}`.toLowerCase();
@@ -71,16 +78,49 @@ export function SearchableSelect({
     });
   }, [options, query]);
 
-  // Close on outside click.
+  /** Position the portal list against the trigger, flipping up if needed. */
+  const place = useCallback(() => {
+    const el = wrapRef.current;
+    if (!el) return;
+    const r = el.getBoundingClientRect();
+    const below = window.innerHeight - r.bottom;
+    const openUp = below < Math.min(MAX_LIST_H, 200) && r.top > below;
+    setRect({
+      left: r.left,
+      top: openUp ? r.top : r.bottom,
+      width: r.width,
+      openUp,
+    });
+  }, []);
+
   useEffect(() => {
-    function onDocClick(e: MouseEvent) {
-      if (wrapRef.current && !wrapRef.current.contains(e.target as Node)) {
-        setOpen(false);
-        setQuery('');
-      }
+    if (!open) return;
+    place();
+    // Track scrolling in ANY ancestor (capture) plus window resize.
+    const onMove = () => place();
+    window.addEventListener('scroll', onMove, true);
+    window.addEventListener('resize', onMove);
+    return () => {
+      window.removeEventListener('scroll', onMove, true);
+      window.removeEventListener('resize', onMove);
+    };
+  }, [open, place]);
+
+  // Close on outside click — must also treat the portal list as "inside".
+  useEffect(() => {
+    function onDocPointerDown(e: MouseEvent | TouchEvent) {
+      const t = e.target as Node;
+      if (wrapRef.current?.contains(t)) return;
+      if (listRef.current?.contains(t)) return;
+      setOpen(false);
+      setQuery('');
     }
-    document.addEventListener('mousedown', onDocClick);
-    return () => document.removeEventListener('mousedown', onDocClick);
+    document.addEventListener('mousedown', onDocPointerDown);
+    document.addEventListener('touchstart', onDocPointerDown);
+    return () => {
+      document.removeEventListener('mousedown', onDocPointerDown);
+      document.removeEventListener('touchstart', onDocPointerDown);
+    };
   }, []);
 
   useEffect(() => {
@@ -115,8 +155,67 @@ export function SearchableSelect({
     }
   }
 
-  // Render list with optional group headings.
   let lastGroup: string | undefined;
+
+  const list = (
+    <div
+      ref={listRef}
+      role="listbox"
+      style={{
+        position: 'fixed',
+        left: rect?.left ?? -9999,
+        top: rect?.openUp ? undefined : rect?.top,
+        bottom: rect?.openUp ? window.innerHeight - (rect?.top ?? 0) : undefined,
+        width: rect?.width,
+        maxHeight: MAX_LIST_H,
+        zIndex: 9999,
+      }}
+      className="mt-1 overflow-y-auto rounded-xl border border-border bg-card shadow-xl"
+    >
+      {filtered.length === 0 ? (
+        <p className="px-3 py-3 text-sm text-muted-foreground">{emptyText}</p>
+      ) : (
+        filtered.map((opt, i) => {
+          const showGroup = opt.group && opt.group !== lastGroup;
+          lastGroup = opt.group;
+          return (
+            <div key={opt.value}>
+              {showGroup && (
+                <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
+                  {opt.group}
+                </p>
+              )}
+              <button
+                type="button"
+                role="option"
+                aria-selected={opt.value === value}
+                disabled={opt.disabled}
+                onMouseEnter={() => setActiveIdx(i)}
+                onClick={() => pick(opt)}
+                className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors ${
+                  opt.disabled
+                    ? 'cursor-not-allowed text-muted-foreground/50'
+                    : i === activeIdx
+                      ? 'bg-muted text-foreground'
+                      : 'text-foreground hover:bg-muted/60'
+                } ${opt.value === value ? 'font-medium' : ''}`}
+              >
+                <span className="flex min-w-0 items-center gap-2">
+                  <span className="min-w-0 truncate">{opt.label}</span>
+                  {opt.category && (
+                    <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                      {opt.category}
+                    </span>
+                  )}
+                </span>
+                {opt.hint && <span className="shrink-0 text-xs text-muted-foreground">{opt.hint}</span>}
+              </button>
+            </div>
+          );
+        })
+      )}
+    </div>
+  );
 
   return (
     <div ref={wrapRef} className={`relative ${className}`}>
@@ -135,9 +234,9 @@ export function SearchableSelect({
           disabled={disabled}
           value={open ? query : selected?.label ?? ''}
           placeholder={selected ? selected.label : placeholder}
-          onChange={(e) => { setQuery(e.target.value); setOpen(true); }}
-          onFocus={() => setOpen(true)}
-          onClick={() => setOpen(true)}
+          onChange={(e) => { setQuery(e.target.value); setOpen(true); place(); }}
+          onFocus={() => { setOpen(true); place(); }}
+          onClick={() => { setOpen(true); place(); }}
           onKeyDown={onKeyDown}
           className="min-w-0 flex-1 bg-transparent text-sm text-foreground outline-none placeholder:text-muted-foreground"
         />
@@ -154,7 +253,7 @@ export function SearchableSelect({
         <button
           type="button"
           disabled={disabled}
-          onClick={() => { setOpen((o) => !o); setQuery(''); inputRef.current?.focus(); }}
+          onClick={() => { setOpen((o) => !o); setQuery(''); place(); inputRef.current?.focus(); }}
           className="shrink-0 text-muted-foreground hover:text-foreground"
           aria-label="Show all options"
         >
@@ -162,56 +261,7 @@ export function SearchableSelect({
         </button>
       </div>
 
-      {open && (
-        <div
-          ref={listRef}
-          role="listbox"
-          className="absolute z-50 mt-1 max-h-64 w-full overflow-y-auto rounded-xl border border-border bg-card shadow-lg"
-        >
-          {filtered.length === 0 ? (
-            <p className="px-3 py-3 text-sm text-muted-foreground">{emptyText}</p>
-          ) : (
-            filtered.map((opt, i) => {
-              const showGroup = opt.group && opt.group !== lastGroup;
-              lastGroup = opt.group;
-              return (
-                <div key={opt.value}>
-                  {showGroup && (
-                    <p className="px-3 pt-2 pb-1 text-[10px] font-semibold uppercase tracking-wide text-muted-foreground">
-                      {opt.group}
-                    </p>
-                  )}
-                  <button
-                    type="button"
-                    role="option"
-                    aria-selected={opt.value === value}
-                    disabled={opt.disabled}
-                    onMouseEnter={() => setActiveIdx(i)}
-                    onClick={() => pick(opt)}
-                    className={`flex w-full items-center justify-between gap-2 px-3 py-2 text-left text-sm transition-colors ${
-                      opt.disabled
-                        ? 'cursor-not-allowed text-muted-foreground/50'
-                        : i === activeIdx
-                          ? 'bg-muted text-foreground'
-                          : 'text-foreground hover:bg-muted/60'
-                    } ${opt.value === value ? 'font-medium' : ''}`}
-                  >
-                    <span className="flex min-w-0 items-center gap-2">
-                      <span className="min-w-0 truncate">{opt.label}</span>
-                      {opt.category && (
-                        <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
-                          {opt.category}
-                        </span>
-                      )}
-                    </span>
-                    {opt.hint && <span className="shrink-0 text-xs text-muted-foreground">{opt.hint}</span>}
-                  </button>
-                </div>
-              );
-            })
-          )}
-        </div>
-      )}
+      {open && mounted && rect && createPortal(list, document.body)}
     </div>
   );
 }
