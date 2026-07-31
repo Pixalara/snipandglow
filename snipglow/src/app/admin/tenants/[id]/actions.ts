@@ -419,3 +419,82 @@ export async function adminSetSubscriptionEnd(
   revalidatePath(`/admin/tenants/${tenantId}`);
   return { success: true };
 }
+
+// =============================================================================
+// Admin — per-tenant negotiated pricing.
+//
+// Sets/clears a discounted rate for one salon. Once saved, BOTH the price shown
+// in their dashboard AND the Razorpay order amount use this rate instead of the
+// plan list price. Pass null to clear an override and revert to list pricing.
+// =============================================================================
+
+export async function adminUpdateTenantPricing(
+  tenantId: string,
+  input: {
+    /** ₹/month charged when billed monthly. null → use list price. */
+    custom_monthly_price: number | null;
+    /** ₹/month (effective) charged when billed yearly. null → use list price. */
+    custom_yearly_per_month: number | null;
+  }
+): Promise<{ success: boolean; error?: string }> {
+  const user = await requireAdmin();
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  const clean = (v: number | null): number | null => {
+    if (v === null || v === undefined) return null;
+    const n = Math.round(Number(v));
+    if (!Number.isFinite(n) || n <= 0) return null;
+    if (n > 1_000_000) return null; // guard against fat-finger entries
+    return n;
+  };
+
+  const monthly = clean(input.custom_monthly_price);
+  const yearlyPerMonth = clean(input.custom_yearly_per_month);
+
+  const admin = createAdminClient();
+  const { data: tenant } = await (admin
+    .from('tenants' as any)
+    .select('settings, name, plan_tier')
+    .eq('id', tenantId)
+    .single() as any);
+
+  if (!tenant) return { success: false, error: 'Tenant not found.' };
+
+  const currentSettings = (tenant.settings as Record<string, unknown>) ?? {};
+  const updatedSettings: Record<string, unknown> = { ...currentSettings };
+
+  // Store when set; remove the key entirely when cleared.
+  if (monthly === null) delete updatedSettings.custom_monthly_price;
+  else updatedSettings.custom_monthly_price = monthly;
+
+  if (yearlyPerMonth === null) delete updatedSettings.custom_yearly_per_month;
+  else updatedSettings.custom_yearly_per_month = yearlyPerMonth;
+
+  const { error } = await (admin
+    .from('tenants' as any)
+    .update({ settings: updatedSettings })
+    .eq('id', tenantId) as any);
+
+  if (error) {
+    console.error('adminUpdateTenantPricing error:', error);
+    return { success: false, error: 'Failed to save pricing.' };
+  }
+
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'update_tenant_pricing',
+    targetType: 'tenant',
+    targetId: tenantId,
+    metadata: {
+      tenant_name: tenant.name,
+      plan_tier: tenant.plan_tier,
+      custom_monthly_price: monthly,
+      custom_yearly_per_month: yearlyPerMonth,
+    },
+  });
+
+  revalidatePath(`/admin/tenants/${tenantId}`);
+  revalidatePath('/admin/payments');
+  return { success: true };
+}

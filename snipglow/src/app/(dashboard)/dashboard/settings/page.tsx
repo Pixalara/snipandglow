@@ -14,7 +14,7 @@ import {
   ShieldCheck,
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
-import { getSubscriptionState, planLabel, planMonthlyPrice, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
+import { getSubscriptionState, planLabel, effectiveMonthlyPrice, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
 import { RenewButton } from './renew-button';
 
 export default async function SettingsPage() {
@@ -83,7 +83,8 @@ export default async function SettingsPage() {
   // Plan + billing cycle
   const planTier = (tenant as any).plan_tier ?? 'starter';
   const billingCycle = getBillingCycle(settings);
-  const planMonthly = planMonthlyPrice(planTier, billingCycle);
+  // Uses the salon's negotiated rate when the admin has set one.
+  const planMonthly = effectiveMonthlyPrice(planTier, billingCycle, settings);
 
   // Salon profile data
   const salonProfile = {

@@ -12,6 +12,7 @@ const navItems = [
   { label: 'Tenants', href: '/admin/tenants', icon: Building2 },
   { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
+  { label: 'Payments', href: '/admin/payments', icon: IndianRupee },
   { label: 'Announcements', href: '/admin/announcements', icon: Mail },
   { label: 'Support Tickets', href: '/admin/support', icon: Headphones },
   { label: 'WhatsApp Setup', href: '/admin/whatsapp-setup', icon: MessageCircle, badgeKey: 'pendingSetupRequests' as const },

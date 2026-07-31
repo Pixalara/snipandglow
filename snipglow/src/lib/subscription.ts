@@ -143,6 +143,84 @@ export function getBillingCycle(settings: Record<string, unknown> | null | undef
   return (settings?.billing_cycle as string) === 'monthly' ? 'monthly' : 'yearly';
 }
 
+// =============================================================================
+// Per-tenant negotiated pricing (admin override).
+//
+// Some salons are onboarded on a discounted rate. The admin stores an override
+// in `tenants.settings`; when present it REPLACES the list price everywhere the
+// customer sees or pays a price (dashboard label + Razorpay order amount).
+//
+//   settings.custom_monthly_price     ₹/month when billed monthly
+//   settings.custom_yearly_per_month  ₹/month (effective) when billed yearly
+//
+// Either may be set independently. Unset/invalid → fall back to PLAN_PRICING.
+// =============================================================================
+
+/** Read a positive rupee override from settings, else null. */
+function overrideValue(settings: Record<string, unknown> | null | undefined, key: string): number | null {
+  const raw = settings?.[key];
+  const n = typeof raw === 'string' ? parseFloat(raw) : typeof raw === 'number' ? raw : NaN;
+  return Number.isFinite(n) && n > 0 ? Math.round(n) : null;
+}
+
+export interface CustomPricing {
+  monthly: number | null;
+  yearlyPerMonth: number | null;
+}
+
+export function getCustomPricing(settings: Record<string, unknown> | null | undefined): CustomPricing {
+  return {
+    monthly: overrideValue(settings, 'custom_monthly_price'),
+    yearlyPerMonth: overrideValue(settings, 'custom_yearly_per_month'),
+  };
+}
+
+/** True when this tenant is on a negotiated rate for the given cycle. */
+export function hasCustomPrice(
+  settings: Record<string, unknown> | null | undefined,
+  cycle: BillingCycle
+): boolean {
+  const c = getCustomPricing(settings);
+  return (cycle === 'yearly' ? c.yearlyPerMonth : c.monthly) !== null;
+}
+
+/**
+ * The ₹/month this tenant actually pays — custom rate if set, else list price.
+ * This is the single source of truth for both display and charging.
+ */
+export function effectiveMonthlyPrice(
+  tier: string | null | undefined,
+  cycle: BillingCycle,
+  settings?: Record<string, unknown> | null
+): number {
+  const custom = getCustomPricing(settings);
+  if (cycle === 'yearly' && custom.yearlyPerMonth) return custom.yearlyPerMonth;
+  if (cycle === 'monthly' && custom.monthly) return custom.monthly;
+  return planMonthlyPrice(tier, cycle);
+}
+
+/** Total charged for a full year (custom rate aware). */
+export function effectiveYearlyTotal(
+  tier: string | null | undefined,
+  settings?: Record<string, unknown> | null
+): number {
+  return effectiveMonthlyPrice(tier, 'yearly', settings) * 12;
+}
+
+/**
+ * The amount to charge right now, in RUPEES, for one billing period.
+ * monthly → 1 month · yearly → 12 months.
+ */
+export function amountPayable(
+  tier: string | null | undefined,
+  cycle: BillingCycle,
+  settings?: Record<string, unknown> | null
+): number {
+  return cycle === 'yearly'
+    ? effectiveYearlyTotal(tier, settings)
+    : effectiveMonthlyPrice(tier, 'monthly', settings);
+}
+
 export function billingCycleLabel(cycle: BillingCycle): string {
   return cycle === 'monthly' ? 'Monthly' : 'Yearly';
 }

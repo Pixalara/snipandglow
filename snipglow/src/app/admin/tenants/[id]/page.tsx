@@ -7,8 +7,16 @@ import Link from 'next/link';
 import { AdminGstEditor } from './gst-editor';
 import { AdminWhatsAppActivator } from './whatsapp-activator';
 import { AdminPlanEditor } from './plan-editor';
+import { PricingEditor } from './pricing-editor';
+import { PaymentHistoryTable, type PaymentRow } from '../../payment-history-table';
 import { toAdminWhatsAppView } from '@/lib/whatsapp/redaction';
-import { planLabel, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
+import {
+  planLabel,
+  getBillingCycle,
+  billingCycleLabel,
+  planPricing,
+  getCustomPricing,
+} from '@/lib/subscription';
 
 // =============================================================================
 // Admin — Tenant Detail Page
@@ -36,6 +44,16 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
     (admin.from('whatsapp_setup_requests' as any).select('contact_phone, contact_name, notes, status, created_at').eq('tenant_id', tenantId).order('created_at', { ascending: false }).limit(1).maybeSingle() as any),
     (admin as any).from('invoices').select('total, created_at').eq('tenant_id', tenantId).neq('invoice_type', 'wallet_recharge'),
   ]);
+
+  // Subscription payment history for this salon.
+  const { data: paymentsRes } = await (admin
+    .from('payment_orders' as any)
+    .select('*')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(100) as any);
+  const payments = (paymentsRes ?? []) as PaymentRow[];
+  const paidTotal = payments.filter((p) => p.status === 'paid').reduce((s, p) => s + p.amount, 0) / 100;
 
   await logAdminAction({
     adminUserId: user.id,
@@ -195,6 +213,28 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         subscriptionStatus={tenant.subscription_status}
         subscriptionEnd={tenant.subscription_end ?? null}
       />
+
+      {/* Payment Settings — negotiated rate for this salon */}
+      <PricingEditor
+        tenantId={tenantId}
+        planName={planLabel(tenant.plan_tier)}
+        listMonthly={planPricing(tenant.plan_tier).monthly}
+        listYearlyPerMonth={planPricing(tenant.plan_tier).yearlyPerMonth}
+        customMonthly={getCustomPricing(tenant.settings).monthly}
+        customYearlyPerMonth={getCustomPricing(tenant.settings).yearlyPerMonth}
+        billingCycle={getBillingCycle(tenant.settings)}
+      />
+
+      {/* Payment history for this salon */}
+      <div className="rounded-xl border border-border bg-card overflow-hidden">
+        <div className="border-b border-border px-6 py-4 bg-muted/30 flex items-center justify-between gap-2">
+          <h2 className="text-sm font-semibold text-foreground">Payment History</h2>
+          <span className="text-xs text-muted-foreground">
+            {payments.filter((p) => p.status === 'paid').length} paid · ₹{paidTotal.toLocaleString('en-IN')} collected
+          </span>
+        </div>
+        <PaymentHistoryTable rows={payments} emptyText="No subscription payments from this salon yet" />
+      </div>
 
       {/* WhatsApp Settings — redaction-safe; never renders any access token */}
       <Section title="WhatsApp Settings">
