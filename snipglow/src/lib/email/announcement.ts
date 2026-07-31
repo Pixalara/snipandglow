@@ -117,7 +117,7 @@ export function renderAnnouncementEmail(
     .map(
       (b) => `
         <tr>
-          <td class="sg-tick" width="34" style="width:34px;padding:0 0 14px 0;vertical-align:top;">
+          <td class="sg-tick" width="26" style="width:26px;padding:0 0 14px 0;vertical-align:top;">
             <!-- Tick rendered as a fixed-size table cell: mobile clients strip
                  line-height on divs, which made the glyph spill outside the box. -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="26" style="width:26px;border-collapse:collapse;">
@@ -128,9 +128,9 @@ export function renderAnnouncementEmail(
               </tr>
             </table>
           </td>
-          <td style="padding:0 0 14px 0;vertical-align:top;">
+          <td class="sg-bullet-text" style="padding:0 0 14px 14px;vertical-align:top;">
             <div style="font-family:Arial,Helvetica,sans-serif;font-size:15px;font-weight:600;line-height:1.35;color:#0f172a;">${esc(b.title)}</div>
-            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:400;line-height:1.5;color:#475569;margin-top:2px;">${esc(b.body)}</div>
+            <div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;font-weight:400;line-height:1.5;color:#475569;margin-top:4px;">${esc(b.body)}</div>
           </td>
         </tr>`
     )
@@ -169,6 +169,8 @@ export function renderAnnouncementEmail(
     .sg-badge   { margin-top:10px !important; }
     /* Keep the tick square from being squeezed or stretched. */
     .sg-tick    { width:26px !important; min-width:26px !important; }
+    /* Preserve breathing room between the tick and its text. */
+    .sg-bullet-text { padding-left:12px !important; }
   }
 </style>
 </head>

@@ -46,6 +46,13 @@ describe('announcement templates', () => {
     expect(tickCells.length).toBe(ONLINE_RENEWAL_CAMPAIGN.bullets.length);
   });
 
+  it('keeps a gap between the tick and its text', () => {
+    const { html } = renderAnnouncementEmail(ONLINE_RENEWAL_CAMPAIGN, { salonName: 'X' });
+    // Text cell carries explicit left padding so the copy never touches the tick.
+    expect(html).toContain('class="sg-bullet-text" style="padding:0 0 14px 14px;');
+    expect(html).toContain('.sg-bullet-text { padding-left:12px !important; }');
+  });
+
   it('includes mobile media queries and responsive hooks', () => {
     const { html } = renderAnnouncementEmail(ONLINE_RENEWAL_CAMPAIGN, { salonName: 'X' });
     expect(html).toContain('@media only screen and (max-width:600px)');
