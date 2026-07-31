@@ -6,6 +6,8 @@ import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
+import { SearchableSelect } from '@/components/searchable-select';
+import { Scissors, X } from 'lucide-react';
 import {
   createAppointment,
   getAvailableSlots,
@@ -290,54 +292,73 @@ export default function NewAppointmentPage() {
                 Services <span className="text-destructive">*</span>
               </label>
 
-              {/* Selected services chips */}
-              {selectedServices.length > 0 && (
-                <div className="flex flex-wrap gap-2 mb-2">
-                  {selectedServices.map((svc) => (
-                    <span
-                      key={svc.id}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-pink-50 dark:bg-pink-900/20 border border-pink-200 dark:border-pink-800 px-3 py-1 text-xs font-medium text-pink-700 dark:text-pink-300"
-                    >
-                      {svc.name}
-                      <button
-                        type="button"
-                        onClick={() => {
-                          setSelectedServiceIds((prev) => prev.filter((id) => id !== svc.id));
-                          setSelectedSlot('');
-                        }}
-                        className="ml-0.5 text-pink-500 hover:text-pink-700 dark:hover:text-pink-200"
-                        aria-label={`Remove ${svc.name}`}
-                      >
-                        ×
-                      </button>
-                    </span>
-                  ))}
-                </div>
-              )}
-
-              {/* Service dropdown to add */}
-              <select
+              {/* Search or browse — matches by name AND category ("hair", "skin") */}
+              <SearchableSelect
                 value=""
-                onChange={(e) => {
-                  if (e.target.value && !selectedServiceIds.includes(e.target.value)) {
-                    setSelectedServiceIds((prev) => [...prev, e.target.value]);
+                onChange={(id) => {
+                  if (id && !selectedServiceIds.includes(id)) {
+                    setSelectedServiceIds((prev) => [...prev, id]);
                     setSelectedSlot('');
                   }
                 }}
-                className="h-8 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm text-foreground transition-colors outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
-                aria-label="Add a service"
-              >
-                <option value="">{selectedServiceIds.length === 0 ? 'Select services...' : '+ Add another service'}</option>
-                {services.filter((svc) => !selectedServiceIds.includes(svc.id)).map((svc) => (
-                  <option key={svc.id} value={svc.id}>
-                    {svc.name} — ₹{svc.price}
-                  </option>
-                ))}
-              </select>
+                placeholder={selectedServiceIds.length === 0 ? 'Search or browse services…' : 'Add another service…'}
+                emptyText="No service found"
+                ariaLabel="Search or select a service"
+                options={services
+                  .filter((svc) => !selectedServiceIds.includes(svc.id))
+                  .map((svc) => ({
+                    value: svc.id,
+                    label: svc.name,
+                    hint: `₹${svc.price.toLocaleString('en-IN')}`,
+                    category: svc.category ?? null,
+                  }))}
+              />
+
+              {/* Selected services — clear cards with price + running total */}
               {selectedServices.length > 0 && (
-                <p className="text-xs text-muted-foreground">
-                  {selectedServices.length} service{selectedServices.length !== 1 ? 's' : ''} selected
-                </p>
+                <div className="mt-2 space-y-1.5">
+                  {selectedServices.map((svc) => (
+                    <div
+                      key={svc.id}
+                      className="flex items-center justify-between gap-2 rounded-xl border border-pink-200/70 dark:border-pink-800/40 bg-pink-50/60 dark:bg-pink-900/15 px-3 py-2"
+                    >
+                      <span className="flex min-w-0 items-center gap-2">
+                        <Scissors className="size-3.5 shrink-0 text-pink-500" />
+                        <span className="truncate text-sm font-medium text-foreground">{svc.name}</span>
+                        {svc.category && (
+                          <span className="shrink-0 rounded-full bg-white/70 dark:bg-white/10 px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                            {svc.category}
+                          </span>
+                        )}
+                      </span>
+                      <span className="flex shrink-0 items-center gap-2">
+                        <span className="text-sm font-semibold text-foreground">
+                          ₹{svc.price.toLocaleString('en-IN')}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => {
+                            setSelectedServiceIds((prev) => prev.filter((id) => id !== svc.id));
+                            setSelectedSlot('');
+                          }}
+                          className="text-muted-foreground transition-colors hover:text-red-600"
+                          aria-label={`Remove ${svc.name}`}
+                        >
+                          <X className="size-4" />
+                        </button>
+                      </span>
+                    </div>
+                  ))}
+
+                  <div className="flex items-center justify-between rounded-xl bg-muted/50 px-3 py-2">
+                    <span className="text-xs font-medium text-muted-foreground">
+                      {selectedServices.length} service{selectedServices.length !== 1 ? 's' : ''} selected
+                    </span>
+                    <span className="text-sm font-bold text-foreground">
+                      ₹{selectedServices.reduce((sum, s) => sum + s.price, 0).toLocaleString('en-IN')}
+                    </span>
+                  </div>
+                </div>
               )}
             </div>
 
