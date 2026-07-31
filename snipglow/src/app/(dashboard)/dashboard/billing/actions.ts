@@ -65,6 +65,8 @@ export interface BillableProduct {
   selling_price: number;
   stock_quantity: number;
   unit: string;
+  /** Used so billing search can match by category (e.g. "hair", "skin"). */
+  category: string | null;
 }
 
 export async function getBillableProducts(): Promise<BillableProduct[]> {
@@ -74,7 +76,7 @@ export async function getBillableProducts(): Promise<BillableProduct[]> {
 
   const { data, error } = await (supabase as any)
     .from('products')
-    .select('id, name, selling_price, stock_quantity, unit')
+    .select('id, name, selling_price, stock_quantity, unit, category')
     .eq('is_active', true)
     .order('name', { ascending: true });
 

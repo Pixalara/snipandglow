@@ -963,6 +963,8 @@ export interface BillingProduct {
   selling_price: number;
   stock_quantity: number;
   unit: string;
+  /** Lets billing search match by category (e.g. "hair", "skin"). */
+  category: string | null;
 }
 
 export async function getActiveProducts(): Promise<BillingProduct[]> {
@@ -970,7 +972,7 @@ export async function getActiveProducts(): Promise<BillingProduct[]> {
 
   const { data } = await (supabase as any)
     .from('products')
-    .select('id, name, selling_price, stock_quantity, unit')
+    .select('id, name, selling_price, stock_quantity, unit, category')
     .eq('is_active', true)
     .order('name');
 

@@ -718,14 +718,14 @@ function CompleteAndBillModal({
   }
 
   // Catalog + selections for cross-sell / staff attribution.
-  const [catalog, setCatalog] = useState<{ id: string; name: string; price: number }[]>([]);
+  const [catalog, setCatalog] = useState<{ id: string; name: string; price: number; category: string | null }[]>([]);
   const [employees, setEmployees] = useState<{ id: string; name: string; role: string }[]>([]);
   const [selectedServiceIds, setSelectedServiceIds] = useState<string[]>(appointment.service_ids ?? []);
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [addServiceId, setAddServiceId] = useState<string>('');
   const [loadingLists, setLoadingLists] = useState(true);
   // Retail products sold alongside the appointment.
-  const [productCatalog, setProductCatalog] = useState<{ id: string; name: string; price: number; stock: number; unit: string }[]>([]);
+  const [productCatalog, setProductCatalog] = useState<{ id: string; name: string; price: number; stock: number; unit: string; category: string | null }[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<{ id: string; name: string; price: number; quantity: number; maxStock: number; discount_pct: number }[]>([]);
   const [addProductId, setAddProductId] = useState<string>('');
 
@@ -757,8 +757,8 @@ function CompleteAndBillModal({
     async function load() {
       setLoadingLists(true);
       const [svc, emp, prods] = await Promise.all([getActiveServices(), getActiveEmployees(), getActiveProducts()]);
-      setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price })));
-      setProductCatalog(prods.map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), stock: Number(p.stock_quantity), unit: p.unit })));
+      setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price, category: s.category ?? null })));
+      setProductCatalog(prods.map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), stock: Number(p.stock_quantity), unit: p.unit, category: p.category ?? null })));
       const emps = emp.map((e) => ({ id: e.id, name: e.name, role: e.role }));
       // Owner first, then the rest by name.
       emps.sort((a, b) => {
@@ -1015,7 +1015,7 @@ function CompleteAndBillModal({
                 ariaLabel="Search or select a service"
                 options={catalog
                   .filter((s) => !selectedServiceIds.includes(s.id))
-                  .map((s) => ({ value: s.id, label: s.name, hint: `₹${s.price.toLocaleString('en-IN')}` }))}
+                  .map((s) => ({ value: s.id, label: s.name, hint: `₹${s.price.toLocaleString('en-IN')}`, category: s.category }))}
               />
               <Button type="button" variant="outline" className="rounded-xl" onClick={addService} disabled={!addServiceId}>
                 Add
@@ -1079,6 +1079,7 @@ function CompleteAndBillModal({
                       value: p.id,
                       label: p.name,
                       hint: `₹${p.price.toLocaleString('en-IN')}${p.stock <= 0 ? ' · Out of stock' : ` · ${p.stock} left`}`,
+                      category: p.category,
                       disabled: p.stock <= 0,
                     }))}
                 />

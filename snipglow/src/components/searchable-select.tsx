@@ -19,6 +19,11 @@ export interface SelectOption {
   disabled?: boolean;
   /** Optional group heading, e.g. 'Services' / 'Products'. */
   group?: string;
+  /**
+   * Category shown as a small tag and included in search, so typing "hair"
+   * surfaces every item in the Hair category — not just names containing "hair".
+   */
+  category?: string | null;
 }
 
 interface Props {
@@ -53,12 +58,17 @@ export function SearchableSelect({
   const selected = options.find((o) => o.value === value) ?? null;
 
   // Filter on the typed query (empty query => full list, i.e. dropdown mode).
+  // Matches name, category, and the hint text — so "hair" returns everything in
+  // the Hair category as well as anything with "hair" in the name.
   const filtered = useMemo(() => {
     const q = query.trim().toLowerCase();
     if (!q) return options;
-    return options.filter(
-      (o) => o.label.toLowerCase().includes(q) || (o.hint ?? '').toLowerCase().includes(q)
-    );
+    // Support multi-word queries: every term must match somewhere.
+    const terms = q.split(/\s+/).filter(Boolean);
+    return options.filter((o) => {
+      const haystack = `${o.label} ${o.category ?? ''} ${o.hint ?? ''} ${o.group ?? ''}`.toLowerCase();
+      return terms.every((t) => haystack.includes(t));
+    });
   }, [options, query]);
 
   // Close on outside click.
@@ -186,7 +196,14 @@ export function SearchableSelect({
                           : 'text-foreground hover:bg-muted/60'
                     } ${opt.value === value ? 'font-medium' : ''}`}
                   >
-                    <span className="min-w-0 truncate">{opt.label}</span>
+                    <span className="flex min-w-0 items-center gap-2">
+                      <span className="min-w-0 truncate">{opt.label}</span>
+                      {opt.category && (
+                        <span className="shrink-0 rounded-full bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground">
+                          {opt.category}
+                        </span>
+                      )}
+                    </span>
                     {opt.hint && <span className="shrink-0 text-xs text-muted-foreground">{opt.hint}</span>}
                   </button>
                 </div>
