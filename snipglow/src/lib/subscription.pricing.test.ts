@@ -90,3 +90,86 @@ describe('getCustomPricing / hasCustomPrice', () => {
     expect(getCustomPricing({ custom_monthly_price: 799.6 }).monthly).toBe(800);
   });
 });
+
+// =============================================================================
+// Isolation guarantees.
+//
+// Business rule: ONLY salons with an admin-entered rate see a discount. Every
+// other salon must always see/pay the standard list price. These tests assert
+// there is no shared/leaking state between tenants.
+// =============================================================================
+
+describe('per-tenant isolation', () => {
+  const DISCOUNTED = { custom_monthly_price: 799 };
+  const NORMAL = {}; // no override — the vast majority of salons
+  const LIST = PLAN_PRICING.starter.monthly; // 999
+
+  it('a discounted tenant does not affect a normal tenant (same request order)', () => {
+    expect(amountPayable('starter', 'monthly', DISCOUNTED)).toBe(799);
+    // Immediately after, a tenant with no override still pays list price.
+    expect(amountPayable('starter', 'monthly', NORMAL)).toBe(LIST);
+  });
+
+  it('is order-independent and repeatable (no memoised/global state)', () => {
+    for (let i = 0; i < 50; i++) {
+      expect(amountPayable('starter', 'monthly', NORMAL)).toBe(LIST);
+      expect(amountPayable('starter', 'monthly', DISCOUNTED)).toBe(799);
+      expect(amountPayable('starter', 'monthly', NORMAL)).toBe(LIST);
+    }
+  });
+
+  it('does not mutate the settings object it is given', () => {
+    const settings = { ...NORMAL } as Record<string, unknown>;
+    amountPayable('starter', 'monthly', settings);
+    expect(settings).toEqual({});
+    const d = { ...DISCOUNTED } as Record<string, unknown>;
+    amountPayable('starter', 'monthly', d);
+    expect(d).toEqual({ custom_monthly_price: 799 });
+  });
+
+  it('ignores unrelated settings keys (GST, billing cycle, wallet, etc.)', () => {
+    const noisy = {
+      billing_cycle: 'monthly',
+      gst_enabled: true,
+      gst_rate: 18,
+      legal_name: 'Some Salon LLP',
+      loyalty_tiers: { gold_min: 5 },
+      // Deliberately similar-looking but WRONG keys must not be honoured.
+      custom_price: 1,
+      customMonthlyPrice: 1,
+      monthly_price: 1,
+      discount: 500,
+    };
+    expect(amountPayable('starter', 'monthly', noisy)).toBe(LIST);
+  });
+
+  it('keeps every tier on its own list price when undiscounted', () => {
+    expect(amountPayable('starter', 'monthly', NORMAL)).toBe(PLAN_PRICING.starter.monthly);
+    expect(amountPayable('pro', 'monthly', NORMAL)).toBe(PLAN_PRICING.pro.monthly);
+    expect(amountPayable('enterprise', 'monthly', NORMAL)).toBe(PLAN_PRICING.enterprise.monthly);
+    expect(amountPayable('starter', 'yearly', NORMAL)).toBe(PLAN_PRICING.starter.yearlyPerMonth * 12);
+    expect(amountPayable('pro', 'yearly', NORMAL)).toBe(PLAN_PRICING.pro.yearlyPerMonth * 12);
+    expect(amountPayable('enterprise', 'yearly', NORMAL)).toBe(PLAN_PRICING.enterprise.yearlyPerMonth * 12);
+  });
+
+  it('a discount on one tier does not spill into another tier', () => {
+    // The override is stored per tenant, so the tier is whatever that tenant is on.
+    expect(amountPayable('pro', 'monthly', DISCOUNTED)).toBe(799);
+    expect(amountPayable('pro', 'monthly', NORMAL)).toBe(PLAN_PRICING.pro.monthly);
+  });
+
+  it('flags custom rate only for the tenant that has one', () => {
+    expect(hasCustomPrice(DISCOUNTED, 'monthly')).toBe(true);
+    expect(hasCustomPrice(NORMAL, 'monthly')).toBe(false);
+    expect(hasCustomPrice(null, 'monthly')).toBe(false);
+    expect(hasCustomPrice(undefined, 'yearly')).toBe(false);
+  });
+
+  it('reverting an override restores the list price exactly', () => {
+    // Admin "Revert to list price" deletes the keys from settings.
+    const afterRevert: Record<string, unknown> = { ...DISCOUNTED };
+    delete afterRevert.custom_monthly_price;
+    expect(amountPayable('starter', 'monthly', afterRevert)).toBe(LIST);
+    expect(hasCustomPrice(afterRevert, 'monthly')).toBe(false);
+  });
+});
