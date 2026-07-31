@@ -2,6 +2,7 @@ import { describe, it, expect } from 'vitest';
 import {
   renderAnnouncementEmail,
   ONLINE_RENEWAL_CAMPAIGN,
+  RENEWAL_REMINDER_CAMPAIGN,
   DEFAULT_CAMPAIGN,
   CAMPAIGN_PRESETS,
 } from './announcement';
@@ -70,6 +71,43 @@ describe('announcement templates', () => {
     expect(fallbacks.length).toBeGreaterThanOrEqual(3); // header + ticks + CTA
     // The old violet fallback read as blue on mobile - guard against it returning.
     expect(html).not.toContain('background:#8b5cf6;');
+  });
+
+  it('renders the reminder theme in amber, not brand pink', () => {
+    const { html } = renderAnnouncementEmail(RENEWAL_REMINDER_CAMPAIGN, { salonName: 'X' });
+    expect(html).toContain('#f97316'); // amber/orange solid fallback
+    expect(html).toContain('Renewal due'); // urgency eyebrow
+    // Payment emails keep the Razorpay trust badge in the header.
+    expect(html).toContain('SECURED BY');
+    // Must not fall back to the feature-launch fuchsia.
+    expect(html).not.toContain('background:#d946ef;');
+  });
+
+  it('uses the themed header tag when there is no partner badge', () => {
+    const { html } = renderAnnouncementEmail(
+      { ...RENEWAL_REMINDER_CAMPAIGN, partnerBadge: undefined },
+      { salonName: 'X' }
+    );
+    expect(html).toContain('Reminder');
+  });
+
+  it('keeps the brand theme for feature launches', () => {
+    const { html } = renderAnnouncementEmail(ONLINE_RENEWAL_CAMPAIGN, { salonName: 'X' });
+    expect(html).toContain('#d946ef');
+    expect(html).not.toContain('#f97316');
+  });
+
+  it('exposes all presets to the admin UI', () => {
+    expect(CAMPAIGN_PRESETS.map((p) => p.key)).toEqual([
+      'wallet',
+      'online_renewal',
+      'renewal_reminder',
+    ]);
+    for (const p of CAMPAIGN_PRESETS) {
+      expect(p.campaign.subject.length).toBeGreaterThan(0);
+      expect(p.campaign.ctaUrl).toMatch(/^https:\/\//);
+      expect(p.campaign.bullets.length).toBeGreaterThan(0);
+    }
   });
 
   it('escapes HTML in user-supplied copy', () => {

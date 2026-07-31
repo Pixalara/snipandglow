@@ -35,7 +35,74 @@ export interface AnnouncementCampaign {
    * clients that block or strip remote images.
    */
   partnerBadge?: 'razorpay';
+  /**
+   * Visual theme. 'brand' (default) is the pink/violet feature-launch look;
+   * 'reminder' switches to a warm amber palette that reads as time-sensitive
+   * without looking alarming. Also changes the header tag wording.
+   */
+  theme?: 'brand' | 'reminder';
+  /** Header tag text. Defaults to 'Product Update' (or 'Reminder' when theme='reminder'). */
+  headerTag?: string;
 }
+
+/** Palette per theme, used for the header, ticks and CTA. */
+const THEMES = {
+  brand: {
+    headerFrom: '#ec4899',
+    headerMid: '#d946ef',
+    headerTo: '#a855f7',
+    solid: '#d946ef',
+    ctaFrom: '#ec4899',
+    ctaTo: '#a855f7',
+    eyebrowBg: '#fdf2f8',
+    eyebrowText: '#a21caf',
+    tag: 'Product Update',
+  },
+  reminder: {
+    headerFrom: '#f59e0b',
+    headerMid: '#f97316',
+    headerTo: '#ec4899',
+    solid: '#f97316',
+    ctaFrom: '#f59e0b',
+    ctaTo: '#ea580c',
+    eyebrowBg: '#fff7ed',
+    eyebrowText: '#c2410c',
+    tag: 'Reminder',
+  },
+} as const;
+
+/** Preset: subscription renewal reminder. */
+export const RENEWAL_REMINDER_CAMPAIGN: AnnouncementCampaign = {
+  subject: 'Your SnipandGlow plan is due for renewal',
+  eyebrow: 'Action needed \u00b7 Renewal due',
+  headline: 'Keep your salon running without a pause',
+  greeting: 'Hi {salon},',
+  intro:
+    'this is a friendly reminder that your SnipandGlow subscription is coming up for renewal. Renewing takes under a minute from your own dashboard, and everything keeps working exactly as it is.',
+  bullets: [
+    {
+      title: 'Renew in under a minute',
+      body: 'Open Settings > Subscription and tap Renew Now. Pay by UPI, card, net banking or wallet.',
+    },
+    {
+      title: 'Activated instantly',
+      body: 'Your plan extends the moment payment succeeds - no waiting, no follow-up, nothing locked.',
+    },
+    {
+      title: 'Your remaining days are safe',
+      body: 'Renew before the due date and the new period is added on top of your existing days. Nothing is lost.',
+    },
+    {
+      title: 'What pausing would affect',
+      body: 'Appointments, billing, customer records and WhatsApp reminders stay switched off until renewal. Your data is always safe.',
+    },
+  ],
+  ctaLabel: 'Renew my subscription',
+  ctaUrl: 'https://snipandglow.com/dashboard/settings',
+  footerNote: 'Already renewed? Thank you - please ignore this reminder.',
+  partnerBadge: 'razorpay',
+  theme: 'reminder',
+};
 
 /** Preset: online renewals via Razorpay. */
 export const ONLINE_RENEWAL_CAMPAIGN: AnnouncementCampaign = {
@@ -95,6 +162,7 @@ export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
 export const CAMPAIGN_PRESETS: { key: string; label: string; campaign: AnnouncementCampaign }[] = [
   { key: 'wallet', label: 'Customer Wallet', campaign: DEFAULT_CAMPAIGN },
   { key: 'online_renewal', label: 'Online Renewals', campaign: ONLINE_RENEWAL_CAMPAIGN },
+  { key: 'renewal_reminder', label: 'Renewal Reminder', campaign: RENEWAL_REMINDER_CAMPAIGN },
 ];
 
 function esc(s = ''): string {
@@ -109,6 +177,8 @@ export function renderAnnouncementEmail(
   const greetName = salonName && salonName.trim() ? `${esc(salonName.trim())} team` : 'there';
   const greetingLine = esc(campaign.greeting || 'Hi {salon},').replace('{salon}', greetName);
   const cta = campaign.ctaUrl || BRAND.site;
+  const th = THEMES[campaign.theme === 'reminder' ? 'reminder' : 'brand'];
+  const headerTag = campaign.headerTag?.trim() || th.tag;
   const subject = campaign.subject || 'An update from SnipandGlow';
   const preheader = (campaign.intro || '').slice(0, 140);
 
@@ -122,7 +192,7 @@ export function renderAnnouncementEmail(
                  line-height on divs, which made the glyph spill outside the box. -->
             <table role="presentation" cellpadding="0" cellspacing="0" border="0" width="26" style="width:26px;border-collapse:collapse;">
               <tr>
-                <td align="center" valign="middle" height="26" style="width:26px;height:26px;border-radius:8px;background:#d946ef;background-image:linear-gradient(135deg,#ec4899,#a855f7);color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;text-align:center;vertical-align:middle;mso-line-height-rule:exactly;line-height:26px;">
+                <td align="center" valign="middle" height="26" style="width:26px;height:26px;border-radius:8px;background:${th.solid};background-image:linear-gradient(135deg,${th.ctaFrom},${th.ctaTo});color:#ffffff;font-family:Arial,Helvetica,sans-serif;font-size:13px;font-weight:700;text-align:center;vertical-align:middle;mso-line-height-rule:exactly;line-height:26px;">
                   <span style="color:#ffffff;font-size:13px;line-height:26px;">&#10003;</span>
                 </td>
               </tr>
@@ -181,7 +251,7 @@ export function renderAnnouncementEmail(
       <td align="center" style="padding:24px 12px;">
         <table role="presentation" width="600" cellpadding="0" cellspacing="0" style="width:600px;max-width:100%;background:#ffffff;border-radius:16px;overflow:hidden;box-shadow:0 8px 30px rgba(15,23,42,0.08);">
           <tr>
-            <td class="sg-head" style="background:#d946ef;background-image:linear-gradient(135deg,#ec4899 0%,#d946ef 50%,#a855f7 100%);padding:26px 32px;">
+            <td class="sg-head" style="background:${th.solid};background-image:linear-gradient(135deg,${th.headerFrom} 0%,${th.headerMid} 50%,${th.headerTo} 100%);padding:26px 32px;">
               <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr>
                 <td style="vertical-align:middle;">
                   <table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block;vertical-align:middle;"><tr>
@@ -202,7 +272,7 @@ export function renderAnnouncementEmail(
                             <span style="font:800 13px/1 Arial,Helvetica,sans-serif;color:#0C2451;letter-spacing:-0.2px;margin-left:6px;">Razorpay</span>
                           </td>
                         </tr></table>`
-                      : `<span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font:700 10px/1 Arial,Helvetica,sans-serif;letter-spacing:0.8px;text-transform:uppercase;padding:6px 11px;border-radius:999px;">Product Update</span>`
+                      : `<span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font:700 10px/1 Arial,Helvetica,sans-serif;letter-spacing:0.8px;text-transform:uppercase;padding:6px 11px;border-radius:999px;">${esc(headerTag)}</span>`
                   }
                 </td>
               </tr></table>
@@ -210,7 +280,7 @@ export function renderAnnouncementEmail(
           </tr>
           <tr>
             <td class="sg-pad" style="padding:34px 32px 8px 32px;">
-              ${campaign.eyebrow ? `<div style="display:inline-block;background:#fdf2f8;color:#a21caf;font:700 11px/1 Arial,Helvetica,sans-serif;letter-spacing:0.5px;padding:7px 12px;border-radius:999px;text-transform:uppercase;">${esc(campaign.eyebrow)}</div>` : ''}
+              ${campaign.eyebrow ? `<div style="display:inline-block;background:${th.eyebrowBg};color:${th.eyebrowText};font:700 11px/1 Arial,Helvetica,sans-serif;letter-spacing:0.5px;padding:7px 12px;border-radius:999px;text-transform:uppercase;">${esc(campaign.eyebrow)}</div>` : ''}
               <h1 class="sg-h1" style="font:800 26px/1.25 Arial,Helvetica,sans-serif;color:#0f172a;margin:16px 0 10px 0;">${esc(campaign.headline)}</h1>
               <p style="font:400 15px/1.6 Arial,Helvetica,sans-serif;color:#475569;margin:0;">${greetingLine} ${esc(campaign.intro)}</p>
             </td>
@@ -219,7 +289,7 @@ export function renderAnnouncementEmail(
           <tr>
             <td class="sg-pad" style="padding:18px 32px 34px 32px;">
               <table class="sg-cta" role="presentation" cellpadding="0" cellspacing="0"><tr>
-                <td style="border-radius:12px;background:#d946ef;background-image:linear-gradient(135deg,#ec4899,#a855f7);">
+                <td style="border-radius:12px;background:${th.solid};background-image:linear-gradient(135deg,${th.ctaFrom},${th.ctaTo});">
                   <a href="${esc(cta)}" style="display:inline-block;padding:14px 28px;font:700 15px/1 Arial,Helvetica,sans-serif;color:#ffffff;text-decoration:none;border-radius:12px;">${esc(campaign.ctaLabel || 'Open SnipandGlow')} &rarr;</a>
                 </td>
               </tr></table>

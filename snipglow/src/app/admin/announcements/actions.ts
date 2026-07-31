@@ -122,8 +122,10 @@ function normalizeCampaign(c: Partial<AnnouncementCampaign> | undefined): Announ
     ctaLabel: (src.ctaLabel ?? '').trim().slice(0, 60) || DEFAULT_CAMPAIGN.ctaLabel,
     ctaUrl: (src.ctaUrl ?? '').trim().slice(0, 400) || DEFAULT_CAMPAIGN.ctaUrl,
     footerNote: (src.footerNote ?? '').trim().slice(0, 200) || undefined,
-    // Only a known badge value is allowed through (never raw client markup).
+    // Only known enum values are allowed through (never raw client markup).
     partnerBadge: src.partnerBadge === 'razorpay' ? 'razorpay' : undefined,
+    theme: src.theme === 'reminder' ? 'reminder' : 'brand',
+    headerTag: (src.headerTag ?? '').trim().slice(0, 40) || undefined,
   };
 }
 
