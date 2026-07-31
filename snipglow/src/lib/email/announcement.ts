@@ -1,4 +1,4 @@
-// =============================================================================
+﻿// =============================================================================
 // Generic, reusable feature-announcement email template.
 // Pure module (no server-only deps) so it can render on the client for preview
 // AND on the server for sending. Content is fully configurable per campaign.
@@ -28,28 +28,35 @@ export interface AnnouncementCampaign {
   ctaLabel: string;
   ctaUrl: string;
   footerNote?: string;
+  /**
+   * Show a highlighted "Secured by Razorpay" badge in the header instead of the
+   * plain "Product Update" tag. Used for payment-related announcements to build
+   * trust. Rendered as styled text (not an image) so it never breaks in email
+   * clients that block or strip remote images.
+   */
+  partnerBadge?: 'razorpay';
 }
 
 /** Preset: online renewals via Razorpay. */
 export const ONLINE_RENEWAL_CAMPAIGN: AnnouncementCampaign = {
-  subject: 'Renew SnipandGlow instantly — online payments are live',
+  subject: 'Renew SnipandGlow instantly - online payments are live',
   eyebrow: 'New \u00b7 Online renewals',
   headline: 'Renew in seconds, right from your dashboard',
   greeting: 'Hi {salon},',
   intro:
-    'no more calls, bank transfers or waiting for us to activate your account. You can now pay for your SnipandGlow subscription securely from your own portal \u2014 and the moment payment succeeds, your subscription is extended automatically.',
+    'no more calls, bank transfers or waiting for us to activate your account. You can now pay for your SnipandGlow subscription securely from your own portal - and the moment payment succeeds, your subscription is extended automatically.',
   bullets: [
     {
       title: 'Renew from your own portal',
-      body: 'Go to Settings \u2192 Subscription and tap Renew. Pay by UPI, card, net banking or wallet \u2014 whatever suits you.',
+      body: 'Go to Settings \u2192 Subscription and tap Renew. Pay by UPI, card, net banking or wallet - whatever suits you.',
     },
     {
-      title: 'Activated automatically \u2014 zero waiting',
+      title: 'Activated automatically - zero waiting',
       body: 'Your subscription updates the instant payment succeeds. No follow-ups, no downtime, no locked features.',
     },
     {
       title: 'Renew early, lose nothing',
-      body: 'Pay ahead of your due date and the new period is simply added on top \u2014 your remaining days are never wasted.',
+      body: 'Pay ahead of your due date and the new period is simply added on top - your remaining days are never wasted.',
     },
     {
       title: 'Bank-grade & secure',
@@ -59,19 +66,20 @@ export const ONLINE_RENEWAL_CAMPAIGN: AnnouncementCampaign = {
   ctaLabel: 'Renew from your dashboard',
   ctaUrl: 'https://snipandglow.com/dashboard/settings',
   footerNote: 'Find it under Settings \u2192 Subscription \u2192 Renew Now.',
+  partnerBadge: 'razorpay',
 };
 
-/** Default preset — the Customer Wallet announcement. */
+/** Default preset - the Customer Wallet announcement. */
 export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
   subject: 'New in SnipandGlow: Customer Wallet for your salon',
   eyebrow: 'New feature \u00b7 Customer Wallet',
   headline: 'Let your clients prepay & spend from a salon wallet',
   greeting: 'Hi {salon},',
   intro:
-    'we\u2019ve just rolled out Customer Wallet in SnipandGlow. Now clients can load balance in advance and you can auto-apply it on any bill \u2014 perfect for advance packages and loyal regulars.',
+    'we\u2019ve just rolled out Customer Wallet in SnipandGlow. Now clients can load balance in advance and you can auto-apply it on any bill - perfect for advance packages and loyal regulars.',
   bullets: [
     { title: 'Prepaid balance', body: 'Top up any client\u2019s wallet in seconds, with an optional promotional bonus for advance packages.' },
-    { title: 'Auto-deduct on bills', body: 'Pay fully from the wallet, or split it \u2014 part wallet, part cash/UPI/card \u2014 right from the bill screen.' },
+    { title: 'Auto-deduct on bills', body: 'Pay fully from the wallet, or split it - part wallet, part cash/UPI/card - right from the bill screen.' },
     { title: 'Instant WhatsApp receipts', body: 'Every top-up and payment sends the client a branded receipt automatically.' },
     { title: 'Safe & tracked', body: 'A \u20b950,000/year top-up limit per client and a full transaction ledger keep balances clean.' },
   ],
@@ -156,7 +164,16 @@ export function renderAnnouncementEmail(
                   </tr></table>
                 </td>
                 <td align="right" style="vertical-align:middle;">
-                  <span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font:700 10px/1 Arial,Helvetica,sans-serif;letter-spacing:0.8px;text-transform:uppercase;padding:6px 11px;border-radius:999px;">Product Update</span>
+                  ${
+                    campaign.partnerBadge
+                      ? `<table role="presentation" cellpadding="0" cellspacing="0" style="display:inline-block;vertical-align:middle;"><tr>
+                          <td style="background:#ffffff;border-radius:999px;padding:7px 13px;box-shadow:0 2px 8px rgba(0,0,0,0.18);" valign="middle">
+                            <span style="font:600 10px/1 Arial,Helvetica,sans-serif;color:#64748b;letter-spacing:0.4px;">SECURED BY</span>
+                            <span style="font:800 13px/1 Arial,Helvetica,sans-serif;color:#0C2451;letter-spacing:-0.2px;margin-left:6px;">Razorpay</span>
+                          </td>
+                        </tr></table>`
+                      : `<span style="display:inline-block;background:rgba(255,255,255,0.18);color:#ffffff;font:700 10px/1 Arial,Helvetica,sans-serif;letter-spacing:0.8px;text-transform:uppercase;padding:6px 11px;border-radius:999px;">Product Update</span>`
+                  }
                 </td>
               </tr></table>
             </td>
