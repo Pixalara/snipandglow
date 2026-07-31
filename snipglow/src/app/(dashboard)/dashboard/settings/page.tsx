@@ -12,9 +12,11 @@ import {
   Clock,
   CalendarDays,
   ShieldCheck,
+  Sparkles,
+  Receipt,
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
-import { getSubscriptionState, planLabel, effectiveMonthlyPrice, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
+import { getSubscriptionState, planLabel, effectiveMonthlyPrice, amountPayable, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
 import { RenewButton } from './renew-button';
 
 export default async function SettingsPage() {
@@ -54,6 +56,23 @@ export default async function SettingsPage() {
     }
   }
 
+  // This salon's own subscription payments (RLS restricts rows to this tenant).
+  const { data: paymentRows } = await (supabase as any)
+    .from('payment_orders')
+    .select('id, amount, months, billing_cycle, status, created_at, razorpay_payment_id')
+    .eq('status', 'paid')
+    .order('created_at', { ascending: false })
+    .limit(12);
+  const payments = (paymentRows ?? []) as {
+    id: string;
+    amount: number;
+    months: number;
+    billing_cycle: string;
+    status: string;
+    created_at: string;
+    razorpay_payment_id: string | null;
+  }[];
+
   const subscriptionStatus = tenant.subscription_status as SubscriptionStatus;
   const subscriptionEnd = tenant.subscription_end ? new Date(tenant.subscription_end) : null;
   const subscriptionStart = tenant.subscription_start ? new Date(tenant.subscription_start) : null;
@@ -85,6 +104,8 @@ export default async function SettingsPage() {
   const billingCycle = getBillingCycle(settings);
   // Uses the salon's negotiated rate when the admin has set one.
   const planMonthly = effectiveMonthlyPrice(planTier, billingCycle, settings);
+  // Exactly what Razorpay will charge on renewal (1 month or 12 months).
+  const renewalAmount = amountPayable(planTier, billingCycle, settings);
 
   // Salon profile data
   const salonProfile = {
@@ -218,7 +239,7 @@ export default async function SettingsPage() {
                   </p>
                 </div>
               </div>
-              <RenewButton />
+              <RenewButton label={`Complete Payment — ₹${renewalAmount.toLocaleString('en-IN')}`} />
             </div>
           )}
 
@@ -261,21 +282,114 @@ export default async function SettingsPage() {
                 </div>
               </div>
 
-              <div className="rounded-xl border border-border bg-muted/30 p-5">
-                <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div>
-                    <p className="text-sm font-semibold text-foreground">Renew early</p>
-                    <p className="text-sm text-muted-foreground mt-1">
-                      Pay ahead of time and stay covered without interruption. Your remaining days
-                      are never lost — the new period is added on top of{' '}
-                      {subscriptionEnd
-                        ? subscriptionEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
-                        : 'your current end date'}
+              {/* Renew early — premium panel with the exact amount payable */}
+              <div className="relative overflow-hidden rounded-2xl border border-border bg-gradient-to-br from-pink-50 via-fuchsia-50/60 to-violet-50 dark:from-pink-950/20 dark:via-fuchsia-950/10 dark:to-violet-950/15 p-5 sm:p-6">
+                <div className="absolute -right-8 -top-8 size-32 rounded-full bg-fuchsia-400/10 blur-2xl" />
+
+                <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
+                  <div className="min-w-0">
+                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 dark:bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-fuchsia-700 dark:text-fuchsia-300">
+                      <Sparkles className="size-3" />
+                      Renew early
+                    </span>
+                    <p className="mt-2.5 text-base font-bold text-foreground">
+                      Stay covered without interruption
+                    </p>
+                    <p className="text-sm text-muted-foreground mt-1 max-w-md">
+                      Pay ahead of time and your remaining days are never lost - the new period is
+                      added on top of{' '}
+                      <span className="font-medium text-foreground">
+                        {subscriptionEnd
+                          ? subscriptionEnd.toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })
+                          : 'your current end date'}
+                      </span>
                       .
                     </p>
+
+                    {/* Trust row */}
+                    <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1.5">
+                      {[
+                        'Instant activation',
+                        'UPI · Card · Net banking',
+                        'Secured by Razorpay',
+                      ].map((t) => (
+                        <span key={t} className="inline-flex items-center gap-1.5 text-xs text-muted-foreground">
+                          <CheckCircle2 className="size-3.5 text-emerald-500" />
+                          {t}
+                        </span>
+                      ))}
+                    </div>
                   </div>
-                  <RenewButton label="Renew Now" variant="outline" icon="refresh" />
+
+                  {/* Amount + CTA */}
+                  <div className="shrink-0 rounded-xl border border-border bg-card/80 backdrop-blur-sm p-4 lg:min-w-[220px]">
+                    <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Amount payable</p>
+                    <p className="mt-1 text-3xl font-bold text-foreground leading-none">
+                      ₹{renewalAmount.toLocaleString('en-IN')}
+                    </p>
+                    <p className="mt-1.5 text-xs text-muted-foreground">
+                      {billingCycle === 'yearly'
+                        ? `12 months · ₹${planMonthly.toLocaleString('en-IN')}/mo`
+                        : '1 month'}
+                    </p>
+                    <div className="mt-3">
+                      <RenewButton label="Renew Now" icon="refresh" />
+                    </div>
+                  </div>
                 </div>
+              </div>
+
+              {/* Payment history — builds trust with a clear, verifiable record */}
+              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+                <div className="flex items-center justify-between gap-2 border-b border-border px-4 sm:px-5 py-3">
+                  <div className="flex items-center gap-2">
+                    <Receipt className="size-4 text-muted-foreground" />
+                    <p className="text-sm font-semibold text-foreground">Payment History</p>
+                  </div>
+                  {payments.length > 0 && (
+                    <span className="text-xs text-muted-foreground">
+                      {payments.length} payment{payments.length !== 1 ? 's' : ''} · ₹
+                      {(payments.reduce((s, p) => s + p.amount, 0) / 100).toLocaleString('en-IN')} paid
+                    </span>
+                  )}
+                </div>
+
+                {payments.length === 0 ? (
+                  <p className="px-4 sm:px-5 py-8 text-center text-sm text-muted-foreground">
+                    No online payments yet. Your receipts will appear here after your first renewal.
+                  </p>
+                ) : (
+                  <ul className="divide-y divide-border">
+                    {payments.map((p) => (
+                      <li key={p.id} className="flex items-center justify-between gap-3 px-4 sm:px-5 py-3">
+                        <div className="flex min-w-0 items-center gap-3">
+                          <span className="flex size-8 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                            <CheckCircle2 className="size-4 text-emerald-600 dark:text-emerald-400" />
+                          </span>
+                          <div className="min-w-0">
+                            <p className="text-sm font-medium text-foreground">
+                              {new Date(p.created_at).toLocaleDateString('en-IN', {
+                                day: '2-digit',
+                                month: 'short',
+                                year: 'numeric',
+                              })}
+                            </p>
+                            <p className="text-xs text-muted-foreground truncate">
+                              {p.months} month{p.months !== 1 ? 's' : ''} · {p.billing_cycle}
+                              {p.razorpay_payment_id ? ` · ${p.razorpay_payment_id}` : ''}
+                            </p>
+                          </div>
+                        </div>
+                        <div className="shrink-0 text-right">
+                          <p className="text-sm font-bold text-foreground">
+                            ₹{(p.amount / 100).toLocaleString('en-IN')}
+                          </p>
+                          <p className="text-[11px] font-medium text-emerald-600 dark:text-emerald-400">Paid</p>
+                        </div>
+                      </li>
+                    ))}
+                  </ul>
+                )}
               </div>
             </div>
           )}
