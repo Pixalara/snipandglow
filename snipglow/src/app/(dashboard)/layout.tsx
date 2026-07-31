@@ -3,7 +3,7 @@ import { createClient } from '@/lib/supabase/server';
 import { AppShell } from '@/components/app-shell';
 import { SubscriptionGuard } from '@/components/subscription-guard';
 import { RenewalReminderPopup } from '@/components/renewal-reminder-popup';
-import { getSubscriptionState, planLabel } from '@/lib/subscription';
+import { getSubscriptionState, planLabel, amountPayable, getBillingCycle } from '@/lib/subscription';
 import type { UserRole, Branch } from '@/types';
 
 export default async function DashboardLayout({
@@ -33,6 +33,7 @@ export default async function DashboardLayout({
   let isTrial = false;
   let trialEndedAt: string | null = null;
   let subscriptionEndDate: string | null = null;
+  let renewalAmount = 0;
 
   if (tenantId) {
     const [branchRes, tenantRes] = await Promise.all([
@@ -67,6 +68,9 @@ export default async function DashboardLayout({
       isExpired = state.isExpired;
       isTrial = state.isTrial;
       trialEndedAt = state.endDate ? state.endDate.toISOString() : null;
+      // Custom-rate aware: matches exactly what Razorpay will charge.
+      const tSettings = ((tenantRes.data as any).settings ?? {}) as Record<string, unknown>;
+      renewalAmount = amountPayable(planTier, getBillingCycle(tSettings), tSettings);
       subscriptionEndDate = state.endDate ? state.endDate.toISOString() : null;
     }
   }
@@ -94,6 +98,7 @@ export default async function DashboardLayout({
         isExpired={isExpired}
         isOwner={role === 'owner'}
         planLabel={planLabel(planTier)}
+        renewalAmount={renewalAmount}
       />
     </AppShell>
   );
