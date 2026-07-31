@@ -34,6 +34,33 @@ describe('announcement templates', () => {
     expect(html).toContain('https://snipandglow.com/dashboard/settings');
   });
 
+  it('renders ticks as fixed-size table cells, not line-height divs', () => {
+    const { html } = renderAnnouncementEmail(ONLINE_RENEWAL_CAMPAIGN, { salonName: 'X' });
+    // Regression guard: the old markup centred the glyph with a div + line-height,
+    // which mobile clients strip — the tick then escaped its coloured box.
+    expect(html).not.toMatch(/<div[^>]*height:26px[^>]*>&#10003;<\/div>/);
+    expect(html).toContain('valign="middle"');
+    expect(html).toContain('mso-line-height-rule:exactly');
+    // Every bullet must have a sized tick cell.
+    const tickCells = html.match(/class="sg-tick"/g) ?? [];
+    expect(tickCells.length).toBe(ONLINE_RENEWAL_CAMPAIGN.bullets.length);
+  });
+
+  it('includes mobile media queries and responsive hooks', () => {
+    const { html } = renderAnnouncementEmail(ONLINE_RENEWAL_CAMPAIGN, { salonName: 'X' });
+    expect(html).toContain('@media only screen and (max-width:600px)');
+    expect(html).toContain('viewport');
+    for (const cls of ['sg-pad', 'sg-head', 'sg-h1', 'sg-tick', 'sg-cta']) {
+      expect(html, `missing responsive class ${cls}`).toContain(cls);
+    }
+  });
+
+  it('gives gradients a solid colour fallback', () => {
+    const { html } = renderAnnouncementEmail(ONLINE_RENEWAL_CAMPAIGN, { salonName: 'X' });
+    // Clients that ignore linear-gradient still show a coloured tick/button.
+    expect(html).toContain('background:#8b5cf6;background-image:linear-gradient');
+  });
+
   it('escapes HTML in user-supplied copy', () => {
     const { html } = renderAnnouncementEmail(
       { ...ONLINE_RENEWAL_CAMPAIGN, headline: '<script>alert(1)</script>' },
