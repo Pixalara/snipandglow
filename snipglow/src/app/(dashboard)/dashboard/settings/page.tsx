@@ -12,7 +12,6 @@ import {
   Clock,
   CalendarDays,
   ShieldCheck,
-  Sparkles,
   Receipt,
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
@@ -288,8 +287,7 @@ export default async function SettingsPage() {
 
                 <div className="relative flex flex-col gap-5 lg:flex-row lg:items-center lg:justify-between">
                   <div className="min-w-0">
-                    <span className="inline-flex items-center gap-1.5 rounded-full bg-white/80 dark:bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-fuchsia-700 dark:text-fuchsia-300">
-                      <Sparkles className="size-3" />
+                    <span className="inline-flex items-center rounded-full bg-white/80 dark:bg-white/10 px-2.5 py-1 text-[10px] font-bold uppercase tracking-wide text-fuchsia-700 dark:text-fuchsia-300">
                       Renew early
                     </span>
                     <p className="mt-2.5 text-base font-bold text-foreground">
@@ -321,8 +319,11 @@ export default async function SettingsPage() {
                     </div>
                   </div>
 
-                  {/* Amount + CTA */}
-                  <div className="shrink-0 rounded-xl border border-border bg-card/80 backdrop-blur-sm p-4 lg:min-w-[220px]">
+                  {/* Amount + CTA.
+                      NOTE: no backdrop-blur here — backdrop-filter creates a
+                      containing block, which would trap the fixed-position
+                      payment modal inside this small card. */}
+                  <div className="w-full shrink-0 rounded-xl border border-border bg-card p-4 lg:w-[240px]">
                     <p className="text-[11px] uppercase tracking-wide text-muted-foreground">Amount payable</p>
                     <p className="mt-1 text-3xl font-bold text-foreground leading-none">
                       ₹{renewalAmount.toLocaleString('en-IN')}
@@ -332,8 +333,8 @@ export default async function SettingsPage() {
                         ? `12 months · ₹${planMonthly.toLocaleString('en-IN')}/mo`
                         : '1 month'}
                     </p>
-                    <div className="mt-3">
-                      <RenewButton label="Renew Now" icon="refresh" />
+                    <div className="mt-3 [&_button]:w-full">
+                      <RenewButton label="Renew Now" icon="refresh" fullWidth={false} />
                     </div>
                   </div>
                 </div>
