@@ -1,8 +1,12 @@
 import type { Metadata, Viewport } from 'next'
 import { Inter, Plus_Jakarta_Sans } from 'next/font/google'
+import Script from 'next/script'
 import './globals.css'
 import { Providers } from './providers'
 import { SpeedInsights } from '@vercel/speed-insights/next'
+
+/** Google Ads account tag (gtag.js). Account-level tag only - no conversion label. */
+const GOOGLE_ADS_ID = 'AW-18361807295'
 
 const inter = Inter({
   variable: '--font-inter',
@@ -133,12 +137,31 @@ export default function RootLayout({
         <link rel="dns-prefetch" href="https://connect.facebook.net" />
         <link rel="dns-prefetch" href="https://api.web3forms.com" />
         <link rel="dns-prefetch" href="https://images.unsplash.com" />
+        <link rel="dns-prefetch" href="https://www.googletagmanager.com" />
         {/* Hreflang */}
         <link rel="alternate" hrefLang="en-in" href="https://snipandglow.com" />
       </head>
       <body className="min-h-full flex flex-col" style={{ fontFamily: 'var(--font-inter), system-ui, sans-serif' }}>
         <Providers>{children}</Providers>
         <SpeedInsights />
+
+        {/* ── Google tag (gtag.js) — Google Ads ─────────────────────────────
+            Declared once in the ROOT layout, so it loads on every route in the
+            app (public site, auth, dashboard, admin) without duplication.
+            next/script dedupes by `id`, and the root layout is a server
+            component that is not re-rendered on client navigation, so the
+            snippet is never injected twice.                                  */}
+        <Script
+          id="google-ads-gtag-src"
+          src={`https://www.googletagmanager.com/gtag/js?id=${GOOGLE_ADS_ID}`}
+          strategy="afterInteractive"
+        />
+        <Script id="google-ads-gtag-init" strategy="afterInteractive">
+          {`window.dataLayer = window.dataLayer || [];
+function gtag(){dataLayer.push(arguments);}
+gtag('js', new Date());
+gtag('config', '${GOOGLE_ADS_ID}');`}
+        </Script>
       </body>
     </html>
   )
