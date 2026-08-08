@@ -4,9 +4,7 @@ import Script from 'next/script'
 import './globals.css'
 import { Providers } from './providers'
 import { SpeedInsights } from '@vercel/speed-insights/next'
-
-/** Google Ads account tag (gtag.js). Account-level tag only - no conversion label. */
-const GOOGLE_ADS_ID = 'AW-18361807295'
+import { GOOGLE_ADS_ID } from '@/lib/analytics/gtag'
 
 const inter = Inter({
   variable: '--font-inter',

@@ -8,6 +8,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { completeOnboarding } from './actions';
 import { createClient as createBrowserSupabase } from '@/lib/supabase/client';
+import { trackSignupConversion } from '@/lib/analytics/gtag';
 
 interface ServiceEntry {
   name: string;
@@ -74,6 +75,11 @@ export default function OnboardingPage() {
     setLoading(false);
 
     if (result.success) {
+      // Signup is now genuinely complete (tenant + branch created), so this is
+      // the correct point to report the Google Ads Sign-up conversion. Deduped
+      // by tenant id so re-renders or a back-navigation can't double-count.
+      trackSignupConversion(result.data?.tenantId);
+
       // Refresh the session so the JWT picks up the new tenant_id metadata
       const supabase = createBrowserSupabase();
       await supabase.auth.refreshSession();
