@@ -3,6 +3,7 @@ import {
   renderAnnouncementEmail,
   ONLINE_RENEWAL_CAMPAIGN,
   RENEWAL_REMINDER_CAMPAIGN,
+  WELCOME_CAMPAIGN,
   DEFAULT_CAMPAIGN,
   CAMPAIGN_PRESETS,
 } from './announcement';
@@ -83,6 +84,19 @@ describe('announcement templates', () => {
     expect(html).not.toContain('background:#d946ef;');
   });
 
+  it('renders the welcome template with all four setup steps', () => {
+    const { html, text } = renderAnnouncementEmail(WELCOME_CAMPAIGN, { salonName: 'Bloom Salon' });
+    expect(html).toContain('Bloom Salon team');
+    expect(html).toContain('Welcome'); // header tag
+    for (const step of ['Add your services', 'Add your customers', 'Manage appointments', 'Manage billing']) {
+      expect(html, `welcome email missing "${step}"`).toContain(step);
+    }
+    // Plain-text alternative must carry the steps too.
+    expect(text).toContain('Manage billing');
+    // Sends people to the dashboard, not a marketing page.
+    expect(html).toContain('https://snipandglow.com/dashboard');
+  });
+
   it('uses the themed header tag when there is no partner badge', () => {
     const { html } = renderAnnouncementEmail(
       { ...RENEWAL_REMINDER_CAMPAIGN, partnerBadge: undefined },
@@ -99,6 +113,7 @@ describe('announcement templates', () => {
 
   it('exposes all presets to the admin UI', () => {
     expect(CAMPAIGN_PRESETS.map((p) => p.key)).toEqual([
+      'welcome',
       'wallet',
       'online_renewal',
       'renewal_reminder',

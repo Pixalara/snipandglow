@@ -71,6 +71,44 @@ const THEMES = {
   },
 } as const;
 
+/**
+ * Preset: welcome email for a newly signed-up salon.
+ *
+ * The steps are ordered as a real setup sequence rather than a feature list:
+ * services first (appointments and bills both price off them), then customers,
+ * then the day-to-day work of appointments and billing.
+ */
+export const WELCOME_CAMPAIGN: AnnouncementCampaign = {
+  subject: 'Welcome to SnipandGlow - here is how to get started',
+  eyebrow: 'Welcome aboard',
+  headline: 'Your salon is all set up on SnipandGlow',
+  greeting: 'Hi {salon},',
+  intro:
+    'welcome to SnipandGlow, and thank you for coming on board. Your account is ready to use. Here are the four things to set up first - most salons finish all of them in about ten minutes.',
+  bullets: [
+    {
+      title: '1. Add your services',
+      body: 'Go to Services and add what you offer with price and duration. Everything else - appointments, bills and reports - works off this list, so start here.',
+    },
+    {
+      title: '2. Add your customers',
+      body: 'Open Customers to add clients with their phone number, or let them come in automatically as you take bookings. Every visit, note and payment then stays on their profile.',
+    },
+    {
+      title: '3. Manage appointments',
+      body: 'Book from the Appointments screen in seconds, or let clients book themselves on WhatsApp. Reminders go out automatically so fewer chairs sit empty.',
+    },
+    {
+      title: '4. Manage billing',
+      body: 'Generate a GST-ready bill in seconds from Billing. Search services by name or category, apply discounts, and the receipt reaches your client on WhatsApp instantly.',
+    },
+  ],
+  ctaLabel: 'Open my dashboard',
+  ctaUrl: 'https://snipandglow.com/dashboard',
+  footerNote: 'Need a hand getting started? Just reply to this email and we will help you set it up.',
+  headerTag: 'Welcome',
+};
+
 /** Preset: subscription renewal reminder. */
 export const RENEWAL_REMINDER_CAMPAIGN: AnnouncementCampaign = {
   subject: 'Your SnipandGlow plan is due for renewal',
@@ -160,6 +198,8 @@ export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
  * announcements here and they appear as preset buttons in the admin UI.
  */
 export const CAMPAIGN_PRESETS: { key: string; label: string; campaign: AnnouncementCampaign }[] = [
+  // Welcome first: it's the one needed every time a new salon signs up.
+  { key: 'welcome', label: 'Welcome', campaign: WELCOME_CAMPAIGN },
   { key: 'wallet', label: 'Customer Wallet', campaign: DEFAULT_CAMPAIGN },
   { key: 'online_renewal', label: 'Online Renewals', campaign: ONLINE_RENEWAL_CAMPAIGN },
   { key: 'renewal_reminder', label: 'Renewal Reminder', campaign: RENEWAL_REMINDER_CAMPAIGN },
