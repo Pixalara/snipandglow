@@ -1,6 +1,7 @@
 import 'server-only';
 import crypto from 'crypto';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { computeSubscriptionWindow } from './subscription-window';
 
 // =============================================================================
 // Razorpay payment verification + subscription activation.
@@ -48,27 +49,20 @@ export function verifyWebhookSignature(rawBody: string, signature: string): bool
   return safeEqual(expected, signature);
 }
 
-/** Add whole months to a date, clamping day-of-month overflow (31 Jan + 1mo). */
-function addMonths(from: Date, months: number): Date {
-  const d = new Date(from);
-  const day = d.getDate();
-  d.setMonth(d.getMonth() + months);
-  if (d.getDate() < day) d.setDate(0); // rolled into next month → clamp back
-  return d;
-}
-
 export interface ActivationResult {
   ok: boolean;
   alreadyActivated?: boolean;
   error?: string;
+  newStart?: string;
   newEnd?: string;
 }
 
 /**
  * Mark an order paid and extend the tenant's subscription — exactly once.
  *
- * The extension starts from whichever is LATER: now, or the current
- * subscription_end (so renewing early never loses paid days).
+ * The window itself is decided by `computeSubscriptionWindow`: a first payment
+ * or a lapsed renewal starts on the payment date, while renewing an already
+ * live paid plan starts the day after the current expiry.
  */
 export async function activatePaidOrder(params: {
   razorpayOrderId: string;
@@ -87,23 +81,28 @@ export async function activatePaidOrder(params: {
 
   const { data: tenant } = await (admin
     .from('tenants' as any)
-    .select('id, subscription_end, subscription_start')
+    .select('id, subscription_end, subscription_start, subscription_status')
     .eq('id', order.tenant_id)
     .maybeSingle() as any);
 
   if (!tenant) return { ok: false, error: 'TENANT_NOT_FOUND' };
 
   const now = new Date();
-  const currentEnd = tenant.subscription_end ? new Date(tenant.subscription_end) : null;
-  const base = currentEnd && currentEnd.getTime() > now.getTime() ? currentEnd : now;
-  const newEnd = addMonths(base, Number(order.months) || 1);
+  const parsedEnd = tenant.subscription_end ? new Date(tenant.subscription_end) : null;
+  const window = computeSubscriptionWindow({
+    now,
+    currentEnd: parsedEnd && !Number.isNaN(parsedEnd.getTime()) ? parsedEnd : null,
+    status: tenant.subscription_status,
+    months: Number(order.months) || 1,
+  });
 
   const { error: tenantErr } = await (admin
     .from('tenants' as any)
     .update({
       subscription_status: 'active',
-      subscription_start: tenant.subscription_start ?? now.toISOString(),
-      subscription_end: newEnd.toISOString(),
+      // The paid term's own start date, per the activation rules.
+      subscription_start: window.start.toISOString(),
+      subscription_end: window.end.toISOString(),
       // Let the pre-expiry reminder fire again for the new date.
       trial_expiry_alert_sent: false,
     } as any)
@@ -114,7 +113,9 @@ export async function activatePaidOrder(params: {
     return { ok: false, error: 'TENANT_UPDATE_FAILED' };
   }
 
-  // Latch the order so a second callback can't extend again.
+  // Latch the order so a second callback can't extend again. Deliberately kept
+  // to columns that have always existed, so activation can never be broken by a
+  // pending migration.
   await (admin
     .from('payment_orders' as any)
     .update({
@@ -125,5 +126,21 @@ export async function activatePaidOrder(params: {
     } as any)
     .eq('id', order.id) as any);
 
-  return { ok: true, newEnd: newEnd.toISOString() };
+  // Audit trail of the exact term purchased (migration 048). Best-effort and
+  // separate from the latch above: this is derivable data, so if the migration
+  // has not been applied yet we log and move on rather than failing a payment.
+  const { error: periodErr } = await (admin
+    .from('payment_orders' as any)
+    .update({
+      period_start: window.start.toISOString(),
+      period_end: window.end.toISOString(),
+      activation_basis: window.basis,
+    } as any)
+    .eq('id', order.id) as any);
+
+  if (periodErr) {
+    console.warn('[razorpay] could not record the billing period (migration 048?):', periodErr.message);
+  }
+
+  return { ok: true, newStart: window.start.toISOString(), newEnd: window.end.toISOString() };
 }

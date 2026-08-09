@@ -57,6 +57,39 @@ interface OrderResponse {
   email: string;
 }
 
+type Cycle = 'monthly' | 'yearly';
+
+interface PlanOption {
+  cycle: Cycle;
+  amount: number;
+  months: number;
+  perMonth: number;
+  periodStart: string;
+  periodEnd: string;
+}
+
+interface PlansResponse {
+  planLabel: string;
+  currentCycle: Cycle;
+  yearlyDiscountPct: number;
+  customRate: boolean;
+  options: PlanOption[];
+}
+
+/** "25 Aug 2026" in IST - the customer's calendar. */
+function fmtDate(iso: string): string {
+  const d = new Date(iso);
+  if (Number.isNaN(d.getTime())) return '';
+  return d.toLocaleDateString('en-IN', {
+    day: 'numeric',
+    month: 'short',
+    year: 'numeric',
+    timeZone: 'Asia/Kolkata',
+  });
+}
+
+const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
+
 export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
@@ -64,11 +97,43 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
   const [error, setError] = useState('');
   const [unavailable, setUnavailable] = useState(false);
   const [amountLabel, setAmountLabel] = useState('');
+  const [plans, setPlans] = useState<PlansResponse | null>(null);
+  const [cycle, setCycle] = useState<Cycle | null>(null);
+  const [plansFailed, setPlansFailed] = useState(false);
+  // Derived rather than stored, so the effect never needs a synchronous setState.
+  const loadingPlans = open && !plans && !plansFailed;
 
   // Warm the Checkout script so the first tap opens instantly.
   useEffect(() => { if (open) void loadCheckout(); }, [open]);
 
+  // Load the monthly/yearly choices. Prices are server-computed so a negotiated
+  // rate shows correctly and the browser never proposes an amount.
+  useEffect(() => {
+    if (!open || plans || plansFailed) return;
+    let cancelled = false;
+    (async () => {
+      try {
+        const res = await fetch('/api/payments/plans');
+        if (cancelled) return;
+        if (!res.ok) {
+          // Non-fatal: Pay now still works, using the tenant's saved cycle.
+          setPlansFailed(true);
+          return;
+        }
+        const data = (await res.json()) as PlansResponse;
+        if (cancelled) return;
+        setPlans(data);
+        setCycle(data.currentCycle);
+      } catch {
+        if (!cancelled) setPlansFailed(true);
+      }
+    })();
+    return () => { cancelled = true; };
+  }, [open, plans, plansFailed]);
+
   if (!open) return null;
+
+  const selected = plans?.options.find((o) => o.cycle === cycle) ?? null;
 
   const waLink = `https://wa.me/91${SUPPORT_PHONE}?text=${encodeURIComponent('Hi, I want to renew my SnipandGlow subscription.')}`;
 
@@ -79,7 +144,8 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
       const res = await fetch('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({}),
+        // Send the chosen cycle; omitting it lets the server use the saved one.
+        body: JSON.stringify(cycle ? { cycle } : {}),
       });
 
       if (res.status === 503) {
@@ -197,6 +263,74 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
               )}
             </div>
 
+            {/* Billing cycle choice. Hidden when plans can't be loaded, in which
+                case the server falls back to the tenant's saved cycle. */}
+            {!unavailable && (loadingPlans || plans) && (
+              <div className="mt-5">
+                <p className="text-xs font-semibold uppercase tracking-wide text-muted-foreground">
+                  Choose your plan
+                </p>
+
+                {loadingPlans && !plans ? (
+                  <div className="mt-2 flex items-center gap-2 text-sm text-muted-foreground">
+                    <Loader2 className="size-4 animate-spin" />
+                    Loading plans…
+                  </div>
+                ) : (
+                  <div className="mt-2 grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                    {plans?.options.map((opt) => {
+                      const active = opt.cycle === cycle;
+                      return (
+                        <button
+                          key={opt.cycle}
+                          type="button"
+                          onClick={() => setCycle(opt.cycle)}
+                          disabled={busy}
+                          aria-pressed={active}
+                          className={`relative rounded-xl border p-3 text-left transition-all disabled:opacity-60 ${
+                            active
+                              ? 'border-fuchsia-500 bg-fuchsia-50 dark:bg-fuchsia-900/20 ring-2 ring-fuchsia-500/30'
+                              : 'border-border hover:border-fuchsia-300 hover:bg-muted/50'
+                          }`}
+                        >
+                          {opt.cycle === 'yearly' && (plans?.yearlyDiscountPct ?? 0) > 0 && (
+                            <span className="absolute -top-2 right-2 rounded-full bg-emerald-600 px-2 py-0.5 text-[10px] font-bold text-white">
+                              SAVE {plans?.yearlyDiscountPct}%
+                            </span>
+                          )}
+                          <span className="block text-sm font-semibold text-foreground">
+                            {opt.cycle === 'yearly' ? 'Yearly' : 'Monthly'}
+                          </span>
+                          <span className="mt-0.5 block text-lg font-bold text-foreground">
+                            {inr(opt.amount)}
+                          </span>
+                          <span className="block text-[11px] text-muted-foreground">
+                            {opt.cycle === 'yearly'
+                              ? `${inr(opt.perMonth)}/mo · billed yearly`
+                              : 'per month'}
+                          </span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                )}
+
+                {selected && (
+                  <p className="mt-2.5 text-xs text-muted-foreground">
+                    Active from{' '}
+                    <span className="font-semibold text-foreground">
+                      {fmtDate(selected.periodStart)}
+                    </span>{' '}
+                    to{' '}
+                    <span className="font-semibold text-foreground">
+                      {fmtDate(selected.periodEnd)}
+                    </span>
+                    .
+                  </p>
+                )}
+              </div>
+            )}
+
             {unavailable ? (
               <div className="mt-5 rounded-xl border border-amber-200 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/15 p-4">
                 <p className="text-sm text-amber-800 dark:text-amber-300">
@@ -218,7 +352,7 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
                   className="mt-5 inline-flex items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-pink-500 hover:to-fuchsia-500 transition-all disabled:opacity-60"
                 >
                   {busy ? <Loader2 className="size-4 animate-spin" /> : <Crown className="size-4" />}
-                  {busy ? 'Opening payment…' : 'Pay now'}
+                  {busy ? 'Opening payment…' : selected ? `Pay ${inr(selected.amount)}` : 'Pay now'}
                 </button>
 
                 <div className="mt-3 flex items-center justify-center gap-1.5 text-xs text-muted-foreground">
