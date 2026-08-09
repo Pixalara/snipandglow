@@ -14,6 +14,7 @@ import {
   Clock,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
+import { WelcomeTour } from './welcome-tour';
 
 const DashboardCharts = dynamic(() => import('./dashboard-charts').then(mod => ({ default: mod.DashboardCharts })), {
   loading: () => <div className="h-[200px] flex items-center justify-center text-sm text-muted-foreground">Loading charts...</div>,
@@ -29,6 +30,21 @@ export default async function DashboardPage() {
 
   const userName = user.user_metadata?.name ?? user.email ?? 'there';
   const tenantId = user.user_metadata?.tenant_id;
+  const role = (user.user_metadata?.role as UserRole) ?? 'staff';
+
+  // First-run tour: owners only, and only until it has been completed once for
+  // this salon (recorded in tenants.settings.tour_seen_at).
+  let showTour = false;
+  let salonName = '';
+  if (tenantId && role === 'owner') {
+    const { data: tenantRow } = await supabase
+      .from('tenants')
+      .select('name, settings')
+      .eq('id', tenantId)
+      .maybeSingle();
+    salonName = (tenantRow?.name as string) ?? '';
+    showTour = !((tenantRow?.settings as Record<string, unknown> | null)?.tour_seen_at);
+  }
 
   // Fetch quick stats
   let customerCount = 0;
@@ -122,6 +138,9 @@ export default async function DashboardPage() {
 
   return (
     <div className="space-y-8">
+      {/* First-run guided tour (new salons only) */}
+      {showTour && <WelcomeTour salonName={salonName} />}
+
       {/* Hero Welcome Section */}
       <div className="relative overflow-hidden rounded-3xl p-5 sm:p-7 md:p-9 shadow-lg animate-card-rise" style={{ background: 'linear-gradient(135deg, #667eea 0%, #764ba2 25%, #f093fb 50%, #f5576c 75%, #fda085 100%)' }}>
         {/* Decorative blurred orbs */}
