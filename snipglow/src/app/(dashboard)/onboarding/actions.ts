@@ -1,8 +1,10 @@
 'use server';
 
+import { after } from 'next/server';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { toTitleCase } from '@/lib/utils';
+import { notifyPlatformOfSignup } from '@/lib/notifications/signup-alert';
 import type { ActionResult } from '@/types';
 
 export async function completeOnboarding(data: {
@@ -147,12 +149,15 @@ export async function completeOnboarding(data: {
 
     // Auto-create WhatsApp booking settings (shared mode)
     // Slug format: sng001_salon_name (generated from tenant_code + name)
+    let tenantCode: string | null = null;
     try {
       const { data: tenantWithCode } = await (admin
         .from('tenants')
         .select('tenant_code')
         .eq('id', tenant.id)
         .single() as any);
+
+      tenantCode = tenantWithCode?.tenant_code ?? null;
 
       if (tenantWithCode?.tenant_code) {
         const slug = (tenantWithCode.tenant_code.replace('-', '') + '_' + data.salonName)
@@ -170,6 +175,24 @@ export async function completeOnboarding(data: {
       console.error('Failed to create WhatsApp settings:', err);
       // Non-fatal
     }
+
+    // Alert the platform team (email + WhatsApp). Runs after the response is
+    // sent so it adds nothing to the owner's signup time, and never throws.
+    after(async () => {
+      await notifyPlatformOfSignup({
+        tenantId: tenant.id,
+        tenantCode,
+        salonName: toTitleCase(data.salonName),
+        ownerName: toTitleCase(data.ownerName),
+        phone: data.phone,
+        email: user.email ?? null,
+        city: cityTC,
+        state: stateTC,
+        pincode,
+        planTier: 'starter',
+        trialEnd: trialEnd.toISOString(),
+      });
+    });
 
     return { success: true, data: { tenantId: tenant.id, branchId: branch.id } };
   } catch (err) {
