@@ -11,6 +11,7 @@ export async function completeOnboarding(data: {
   phone: string;
   branchName: string;
   branchAddress: string;
+  city: string;
   state: string;
   pincode: string;
   openTime: string;
@@ -31,16 +32,19 @@ export async function completeOnboarding(data: {
 
     // ─── Validate mandatory location fields ──────────────────────────────
     const address = (data.branchAddress ?? '').trim();
+    const city = (data.city ?? '').trim();
     const state = (data.state ?? '').trim();
     const pincode = (data.pincode ?? '').trim();
     if (!address) return { success: false, error: 'Address is required.' };
+    if (!city) return { success: false, error: 'City is required.' };
     if (!state) return { success: false, error: 'State is required.' };
     if (!/^\d{6}$/.test(pincode)) return { success: false, error: 'Please enter a valid 6-digit pincode.' };
 
     const addressTC = toTitleCase(address);
+    const cityTC = toTitleCase(city);
     const stateTC = toTitleCase(state);
-    // Readable single-line address stored on the branch.
-    const fullAddress = `${addressTC}, ${stateTC} - ${pincode}`;
+    // Readable single-line address stored on the branch (used on invoices).
+    const fullAddress = `${addressTC}, ${cityTC}, ${stateTC} - ${pincode}`;
 
     // Build operating hours (same for all days)
     const operatingHours: Record<string, { open: string; close: string }> = {};
@@ -67,7 +71,7 @@ export async function completeOnboarding(data: {
         plan_tier: 'starter',
         // Persist structured location so it's available for billing/WhatsApp
         // verification without parsing the branch address string.
-        settings: { address: addressTC, state: stateTC, pincode },
+        settings: { address: addressTC, city: cityTC, state: stateTC, pincode },
       })
       .select('id')
       .single();

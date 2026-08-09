@@ -31,6 +31,7 @@ export default function OnboardingPage() {
   // Step 2 fields
   const [branchName, setBranchName] = useState('');
   const [branchAddress, setBranchAddress] = useState('');
+  const [city, setCity] = useState('');
   const [state, setState] = useState('');
   const [pincode, setPincode] = useState('');
   const [openTime, setOpenTime] = useState('09:00');
@@ -65,6 +66,7 @@ export default function OnboardingPage() {
       phone,
       branchName: branchName || salonName,
       branchAddress,
+      city,
       state,
       pincode,
       openTime,
@@ -164,11 +166,21 @@ export default function OnboardingPage() {
                   id="branchAddress"
                   value={branchAddress}
                   onChange={(e) => setBranchAddress(e.target.value)}
-                  placeholder="Shop no., street, area, city"
+                  placeholder="Shop no., street, area"
                   required
                 />
               </div>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="city">City <span className="text-destructive">*</span></Label>
+                  <Input
+                    id="city"
+                    value={city}
+                    onChange={(e) => setCity(e.target.value)}
+                    placeholder="e.g. Pune"
+                    required
+                  />
+                </div>
                 <div className="space-y-2">
                   <Label htmlFor="state">State <span className="text-destructive">*</span></Label>
                   <Input
@@ -277,7 +289,7 @@ export default function OnboardingPage() {
               onClick={() => setStep((s) => s + 1)}
               disabled={
                 (step === 1 && (!salonName || !ownerName || !phone)) ||
-                (step === 2 && (!branchAddress.trim() || !state.trim() || !/^\d{6}$/.test(pincode)))
+                (step === 2 && (!branchAddress.trim() || !city.trim() || !state.trim() || !/^\d{6}$/.test(pincode)))
               }
             >
               Next
