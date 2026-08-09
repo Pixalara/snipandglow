@@ -1,5 +1,6 @@
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import {
+  DEFAULT_SIGNUP_ALERT_EMAIL,
   parseRecipients,
   signupAlertEmails,
   signupAlertWhatsAppNumbers,
@@ -77,13 +78,12 @@ describe('parseRecipients', () => {
 describe('signupAlertEmails', () => {
   it('prefers the explicit list', () => {
     process.env.SIGNUP_ALERT_EMAILS = 'Ops@Pixalara.com';
-    process.env.PLATFORM_ADMIN_EMAILS = 'admin@pixalara.com';
     expect(signupAlertEmails()).toEqual(['ops@pixalara.com']);
   });
 
-  it('falls back to the platform admins', () => {
-    process.env.PLATFORM_ADMIN_EMAILS = 'admin@pixalara.com,second@pixalara.com';
-    expect(signupAlertEmails()).toEqual(['admin@pixalara.com', 'second@pixalara.com']);
+  it('supports several addresses', () => {
+    process.env.SIGNUP_ALERT_EMAILS = 'a@pixalara.com, b@pixalara.com';
+    expect(signupAlertEmails()).toEqual(['a@pixalara.com', 'b@pixalara.com']);
   });
 
   it('deduplicates', () => {
@@ -91,8 +91,14 @@ describe('signupAlertEmails', () => {
     expect(signupAlertEmails()).toEqual(['ops@pixalara.com']);
   });
 
-  it('is empty when nothing is configured', () => {
-    expect(signupAlertEmails()).toEqual([]);
+  it('defaults to the sales mailbox so alerts are never silently dropped', () => {
+    expect(signupAlertEmails()).toEqual([DEFAULT_SIGNUP_ALERT_EMAIL]);
+    expect(DEFAULT_SIGNUP_ALERT_EMAIL).toBe('snipandglow.sales@pixalara.com');
+  });
+
+  it('ignores PLATFORM_ADMIN_EMAILS, which is an access list not an alert list', () => {
+    process.env.PLATFORM_ADMIN_EMAILS = 'admin@pixalara.com';
+    expect(signupAlertEmails()).toEqual([DEFAULT_SIGNUP_ALERT_EMAIL]);
   });
 });
 

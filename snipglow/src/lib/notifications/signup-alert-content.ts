@@ -26,6 +26,15 @@ export interface SignupAlert {
 /** Default WhatsApp template name; override with SIGNUP_ALERT_WA_TEMPLATE. */
 export const SIGNUP_ALERT_TEMPLATE = 'platform_signup_alert';
 
+/**
+ * Where signup alerts go when SIGNUP_ALERT_EMAILS is not set.
+ *
+ * This is the same mailbox that already receives demo bookings, support tickets
+ * and WhatsApp setup requests (via the platform Web3Forms key), so new-signup
+ * alerts land alongside the rest of the sales pipeline with zero config.
+ */
+export const DEFAULT_SIGNUP_ALERT_EMAIL = 'snipandglow.sales@pixalara.com';
+
 /** Split a comma/semicolon/space separated env list into clean entries. */
 export function parseRecipients(raw: string | undefined | null): string[] {
   return (raw || '')
@@ -35,15 +44,16 @@ export function parseRecipients(raw: string | undefined | null): string[] {
 }
 
 /**
- * Email recipients for signup alerts, falling back to the platform admins.
- * PLATFORM_ADMIN_EMAILS is parsed here rather than imported from lib/admin/auth
- * so this module stays free of the Next request-scoped dependency chain.
+ * Email recipients for signup alerts.
+ *
+ * SIGNUP_ALERT_EMAILS wins when set; otherwise alerts go to the sales mailbox
+ * that already handles demo bookings. Deliberately never returns an empty list,
+ * so a missing env var can't silently swallow signup notifications.
  */
 export function signupAlertEmails(): string[] {
   const explicit = parseRecipients(process.env.SIGNUP_ALERT_EMAILS).map((e) => e.toLowerCase());
   if (explicit.length > 0) return Array.from(new Set(explicit));
-  const admins = parseRecipients(process.env.PLATFORM_ADMIN_EMAILS).map((e) => e.toLowerCase());
-  return Array.from(new Set(admins));
+  return [DEFAULT_SIGNUP_ALERT_EMAIL];
 }
 
 /**

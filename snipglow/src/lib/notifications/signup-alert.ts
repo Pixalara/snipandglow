@@ -12,7 +12,8 @@
 //   • Both channels run in parallel; one failing does not block the other.
 //
 // Configuration (each channel silently no-ops when unset)
-//   SIGNUP_ALERT_EMAILS       comma-separated. Defaults to PLATFORM_ADMIN_EMAILS.
+//   SIGNUP_ALERT_EMAILS       comma-separated. Defaults to the sales mailbox
+//                             (DEFAULT_SIGNUP_ALERT_EMAIL), so email needs no setup.
 //   SIGNUP_ALERT_WHATSAPP     comma-separated phones (10-digit or 91XXXXXXXXXX).
 //   SIGNUP_ALERT_WA_TEMPLATE  approved template name. Default platform_signup_alert.
 // =============================================================================
@@ -35,11 +36,7 @@ import {
 export type { SignupAlert };
 
 async function sendEmailAlert(alert: SignupAlert): Promise<void> {
-  const to = signupAlertEmails();
-  if (to.length === 0) {
-    console.warn('[signup-alert] no email recipients (set SIGNUP_ALERT_EMAILS or PLATFORM_ADMIN_EMAILS)');
-    return;
-  }
+  const to = signupAlertEmails(); // never empty - defaults to the sales mailbox
   if (!isEmailConfigured()) {
     console.warn('[signup-alert] SMTP not configured, skipping email');
     return;
