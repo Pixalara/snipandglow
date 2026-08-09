@@ -5,6 +5,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { toTitleCase } from '@/lib/utils';
 import { notifyPlatformOfSignup } from '@/lib/notifications/signup-alert';
+import { sendWelcomeWhatsApp } from '@/lib/notifications/welcome-whatsapp';
 import type { ActionResult } from '@/types';
 
 export async function completeOnboarding(data: {
@@ -176,22 +177,30 @@ export async function completeOnboarding(data: {
       // Non-fatal
     }
 
-    // Alert the platform team (email + WhatsApp). Runs after the response is
-    // sent so it adds nothing to the owner's signup time, and never throws.
+    // Post-signup notifications. Run after the response is sent so they add
+    // nothing to the owner's signup time, and neither one can throw.
     after(async () => {
-      await notifyPlatformOfSignup({
-        tenantId: tenant.id,
-        tenantCode,
-        salonName: toTitleCase(data.salonName),
-        ownerName: toTitleCase(data.ownerName),
-        phone: data.phone,
-        email: user.email ?? null,
-        city: cityTC,
-        state: stateTC,
-        pincode,
-        planTier: 'starter',
-        trialEnd: trialEnd.toISOString(),
-      });
+      await Promise.all([
+        // Welcome the new owner on WhatsApp.
+        sendWelcomeWhatsApp({
+          salonName: toTitleCase(data.salonName),
+          phone: data.phone,
+        }),
+        // Tell the platform team a salon just signed up.
+        notifyPlatformOfSignup({
+          tenantId: tenant.id,
+          tenantCode,
+          salonName: toTitleCase(data.salonName),
+          ownerName: toTitleCase(data.ownerName),
+          phone: data.phone,
+          email: user.email ?? null,
+          city: cityTC,
+          state: stateTC,
+          pincode,
+          planTier: 'starter',
+          trialEnd: trialEnd.toISOString(),
+        }),
+      ]);
     });
 
     return { success: true, data: { tenantId: tenant.id, branchId: branch.id } };
