@@ -11,6 +11,8 @@ import {
   buildSignupAlertText,
   buildSignupAlertEmail,
   signupAlertTemplateParams,
+  isSyntheticEmail,
+  realEmail,
   type SignupAlert,
 } from './signup-alert-content';
 
@@ -217,6 +219,7 @@ describe('message bodies', () => {
       'Glow Studio (SNG-042)',
       'Asha Rao',
       '+919876543210',
+      'asha@example.com',
       'Pune, Maharashtra - 411001',
       '24 Aug 2026',
     ]);
@@ -225,13 +228,28 @@ describe('message bodies', () => {
   it('never leaves a template param empty, which Meta rejects', () => {
     const params = signupAlertTemplateParams({
       ...alert,
+      email: null,
       city: null,
       state: null,
       pincode: null,
       trialEnd: null,
     });
-    expect(params).toHaveLength(5);
+    expect(params).toHaveLength(6);
     for (const p of params) expect(p.trim().length).toBeGreaterThan(0);
+  });
+
+  it('never surfaces a synthetic phone-signup email', () => {
+    const phoneSignup = { ...alert, email: '919876543210@phone.snipandglow.com' };
+    expect(realEmail(phoneSignup)).toBeNull();
+    expect(signupAlertTemplateParams(phoneSignup)[3]).toBe('Not provided');
+    expect(buildSignupAlertText(phoneSignup)).not.toContain('phone.snipandglow.com');
+    expect(buildSignupAlertEmail(phoneSignup)).not.toContain('phone.snipandglow.com');
+  });
+
+  it('treats staff placeholder addresses as synthetic too', () => {
+    expect(isSyntheticEmail('9876543210@staff.snipandglow.com')).toBe(true);
+    expect(isSyntheticEmail('ASHA@Example.com')).toBe(false);
+    expect(isSyntheticEmail(null)).toBe(false);
   });
 
   it('escapes HTML so a salon name cannot inject markup', () => {

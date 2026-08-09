@@ -121,12 +121,34 @@ export function displayPhone(phone: string): string {
   return `+${normalizePhone(phone) || phone}`;
 }
 
-/** Body parameters for the approved WhatsApp template, in declared order. */
+/**
+ * Owners who sign up by phone get a synthetic Supabase auth email
+ * (`<digits>@phone.snipandglow.com`, or `@staff.` for staff logins). Those are
+ * internal placeholders, not contactable addresses, so they must never be
+ * presented as the salon's email.
+ */
+export function isSyntheticEmail(email: string | null | undefined): boolean {
+  const e = (email || '').toLowerCase().trim();
+  return e.endsWith('@phone.snipandglow.com') || e.endsWith('@staff.snipandglow.com');
+}
+
+/** The salon's real email, or null when absent or synthetic. */
+export function realEmail(alert: SignupAlert): string | null {
+  const e = (alert.email || '').trim();
+  if (!e || isSyntheticEmail(e)) return null;
+  return e;
+}
+
+/**
+ * Body parameters for the approved WhatsApp template, in declared order.
+ * Every value is non-empty because Meta rejects blank placeholders.
+ */
 export function signupAlertTemplateParams(alert: SignupAlert): string[] {
   return [
     salonLabel(alert),
     alert.ownerName,
     displayPhone(alert.phone),
+    realEmail(alert) ?? 'Not provided',
     formatAlertLocation(alert),
     formatAlertDate(alert.trialEnd),
   ];
@@ -144,9 +166,10 @@ export function buildSignupAlertText(alert: SignupAlert): string {
     `Owner: ${alert.ownerName}`,
     `Phone: ${displayPhone(alert.phone)}`,
   ];
+  const email = realEmail(alert);
+  if (email) lines.push(`Email: ${email}`);
   const location = formatAlertLocation(alert);
   if (location !== '-') lines.push(`Location: ${location}`);
-  if (alert.email) lines.push(`Email: ${alert.email}`);
   if (alert.trialEnd) lines.push(`Trial ends: ${formatAlertDate(alert.trialEnd)}`);
   lines.push('', adminTenantLink(alert.tenantId));
   return lines.join('\n');
@@ -167,7 +190,8 @@ export function buildSignupAlertEmail(alert: SignupAlert): string {
     ['Owner', alert.ownerName],
     ['Phone', displayPhone(alert.phone)],
   ];
-  if (alert.email) rows.push(['Email', alert.email]);
+  const email = realEmail(alert);
+  if (email) rows.push(['Email', email]);
   const location = formatAlertLocation(alert);
   if (location !== '-') rows.push(['Location', location]);
   if (alert.planTier) rows.push(['Plan', alert.planTier]);
