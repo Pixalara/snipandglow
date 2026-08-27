@@ -2,6 +2,8 @@ import { describe, it, expect } from 'vitest';
 import {
   addMonths,
   istStartOfNextDay,
+  istEndOfDay,
+  istEndOfDayAfterMonths,
   computeSubscriptionWindow,
 } from './subscription-window';
 
@@ -80,6 +82,49 @@ describe('istStartOfNextDay', () => {
   });
 });
 
+describe('istEndOfDay', () => {
+  it('returns the last millisecond of the IST day', () => {
+    // 23:59:59.999 IST on 26 Aug = 18:29:59.999Z on the same date.
+    expect(istEndOfDay(ist(2026, 8, 26, 10, 0)).toISOString()).toBe('2026-08-26T18:29:59.999Z');
+  });
+
+  it('is idempotent', () => {
+    const once = istEndOfDay(ist(2026, 8, 26, 10, 0));
+    expect(istEndOfDay(once).toISOString()).toBe(once.toISOString());
+  });
+
+  it('keeps the IST day when the UTC day is already the previous one', () => {
+    // 01:00 IST on 27 Aug is 19:30Z on 26 Aug; the IST day is the 27th.
+    expect(istDate(istEndOfDay(ist(2026, 8, 27, 1, 0)))).toBe('2026-08-27');
+  });
+});
+
+describe('istEndOfDayAfterMonths', () => {
+  it('keeps the same day of month', () => {
+    expect(istDate(istEndOfDayAfterMonths(ist(2026, 8, 26), 1))).toBe('2026-09-26');
+    expect(istDate(istEndOfDayAfterMonths(ist(2026, 8, 26), 12))).toBe('2027-08-26');
+  });
+
+  it('ignores the time of day of the input', () => {
+    // The regression that caused the drift: an end stored at IST midnight and one
+    // stored at IST end-of-day must renew to exactly the same date.
+    const fromMidnight = istEndOfDayAfterMonths(ist(2026, 8, 26, 0, 0), 1);
+    const fromEndOfDay = istEndOfDayAfterMonths(istEndOfDay(ist(2026, 8, 26)), 1);
+    expect(fromEndOfDay.toISOString()).toBe(fromMidnight.toISOString());
+    expect(istDate(fromMidnight)).toBe('2026-09-26');
+  });
+
+  it('clamps day-of-month overflow on the IST calendar', () => {
+    expect(istDate(istEndOfDayAfterMonths(ist(2026, 8, 31), 1))).toBe('2026-09-30');
+    expect(istDate(istEndOfDayAfterMonths(ist(2026, 1, 31), 1))).toBe('2026-02-28');
+    expect(istDate(istEndOfDayAfterMonths(ist(2028, 1, 31), 1))).toBe('2028-02-29');
+  });
+
+  it('crosses a year boundary', () => {
+    expect(istDate(istEndOfDayAfterMonths(ist(2026, 12, 15), 1))).toBe('2027-01-15');
+  });
+});
+
 describe('computeSubscriptionWindow', () => {
   const now = ist(2026, 8, 9, 14, 0); // 9 Aug 2026, 14:00 IST
 
@@ -110,7 +155,7 @@ describe('computeSubscriptionWindow', () => {
   });
 
   describe('rule 2 - renewing while still active', () => {
-    it('starts the day after the current expiry', () => {
+    it('starts the day after the current expiry and keeps the anniversary', () => {
       const w = computeSubscriptionWindow({
         now,
         currentEnd: ist(2026, 8, 24, 15, 30),
@@ -119,7 +164,8 @@ describe('computeSubscriptionWindow', () => {
       });
       expect(w.basis).toBe('day_after_current_end');
       expect(istDate(w.start)).toBe('2026-08-25');
-      expect(istDate(w.end)).toBe('2026-09-25');
+      // Measured from the OLD END (24 Aug), not from the new start (25 Aug).
+      expect(istDate(w.end)).toBe('2026-09-24');
     });
 
     it('never loses a paid day - the new term begins after the old one ends', () => {
@@ -138,7 +184,7 @@ describe('computeSubscriptionWindow', () => {
         months: 12,
       });
       expect(istDate(w.start)).toBe('2026-08-25');
-      expect(istDate(w.end)).toBe('2027-08-25');
+      expect(istDate(w.end)).toBe('2027-08-24');
     });
 
     it('handles an expiry on the last day of a month', () => {
@@ -149,7 +195,101 @@ describe('computeSubscriptionWindow', () => {
         months: 1,
       });
       expect(istDate(w.start)).toBe('2026-09-01');
-      expect(istDate(w.end)).toBe('2026-10-01');
+      // September has 30 days, so the term is clamped rather than spilling into
+      // October.
+      expect(istDate(w.end)).toBe('2026-09-30');
+    });
+
+    it('leaves the anniversary exactly where it is over many renewals', () => {
+      // The drift bug: each renewal used to push the end date one day later
+      // (26th → 27th → 28th …) because the new end was measured from the new
+      // start. Twenty-four monthly renewals must still land on the 26th.
+      let currentEnd = istEndOfDay(ist(2026, 8, 26));
+      for (let i = 0; i < 24; i++) {
+        const w = computeSubscriptionWindow({
+          // Paying on the expiry day itself, the way a real renewal happens.
+          now: ist(
+            2026 + Math.floor((7 + i) / 12),
+            ((7 + i) % 12) + 1,
+            26,
+            19,
+            26
+          ),
+          currentEnd,
+          status: 'active',
+          months: 1,
+        });
+        expect(w.basis).toBe('day_after_current_end');
+        expect(istDate(w.end).slice(-2)).toBe('26');
+        currentEnd = w.end;
+      }
+      expect(istDate(currentEnd)).toBe('2028-08-26');
+    });
+  });
+
+  describe('the 26 Aug renewal that regressed', () => {
+    // Live incident: monthly term ended 26 Aug 2026, tenant paid Rs 799 at
+    // 19:26 IST on 26 Aug. Expected 27 Aug → 26 Sep. The system stored
+    // 27 Sep → 27 Oct.
+    const paidAt = ist(2026, 8, 26, 19, 26);
+
+    it('renews 27 Aug -> 26 Sep when paid on the expiry day', () => {
+      // Reproduced with the end stored at IST midnight, exactly as it was.
+      const w = computeSubscriptionWindow({
+        now: paidAt,
+        currentEnd: ist(2026, 8, 26, 0, 0),
+        status: 'active',
+        months: 1,
+      });
+      expect(w.basis).toBe('day_after_current_end');
+      expect(istDate(w.start)).toBe('2026-08-27');
+      expect(istDate(w.end)).toBe('2026-09-26');
+    });
+
+    it('gives the same answer when the end is stored at IST end-of-day', () => {
+      const w = computeSubscriptionWindow({
+        now: paidAt,
+        currentEnd: istEndOfDay(ist(2026, 8, 26)),
+        status: 'active',
+        months: 1,
+      });
+      expect(istDate(w.start)).toBe('2026-08-27');
+      expect(istDate(w.end)).toBe('2026-09-26');
+    });
+
+    it('never produces the bad 27 Sep -> 27 Oct window, even applied twice', () => {
+      // Belt and braces on the atomicity fix in activate.ts: if a second
+      // activation somehow ran, the dates must not silently gain a month.
+      const first = computeSubscriptionWindow({
+        now: paidAt,
+        currentEnd: ist(2026, 8, 26, 0, 0),
+        status: 'active',
+        months: 1,
+      });
+      expect(istDate(first.end)).not.toBe('2026-10-27');
+
+      const second = computeSubscriptionWindow({
+        now: paidAt,
+        currentEnd: first.end,
+        status: 'active',
+        months: 1,
+      });
+      // A genuine second month, on the same anniversary - not 27 Oct.
+      expect(istDate(second.start)).toBe('2026-09-27');
+      expect(istDate(second.end)).toBe('2026-10-26');
+    });
+
+    it('leaves the tenant covered for the whole of their final day', () => {
+      const w = computeSubscriptionWindow({
+        now: paidAt,
+        currentEnd: ist(2026, 8, 26, 0, 0),
+        status: 'active',
+        months: 1,
+      });
+      // getSubscriptionState locks once end <= now, so 26 Sep must still be live
+      // late in the evening.
+      expect(w.end.getTime()).toBeGreaterThan(ist(2026, 9, 26, 23, 30).getTime());
+      expect(w.end.getTime()).toBeLessThan(ist(2026, 9, 27, 0, 0).getTime());
     });
   });
 
@@ -231,9 +371,24 @@ describe('computeSubscriptionWindow', () => {
       }
     });
 
-    it('treats an expiry exactly at now as lapsed, not live', () => {
+    it('treats an expiry later today as still live, so paying on expiry day renews', () => {
+      // subscription_end names the last DAY of cover, so the exact time of day it
+      // was stamped with must not decide between renew and restart.
       const w = computeSubscriptionWindow({ now, currentEnd: now, status: 'active', months: 1 });
+      expect(w.basis).toBe('day_after_current_end');
+      expect(istDate(w.start)).toBe('2026-08-10');
+      expect(istDate(w.end)).toBe('2026-09-09');
+    });
+
+    it('treats an expiry on any earlier day as lapsed', () => {
+      const w = computeSubscriptionWindow({
+        now,
+        currentEnd: ist(2026, 8, 8, 23, 59), // yesterday, IST
+        status: 'active',
+        months: 1,
+      });
       expect(w.basis).toBe('payment_date');
+      expect(w.start.toISOString()).toBe(now.toISOString());
     });
   });
 });

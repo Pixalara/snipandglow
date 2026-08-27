@@ -10,6 +10,14 @@ import { computeSubscriptionWindow } from './subscription-window';
 // `activatePaidOrder()`, which is IDEMPOTENT: the first caller extends the
 // subscription and stamps `activated_at`; later callers no-op. That prevents a
 // double extension when both paths report the same payment.
+//
+// The latch MUST be claimed with a conditional UPDATE ... WHERE activated_at IS
+// NULL before the tenant row is touched. A plain read-then-write is not enough:
+// /api/payments/verify and /api/payments/webhook land within milliseconds of one
+// another (and Razorpay sends both `payment.captured` and `order.paid` for a
+// single payment), so both callers would see activated_at = null and both would
+// extend. That is precisely how a 26 Aug renewal became 27 Sep → 27 Oct: the
+// first pass moved the end to 26 Sep, then the second pass chained onto it.
 // =============================================================================
 
 /** Constant-time compare of two hex signatures. */
@@ -77,7 +85,36 @@ export async function activatePaidOrder(params: {
     .maybeSingle() as any);
 
   if (orderErr || !order) return { ok: false, error: 'ORDER_NOT_FOUND' };
+  // Cheap early exit for the common "webhook arrives well after the browser
+  // already activated" case. Not a substitute for the atomic claim below.
   if (order.activated_at) return { ok: true, alreadyActivated: true };
+
+  // Claim the order atomically BEFORE extending the subscription. The
+  // `.is('activated_at', null)` predicate is evaluated by Postgres as part of the
+  // UPDATE, so exactly one concurrent caller gets a row back and the losers
+  // no-op. Deliberately restricted to columns that have always existed, so
+  // activation can never be broken by a pending migration.
+  const claimedAt = new Date().toISOString();
+  const { data: claimedOrder, error: claimErr } = await (admin
+    .from('payment_orders' as any)
+    .update({
+      status: 'paid',
+      razorpay_payment_id: params.razorpayPaymentId ?? null,
+      activated_at: claimedAt,
+      updated_at: claimedAt,
+    } as any)
+    .eq('id', order.id)
+    .is('activated_at', null)
+    .select('id')
+    .maybeSingle() as any);
+
+  if (claimErr) {
+    console.error('[razorpay] could not claim order for activation:', claimErr);
+    return { ok: false, error: 'ORDER_CLAIM_FAILED' };
+  }
+
+  // Someone else won the race and is already extending this order.
+  if (!claimedOrder) return { ok: true, alreadyActivated: true };
 
   const { data: tenant } = await (admin
     .from('tenants' as any)
@@ -85,7 +122,25 @@ export async function activatePaidOrder(params: {
     .eq('id', order.tenant_id)
     .maybeSingle() as any);
 
-  if (!tenant) return { ok: false, error: 'TENANT_NOT_FOUND' };
+  // The claim is held at this point, so any bail-out from here on must release it
+  // — otherwise the order looks activated while the subscription was never
+  // extended, and no retry or webhook redelivery could ever put that right.
+  const releaseClaim = async () => {
+    await (admin
+      .from('payment_orders' as any)
+      .update({
+        status: order.status ?? 'created',
+        activated_at: null,
+        updated_at: new Date().toISOString(),
+      } as any)
+      .eq('id', order.id)
+      .eq('activated_at', claimedAt) as any);
+  };
+
+  if (!tenant) {
+    await releaseClaim();
+    return { ok: false, error: 'TENANT_NOT_FOUND' };
+  }
 
   const now = new Date();
   const parsedEnd = tenant.subscription_end ? new Date(tenant.subscription_end) : null;
@@ -110,25 +165,13 @@ export async function activatePaidOrder(params: {
 
   if (tenantErr) {
     console.error('[razorpay] tenant activation failed:', tenantErr);
+    await releaseClaim();
     return { ok: false, error: 'TENANT_UPDATE_FAILED' };
   }
 
-  // Latch the order so a second callback can't extend again. Deliberately kept
-  // to columns that have always existed, so activation can never be broken by a
-  // pending migration.
-  await (admin
-    .from('payment_orders' as any)
-    .update({
-      status: 'paid',
-      razorpay_payment_id: params.razorpayPaymentId ?? null,
-      activated_at: new Date().toISOString(),
-      updated_at: new Date().toISOString(),
-    } as any)
-    .eq('id', order.id) as any);
-
   // Audit trail of the exact term purchased (migration 048). Best-effort and
-  // separate from the latch above: this is derivable data, so if the migration
-  // has not been applied yet we log and move on rather than failing a payment.
+  // separate from the latch: this is derivable data, so if the migration has not
+  // been applied yet we log and move on rather than failing a payment.
   const { error: periodErr } = await (admin
     .from('payment_orders' as any)
     .update({
