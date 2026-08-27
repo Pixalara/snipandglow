@@ -3,9 +3,22 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import '@testing-library/jest-dom/vitest';
 import type { PlanTier } from '@/types';
-import { WhatsAppClient } from './whatsapp-client';
+import { WhatsAppConnectCard } from './whatsapp-client';
 import type { OnboardingStatus } from '@/lib/whatsapp/onboarding-status';
 import { controlsFor } from '@/lib/whatsapp/onboarding-status';
+
+// -----------------------------------------------------------------------------
+// These tests target WhatsAppConnectCard DIRECTLY, not the WhatsAppClient page.
+//
+// The connect card was taken off the WhatsApp page in commit 0373539 while
+// Embedded Signup goes through Meta's review (see `SHOW_CONNECT_CARD` in
+// whatsapp-client.tsx). Rendering WhatsAppClient here asserted against a card
+// that is no longer mounted, so every one of these specs failed on a component
+// that was working perfectly well.
+//
+// Testing the card directly keeps the plan gating, Embedded Signup and status
+// rendering guarded while it is parked, so it can be switched back on safely.
+// -----------------------------------------------------------------------------
 
 // -----------------------------------------------------------------------------
 // Mock the server actions module. The component dynamically imports './actions'
@@ -76,11 +89,11 @@ afterEach(() => {
 // =============================================================================
 // Plan gating (Req 1.1, 1.2, 1.3, 1.4)
 // =============================================================================
-describe('WhatsAppClient — plan gating', () => {
+describe('WhatsAppConnectCard — plan gating', () => {
   it('reads the plan tier before render and shows an upgrade prompt for non-Pro tenants (Req 1.1, 1.3)', async () => {
     vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
 
-    render(<WhatsAppClient planTier={'starter' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'starter' as PlanTier} />);
 
     // The upgrade prompt is shown instead of the connect action.
     expect(await screen.findByText(/Available on the Pro plan/i)).toBeInTheDocument();
@@ -91,7 +104,7 @@ describe('WhatsAppClient — plan gating', () => {
   it('shows the connect action for Pro tenants in not_started status (Req 1.2, 1.4)', async () => {
     vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     expect(await screen.findByRole('button', { name: /Connect WhatsApp/i })).toBeInTheDocument();
     expect(screen.queryByText(/Available on the Pro plan/i)).not.toBeInTheDocument();
@@ -101,12 +114,12 @@ describe('WhatsAppClient — plan gating', () => {
 // =============================================================================
 // Embedded Signup launch + auth code submission (Req 2.1, 2.2, 2.3, 2.5)
 // =============================================================================
-describe('WhatsAppClient — Embedded Signup', () => {
+describe('WhatsAppConnectCard — Embedded Signup', () => {
   it('launches FB.login with config_id and response_type="code" on connect (Req 2.1)', async () => {
     const login = vi.fn();
     vi.stubGlobal('FB', { init: vi.fn(), login });
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     const connectBtn = await screen.findByRole('button', { name: /Connect WhatsApp/i });
     fireEvent.click(connectBtn);
@@ -131,7 +144,7 @@ describe('WhatsAppClient — Embedded Signup', () => {
       state: makeState({ status: 'connected', mode: 'dedicated', displayPhoneNumber: '+91 90000 00000' }),
     } as any);
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     const connectBtn = await screen.findByRole('button', { name: /Connect WhatsApp/i });
     fireEvent.click(connectBtn);
@@ -148,7 +161,7 @@ describe('WhatsAppClient — Embedded Signup', () => {
     });
     vi.stubGlobal('FB', { init: vi.fn(), login });
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     const connectBtn = await screen.findByRole('button', { name: /Connect WhatsApp/i });
     fireEvent.click(connectBtn);
@@ -161,7 +174,7 @@ describe('WhatsAppClient — Embedded Signup', () => {
     // SDK never loaded: FB is undefined.
     vi.stubGlobal('FB', undefined);
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     const connectBtn = await screen.findByRole('button', { name: /Connect WhatsApp/i });
     fireEvent.click(connectBtn);
@@ -174,14 +187,14 @@ describe('WhatsAppClient — Embedded Signup', () => {
 // =============================================================================
 // Render by status (Req 7.1, 7.2, 7.3)
 // =============================================================================
-describe('WhatsAppClient — render by onboarding status', () => {
+describe('WhatsAppConnectCard — render by onboarding status', () => {
   it('renders the connected number and confirmation when status is connected (Req 7.1, 7.2)', async () => {
     vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
     mockGetOnboardingState.mockResolvedValue(
       makeState({ status: 'connected', mode: 'dedicated', displayPhoneNumber: '+91 98765 43210' }) as any,
     );
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     expect(await screen.findByText('+91 98765 43210')).toBeInTheDocument();
     expect(screen.getByText(/Connected Successfully/i)).toBeInTheDocument();
@@ -197,7 +210,7 @@ describe('WhatsAppClient — render by onboarding status', () => {
       makeState({ status: 'failed', errorReason: 'Token exchange failed' }) as any,
     );
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     expect(await screen.findByText('Token exchange failed')).toBeInTheDocument();
     expect(screen.getByText(/Connection Failed/i)).toBeInTheDocument();
@@ -214,12 +227,12 @@ describe('WhatsAppClient — render by onboarding status', () => {
 // `embeddedSignupAvailable = true`). These tests are skipped until that
 // override is reverted.
 // =============================================================================
-describe.skip('WhatsAppClient — interim manual setup', () => {
+describe.skip('WhatsAppConnectCard — interim manual setup', () => {
   it('shows the Request WhatsApp Setup form (not the connect button) when no config id is present', async () => {
     vi.stubEnv('NEXT_PUBLIC_FB_CONFIG_ID', '');
     vi.stubGlobal('FB', { init: vi.fn(), login: vi.fn() });
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     expect(await screen.findByRole('button', { name: /Request WhatsApp Setup/i })).toBeInTheDocument();
     expect(screen.queryByRole('button', { name: /Connect WhatsApp/i })).not.toBeInTheDocument();
@@ -233,7 +246,7 @@ describe.skip('WhatsAppClient — interim manual setup', () => {
       request: { id: 'r1', contactPhone: '+91 98765 43210', contactName: null, status: 'pending', createdAt: 'now' },
     } as any);
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     const phoneInput = await screen.findByPlaceholderText(/Your WhatsApp number/i);
     fireEvent.change(phoneInput, { target: { value: '+91 98765 43210' } });
@@ -261,7 +274,7 @@ describe.skip('WhatsAppClient — interim manual setup', () => {
       createdAt: 'now',
     } as any);
 
-    render(<WhatsAppClient planTier={'pro' as PlanTier} />);
+    render(<WhatsAppConnectCard planTier={'pro' as PlanTier} />);
 
     expect(await screen.findByText(/Setup in progress/i)).toBeInTheDocument();
     expect(screen.getByText('+91 90000 11111')).toBeInTheDocument();

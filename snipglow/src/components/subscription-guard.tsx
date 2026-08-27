@@ -17,10 +17,18 @@ interface SubscriptionGuardProps {
   children: React.ReactNode;
 }
 
-// Only the dashboard home stays accessible when expired (so the owner can see
-// the renewal prompt and complete payment). Everything else — including Settings
-// — is locked until the subscription is renewed.
-const ALWAYS_ACCESSIBLE = ['/dashboard'];
+// Routes that stay reachable when expired, so the owner can always see what they
+// owe and pay it:
+//
+//   /dashboard          — the renewal prompt lives here
+//   /dashboard/settings — the expiry date, the exact amount payable and the
+//                         payment history live here. Locking it meant an owner
+//                         who had just paid could not look up the payment id that
+//                         support would ask them for.
+//
+// Everything that runs the salon (appointments, billing, customers, WhatsApp)
+// stays locked until the subscription is renewed.
+const ALWAYS_ACCESSIBLE = ['/dashboard', '/dashboard/settings'];
 
 export function SubscriptionGuard({
   subscriptionStatus,

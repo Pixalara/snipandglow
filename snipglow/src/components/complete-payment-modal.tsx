@@ -90,11 +90,35 @@ function fmtDate(iso: string): string {
 
 const inr = (n: number) => `₹${n.toLocaleString('en-IN')}`;
 
+/** Network calls must not hang forever: a stuck fetch left the Pay button
+ *  disabled on "Opening payment…" with no way out but the backdrop. */
+const FETCH_TIMEOUT_MS = 20_000;
+
+async function fetchWithTimeout(url: string, init?: RequestInit): Promise<Response> {
+  const controller = new AbortController();
+  const timer = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS);
+  try {
+    return await fetch(url, { ...init, signal: controller.signal });
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+/** What the payment actually bought — shown on the success screen. */
+interface Receipt {
+  newEnd: string | null;
+  amountLabel: string;
+  paymentId: string;
+}
+
 export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const router = useRouter();
   const [busy, setBusy] = useState(false);
   const [paid, setPaid] = useState(false);
+  const [receipt, setReceipt] = useState<Receipt | null>(null);
   const [error, setError] = useState('');
+  /** Set when the customer closes the Razorpay window without paying. */
+  const [cancelledByUser, setCancelledByUser] = useState(false);
   const [unavailable, setUnavailable] = useState(false);
   const [amountLabel, setAmountLabel] = useState('');
   const [plans, setPlans] = useState<PlansResponse | null>(null);
@@ -106,6 +130,22 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
   // Warm the Checkout script so the first tap opens instantly.
   useEffect(() => { if (open) void loadCheckout(); }, [open]);
 
+  // Clear transient outcomes when the modal is reopened. The component stays
+  // mounted, so without this a previous "Payment cancelled" notice or error was
+  // still on screen the next time the owner tapped Renew.
+  //
+  // Adjusted during render rather than in an effect — this is React's documented
+  // pattern for resetting state when a prop changes, and it avoids the extra
+  // render pass an effect would cause.
+  const [wasOpen, setWasOpen] = useState(open);
+  if (open !== wasOpen) {
+    setWasOpen(open);
+    if (open) {
+      setError('');
+      setCancelledByUser(false);
+    }
+  }
+
   // Load the monthly/yearly choices. Prices are server-computed so a negotiated
   // rate shows correctly and the browser never proposes an amount.
   useEffect(() => {
@@ -113,7 +153,7 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
     let cancelled = false;
     (async () => {
       try {
-        const res = await fetch('/api/payments/plans');
+        const res = await fetchWithTimeout('/api/payments/plans');
         if (cancelled) return;
         if (!res.ok) {
           // Non-fatal: Pay now still works, using the tenant's saved cycle.
@@ -140,8 +180,9 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
   async function handlePay() {
     setBusy(true);
     setError('');
+    setCancelledByUser(false);
     try {
-      const res = await fetch('/api/payments/create-order', {
+      const res = await fetchWithTimeout('/api/payments/create-order', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         // Send the chosen cycle; omitting it lets the server use the saved one.
@@ -188,11 +229,16 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
         },
         theme: { color: '#db2777' },
         modal: {
-          ondismiss: () => setBusy(false),
+          // Closing the Razorpay window used to reset silently, so the most
+          // common exit from checkout gave no feedback whatsoever.
+          ondismiss: () => {
+            setBusy(false);
+            setCancelledByUser(true);
+          },
         },
         handler: async (resp: Record<string, string>) => {
           try {
-            const v = await fetch('/api/payments/verify', {
+            const v = await fetchWithTimeout('/api/payments/verify', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
               body: JSON.stringify({
@@ -202,6 +248,14 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
               }),
             });
             if (v.ok) {
+              // Keep what the payment bought so the success screen can confirm
+              // the new expiry date instead of just saying "active again".
+              const body = (await v.json().catch(() => ({}))) as { newEnd?: string | null };
+              setReceipt({
+                newEnd: body.newEnd ?? null,
+                amountLabel: `₹${(order.amount / 100).toLocaleString('en-IN')}`,
+                paymentId: resp.razorpay_payment_id ?? '',
+              });
               setPaid(true);
               setBusy(false);
               // Clear the "renew" prompt for this session and refresh server state.
@@ -221,8 +275,12 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
       });
 
       rzp.open();
-    } catch {
-      setError('Something went wrong starting the payment. Please try again.');
+    } catch (err) {
+      setError(
+        (err as Error)?.name === 'AbortError'
+          ? 'The payment server took too long to respond. Check your connection and try again.'
+          : 'Something went wrong starting the payment. Please try again.'
+      );
       setBusy(false);
     }
   }
@@ -237,9 +295,39 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
               <CheckCircle2 className="size-8 text-emerald-600 dark:text-emerald-400" />
             </div>
             <h2 className="text-xl font-bold text-foreground">Payment successful</h2>
-            <p className="text-sm text-muted-foreground mt-2 max-w-sm">
-              Your subscription is active again. Everything is restored exactly as you left it — thank you!
-            </p>
+            {receipt?.newEnd ? (
+              <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+                You&apos;re covered until{' '}
+                <span className="font-semibold text-foreground">{fmtDate(receipt.newEnd)}</span>.
+                Everything is restored exactly as you left it — thank you!
+              </p>
+            ) : (
+              <p className="text-sm text-muted-foreground mt-2 max-w-sm">
+                Your subscription is active again. Everything is restored exactly as you left it — thank you!
+              </p>
+            )}
+
+            {/* A record the owner can quote to support or note against the payment. */}
+            {receipt && (
+              <dl className="mt-4 w-full space-y-1.5 rounded-xl border border-border bg-muted/40 p-4 text-left">
+                {receipt.newEnd && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-xs text-muted-foreground">Covered until</dt>
+                    <dd className="text-xs font-semibold text-foreground">{fmtDate(receipt.newEnd)}</dd>
+                  </div>
+                )}
+                <div className="flex items-center justify-between gap-3">
+                  <dt className="text-xs text-muted-foreground">Amount paid</dt>
+                  <dd className="text-xs font-semibold text-foreground">{receipt.amountLabel}</dd>
+                </div>
+                {receipt.paymentId && (
+                  <div className="flex items-center justify-between gap-3">
+                    <dt className="text-xs text-muted-foreground">Payment ID</dt>
+                    <dd className="font-mono text-[11px] text-foreground break-all">{receipt.paymentId}</dd>
+                  </div>
+                )}
+              </dl>
+            )}
             <button
               onClick={() => { onClose(); router.refresh(); }}
               className="mt-5 inline-flex w-full items-center justify-center gap-2 rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 px-6 py-3 text-sm font-semibold text-white shadow-lg hover:from-pink-500 hover:to-fuchsia-500 transition-all"
@@ -341,8 +429,30 @@ export function CompletePaymentModal({ open, onClose }: { open: boolean; onClose
             ) : (
               <>
                 {error && (
-                  <div className="mt-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 p-3">
+                  <div role="alert" className="mt-4 rounded-xl border border-red-200 dark:border-red-900/50 bg-red-50 dark:bg-red-900/20 p-3">
                     <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+                  </div>
+                )}
+
+                {/* Closed the Razorpay window without paying. */}
+                {cancelledByUser && !error && (
+                  <div role="status" className="mt-4 rounded-xl border border-amber-300 dark:border-amber-800/40 bg-amber-50 dark:bg-amber-900/15 p-3">
+                    <p className="text-sm text-amber-900 dark:text-amber-200">
+                      Payment cancelled — nothing has been charged. You can try again whenever
+                      you&apos;re ready.
+                    </p>
+                  </div>
+                )}
+
+                {/* Could not price the plan. The Pay button still works (the server
+                    uses the saved cycle) but say so rather than quietly dropping
+                    the amount and the term from the screen. */}
+                {plansFailed && !unavailable && (
+                  <div role="status" className="mt-4 rounded-xl border border-border bg-muted/50 p-3">
+                    <p className="text-sm text-muted-foreground">
+                      Could not load your plan details just now. You can still pay — the exact
+                      amount is confirmed on the next screen before anything is charged.
+                    </p>
                   </div>
                 )}
 

@@ -545,7 +545,7 @@ export async function updateEmployee(
     return { success: false, error: 'Failed to update employee. Please try again.' };
   }
 
-  revalidatePath('/staff');
+  revalidatePath('/dashboard/staff');
   return { success: true, data: data as Employee };
 }
 
@@ -573,7 +573,7 @@ export async function deactivateEmployee(id: string): Promise<ActionResult<void>
     return { success: false, error: 'Failed to deactivate employee. Please try again.' };
   }
 
-  revalidatePath('/staff');
+  revalidatePath('/dashboard/staff');
   return { success: true, data: undefined };
 }
 

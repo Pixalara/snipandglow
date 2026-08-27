@@ -70,6 +70,7 @@ export function VisitHistoryTable({ appointments }: { appointments: VisitRow[] }
       data={appointments}
       getRowKey={(row) => row.id}
       emptyMessage="No visit history yet"
+      emptyHint="Completed appointments for this customer will appear here."
     />
   );
 }
@@ -122,6 +123,7 @@ export function BillingHistoryTable({ invoices }: { invoices: BillingHistoryRow[
       data={invoices}
       getRowKey={(row) => row.id}
       emptyMessage="No billing history yet"
+      emptyHint="Invoices raised for this customer will appear here."
     />
   );
 }
@@ -219,6 +221,7 @@ export function WalletHistoryTable({ transactions }: { transactions: WalletTxRow
       data={transactions}
       getRowKey={(row) => row.id}
       emptyMessage="No wallet activity yet"
+      emptyHint="Top-ups and wallet payments for this customer will appear here."
     />
   );
 }

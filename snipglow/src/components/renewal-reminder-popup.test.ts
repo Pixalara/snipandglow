@@ -1,9 +1,18 @@
 import { describe, it, expect } from 'vitest';
-import { istDaysUntil, stageForDaysLeft } from './renewal-reminder-popup';
+import {
+  istDaysUntil,
+  stageForDaysLeft,
+  isUrgentStage,
+  REMINDER_WINDOW_DAYS,
+} from './renewal-reminder-popup';
 
 // =============================================================================
-// Reminder cadence: 2 days before, 1 day before, and the day of expiry.
-// These must be judged on the salon's IST calendar, not raw elapsed hours.
+// Reminder cadence: escalating BANDS across the final two weeks, judged on the
+// salon's IST calendar rather than raw elapsed hours.
+//
+// The bands matter more than the exact wording: the stages used to be
+// `days === 2 / 1 / 0`, so an owner who didn't log in on one of those three days
+// was never warned before losing access.
 // =============================================================================
 
 describe('istDaysUntil', () => {
@@ -45,14 +54,26 @@ describe('istDaysUntil', () => {
 });
 
 describe('stageForDaysLeft', () => {
-  it('fires the three reminder stages', () => {
-    expect(stageForDaysLeft(2)).toBe('two_days');
-    expect(stageForDaysLeft(1)).toBe('tomorrow');
+  it('escalates through the five stages', () => {
     expect(stageForDaysLeft(0)).toBe('today');
+    expect(stageForDaysLeft(1)).toBe('tomorrow');
+    expect(stageForDaysLeft(2)).toBe('three_days');
+    expect(stageForDaysLeft(3)).toBe('three_days');
+    expect(stageForDaysLeft(4)).toBe('week');
+    expect(stageForDaysLeft(7)).toBe('week');
+    expect(stageForDaysLeft(8)).toBe('two_weeks');
+    expect(stageForDaysLeft(14)).toBe('two_weeks');
   });
 
-  it('stays silent when renewal is further out', () => {
-    for (const d of [3, 4, 7, 15, 30, 365]) {
+  it('warns on EVERY day inside the window, so a missed login cannot skip it', () => {
+    // The whole point of the fix: no gaps between 0 and the window edge.
+    for (let d = 0; d <= REMINDER_WINDOW_DAYS; d++) {
+      expect(stageForDaysLeft(d), `day ${d} must warn`).not.toBeNull();
+    }
+  });
+
+  it('stays silent when renewal is further out than the window', () => {
+    for (const d of [REMINDER_WINDOW_DAYS + 1, 20, 30, 365]) {
       expect(stageForDaysLeft(d)).toBeNull();
     }
   });
@@ -60,5 +81,24 @@ describe('stageForDaysLeft', () => {
   it('stays silent once expired (the lockout guard takes over)', () => {
     expect(stageForDaysLeft(-1)).toBeNull();
     expect(stageForDaysLeft(-30)).toBeNull();
+  });
+
+  it('is silent for nonsense input rather than throwing', () => {
+    expect(stageForDaysLeft(NaN)).toBeNull();
+    expect(stageForDaysLeft(Infinity)).toBeNull();
+  });
+});
+
+describe('isUrgentStage', () => {
+  it('takes over the screen only inside the last three days', () => {
+    expect(isUrgentStage('today')).toBe(true);
+    expect(isUrgentStage('tomorrow')).toBe(true);
+    expect(isUrgentStage('three_days')).toBe(true);
+  });
+
+  it('leaves the earlier notices non-blocking', () => {
+    // A salon two weeks from renewal is working normally; don't block the screen.
+    expect(isUrgentStage('week')).toBe(false);
+    expect(isUrgentStage('two_weeks')).toBe(false);
   });
 });

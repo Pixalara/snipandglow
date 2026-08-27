@@ -3,6 +3,7 @@
 import { useMemo, useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { formatTimeIST, formatDateIN, calculatePerItemInvoiceTotal } from '@/lib/utils';
 import {
   updateAppointmentStatus, completeAndGenerateBill,
@@ -181,7 +182,11 @@ function AppointmentDetailPopup({ appointment, onClose, onComplete, onReschedule
     setError('');
     startTransition(async () => {
       const result = await updateAppointmentStatus(appointment.id, 'cancelled');
-      if (result.success) { onClose(); router.refresh(); } else setError(result.error);
+      if (result.success) {
+        toast.success('Appointment cancelled. The customer has been notified on WhatsApp.');
+        onClose();
+        router.refresh();
+      } else setError(result.error);
     });
   }
 
@@ -302,37 +307,60 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
   const [selectedEmployeeId, setSelectedEmployeeId] = useState<string>('');
   const [addServiceId, setAddServiceId] = useState<string>('');
   const [loadingLists, setLoadingLists] = useState(true);
+  /** Set when the services/staff/products catalog fails to load. */
+  const [listsError, setListsError] = useState('');
+  const [listsReloadKey, setListsReloadKey] = useState(0);
   const [productCatalog, setProductCatalog] = useState<{ id: string; name: string; price: number; stock: number; unit: string; category: string | null }[]>([]);
   const [selectedProducts, setSelectedProducts] = useState<{ id: string; name: string; price: number; quantity: number; maxStock: number; discount_pct: number }[]>([]);
   const [addProductId, setAddProductId] = useState<string>('');
 
   useEffect(() => {
-    getCustomerMembershipDiscount(appointment.customer_id).then(info => {
-      if (info && info.discountPct > 0) setMembershipInfo(info);
-      setLoadingMembership(false);
-    });
+    let active = true;
+    getCustomerMembershipDiscount(appointment.customer_id)
+      .then(info => {
+        if (!active) return;
+        if (info && info.discountPct > 0) setMembershipInfo(info);
+      })
+      .catch(err => {
+        // Without a catch, setLoadingMembership(false) never ran and the panel
+        // sat on its loading state forever.
+        console.warn('[calendar] membership discount lookup failed:', err);
+      })
+      .finally(() => {
+        if (active) setLoadingMembership(false);
+      });
+    return () => { active = false; };
   }, [appointment.customer_id]);
 
   useEffect(() => {
     async function load() {
       setLoadingLists(true);
-      const [svc, emp, prods] = await Promise.all([getActiveServices(), getActiveEmployees(), getActiveProducts()]);
-      setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price, category: s.category ?? null })));
-      setProductCatalog(prods.map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), stock: Number(p.stock_quantity), unit: p.unit, category: p.category ?? null })));
-      const emps = emp.map((e) => ({ id: e.id, name: e.name, role: e.role }));
-      emps.sort((a, b) => {
-        if (a.role === 'owner' && b.role !== 'owner') return -1;
-        if (b.role === 'owner' && a.role !== 'owner') return 1;
-        return a.name.localeCompare(b.name);
-      });
-      setEmployees(emps);
-      const defaultEmp = emps.find((e) => e.id === appointment.employee_id) ?? emps[0];
-      setSelectedEmployeeId(defaultEmp?.id ?? '');
-      setSelectedServiceIds((appointment.service_ids && appointment.service_ids.length > 0) ? appointment.service_ids : []);
-      setLoadingLists(false);
+      setListsError('');
+      // Guarded so a rejected fetch can't leave loadingLists true forever, which
+      // left the staff/service/product pickers disabled and unexplained.
+      try {
+        const [svc, emp, prods] = await Promise.all([getActiveServices(), getActiveEmployees(), getActiveProducts()]);
+        setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price, category: s.category ?? null })));
+        setProductCatalog(prods.map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), stock: Number(p.stock_quantity), unit: p.unit, category: p.category ?? null })));
+        const emps = emp.map((e) => ({ id: e.id, name: e.name, role: e.role }));
+        emps.sort((a, b) => {
+          if (a.role === 'owner' && b.role !== 'owner') return -1;
+          if (b.role === 'owner' && a.role !== 'owner') return 1;
+          return a.name.localeCompare(b.name);
+        });
+        setEmployees(emps);
+        const defaultEmp = emps.find((e) => e.id === appointment.employee_id) ?? emps[0];
+        setSelectedEmployeeId(defaultEmp?.id ?? '');
+        setSelectedServiceIds((appointment.service_ids && appointment.service_ids.length > 0) ? appointment.service_ids : []);
+      } catch (err) {
+        console.error('[calendar] could not load services/staff/products:', err);
+        setListsError('Could not load services, staff and products. Check your connection and retry.');
+      } finally {
+        setLoadingLists(false);
+      }
     }
     load();
-  }, [appointment.employee_id, appointment.service_ids]);
+  }, [appointment.employee_id, appointment.service_ids, listsReloadKey]);
 
   const selectedServices = catalog.filter((s) => selectedServiceIds.includes(s.id));
   const servicesSubtotal = selectedServices.reduce((sum, s) => sum + s.price, 0);
@@ -626,6 +654,18 @@ function CompleteAndBillModal({ appointment, onClose }: { appointment: Appointme
               ))}
             </div>
           </div>
+          {listsError && (
+            <div role="alert" className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/15">
+              <p className="text-sm text-amber-900 dark:text-amber-200">{listsError}</p>
+              <button
+                type="button"
+                onClick={() => setListsReloadKey((k) => k + 1)}
+                className="text-xs font-semibold text-amber-900 underline hover:no-underline dark:text-amber-200"
+              >
+                Retry
+              </button>
+            </div>
+          )}
           {error && <div className="rounded-xl border border-red-200 bg-red-50 p-3 text-sm text-red-700">{error}</div>}
         </div>
         <div className="border-t border-border px-5 py-4 bg-muted/20 shrink-0 flex gap-2">
@@ -648,6 +688,8 @@ function RescheduleModal({ appointment, onClose }: { appointment: AppointmentRow
   const [newDate, setNewDate] = useState('');
   const [slots, setSlots] = useState<TimeSlot[]>([]);
   const [loadingSlots, setLoadingSlots] = useState(false);
+  /** Distinguishes "the lookup failed" from "this date is fully booked". */
+  const [slotsError, setSlotsError] = useState('');
   const [selectedSlot, setSelectedSlot] = useState('');
   const [error, setError] = useState('');
 
@@ -656,8 +698,18 @@ function RescheduleModal({ appointment, onClose }: { appointment: AppointmentRow
 
   useEffect(() => {
     if (!newDate) return;
-    setLoadingSlots(true); setSlots([]); setSelectedSlot('');
-    getSlotsForReschedule(appointment.id, newDate).then(s => { setSlots(s); setLoadingSlots(false); });
+    let active = true;
+    setLoadingSlots(true); setSlots([]); setSelectedSlot(''); setSlotsError('');
+    getSlotsForReschedule(appointment.id, newDate)
+      .then(s => { if (active) setSlots(s); })
+      .catch(err => {
+        // Previously uncaught: loadingSlots stayed true and the picker showed a
+        // spinner forever instead of telling the user to retry.
+        console.error('[calendar] could not load reschedule slots:', err);
+        if (active) setSlotsError('Could not load available slots. Please try again.');
+      })
+      .finally(() => { if (active) setLoadingSlots(false); });
+    return () => { active = false; };
   }, [newDate, appointment.id]);
 
   function handleReschedule() {
@@ -666,7 +718,11 @@ function RescheduleModal({ appointment, onClose }: { appointment: AppointmentRow
     setError('');
     startTransition(async () => {
       const result = await rescheduleAppointment(appointment.id, { appointment_date: newDate, start_time: startTime, end_time: endTime });
-      if (result.success) { onClose(); router.refresh(); } else setError(result.error);
+      if (result.success) {
+        toast.success('Appointment rescheduled.');
+        onClose();
+        router.refresh();
+      } else setError(result.error);
     });
   }
 
@@ -706,6 +762,8 @@ function RescheduleModal({ appointment, onClose }: { appointment: AppointmentRow
                   <div className="h-4 w-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
                   Loading slots...
                 </div>
+              ) : slotsError ? (
+                <p role="alert" className="text-sm text-red-700 dark:text-red-400">{slotsError}</p>
               ) : slots.length === 0 ? (
                 <p className="text-sm text-muted-foreground">No available slots for this date.</p>
               ) : (

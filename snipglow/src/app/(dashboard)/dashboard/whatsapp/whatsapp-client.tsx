@@ -71,6 +71,19 @@ interface WhatsAppClientProps {
 
 type TabType = 'logs';
 
+/**
+ * Whether to show the self-serve "Connect Your Number" card.
+ *
+ * PARKED, not deleted. The card was taken off this page in commit 0373539 while
+ * Embedded Signup goes through Meta's Tech Provider review. `WhatsAppConnectCard`
+ * and its tests are kept intact so it can be restored by flipping this flag
+ * rather than rebuilding the onboarding flow from scratch.
+ *
+ * The card's own tests render `WhatsAppConnectCard` directly, so they keep
+ * guarding the logic while it is off the page.
+ */
+const SHOW_CONNECT_CARD = false;
+
 export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
   return (
     <div className="space-y-6">
@@ -89,6 +102,8 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
         </div>
         <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-emerald-500/5" />
       </div>
+
+      {SHOW_CONNECT_CARD && <WhatsAppConnectCard planTier={planTier} />}
 
       <WhatsAppLogsSection />
     </div>
@@ -641,7 +656,7 @@ function TemplatePreviewModal({ template, onClose }: { template: Template; onClo
 // WhatsApp Connect Card
 // =============================================================================
 
-function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
+export function WhatsAppConnectCard({ planTier }: { planTier: PlanTier }) {
   const [sdkLoaded, setSdkLoaded] = useState(false);
   const [connecting, setConnecting] = useState(false);
   const [loading, setLoading] = useState(true);

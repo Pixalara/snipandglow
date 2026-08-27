@@ -59,7 +59,7 @@ export async function createMembership(input: CreateMembershipInput): Promise<Ac
     return { success: false, error: 'Failed to create membership plan. Please try again.' };
   }
 
-  revalidatePath('/memberships');
+  revalidatePath('/dashboard/memberships');
   return { success: true, data: data as Membership };
 }
 
@@ -105,7 +105,7 @@ export async function updateMembership(id: string, input: Partial<CreateMembersh
     return { success: false, error: 'Failed to update membership plan. Please try again.' };
   }
 
-  revalidatePath('/memberships');
+  revalidatePath('/dashboard/memberships');
   return { success: true, data: data as Membership };
 }
 
@@ -136,7 +136,7 @@ export async function deleteMembership(id: string): Promise<ActionResult<void>> 
     return { success: false, error: 'Failed to delete membership plan. Please try again.' };
   }
 
-  revalidatePath('/memberships');
+  revalidatePath('/dashboard/memberships');
 
   if (activeCount && activeCount > 0) {
     return {
@@ -214,8 +214,8 @@ export async function assignMembership(input: AssignMembershipInput): Promise<Ac
     return { success: false, error: 'Failed to assign membership. Please try again.' };
   }
 
-  revalidatePath('/memberships');
-  revalidatePath('/customers');
+  revalidatePath('/dashboard/memberships');
+  revalidatePath('/dashboard/customers');
   return { success: true, data: data as CustomerMembership };
 }
 

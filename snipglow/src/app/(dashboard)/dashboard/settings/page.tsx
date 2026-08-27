@@ -339,9 +339,14 @@ export default async function SettingsPage() {
                   </div>
                 </div>
               </div>
+            </div>
+          )}
 
-              {/* Payment history — builds trust with a clear, verifiable record */}
-              <div className="rounded-2xl border border-border bg-card overflow-hidden">
+          {/* Payment history — shown on EVERY plan state, not just active.
+              An owner whose activation is still reconciling needs the payment id
+              from here to quote to support, and that is exactly when the account
+              still reads as expired. */}
+          <div className="rounded-2xl border border-border bg-card overflow-hidden">
                 <div className="flex items-center justify-between gap-2 border-b border-border px-4 sm:px-5 py-3">
                   <div className="flex items-center gap-2">
                     <Receipt className="size-4 text-muted-foreground" />
@@ -391,9 +396,7 @@ export default async function SettingsPage() {
                     ))}
                   </ul>
                 )}
-              </div>
-            </div>
-          )}
+          </div>
         </div>
       </div>
 

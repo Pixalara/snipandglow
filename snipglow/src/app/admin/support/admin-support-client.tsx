@@ -2,6 +2,7 @@
 
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { Headphones, Clock, CheckCircle2, AlertTriangle, Loader2 } from 'lucide-react';
 import { updateTicketStatus } from './actions';
 import { formatISTDate } from '@/lib/datetime';
@@ -104,9 +105,16 @@ function TicketCard({ ticket }: { ticket: Ticket }) {
   const [expanded, setExpanded] = useState(false);
 
   function handleStatusChange(newStatus: string) {
+    const label = statusOptions.find((s) => s.value === newStatus)?.label ?? newStatus;
     startTransition(async () => {
-      await updateTicketStatus(ticket.id, newStatus);
-      router.refresh();
+      const result = await updateTicketStatus(ticket.id, newStatus);
+      if (result.success) {
+        toast.success(`Ticket marked ${label}. The salon owner has been notified.`);
+        router.refresh();
+        return;
+      }
+      // Without this the badge simply never changed and the admin re-clicked.
+      toast.error(result.error ?? 'Could not update the ticket. Please try again.');
     });
   }
 

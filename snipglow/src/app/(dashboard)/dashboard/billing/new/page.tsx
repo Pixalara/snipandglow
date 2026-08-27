@@ -71,6 +71,12 @@ export default function NewBillingPage() {
   const [walletBalance, setWalletBalance] = useState(0);
   const [useWallet, setUseWallet] = useState(false);
   const [walletAmountInput, setWalletAmountInput] = useState('');
+  /** True while the balance is being looked up, so the row isn't silently absent. */
+  const [walletLoading, setWalletLoading] = useState(false);
+  /** True when the lookup FAILED — distinct from a genuine zero balance. */
+  const [walletLoadFailed, setWalletLoadFailed] = useState(false);
+  /** Bumped by the Retry button to re-run the lookup. */
+  const [walletReloadKey, setWalletReloadKey] = useState(0);
 
   // UI state
   const [error, setError] = useState('');
@@ -137,17 +143,47 @@ export default function NewBillingPage() {
   }, [selectedCustomer, fetchMembership]);
 
   // Fetch wallet balance when a customer is selected.
+  //
+  // A FAILED lookup must never be presented as "no credit". Falling back to ₹0
+  // silently hid the whole wallet row, so staff told customers they had no store
+  // credit and took the full amount in cash. The usable balance still stays at 0
+  // (never grant credit we could not verify) but the failure is now visible and
+  // retryable.
   useEffect(() => {
     if (!selectedCustomer) {
       setWalletBalance(0);
+      setWalletLoading(false);
+      setWalletLoadFailed(false);
       setUseWallet(false);
       setWalletAmountInput('');
       return;
     }
-    getCustomerWalletBalance(selectedCustomer.id)
-      .then((b) => setWalletBalance(b))
-      .catch(() => setWalletBalance(0));
-  }, [selectedCustomer]);
+
+    let cancelled = false;
+    const customerId = selectedCustomer.id;
+    setWalletLoading(true);
+    setWalletLoadFailed(false);
+
+    getCustomerWalletBalance(customerId)
+      .then((b) => {
+        // Guard against a slower earlier request resolving after a customer
+        // switch and showing one customer's credit against another's bill.
+        if (cancelled) return;
+        setWalletBalance(b);
+      })
+      .catch(() => {
+        if (cancelled) return;
+        setWalletBalance(0);
+        setWalletLoadFailed(true);
+      })
+      .finally(() => {
+        if (!cancelled) setWalletLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [selectedCustomer, walletReloadKey]);
 
   // Per-item discounts. Membership / tenant-default % becomes the default
   // discount on each line (the user can override any line).
@@ -336,6 +372,15 @@ export default function NewBillingPage() {
       discount_pct: item.discount_pct,
     }));
 
+    // Best-effort stock refresh. Failure only makes the stock HINTS stale (the
+    // server re-validates stock on every sale), so it must not block the
+    // invoice — but it is logged rather than swallowed so it stays diagnosable.
+    const refreshStockHints = () => {
+      getBillableProducts()
+        .then(setProducts)
+        .catch((err) => console.warn('[billing/new] stock hint refresh failed:', err));
+    };
+
     startTransition(async () => {
       const result = await createInvoice({
         customer_id: selectedCustomer.id,
@@ -349,14 +394,14 @@ export default function NewBillingPage() {
 
       if (result.success) {
         // Refresh products so stock hints reflect the just-completed sale.
-        getBillableProducts().then(setProducts).catch(() => {});
+        refreshStockHints();
         setSuccessInvoice({
           invoice_number: result.data.invoice_number,
           id: result.data.id,
         });
       } else {
         // Stock may have changed elsewhere; refresh hints on failure too.
-        getBillableProducts().then(setProducts).catch(() => {});
+        refreshStockHints();
         setError(result.error);
       }
     });
@@ -728,8 +773,40 @@ export default function NewBillingPage() {
               )}
             </div>
 
+            {/* Wallet lookup in progress — say so rather than rendering nothing,
+                otherwise the row appears late and looks like "no credit". */}
+            {selectedCustomer && walletLoading && (
+              <div className="flex items-center gap-2 rounded-lg border border-border bg-muted/40 p-3 text-xs text-muted-foreground">
+                <span className="size-3.5 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+                Checking wallet balance…
+              </div>
+            )}
+
+            {/* Wallet lookup FAILED — never let this look like a zero balance. */}
+            {selectedCustomer && walletLoadFailed && (
+              <div
+                role="alert"
+                className="space-y-2 rounded-lg border border-amber-300 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/15"
+              >
+                <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                  Could not check the wallet balance
+                </p>
+                <p className="text-xs text-amber-800 dark:text-amber-300">
+                  This customer may still have store credit. Retry before taking payment so you
+                  don&apos;t charge them the full amount by mistake.
+                </p>
+                <button
+                  type="button"
+                  onClick={() => setWalletReloadKey((k) => k + 1)}
+                  className="text-xs font-semibold text-amber-900 underline hover:no-underline dark:text-amber-200"
+                >
+                  Retry
+                </button>
+              </div>
+            )}
+
             {/* Use Wallet Balance */}
-            {selectedCustomer && walletBalance > 0 && (
+            {selectedCustomer && !walletLoading && !walletLoadFailed && walletBalance > 0 && (
               <div className="space-y-2 rounded-lg border border-violet-200 dark:border-violet-800/30 bg-violet-50/50 dark:bg-violet-900/10 p-3">
                 <label className="flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer">
                   <input

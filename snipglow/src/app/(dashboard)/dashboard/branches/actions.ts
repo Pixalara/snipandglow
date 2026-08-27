@@ -157,7 +157,7 @@ export async function createBranch(input: CreateBranchInput): Promise<ActionResu
     return { success: false, error: 'Failed to create branch. Please try again.' };
   }
 
-  revalidatePath('/branches');
+  revalidatePath('/dashboard/branches');
   return { success: true, data: data as Branch };
 }
 
@@ -201,7 +201,7 @@ export async function updateBranch(
     return { success: false, error: 'Failed to update branch. Please try again.' };
   }
 
-  revalidatePath('/branches');
+  revalidatePath('/dashboard/branches');
   return { success: true, data: data as Branch };
 }
 
@@ -239,6 +239,6 @@ export async function deactivateBranch(id: string): Promise<ActionResult<void>> 
     return { success: false, error: 'Failed to deactivate branch. Please try again.' };
   }
 
-  revalidatePath('/branches');
+  revalidatePath('/dashboard/branches');
   return { success: true, data: undefined };
 }

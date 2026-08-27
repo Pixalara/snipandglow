@@ -3,6 +3,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { revalidatePath } from 'next/cache';
+import { computeSubscriptionWindow } from '@/lib/razorpay/subscription-window';
 import { encryptToken } from '@/lib/crypto/token-encryption';
 import { upsertDedicatedCredentials } from '@/lib/whatsapp/credential-store';
 import { recordOnboardingEvent } from '@/lib/whatsapp/onboarding-log';
@@ -292,14 +293,30 @@ export async function adminActivateSubscription(
   if (!tenant) return { success: false, error: 'Tenant not found.' };
 
   const now = new Date();
-  const currentEnd = (tenant as any).subscription_end ? new Date((tenant as any).subscription_end) : null;
-  // Extend from the later of now or the current (future) end date.
-  const base = currentEnd && currentEnd.getTime() > now.getTime() ? currentEnd : now;
-  const newEnd = new Date(base);
-  newEnd.setMonth(newEnd.getMonth() + m);
+  const parsedEnd = (tenant as any).subscription_end
+    ? new Date((tenant as any).subscription_end)
+    : null;
 
-  // Stamp a start date if the tenant never had one.
-  const start = (tenant as any).subscription_start || now.toISOString();
+  // Use the SAME rules as a Razorpay renewal. This used to do its own date maths
+  // with `newEnd.setMonth(newEnd.getMonth() + m)`, which:
+  //   • ran in the server's local timezone rather than IST,
+  //   • did not clamp month overflow (31 Jan + 1 month landed on 3 Mar),
+  //   • kept the base timestamp's time of day, so an admin-granted plan expired
+  //     mid-morning on its last day instead of at the end of it,
+  //   • did not start the new term the day AFTER the current one ended.
+  // Two implementations of "add a month to a subscription" will always drift, so
+  // there is now one.
+  const window = computeSubscriptionWindow({
+    now,
+    currentEnd: parsedEnd && !Number.isNaN(parsedEnd.getTime()) ? parsedEnd : null,
+    status: (tenant as any).subscription_status,
+    months: m,
+  });
+  const newEnd = window.end;
+
+  // Preserve the original start date when the tenant already has one, so the
+  // record of when they first subscribed isn't overwritten by an extension.
+  const start = (tenant as any).subscription_start || window.start.toISOString();
 
   const { error } = await (admin
     .from('tenants' as any)

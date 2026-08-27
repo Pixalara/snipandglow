@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { formatINR, formatDateIN, isValidDateOfBirth } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import {
@@ -16,7 +17,7 @@ import {
   AlertTriangle,
   Sparkles,
 } from 'lucide-react';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { RowActionsMenu } from '@/components/row-actions-menu';
 import { ExportButton } from '@/components/export-button';
@@ -63,7 +64,13 @@ export function CustomersTable({ customers, loyaltyConfig: initialConfig }: Cust
   const [loyaltyConfig, setLoyaltyConfig] = useState<LoyaltyTierConfig>(initialConfig ?? DEFAULT_LOYALTY_CONFIG);
 
   useEffect(() => {
-    getLoyaltyConfig().then(setLoyaltyConfig);
+    let active = true;
+    getLoyaltyConfig()
+      .then((cfg) => { if (active) setLoyaltyConfig(cfg); })
+      // Previously uncaught: a failure produced an unhandled rejection and the
+      // loyalty column silently rendered as if loyalty were switched off.
+      .catch((err) => console.warn('[customers] loyalty config unavailable:', err));
+    return () => { active = false; };
   }, []);
 
   const columns: Column<CustomerRow>[] = [
@@ -187,7 +194,18 @@ export function CustomersTable({ customers, loyaltyConfig: initialConfig }: Cust
           columns={columns}
           data={customers}
           getRowKey={(row) => row.id}
-          emptyMessage="No customers found"
+          emptyMessage="No customers yet"
+          emptyIcon={<Users className="size-6 text-muted-foreground" />}
+          emptyHint="Add your first customer to start tracking visits, memberships and billing history."
+          emptyAction={
+            <Link
+              href="/dashboard/customers/new"
+              className={buttonVariants({ variant: 'default', size: 'lg' })}
+            >
+              <UserPlus className="size-4" />
+              Add Customer
+            </Link>
+          }
         />
       </div>
 
@@ -593,6 +611,7 @@ function DeleteCustomerModal({
     startTransition(async () => {
       const result = await deleteCustomer(customer.id);
       if (result.success) {
+        toast.success(`${customer.name} deleted.`);
         onClose();
         router.refresh();
       } else {

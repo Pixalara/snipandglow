@@ -52,8 +52,13 @@ export function getSubscriptionState(tenant: TenantSubscriptionFields | null | u
   const now = Date.now();
 
   // Explicit terminal states always lock.
+  //
+  // isTrial is deliberately false here. These statuses are set by an admin, and a
+  // trial that simply ran out is handled by the date check further down (where
+  // status is still 'trial'). Deriving isTrial from `status === 'expired'` told
+  // customers who had been paying for a year that their "free trial" had ended.
   if (status === 'expired' || status === 'cancelled') {
-    return { isExpired: true, isTrial: status === 'expired', daysRemaining: 0, endDate: parseDate(tenant?.subscription_end) };
+    return { isExpired: true, isTrial: false, daysRemaining: 0, endDate: parseDate(tenant?.subscription_end) };
   }
 
   // Paid/active subscriptions: only expired if an end date exists and passed.

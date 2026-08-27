@@ -292,7 +292,9 @@ export function PayrollClient({ payrollRecords, employees, currentMonth, role }:
             columns={columns}
             data={filteredRecords}
             getRowKey={(row) => row.id}
-            emptyMessage="No payroll records found."
+            emptyMessage="No payroll records yet"
+            emptyIcon={<CreditCard className="size-6 text-muted-foreground" />}
+            emptyHint="Record salary payments here to keep staff costs in your expense reporting."
           />
         </div>
       )}

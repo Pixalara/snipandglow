@@ -4,7 +4,7 @@ import { useState, useTransition } from 'react';
 import Link from 'next/link';
 import { formatINR, formatDateIN } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
-import { Button } from '@/components/ui/button';
+import { Button, buttonVariants } from '@/components/ui/button';
 import { updateInvoicePayment } from './actions';
 import { InvoiceDocumentModal } from './invoice-document';
 import {
@@ -184,6 +184,17 @@ export function InvoicesTable({ invoices }: InvoicesTableProps) {
           data={invoices}
           getRowKey={(row) => row.id}
           emptyMessage="No invoices yet"
+          emptyIcon={<FileText className="size-6 text-muted-foreground" />}
+          emptyHint="Create your first bill and it will appear here with its payment status."
+          emptyAction={
+            <Link
+              href="/dashboard/billing/new"
+              className={buttonVariants({ variant: 'default', size: 'lg' })}
+            >
+              <Plus className="size-4" />
+              New Invoice
+            </Link>
+          }
         />
       </div>
 

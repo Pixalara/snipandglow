@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { formatDateIN, formatTimeIST, calculatePerItemInvoiceTotal } from '@/lib/utils';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
@@ -328,23 +329,31 @@ function AppointmentListView({ appointments, role }: { appointments: Appointment
   const [completeTarget, setCompleteTarget] = useState<AppointmentRow | null>(null);
   const [editTarget, setEditTarget] = useState<AppointmentRow | null>(null);
   const [cancelTarget, setCancelTarget] = useState<AppointmentRow | null>(null);
+  const [cancelError, setCancelError] = useState('');
 
-  function handleStatusChange(id: string, newStatus: AppointmentStatus) {
-    setActionId(id);
-    startTransition(async () => {
-      await updateAppointmentStatus(id, newStatus);
-      setActionId(null);
-    });
+  function closeCancel() {
+    setCancelTarget(null);
+    setCancelError('');
   }
 
   function handleConfirmCancel() {
     if (!cancelTarget) return;
     const id = cancelTarget.id;
+    const name = cancelTarget.customer_name;
     setActionId(id);
+    setCancelError('');
     startTransition(async () => {
-      await updateAppointmentStatus(id, 'cancelled');
+      const result = await updateAppointmentStatus(id, 'cancelled');
       setActionId(null);
-      setCancelTarget(null);
+      if (result.success) {
+        toast.success(`${name}'s appointment was cancelled. They have been notified on WhatsApp.`);
+        closeCancel();
+        return;
+      }
+      // Keep the dialog open so the reason stays on screen and the user can
+      // retry. Silently closing here is what made a failed cancel look like a
+      // slow one, so staff clicked again.
+      setCancelError(result.error);
     });
   }
 
@@ -519,8 +528,9 @@ function AppointmentListView({ appointments, role }: { appointments: Appointment
         cancelLabel="Keep It"
         pending={isPending && actionId === cancelTarget?.id}
         pendingLabel="Cancelling..."
+        error={cancelError}
         onConfirm={handleConfirmCancel}
-        onClose={() => setCancelTarget(null)}
+        onClose={closeCancel}
       />
     </>
   );
@@ -709,6 +719,12 @@ function CompleteAndBillModal({
   const [walletBalance, setWalletBalance] = useState(0);
   const [useWallet, setUseWallet] = useState(false);
   const [walletInput, setWalletInput] = useState('');
+  /** Lookup FAILED — distinct from a genuine zero balance. */
+  const [walletLoadFailed, setWalletLoadFailed] = useState(false);
+  const [walletReloadKey, setWalletReloadKey] = useState(0);
+  /** Set when the services/staff/products catalog fails to load. */
+  const [listsError, setListsError] = useState('');
+  const [listsReloadKey, setListsReloadKey] = useState(0);
 
   // Refresh server data (list + calendar reflect the completed/updated appt)
   // when closing after a successful bill.
@@ -743,43 +759,61 @@ function CompleteAndBillModal({
   }, [appointment.customer_id]);
 
   // Fetch wallet balance (owner/manager only — staff can't debit wallets).
+  //
+  // A failed lookup used to be swallowed, which hid the wallet row entirely and
+  // read to staff as "no store credit". Keep the usable balance at 0 but say so.
   useEffect(() => {
     if (!canUseWallet || !appointment.customer_id) return;
     let active = true;
+    setWalletLoadFailed(false);
     getCustomerWalletBalance(appointment.customer_id)
       .then((bal) => { if (active) setWalletBalance(bal); })
-      .catch(() => {});
+      .catch(() => {
+        if (!active) return;
+        setWalletBalance(0);
+        setWalletLoadFailed(true);
+      });
     return () => { active = false; };
-  }, [appointment.customer_id, canUseWallet]);
+  }, [appointment.customer_id, canUseWallet, walletReloadKey]);
 
   // Load services catalog + staff list (owner shown first for default selection).
   useEffect(() => {
     async function load() {
       setLoadingLists(true);
-      const [svc, emp, prods] = await Promise.all([getActiveServices(), getActiveEmployees(), getActiveProducts()]);
-      setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price, category: s.category ?? null })));
-      setProductCatalog(prods.map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), stock: Number(p.stock_quantity), unit: p.unit, category: p.category ?? null })));
-      const emps = emp.map((e) => ({ id: e.id, name: e.name, role: e.role }));
-      // Owner first, then the rest by name.
-      emps.sort((a, b) => {
-        if (a.role === 'owner' && b.role !== 'owner') return -1;
-        if (b.role === 'owner' && a.role !== 'owner') return 1;
-        return a.name.localeCompare(b.name);
-      });
-      setEmployees(emps);
-      // Default staff: the appointment's assigned employee if present, else owner (first).
-      const defaultEmp = emps.find((e) => e.id === appointment.employee_id) ?? emps[0];
-      setSelectedEmployeeId(defaultEmp?.id ?? '');
-      // Seed selected services from the appointment.
-      setSelectedServiceIds(
-        (appointment.service_ids && appointment.service_ids.length > 0)
-          ? appointment.service_ids
-          : []
-      );
-      setLoadingLists(false);
+      setListsError('');
+      // Without this try/catch a rejected fetch left loadingLists true forever,
+      // so the staff/service/product pickers stayed disabled and empty with no
+      // explanation — the modal looked broken rather than failed.
+      try {
+        const [svc, emp, prods] = await Promise.all([getActiveServices(), getActiveEmployees(), getActiveProducts()]);
+        setCatalog(svc.map((s) => ({ id: s.id, name: s.name, price: s.price, category: s.category ?? null })));
+        setProductCatalog(prods.map((p) => ({ id: p.id, name: p.name, price: Number(p.selling_price), stock: Number(p.stock_quantity), unit: p.unit, category: p.category ?? null })));
+        const emps = emp.map((e) => ({ id: e.id, name: e.name, role: e.role }));
+        // Owner first, then the rest by name.
+        emps.sort((a, b) => {
+          if (a.role === 'owner' && b.role !== 'owner') return -1;
+          if (b.role === 'owner' && a.role !== 'owner') return 1;
+          return a.name.localeCompare(b.name);
+        });
+        setEmployees(emps);
+        // Default staff: the appointment's assigned employee if present, else owner (first).
+        const defaultEmp = emps.find((e) => e.id === appointment.employee_id) ?? emps[0];
+        setSelectedEmployeeId(defaultEmp?.id ?? '');
+        // Seed selected services from the appointment.
+        setSelectedServiceIds(
+          (appointment.service_ids && appointment.service_ids.length > 0)
+            ? appointment.service_ids
+            : []
+        );
+      } catch (err) {
+        console.error('[appointments] could not load services/staff/products:', err);
+        setListsError('Could not load services, staff and products. Check your connection and retry.');
+      } finally {
+        setLoadingLists(false);
+      }
     }
     load();
-  }, [appointment.employee_id, appointment.service_ids]);
+  }, [appointment.employee_id, appointment.service_ids, listsReloadKey]);
 
   const selectedServices = catalog.filter((s) => selectedServiceIds.includes(s.id));
   const servicesSubtotal = selectedServices.reduce((sum, s) => sum + s.price, 0);
@@ -1145,8 +1179,47 @@ function CompleteAndBillModal({
             </div>
           )}
 
+          {/* Catalog failed to load — the pickers above are empty for a reason. */}
+          {listsError && (
+            <div
+              role="alert"
+              className="flex flex-wrap items-center gap-x-3 gap-y-1.5 rounded-xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/15"
+            >
+              <p className="text-sm text-amber-900 dark:text-amber-200">{listsError}</p>
+              <button
+                type="button"
+                onClick={() => setListsReloadKey((k) => k + 1)}
+                className="text-xs font-semibold text-amber-900 underline hover:no-underline dark:text-amber-200"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
+          {/* Wallet lookup FAILED — must not be mistaken for "no store credit". */}
+          {canUseWallet && walletLoadFailed && (
+            <div
+              role="alert"
+              className="space-y-1.5 rounded-xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/15"
+            >
+              <p className="text-sm font-medium text-amber-900 dark:text-amber-200">
+                Could not check the wallet balance
+              </p>
+              <p className="text-xs text-amber-800 dark:text-amber-300">
+                This customer may still have store credit. Retry before taking payment.
+              </p>
+              <button
+                type="button"
+                onClick={() => setWalletReloadKey((k) => k + 1)}
+                className="text-xs font-semibold text-amber-900 underline hover:no-underline dark:text-amber-200"
+              >
+                Retry
+              </button>
+            </div>
+          )}
+
           {/* Wallet balance option (owner/manager only) */}
-          {canUseWallet && walletBalance > 0 && (
+          {canUseWallet && !walletLoadFailed && walletBalance > 0 && (
             <div className="space-y-2">
               <label className="flex cursor-pointer items-center justify-between gap-3 rounded-xl border border-emerald-200/70 dark:border-emerald-800/40 bg-emerald-50/60 dark:bg-emerald-900/10 px-4 py-3">
                 <span className="flex items-center gap-2.5">

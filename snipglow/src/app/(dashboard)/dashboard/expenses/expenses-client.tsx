@@ -324,7 +324,9 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
             columns={columns}
             data={filteredExpenses}
             getRowKey={(row) => row.id}
-            emptyMessage="No expenses found."
+            emptyMessage="No expenses recorded"
+            emptyIcon={<Wallet className="size-6 text-muted-foreground" />}
+            emptyHint="Log rent, salaries, supplies and utilities here to see your true profit in Analytics."
           />
         </div>
       )}

@@ -3,6 +3,7 @@
 import { useState, useTransition, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { createCustomerWithMembership, getAvailableMemberships } from '../actions';
@@ -29,6 +30,8 @@ export default function NewCustomerPage() {
   const [notes, setNotes] = useState('');
   const [selectedMembership, setSelectedMembership] = useState('');
   const [memberships, setMemberships] = useState<Membership[]>([]);
+  /** True when the membership list failed to load — not the same as none existing. */
+  const [membershipsFailed, setMembershipsFailed] = useState(false);
   const [error, setError] = useState('');
 
   const currentYear = new Date().getFullYear();
@@ -37,9 +40,20 @@ export default function NewCustomerPage() {
 
   const isFormValid = name.trim() && phone.trim();
 
-  // Fetch available memberships on mount
+  // Fetch available memberships on mount.
+  //
+  // The picker is gated on memberships.length > 0, so an uncaught rejection here
+  // silently removed the whole "Assign Membership" section and staff concluded
+  // the salon had no plans configured.
   useEffect(() => {
-    getAvailableMemberships().then(setMemberships);
+    let active = true;
+    getAvailableMemberships()
+      .then((rows) => { if (active) setMemberships(rows); })
+      .catch((err) => {
+        console.error('[customers/new] could not load memberships:', err);
+        if (active) setMembershipsFailed(true);
+      });
+    return () => { active = false; };
   }, []);
 
   async function handleSubmit(e: React.FormEvent) {
@@ -79,6 +93,7 @@ export default function NewCustomerPage() {
       );
 
       if (result.success) {
+        toast.success(`${name.trim() || 'Customer'} added.`);
         router.push('/dashboard/customers');
       } else {
         setError(result.error);
@@ -234,6 +249,19 @@ export default function NewCustomerPage() {
               className="w-full rounded-xl border border-input bg-background px-3 py-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring resize-none"
             />
           </div>
+
+          {/* Membership list failed to load — don't let it read as "no plans". */}
+          {membershipsFailed && (
+            <div
+              role="alert"
+              className="rounded-xl border border-amber-300 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/15"
+            >
+              <p className="text-sm text-amber-900 dark:text-amber-200">
+                Could not load membership plans. You can still save this customer and assign a
+                membership from their profile later.
+              </p>
+            </div>
+          )}
 
           {/* Membership Selection */}
           {memberships.length > 0 && (

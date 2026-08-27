@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useTransition } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Link from 'next/link';
+import { toast } from 'sonner';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
@@ -180,7 +181,10 @@ export default function NewAppointmentPage() {
       setSubmitting(false);
 
       if (result.success) {
-        router.push('/dashboard/appointments?success=booked');
+        // The old `?success=booked` param was never read by the appointments
+        // page, so the most common action in the product confirmed nothing.
+        toast.success('Appointment booked.');
+        router.push('/dashboard/appointments');
       } else {
         setError(result.error);
       }

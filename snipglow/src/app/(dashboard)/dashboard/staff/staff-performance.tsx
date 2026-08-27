@@ -31,9 +31,13 @@ export function StaffPerformance() {
   useEffect(() => {
     let active = true;
     setLoading(true);
-    getStaffPerformance(days).then((res) => {
-      if (active) { setData(res); setLoading(false); }
-    });
+    getStaffPerformance(days)
+      .then((res) => { if (active) setData(res); })
+      .catch((err) => {
+        // Previously uncaught, so a failed query left the panel spinning forever.
+        console.error('[staff] performance query failed:', err);
+      })
+      .finally(() => { if (active) setLoading(false); });
     return () => { active = false; };
   }, [days]);
 

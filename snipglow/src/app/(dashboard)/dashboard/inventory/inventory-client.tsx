@@ -284,7 +284,13 @@ export function InventoryClient({ products, role }: InventoryClientProps) {
           )}
         </div>
       ) : (
-        <DataTable columns={columns} data={filtered} getRowKey={(p) => p.id} emptyMessage="No products found." />
+        <DataTable
+          columns={columns}
+          data={filtered}
+          getRowKey={(p) => p.id}
+          emptyMessage="No products match this filter"
+          emptyHint="Try clearing the search or category filter to see your full product list."
+        />
       )}
 
       {/* Add / Edit product modal */}

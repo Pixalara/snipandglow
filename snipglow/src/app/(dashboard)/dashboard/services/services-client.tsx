@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
+import { toast } from 'sonner';
 import { formatINR } from '@/lib/utils';
 import { RoleGuard } from '@/components/role-guard';
 import { Button } from '@/components/ui/button';
@@ -75,6 +76,7 @@ export function ServicesClient({ grouped, role }: ServicesClientProps) {
       return;
     }
 
+    toast.success(`"${deleteTarget.name}" removed from your service list.`);
     setDeleteTarget(null);
     router.refresh();
   }

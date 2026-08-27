@@ -29,8 +29,22 @@ interface DataTableProps<T> {
   getRowKey: (row: T) => string;
   /** Optional click handler for row */
   onRowClick?: (row: T) => void;
-  /** Message to display when data is empty */
+  /** Headline shown when data is empty. */
   emptyMessage?: string;
+  /**
+   * Optional icon for the empty state. Pass a lucide icon element.
+   * Without it the empty state still renders, just without the visual anchor.
+   */
+  emptyIcon?: React.ReactNode;
+  /** Optional supporting sentence explaining what to do next. */
+  emptyHint?: string;
+  /**
+   * Optional call to action for the empty state (usually a Link styled as a
+   * button). A first-time salon owner opening Customers or Billing used to get a
+   * lone grey sentence and no way forward, even though the "Add" button existed
+   * elsewhere on the page.
+   */
+  emptyAction?: React.ReactNode;
   /** Additional className for the wrapper */
   className?: string;
 }
@@ -41,12 +55,29 @@ export function DataTable<T>({
   getRowKey,
   onRowClick,
   emptyMessage = 'No data found',
+  emptyIcon,
+  emptyHint,
+  emptyAction,
   className,
 }: DataTableProps<T>) {
   if (data.length === 0) {
     return (
-      <div className={cn('flex items-center justify-center rounded-lg border border-border bg-card p-12', className)}>
-        <p className="text-sm text-muted-foreground">{emptyMessage}</p>
+      <div
+        className={cn(
+          'flex flex-col items-center justify-center rounded-lg border border-border bg-card p-12 text-center',
+          className
+        )}
+      >
+        {emptyIcon && (
+          <div className="mb-4 flex size-14 items-center justify-center rounded-full bg-muted">
+            {emptyIcon}
+          </div>
+        )}
+        <p className={cn('text-muted-foreground', emptyHint || emptyAction ? 'text-base font-semibold text-foreground' : 'text-sm')}>
+          {emptyMessage}
+        </p>
+        {emptyHint && <p className="mt-1 max-w-sm text-sm text-muted-foreground">{emptyHint}</p>}
+        {emptyAction && <div className="mt-4">{emptyAction}</div>}
       </div>
     );
   }

@@ -349,7 +349,9 @@ export function LeadsClient({ leads, role }: LeadsClientProps) {
             columns={columns}
             data={filteredLeads}
             getRowKey={(row) => row.id}
-            emptyMessage="No leads found."
+            emptyMessage="No leads yet"
+            emptyIcon={<Phone className="size-6 text-muted-foreground" />}
+            emptyHint="Enquiries you capture here can be converted into customers once they book."
           />
         </div>
       )}

@@ -343,7 +343,8 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
             columns={columns}
             data={employees}
             getRowKey={(row) => row.id}
-            emptyMessage="No employees found. Add your first team member to get started."
+            emptyMessage="No team members yet"
+            emptyHint="Add your staff to assign appointments to them and track performance."
           />
         </div>
       )}

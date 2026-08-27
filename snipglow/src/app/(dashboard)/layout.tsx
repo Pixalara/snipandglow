@@ -53,7 +53,11 @@ export default async function DashboardLayout({
           : Promise.resolve({ data: [] }),
       supabase
         .from('tenants')
-        .select('subscription_status, subscription_start, subscription_end, plan_tier, created_at')
+        // `settings` is required: renewalAmount below reads the billing cycle and
+        // any negotiated rate from it. Omitting it silently fell back to list
+        // yearly pricing, so the reminder popup quoted a price that checkout then
+        // contradicted.
+        .select('subscription_status, subscription_start, subscription_end, plan_tier, created_at, settings')
         .eq('id', tenantId)
         .single(),
     ]);
