@@ -12,7 +12,7 @@ import {
 } from './actions';
 import {
   CalendarClock, CircleCheck, XCircle, X, User, Scissors,
-  Clock, Calendar, Pencil, CheckCircle2, ArrowRight,
+  Clock, Calendar, CheckCircle2,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -64,9 +64,14 @@ export function CalendarView({ appointments, focusDate }: { appointments: Appoin
 
   // When a Date/Month/Week filter is chosen in the toolbar, jump the calendar's
   // 7-day window to that date (exact date, week's Monday, or month's 1st).
-  useEffect(() => {
+  //
+  // Adjusted during render rather than in an effect: this is derived from a prop,
+  // so an effect would paint the old week first and then immediately re-render.
+  const [prevFocusDate, setPrevFocusDate] = useState(focusDate);
+  if (focusDate !== prevFocusDate) {
+    setPrevFocusDate(focusDate);
     if (focusDate) setStartKey(focusDate);
-  }, [focusDate]);
+  }
 
   const weekStart = useMemo(() => new Date(startKey + 'T00:00:00'), [startKey]);
   const weekDays = useMemo(() => getWeekDays(weekStart), [weekStart]);
@@ -699,7 +704,12 @@ function RescheduleModal({ appointment, onClose }: { appointment: AppointmentRow
   useEffect(() => {
     if (!newDate) return;
     let active = true;
-    setLoadingSlots(true); setSlots([]); setSelectedSlot(''); setSlotsError('');
+    // Queued as a microtask so none of these land synchronously in the effect
+    // body, which would force an extra render pass before the fetch even starts.
+    void Promise.resolve().then(() => {
+      if (!active) return;
+      setLoadingSlots(true); setSlots([]); setSelectedSlot(''); setSlotsError('');
+    });
     getSlotsForReschedule(appointment.id, newDate)
       .then(s => { if (active) setSlots(s); })
       .catch(err => {

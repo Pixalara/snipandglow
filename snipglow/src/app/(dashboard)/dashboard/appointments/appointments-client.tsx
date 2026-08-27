@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useTransition, useEffect, useCallback } from 'react';
+import { useState, useTransition, useEffect } from 'react';
 import Link from 'next/link';
+import dynamic from 'next/dynamic';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
 import { formatDateIN, formatTimeIST, calculatePerItemInvoiceTotal } from '@/lib/utils';
@@ -11,7 +12,24 @@ import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
 import { ConfirmDialog } from '@/components/confirm-dialog';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { CalendarView } from './calendar-view';
+
+// The calendar is a large module (month grid plus its own reschedule and
+// bill modals) and the page opens in LIST view, so it was being downloaded and
+// parsed on every visit for a view most loads never show. Fetched on demand
+// instead, when the user actually switches to Calendar.
+const CalendarView = dynamic(
+  () => import('./calendar-view').then((m) => ({ default: m.CalendarView })),
+  {
+    loading: () => (
+      <div className="flex items-center justify-center rounded-2xl border border-border bg-card p-12">
+        <span className="flex items-center gap-2 text-sm text-muted-foreground">
+          <span className="size-4 animate-spin rounded-full border-2 border-muted-foreground border-t-transparent" />
+          Loading calendar…
+        </span>
+      </div>
+    ),
+  }
+);
 import { updateAppointmentStatus, rescheduleAppointment, getSlotsForReschedule, completeAndGenerateBill, updateAppointmentServices, getActiveServices, getActiveEmployees, getActiveProducts, getCustomerMembershipDiscount } from './actions';
 import { getCustomerWalletBalance } from '../customers/wallet-actions';
 import { SearchableSelect } from '@/components/searchable-select';
@@ -484,6 +502,10 @@ function AppointmentListView({ appointments, role }: { appointments: Appointment
           data={appointments}
           getRowKey={(row) => row.id}
           emptyMessage="No appointments found"
+          // The page ships up to 200 days of history plus every active booking.
+          // Rendering all of them mounted hundreds of interactive row menus
+          // before the page could settle, which is what held up LCP.
+          pageSize={50}
         />
       </div>
 
@@ -559,21 +581,34 @@ function RescheduleModal({
   // Since AppointmentRow doesn't have employee_id directly, we'll use the
   // rescheduleAppointment action which handles fetching internally.
 
-  // Fetch slots when date changes
-  const fetchSlots = useCallback(async () => {
-    if (!newDate || !appointment.id) return;
-    setLoadingSlots(true);
-    setSlots([]);
-    setSelectedSlot('');
-
-    const available = await getSlotsForReschedule(appointment.id, newDate);
-    setSlots(available);
-    setLoadingSlots(false);
-  }, [newDate, appointment.id]);
-
+  // Fetch slots when the date changes.
+  //
+  // Everything is set from inside the async body so nothing is set synchronously
+  // during the effect (which would cost an extra render pass), and an `active`
+  // flag stops a slow earlier response from overwriting a newer date's slots.
+  // The previous version also had no error handling, so a rejected lookup left
+  // the picker spinning forever.
   useEffect(() => {
-    if (newDate) fetchSlots();
-  }, [newDate, fetchSlots]);
+    if (!newDate || !appointment.id) return;
+    let active = true;
+
+    (async () => {
+      setLoadingSlots(true);
+      setSlots([]);
+      setSelectedSlot('');
+      try {
+        const available = await getSlotsForReschedule(appointment.id, newDate);
+        if (active) setSlots(available);
+      } catch (err) {
+        console.error('[appointments] could not load reschedule slots:', err);
+        if (active) setSlots([]);
+      } finally {
+        if (active) setLoadingSlots(false);
+      }
+    })();
+
+    return () => { active = false; };
+  }, [newDate, appointment.id]);
 
   function handleSubmit() {
     if (!newDate || !selectedSlot) return;
@@ -765,9 +800,15 @@ function CompleteAndBillModal({
   useEffect(() => {
     if (!canUseWallet || !appointment.customer_id) return;
     let active = true;
-    setWalletLoadFailed(false);
+    // Both flags are set from the promise callbacks, never synchronously in the
+    // effect body — a synchronous reset here would trigger an extra render pass
+    // on every mount for no benefit.
     getCustomerWalletBalance(appointment.customer_id)
-      .then((bal) => { if (active) setWalletBalance(bal); })
+      .then((bal) => {
+        if (!active) return;
+        setWalletBalance(bal);
+        setWalletLoadFailed(false);
+      })
       .catch(() => {
         if (!active) return;
         setWalletBalance(0);

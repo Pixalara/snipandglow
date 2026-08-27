@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import { cn } from '@/lib/utils';
 
 // =============================================================================
@@ -45,6 +46,19 @@ interface DataTableProps<T> {
    * elsewhere on the page.
    */
   emptyAction?: React.ReactNode;
+  /**
+   * Render at most this many rows initially, with a "Show more" control.
+   *
+   * Worth using on any list that can run to hundreds of rows. Note that this
+   * component deliberately renders each row TWICE — once in the desktop table
+   * and once as a mobile card, with CSS choosing between them — because that is
+   * SSR-safe and avoids a layout shift. The cost is that row count is doubled in
+   * the DOM, and each row here also mounts an interactive actions menu. At a few
+   * hundred rows that hydration work is what holds up Largest Contentful Paint.
+   *
+   * Omitted means "render everything", so existing call sites are unaffected.
+   */
+  pageSize?: number;
   /** Additional className for the wrapper */
   className?: string;
 }
@@ -58,8 +72,23 @@ export function DataTable<T>({
   emptyIcon,
   emptyHint,
   emptyAction,
+  pageSize,
   className,
 }: DataTableProps<T>) {
+  const [shown, setShown] = useState(pageSize ?? Number.POSITIVE_INFINITY);
+
+  // Reset paging when the incoming data changes size — i.e. when a filter or
+  // search narrows the list. Adjusted during render rather than in an effect,
+  // which is React's documented pattern and avoids an extra render pass.
+  const [prevLength, setPrevLength] = useState(data.length);
+  if (data.length !== prevLength) {
+    setPrevLength(data.length);
+    setShown(pageSize ?? Number.POSITIVE_INFINITY);
+  }
+
+  const visible = pageSize ? data.slice(0, shown) : data;
+  const remaining = data.length - visible.length;
+
   if (data.length === 0) {
     return (
       <div
@@ -103,7 +132,7 @@ export function DataTable<T>({
             </tr>
           </thead>
           <tbody>
-            {data.map((row) => (
+            {visible.map((row) => (
               <tr
                 key={getRowKey(row)}
                 onClick={onRowClick ? () => onRowClick(row) : undefined}
@@ -128,7 +157,7 @@ export function DataTable<T>({
 
       {/* Mobile: Stacked card view (visible only on mobile) */}
       <div className="sm:hidden space-y-3">
-        {data.map((row) => (
+        {visible.map((row) => (
           <div
             key={getRowKey(row)}
             onClick={onRowClick ? () => onRowClick(row) : undefined}
@@ -161,6 +190,23 @@ export function DataTable<T>({
           </div>
         ))}
       </div>
+
+      {/* Paging control. Only rendered when pageSize is set AND there is more to
+          show, so untouched call sites get no extra markup. */}
+      {remaining > 0 && (
+        <div className="mt-3 flex flex-col items-center gap-1.5">
+          <button
+            type="button"
+            onClick={() => setShown((n) => n + (pageSize ?? 0))}
+            className="inline-flex items-center justify-center rounded-xl border border-border bg-card px-5 py-2.5 text-sm font-medium text-foreground transition-colors hover:bg-muted"
+          >
+            Show {Math.min(remaining, pageSize ?? 0)} more
+          </button>
+          <p className="text-xs text-muted-foreground" aria-live="polite">
+            Showing {visible.length} of {data.length}
+          </p>
+        </div>
+      )}
     </div>
   );
 }

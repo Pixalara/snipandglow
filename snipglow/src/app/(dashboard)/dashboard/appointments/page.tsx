@@ -1,6 +1,7 @@
 import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { AppointmentsClient } from './appointments-client';
+import { computeAppointmentStats, type AppointmentStats } from './appointment-stats';
 import type { AppointmentStatus, UserRole } from '@/types';
 
 // =============================================================================
@@ -123,67 +124,22 @@ export default async function AppointmentsPage() {
   }));
 
   // ─── Appointment analytics (today / this week / this month) ──────────────
-  // Counted with dedicated queries (not from `rows`, which is capped/windowed)
-  // so the totals stay accurate. All windows use the salon's IST calendar and
-  // count every appointment scheduled in the range, regardless of status.
-  const stats = await getAppointmentStats(supabase);
+  // Derived in memory from `activeRes`, which is the authoritative set: it
+  // already selects EVERY booked/confirmed appointment with no date filter and
+  // no limit, which is exactly what these counts are over.
+  //
+  // This used to be three extra `count: 'exact'` queries awaited AFTER the
+  // customer/service/employee lookups — a third sequential round trip to
+  // Postgres for numbers we were already holding in memory. Counting locally
+  // removes both the queries and the waterfall stage.
+  const stats = computeAppointmentStats(activeRes.data ?? []);
 
   return <AppointmentsClient appointments={rows} role={role} stats={stats} />;
 }
 
-/** Appointment volume counts for the analytics bar. */
-export interface AppointmentStats {
-  today: number;
-  week: number;
-  month: number;
-}
-
-/**
- * Count ACTIVE appointments (booked/confirmed) scheduled today / this week
- * (Mon–Sun) / this month using the salon's IST calendar. Cancelled and
- * completed appointments are excluded so the bar reflects what's still on the
- * schedule (and updates automatically as appointments are completed/cancelled).
- * RLS scopes the counts to the tenant/branch.
- */
-async function getAppointmentStats(
-  supabase: Awaited<ReturnType<typeof createClient>>,
-): Promise<AppointmentStats> {
-  // IST "now" as a Date whose local fields hold IST wall-clock values.
-  const istNow = new Date(new Date().toLocaleString('en-US', { timeZone: 'Asia/Kolkata' }));
-  const y = istNow.getFullYear();
-  const m = istNow.getMonth();
-  const d = istNow.getDate();
-  const dow = istNow.getDay(); // 0=Sun … 6=Sat
-
-  const fmt = (dt: Date) =>
-    `${dt.getFullYear()}-${String(dt.getMonth() + 1).padStart(2, '0')}-${String(dt.getDate()).padStart(2, '0')}`;
-
-  const todayStr = fmt(istNow);
-  // Monday-based week.
-  const mondayOffset = (dow + 6) % 7;
-  const weekStart = fmt(new Date(y, m, d - mondayOffset));
-  const weekEnd = fmt(new Date(y, m, d - mondayOffset + 6));
-  const monthStart = fmt(new Date(y, m, 1));
-  const monthEnd = fmt(new Date(y, m + 1, 0));
-
-  const countIn = async (from: string, to: string): Promise<number> => {
-    const { count } = await supabase
-      .from('appointments')
-      .select('id', { count: 'exact', head: true })
-      .in('status', ['booked', 'confirmed'])
-      .gte('appointment_date', from)
-      .lte('appointment_date', to);
-    return count ?? 0;
-  };
-
-  const [today, week, month] = await Promise.all([
-    countIn(todayStr, todayStr),
-    countIn(weekStart, weekEnd),
-    countIn(monthStart, monthEnd),
-  ]);
-
-  return { today, week, month };
-}
+// Re-exported so `appointments-client.tsx` can keep importing the type from
+// './page' alongside AppointmentRow.
+export type { AppointmentStats };
 
 /** Get the resolved list of service IDs for an appointment (multi-service aware). */
 function getServiceIds(apt: { service_id: string | null; whatsapp_flow_ref?: string | null }): string[] {
