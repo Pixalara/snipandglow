@@ -6,12 +6,16 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { toTitleCase } from '@/lib/utils';
 import { notifyPlatformOfSignup } from '@/lib/notifications/signup-alert';
 import { sendWelcomeWhatsApp } from '@/lib/notifications/welcome-whatsapp';
+import { realEmail, verifiedPhone } from '@/lib/auth/signup-state';
+import { tenDigitPhone } from '@/lib/auth/otp';
 import type { ActionResult } from '@/types';
 
 export async function completeOnboarding(data: {
   salonName: string;
   ownerName: string;
-  phone: string;
+  // NOTE: no `phone` field on purpose. The owner's number is taken from the
+  // WhatsApp-verified value on the session, never from the form, so a caller
+  // cannot register a number it did not prove it controls.
   branchName: string;
   branchAddress: string;
   city: string;
@@ -32,6 +36,40 @@ export async function completeOnboarding(data: {
     if (!user) {
       return { success: false, error: 'Not authenticated' };
     }
+
+    // ─── Signup completeness: THE security boundary ───────────────────────
+    //
+    // This action is the one and only place a tenant row is created, so this is
+    // where "both factors verified" is actually enforced. Middleware and the
+    // OAuth callback route users toward the missing step, but they decide from
+    // `user_metadata`, which a browser can write via supabase.auth.updateUser —
+    // routing is a convenience, not a guarantee.
+    //
+    // Requiring a real email here is what prevents another salon like SNG-009:
+    // created through the phone-only path with a fabricated
+    // `<phone>@phone.snipandglow.com` address and therefore unreachable for
+    // invoices, receipts, renewal notices and password recovery.
+    const ownerEmail = realEmail(user);
+    if (!ownerEmail) {
+      return {
+        success: false,
+        error:
+          'Please finish signing in with Google first — we need a real email address to send your invoices and renewal reminders.',
+      };
+    }
+
+    const verified = verifiedPhone(user);
+    if (!verified) {
+      return {
+        success: false,
+        error: 'Please verify your WhatsApp number before setting up your salon.',
+      };
+    }
+
+    // The VERIFIED number is authoritative, not whatever was typed into the form.
+    // The form field is prefilled and read-only, but a server action is a public
+    // endpoint and must not trust its own UI.
+    const ownerPhone = tenDigitPhone(verified);
 
     // ─── Validate mandatory location fields ──────────────────────────────
     const address = (data.branchAddress ?? '').trim();
@@ -67,7 +105,7 @@ export async function completeOnboarding(data: {
       .insert({
         name: toTitleCase(data.salonName),
         owner_name: toTitleCase(data.ownerName),
-        phone: data.phone,
+        phone: ownerPhone,
         subscription_status: 'trial',
         subscription_start: trialStart.toISOString(),
         subscription_end: trialEnd.toISOString(),
@@ -107,8 +145,9 @@ export async function completeOnboarding(data: {
       branch_id: branch.id,
       auth_user_id: user.id,
       name: toTitleCase(data.ownerName),
-      phone: data.phone,
-      email: user.email ?? null,
+      phone: ownerPhone,
+      // Guaranteed real by the gate above, so this row is always contactable.
+      email: ownerEmail,
       role: 'owner',
       specializations: [],
       is_active: true,
@@ -133,9 +172,16 @@ export async function completeOnboarding(data: {
       await admin.from('services').insert(serviceRows);
     }
 
-    // Update user metadata with tenant context using admin API (avoids cookie/session issues)
+    // Update user metadata with tenant context using admin API (avoids cookie/session issues).
+    //
+    // The spread is load-bearing: this previously REPLACED user_metadata wholesale
+    // and so deleted `phone` (the verified WhatsApp number) and `signup_method` the
+    // moment onboarding finished. Losing `phone` breaks the verification signal the
+    // signup gate reads, and it is the number the OTP sign-in path matches on.
     const { error: metaError } = await admin.auth.admin.updateUserById(user.id, {
       user_metadata: {
+        ...(user.user_metadata ?? {}),
+        phone: verified,
         tenant_id: tenant.id,
         branch_id: branch.id,
         role: 'owner',
@@ -184,7 +230,7 @@ export async function completeOnboarding(data: {
         // Welcome the new owner on WhatsApp.
         sendWelcomeWhatsApp({
           salonName: toTitleCase(data.salonName),
-          phone: data.phone,
+          phone: ownerPhone,
         }),
         // Tell the platform team a salon just signed up.
         notifyPlatformOfSignup({
@@ -192,8 +238,8 @@ export async function completeOnboarding(data: {
           tenantCode,
           salonName: toTitleCase(data.salonName),
           ownerName: toTitleCase(data.ownerName),
-          phone: data.phone,
-          email: user.email ?? null,
+          phone: ownerPhone,
+          email: ownerEmail,
           city: cityTC,
           state: stateTC,
           pincode,

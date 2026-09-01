@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr';
 import { NextResponse, type NextRequest } from 'next/server';
+import { nextSignupStep } from '@/lib/auth/signup-state';
 
 export async function GET(request: NextRequest) {
   const { searchParams, origin } = new URL(request.url);
@@ -43,12 +44,8 @@ export async function GET(request: NextRequest) {
       return NextResponse.redirect(`${origin}/login?error=auth_failed`);
     }
 
-    const hasPhone = user.user_metadata?.phone || user.phone;
-    if (!hasPhone) {
-      response.headers.set('Location', `${origin}/verify-phone`);
-      return response;
-    }
-
+    // Resolve the salon FIRST. An existing member (owner or staff) must reach the
+    // dashboard without being re-verified — only signups in progress are gated.
     const { data: employee } = await supabase
       .from('employees')
       .select('tenant_id, branch_id, role')
@@ -65,10 +62,18 @@ export async function GET(request: NextRequest) {
         },
       });
       response.headers.set('Location', `${origin}${next}`);
-    } else {
-      response.headers.set('Location', `${origin}/onboarding`);
+      return response;
     }
 
+    // Signup in progress. Google is done by definition (we just came back from
+    // it), so the shared helper decides whether the WhatsApp number is still
+    // outstanding. Using the helper rather than an inline check keeps this route,
+    // /auth/confirm, /verify-phone and middleware in agreement.
+    const step = nextSignupStep(user);
+    response.headers.set(
+      'Location',
+      `${origin}${step === '/dashboard' ? '/onboarding' : step}`
+    );
     return response;
   }
 

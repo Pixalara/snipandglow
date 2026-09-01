@@ -1,75 +1,77 @@
 'use client';
 
-import { useEffect } from 'react';
+import { useCallback, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
+import type { User } from '@supabase/supabase-js';
 import { createClient } from '@/lib/supabase/client';
+import { nextSignupStep } from '@/lib/auth/signup-state';
 
 // =============================================================================
-// Auth Confirm — Handles implicit flow OAuth callback
-// The access token is in the URL hash fragment (#access_token=...)
-// This page reads it, sets the session, then redirects to dashboard.
+// Auth Confirm — handles the IMPLICIT flow OAuth callback, where the access token
+// arrives in the URL hash (#access_token=...) and so can only be read in the
+// browser. The PKCE equivalent is /api/auth/callback.
+//
+// Both must make the same routing decision, and both must require the WhatsApp
+// number before onboarding. That decision lives in `nextSignupStep` — this page
+// previously duplicated it twice (once in the listener, once in the fallback) and
+// the two copies had already diverged: the fallback checked
+// `user_metadata.tenant_id` while the listener queried the employees table.
 // =============================================================================
 
 export default function AuthConfirmPage() {
   const router = useRouter();
 
+  const routeUser = useCallback(
+    async (user: User) => {
+      const supabase = createClient();
+
+      // An existing salon member goes straight in — never re-verified.
+      const { data: employee } = await supabase
+        .from('employees')
+        .select('tenant_id, branch_id, role')
+        .eq('auth_user_id', user.id)
+        .eq('is_active', true)
+        .single();
+
+      if (employee) {
+        await supabase.auth.updateUser({
+          data: {
+            tenant_id: employee.tenant_id,
+            branch_id: employee.branch_id,
+            role: employee.role,
+          },
+        });
+        router.replace('/dashboard');
+        return;
+      }
+
+      // Signup in progress: Google is done, so this resolves to /verify-phone
+      // when the number is still missing, else /onboarding.
+      const step = nextSignupStep(user);
+      router.replace(step === '/dashboard' ? '/onboarding' : step);
+    },
+    [router]
+  );
+
   useEffect(() => {
     const supabase = createClient();
 
-    // Listen for auth state change — Supabase client auto-processes the hash
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(async (event, session) => {
+    // Supabase auto-processes the hash and emits SIGNED_IN.
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
       if (event === 'SIGNED_IN' && session?.user) {
-        const user = session.user;
-
-        // Check phone verification
-        const hasPhone = user.user_metadata?.phone || user.phone;
-        if (!hasPhone) {
-          router.replace('/verify-phone');
-          return;
-        }
-
-        // Check employee record
-        const { data: employee } = await supabase
-          .from('employees')
-          .select('tenant_id, branch_id, role')
-          .eq('auth_user_id', user.id)
-          .eq('is_active', true)
-          .single();
-
-        if (employee) {
-          await supabase.auth.updateUser({
-            data: {
-              tenant_id: employee.tenant_id,
-              branch_id: employee.branch_id,
-              role: employee.role,
-            },
-          });
-          router.replace('/dashboard');
-        } else {
-          router.replace('/onboarding');
-        }
+        void routeUser(session.user);
       } else if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
         router.replace('/login?error=auth_failed');
       }
     });
 
-    // Fallback: if already signed in, redirect immediately
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) {
-        const user = session.user;
-        const hasPhone = user.user_metadata?.phone || user.phone;
-        if (!hasPhone) {
-          router.replace('/verify-phone');
-        } else if (user.user_metadata?.tenant_id) {
-          router.replace('/dashboard');
-        } else {
-          router.replace('/onboarding');
-        }
-      }
+    // Fallback for an already-established session, where no event fires.
+    void supabase.auth.getSession().then(({ data: { session } }) => {
+      if (session?.user) void routeUser(session.user);
     });
 
     return () => subscription.unsubscribe();
-  }, [router]);
+  }, [router, routeUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20">

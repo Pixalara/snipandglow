@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
+import { nextSignupStep } from '@/lib/auth/signup-state';
 import { Phone, Smartphone, CheckCircle2, Shield, AlertTriangle } from 'lucide-react';
 
 // =============================================================================
@@ -38,12 +39,12 @@ export default function VerifyPhonePage() {
         return;
       }
 
-      // If phone is already verified, skip this step
-      const phone = user.user_metadata?.phone || user.phone;
-      if (phone) {
-        // Phone already verified — continue to appropriate page
-        const tenantId = user.user_metadata?.tenant_id;
-        router.push(tenantId ? '/dashboard' : '/onboarding');
+      // Already past this step? Let the shared helper decide where to go, so this
+      // page, middleware and the OAuth callback can never disagree about what
+      // "signup finished" means.
+      const step = nextSignupStep(user);
+      if (step !== '/verify-phone') {
+        router.push(step);
         return;
       }
 
@@ -67,8 +68,10 @@ export default function VerifyPhonePage() {
     checkUser();
   }, [router]);
 
-  async function handleSendOtp(e: React.FormEvent) {
-    e.preventDefault();
+  // The event is optional so "Resend OTP" can call this directly instead of
+  // fabricating a synthetic submit event.
+  async function handleSendOtp(e?: React.FormEvent) {
+    e?.preventDefault();
     setError(null);
 
     const cleaned = phone.replace(/[\s\-\(\)]/g, '');
@@ -126,8 +129,13 @@ export default function VerifyPhonePage() {
 
     setOtpLoading(true);
     try {
-      // Verify OTP
-      const res = await fetch('/api/auth/verify-otp', {
+      // Attach the verified number to the CURRENT session.
+      //
+      // Deliberately NOT /api/auth/verify-otp: that is the sign-in endpoint, and
+      // for a Google user with no employee row it used to fall through to its
+      // "new user" branch and create a second, orphan account with a fabricated
+      // email. attach-phone only ever updates the signed-in user.
+      const res = await fetch('/api/auth/attach-phone', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ phone: sentPhone, code: otp }),
@@ -136,18 +144,17 @@ export default function VerifyPhonePage() {
       const data = await res.json();
 
       if (!res.ok) {
-        setError(data.error || 'Verification failed');
+        setError(data.message || data.error || 'Verification failed');
         setOtpLoading(false);
         return;
       }
 
-      // OTP verified — update user metadata with phone number
+      // The number was recorded server-side with the service role. Refresh the
+      // session so the JWT carries the new metadata before the next navigation,
+      // otherwise middleware still sees an unverified account and bounces back.
       const supabase = createClient();
-      await supabase.auth.updateUser({
-        data: { phone: sentPhone },
-      });
+      await supabase.auth.refreshSession();
 
-      // Continue to onboarding or dashboard
       const { data: { user } } = await supabase.auth.getUser();
       const tenantId = user?.user_metadata?.tenant_id;
       router.push(tenantId ? '/dashboard' : '/onboarding');
@@ -327,7 +334,7 @@ export default function VerifyPhonePage() {
               </button>
               <button
                 type="button"
-                onClick={() => { setOtp(''); handleSendOtp(new Event('submit') as any); }}
+                onClick={() => { setOtp(''); void handleSendOtp(); }}
                 className="text-xs text-green-600 hover:text-green-700 font-medium transition-colors"
               >
                 Resend OTP

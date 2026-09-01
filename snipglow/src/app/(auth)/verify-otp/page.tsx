@@ -2,8 +2,9 @@
 
 import { useState, useEffect, useCallback, Suspense } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
+import Link from 'next/link';
 import { createClient } from '@/lib/supabase/client';
-import { MessageCircle } from 'lucide-react';
+import { MessageCircle, UserPlus, CheckCircle2 } from 'lucide-react';
 
 const OTP_EXPIRY_SECONDS = 5 * 60; // 5 minutes
 
@@ -38,6 +39,10 @@ function VerifyOtpContent() {
   const [error, setError] = useState<string | null>(null);
   const [secondsLeft, setSecondsLeft] = useState(OTP_EXPIRY_SECONDS);
   const [resending, setResending] = useState(false);
+  // The code was correct, but this number has no account yet. Signing up is
+  // Google-first (that is where the real email comes from), so instead of a dead
+  // "invalid OTP" we send them there.
+  const [noAccount, setNoAccount] = useState(false);
 
   // Countdown timer
   useEffect(() => {
@@ -101,6 +106,12 @@ function VerifyOtpContent() {
       const data = await res.json();
 
       if (!res.ok) {
+        // Valid code, but no salon is registered against this number.
+        if (data.error === 'NO_ACCOUNT') {
+          setNoAccount(true);
+          setLoading(false);
+          return;
+        }
         setError(data.error || 'Invalid or expired OTP.');
         setLoading(false);
         return;
@@ -142,6 +153,56 @@ function VerifyOtpContent() {
         >
           Go back to login
         </button>
+      </div>
+    );
+  }
+
+  // Number verified, but there is no salon behind it yet. Point at Google signup
+  // rather than leaving them stuck on a code that "worked" but went nowhere.
+  if (noAccount) {
+    return (
+      <div className="space-y-6">
+        <div className="text-center space-y-2">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-100 to-fuchsia-100 border border-pink-200 mx-auto mb-2">
+            <UserPlus className="h-6 w-6 text-fuchsia-600" />
+          </div>
+          <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Let&apos;s get you set up</h1>
+          <p className="text-sm text-slate-500">
+            We don&apos;t have a SnipandGlow account for {maskPhone(phone)} yet.
+          </p>
+        </div>
+
+        <div className="bg-white rounded-2xl border border-slate-200 shadow-xl shadow-slate-100/50 p-6 sm:p-7 space-y-5">
+          <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
+            <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
+            <p className="text-sm text-emerald-800">
+              Your WhatsApp number is confirmed — you&apos;ll verify this same number during signup,
+              so nothing here is wasted.
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <p className="text-sm text-slate-600">
+              Creating an account takes a minute. We start with Google so your salon has a real email
+              address for invoices, receipts and renewal reminders.
+            </p>
+          </div>
+
+          <Link
+            href="/signup"
+            className="w-full flex items-center justify-center gap-2 min-h-[48px] h-12 rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white font-semibold text-sm hover:from-pink-500 hover:to-fuchsia-500 transition-all shadow-lg"
+          >
+            <UserPlus className="size-4" />
+            Create your account
+          </Link>
+
+          <p className="text-center text-xs text-slate-400">
+            Already have an account under a different number?{' '}
+            <Link href="/login" className="text-emerald-600 font-medium hover:underline">
+              Try another way to sign in
+            </Link>
+          </p>
+        </div>
       </div>
     );
   }

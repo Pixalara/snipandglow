@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
+import { consumeOtpCode } from '@/lib/auth/otp';
 
 // =============================================================================
 // POST /api/auth/verify-otp
@@ -19,55 +20,15 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Please enter a valid 6-digit code' }, { status: 400 });
     }
 
-    // Normalize phone to match what send-otp stores
-    const cleanedPhone = phone.replace(/[\s\-\(\)\+]/g, '');
-    const phoneNormalized = cleanedPhone.length === 10 && /^[6-9]/.test(cleanedPhone)
-      ? `91${cleanedPhone}`
-      : cleanedPhone.startsWith('91') ? cleanedPhone : `91${cleanedPhone}`;
-
     const admin = createAdminClient();
 
-    // Fetch OTP record — try exact match first, then normalized
-    let otpRecord: any = null;
-    const { data: record1 } = await (admin
-      .from('otp_codes')
-      .select('*')
-      .eq('phone', phone)
-      .order('created_at', { ascending: false })
-      .limit(1)
-      .maybeSingle() as any);
-
-    if (record1) {
-      otpRecord = record1;
-    } else {
-      // Try with normalized phone
-      const { data: record2 } = await (admin
-        .from('otp_codes')
-        .select('*')
-        .eq('phone', phoneNormalized)
-        .order('created_at', { ascending: false })
-        .limit(1)
-        .maybeSingle() as any);
-      otpRecord = record2;
+    // Expiry, single-use and phone normalisation all live in the shared verifier
+    // so this route and /api/auth/attach-phone cannot drift apart on them.
+    const otp = await consumeOtpCode(admin, { phone, code: cleanedCode });
+    if (!otp.ok || !otp.phone) {
+      return NextResponse.json({ error: otp.message ?? 'Verification failed' }, { status: 400 });
     }
-
-    if (!otpRecord) {
-      return NextResponse.json({ error: 'No OTP found. Please request a new one.' }, { status: 400 });
-    }
-
-    // Check expiry
-    if (new Date(otpRecord.expires_at) < new Date()) {
-      await (admin.from('otp_codes').delete().eq('id', otpRecord.id) as any);
-      return NextResponse.json({ error: 'OTP has expired. Please request a new one.' }, { status: 400 });
-    }
-
-    // Verify code
-    if (otpRecord.code !== cleanedCode) {
-      return NextResponse.json({ error: 'Invalid OTP. Please try again.' }, { status: 400 });
-    }
-
-    // OTP is valid — delete it
-    await (admin.from('otp_codes').delete().eq('id', otpRecord.id) as any);
+    const phoneNormalized = otp.phone;
 
     // Check if user exists — first check employees table (most reliable for existing salon owners)
     const phoneE164 = `+${phoneNormalized}`;
@@ -323,65 +284,32 @@ export async function POST(request: NextRequest) {
         redirect: '/dashboard',
       });
     } else {
-      // Truly new user — no employee record found
-      const tempEmail = `${phoneNormalized}@phone.snipandglow.com`;
-      const { data: newUser, error: createError } = await admin.auth.admin.createUser({
-        email: tempEmail,
-        phone: phoneE164,
-        email_confirm: true,
-        phone_confirm: true,
-        user_metadata: {
-          phone: phoneNormalized,
-          signup_method: 'phone_otp',
+      // ─── No account for this number ─────────────────────────────────────
+      //
+      // This branch used to CREATE a brand-new owner account here, with a
+      // fabricated `<phone>@phone.snipandglow.com` email, and send it straight to
+      // /onboarding. That is how a salon could end up with no contactable
+      // address at all — no invoices, no receipts, no renewal notices, no
+      // password recovery (SNG-009 was created exactly this way).
+      //
+      // Signing up is now Google-first by design: Google supplies a verified,
+      // real email, and /verify-phone then adds the WhatsApp number, so every
+      // new salon has both. OTP remains a SIGN-IN mechanism for accounts that
+      // already exist — it no longer mints them.
+      //
+      // The OTP itself was valid and has already been consumed above, so this is
+      // a legitimate holder of the number; they simply have nothing to sign in
+      // to yet. 404 + a machine-readable code so the client can offer signup.
+      console.log('[VerifyOTP] Valid OTP but no account for', phoneNormalized);
+      return NextResponse.json(
+        {
+          error: 'NO_ACCOUNT',
+          message:
+            "There's no SnipandGlow account for this number yet. Create one with Google — it takes a minute, and you'll verify this same WhatsApp number as part of it.",
+          signupUrl: '/signup',
         },
-      });
-
-      if (createError) {
-        // If user already exists with this email (edge case)
-        if (createError.message?.includes('already been registered')) {
-          const { data: signInData } = await admin.auth.admin.generateLink({
-            type: 'magiclink',
-            email: tempEmail,
-            options: {
-              redirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com'}/dashboard`,
-            },
-          });
-          const actionUrl3 = new URL(signInData?.properties?.action_link || 'https://x.com');
-          const tokenHash3 = actionUrl3.searchParams.get('token_hash') || signInData?.properties?.hashed_token;
-          return NextResponse.json({
-            success: true,
-            action: 'sign_in',
-            token_hash: tokenHash3,
-            type: 'magiclink',
-            email: tempEmail,
-            redirect: '/dashboard',
-          });
-        }
-        console.error('[OTP] Create user error:', createError);
-        return NextResponse.json({ error: 'Failed to create account. Please try again.' }, { status: 500 });
-      }
-
-      // Generate sign-in link
-      const siteUrl2 = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.snipandglow.com';
-      const { data: signInData } = await admin.auth.admin.generateLink({
-        type: 'magiclink',
-        email: tempEmail,
-        options: {
-          redirectTo: `${siteUrl2}/onboarding`,
-        },
-      });
-
-      const actionUrl2 = new URL(signInData?.properties?.action_link || 'https://x.com');
-      const tokenHash2 = actionUrl2.searchParams.get('token_hash') || signInData?.properties?.hashed_token;
-
-      return NextResponse.json({
-        success: true,
-        action: 'sign_up',
-        token_hash: tokenHash2,
-        type: 'magiclink',
-        email: tempEmail,
-        redirect: '/onboarding',
-      });
+        { status: 404 }
+      );
     }
   } catch (err) {
     console.error('[OTP] Unexpected error:', err);

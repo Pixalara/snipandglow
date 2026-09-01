@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import { NextResponse, type NextRequest } from "next/server";
+import { nextSignupStep } from "@/lib/auth/signup-state";
 
 // Routes that don't require authentication
 const publicRoutes = new Set(["/", "/login", "/verify-otp", "/verify-phone", "/signup", "/blog", "/privacy", "/terms", "/refund", "/auth/confirm"]);
@@ -97,10 +98,22 @@ export async function middleware(request: NextRequest) {
   const branchId = user.user_metadata?.branch_id;
   const role = user.user_metadata?.role;
 
-  // Authenticated but no tenant → onboarding (only for dashboard paths)
-  if (!tenantId && !pathname.startsWith("/onboarding")) {
+  // ─── Signup completeness gate ─────────────────────────────────────────────
+  //
+  // Every new salon must clear BOTH Google (a real, contactable email) and
+  // WhatsApp OTP before it can create a tenant. `nextSignupStep` is the shared
+  // rule, also used by the OAuth callback, /auth/confirm and /verify-phone, so
+  // there is exactly one definition of "signup finished".
+  //
+  // Accounts that ALREADY have a tenant return '/dashboard' from the helper and
+  // so fall through untouched — existing owners and owner-created staff are never
+  // re-verified, which would otherwise lock paying customers out.
+  const step = nextSignupStep(user);
+
+  if (step !== "/dashboard" && !pathname.startsWith(step)) {
     const url = request.nextUrl.clone();
-    url.pathname = "/onboarding";
+    url.pathname = step;
+    url.search = "";
     return NextResponse.redirect(url);
   }
 

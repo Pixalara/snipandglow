@@ -7,6 +7,7 @@
 // =============================================================================
 
 import { normalizePhone } from '@/lib/whatsapp/notify-owner';
+import { isSyntheticEmail } from '@/lib/auth/signup-state';
 
 export interface SignupAlert {
   tenantId: string;
@@ -126,11 +127,15 @@ export function displayPhone(phone: string): string {
  * (`<digits>@phone.snipandglow.com`, or `@staff.` for staff logins). Those are
  * internal placeholders, not contactable addresses, so they must never be
  * presented as the salon's email.
+ *
+ * Re-exported from the shared auth helper rather than reimplemented: the signup
+ * routing gate and these notifications must agree on what counts as a real
+ * address, and two copies of the domain list would eventually drift.
+ *
+ * Imported as well as re-exported because a bare `export { x } from '...'` does
+ * not bind the name locally, and `realEmail` below calls it.
  */
-export function isSyntheticEmail(email: string | null | undefined): boolean {
-  const e = (email || '').toLowerCase().trim();
-  return e.endsWith('@phone.snipandglow.com') || e.endsWith('@staff.snipandglow.com');
-}
+export { isSyntheticEmail };
 
 /** The salon's real email, or null when absent or synthetic. */
 export function realEmail(alert: SignupAlert): string | null {
