@@ -17,9 +17,9 @@ import {
   Moon,
   Save,
   Send,
+  Sparkles,
   Users,
   Wallet,
-  Wand2,
   X,
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
@@ -31,7 +31,9 @@ import {
   ATTENDANCE_STATUS_LABELS,
   calculateAttendanceDay,
   daysInMonth,
+  formatDateLabel,
   formatHours,
+  formatMonthLabel,
   isPayableStatus,
   istCurrentMonth,
   istToday,
@@ -69,55 +71,110 @@ import {
 //
 // All arithmetic comes from `src/lib/attendance.ts` (unit tested) — this file
 // only collects input and displays the result.
+//
+// LAYOUT NOTE. Both grids use ONE set of inputs across all breakpoints rather
+// than a desktop table plus a duplicate mobile card list. Duplicating would mean
+// two inputs bound to the same value and two elements carrying the same
+// aria-label, which is worse for screen readers and doubles the DOM on a screen
+// that can hold 30+ editable rows. Instead the same cells reflow: two columns on
+// a phone, six aligned columns from `lg` up.
 // =============================================================================
 
 /** Default shift the "apply to everyone" button fills in. */
 const DEFAULT_SHIFT_IN = '10:00';
 const DEFAULT_SHIFT_OUT = '20:00';
 
+/** Shared column template, so the header and every row stay aligned. */
+const GRID_DAY =
+  'lg:grid-cols-[minmax(150px,1.6fr)_132px_112px_112px_84px_minmax(132px,auto)]';
+const GRID_MONTH =
+  'lg:grid-cols-[minmax(150px,1.5fr)_repeat(2,minmax(72px,0.6fr))_minmax(90px,0.8fr)_minmax(190px,auto)]';
+
+/** Rotated so a list of staff is scannable rather than a wall of one colour. */
+const AVATAR_TINTS = [
+  'bg-indigo-100 text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300',
+  'bg-rose-100 text-rose-700 dark:bg-rose-900/40 dark:text-rose-300',
+  'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300',
+  'bg-amber-100 text-amber-700 dark:bg-amber-900/40 dark:text-amber-300',
+  'bg-violet-100 text-violet-700 dark:bg-violet-900/40 dark:text-violet-300',
+  'bg-sky-100 text-sky-700 dark:bg-sky-900/40 dark:text-sky-300',
+];
+
+/** A colour cue on the status column so a month can be scanned at a glance. */
+const STATUS_DOT: Record<AttendanceStatus, string> = {
+  present: 'bg-emerald-500',
+  half_day: 'bg-amber-500',
+  absent: 'bg-rose-500',
+  leave: 'bg-sky-500',
+  week_off: 'bg-slate-400',
+};
+
+/** Matches `Input` from the design system, which has no select counterpart. */
+const SELECT_CLASS =
+  'h-8 w-full rounded-lg border border-input bg-transparent pl-5 pr-2 text-sm outline-none transition-colors focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 disabled:cursor-not-allowed disabled:opacity-50 dark:bg-input/30';
+
 type Mode = 'day' | 'month';
+
+const TABS: { value: Mode; label: string; short: string; icon: typeof CalendarDays }[] = [
+  { value: 'day', label: 'Daily entry', short: 'Daily', icon: CalendarDays },
+  { value: 'month', label: 'Monthly payout', short: 'Monthly', icon: CalendarRange },
+];
 
 export function StaffAttendance() {
   const [mode, setMode] = useState<Mode>('day');
 
   return (
-    <div className="rounded-2xl border border-border bg-card overflow-hidden">
-      <div className="flex flex-col gap-3 border-b border-border bg-gradient-to-br from-indigo-500/5 to-transparent px-4 py-4 sm:px-6 sm:flex-row sm:items-center sm:justify-between">
-        <div className="flex items-center gap-2.5">
-          <div className="flex size-9 shrink-0 items-center justify-center rounded-xl bg-indigo-100 dark:bg-indigo-900/30">
-            <Clock className="size-4 text-indigo-600 dark:text-indigo-400" />
+    <div className="overflow-hidden rounded-2xl border border-border bg-card">
+      {/* ── Panel header ─────────────────────────────────────────────────── */}
+      <div className="relative overflow-hidden border-b border-border bg-gradient-to-br from-indigo-500/[0.07] via-indigo-500/[0.03] to-transparent">
+        {/* Soft light behind the title, matching the dashboard's page headers. */}
+        <div
+          aria-hidden="true"
+          className="pointer-events-none absolute -right-10 -top-16 size-40 rounded-full bg-indigo-400/10 blur-3xl"
+        />
+        <div className="relative flex flex-col gap-4 px-4 py-4 sm:px-6 lg:flex-row lg:items-center lg:justify-between">
+          <div className="flex items-start gap-3">
+            <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-indigo-100 shadow-sm dark:bg-indigo-900/40">
+              <Clock className="size-[18px] text-indigo-600 dark:text-indigo-400" />
+            </div>
+            <div className="min-w-0">
+              <h2 className="text-sm font-semibold tracking-tight text-foreground sm:text-base">
+                Attendance &amp; Pay
+              </h2>
+              <p className="mt-0.5 text-xs leading-relaxed text-muted-foreground">
+                Record login and logout times. Hours worked and wages are calculated for you.
+              </p>
+            </div>
           </div>
-          <div>
-            <h2 className="text-sm font-semibold text-foreground">Attendance &amp; Pay</h2>
-            <p className="text-xs text-muted-foreground">
-              Record login and logout times — hours worked and wages are calculated for you
-            </p>
-          </div>
-        </div>
 
-        {/* View switch */}
-        <div className="flex items-center rounded-xl border border-border bg-muted/50 p-1">
-          {(
-            [
-              { value: 'day' as Mode, label: 'Daily entry', icon: CalendarDays },
-              { value: 'month' as Mode, label: 'Monthly payout', icon: CalendarRange },
-            ]
-          ).map((tab) => (
-            <button
-              key={tab.value}
-              type="button"
-              onClick={() => setMode(tab.value)}
-              aria-pressed={mode === tab.value}
-              className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium transition-all sm:flex-none ${
-                mode === tab.value
-                  ? 'bg-background text-foreground shadow-sm'
-                  : 'text-muted-foreground hover:text-foreground'
-              }`}
-            >
-              <tab.icon className="size-3.5" />
-              {tab.label}
-            </button>
-          ))}
+          {/* View switch */}
+          <div
+            role="tablist"
+            aria-label="Attendance view"
+            className="flex w-full items-center gap-1 rounded-xl border border-border bg-background/70 p-1 shadow-sm backdrop-blur-sm lg:w-auto"
+          >
+            {TABS.map((tab) => {
+              const active = mode === tab.value;
+              return (
+                <button
+                  key={tab.value}
+                  type="button"
+                  role="tab"
+                  aria-selected={active}
+                  onClick={() => setMode(tab.value)}
+                  className={`flex flex-1 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium transition-all lg:flex-none lg:py-1.5 ${
+                    active
+                      ? 'bg-indigo-600 text-white shadow-sm'
+                      : 'text-muted-foreground hover:bg-muted hover:text-foreground'
+                  }`}
+                >
+                  <tab.icon className="size-3.5 shrink-0" />
+                  <span className="sm:hidden">{tab.short}</span>
+                  <span className="hidden sm:inline">{tab.label}</span>
+                </button>
+              );
+            })}
+          </div>
         </div>
       </div>
 
@@ -127,7 +184,7 @@ export function StaffAttendance() {
 }
 
 // =============================================================================
-// Daily entry
+// Shared pieces
 // =============================================================================
 
 /** Fields the owner can change on a row, split out so dirty-checking is exact. */
@@ -148,6 +205,161 @@ const sameRow = (a: EditableRow, b: EditableRow) =>
   a.login_time === b.login_time &&
   a.logout_time === b.logout_time &&
   a.break_minutes === b.break_minutes;
+
+/**
+ * Wraps a control with a label shown only on narrow screens, where the column
+ * header isn't there to explain it.
+ */
+function Field({
+  label,
+  children,
+  className = '',
+}: {
+  label: string;
+  children: React.ReactNode;
+  className?: string;
+}) {
+  return (
+    <div className={`min-w-0 ${className}`}>
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground lg:hidden">
+        {label}
+      </span>
+      {children}
+    </div>
+  );
+}
+
+/** Status dropdown with a colour cue, used by both the day and month grids. */
+function StatusSelect({
+  value,
+  onChange,
+  label,
+  disabled = false,
+  compact = false,
+}: {
+  value: AttendanceStatus;
+  onChange: (next: AttendanceStatus) => void;
+  label: string;
+  disabled?: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <div className="relative">
+      <span
+        aria-hidden="true"
+        className={`pointer-events-none absolute left-2 top-1/2 size-1.5 -translate-y-1/2 rounded-full ${STATUS_DOT[value]}`}
+      />
+      <select
+        aria-label={label}
+        value={value}
+        disabled={disabled}
+        onChange={(e) => onChange(e.target.value as AttendanceStatus)}
+        className={compact ? `${SELECT_CLASS} h-7 text-xs` : SELECT_CLASS}
+      >
+        {ATTENDANCE_STATUSES.map((status) => (
+          <option key={status} value={status}>
+            {ATTENDANCE_STATUS_LABELS[status]}
+          </option>
+        ))}
+      </select>
+    </div>
+  );
+}
+
+/** Break-minutes input. Blank rather than `0`, so the field looks unfilled. */
+function BreakInput({
+  value,
+  onChange,
+  label,
+  disabled,
+  compact = false,
+}: {
+  value: number;
+  onChange: (next: number) => void;
+  label: string;
+  disabled: boolean;
+  compact?: boolean;
+}) {
+  return (
+    <Input
+      type="number"
+      min={0}
+      max={1440}
+      step={15}
+      inputMode="numeric"
+      aria-label={label}
+      value={value === 0 ? '' : String(value)}
+      placeholder="0"
+      disabled={disabled}
+      onChange={(e) => {
+        const parsed = Number(e.target.value);
+        onChange(Number.isFinite(parsed) ? Math.min(1440, Math.max(0, parsed)) : 0);
+      }}
+      className={compact ? 'h-7 text-xs' : undefined}
+    />
+  );
+}
+
+/** The money and hours for one row. Right-aligned from `lg` up. */
+function DayResult({
+  amount,
+  hours,
+  overnight,
+  warning,
+}: {
+  amount: number;
+  hours: number;
+  overnight: boolean;
+  warning: string | null;
+}) {
+  const settled = hours > 0;
+  return (
+    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 lg:bg-transparent lg:px-0 lg:py-0 lg:text-right">
+      <div className="flex items-baseline gap-1.5 lg:justify-end">
+        <p
+          className={`text-sm font-semibold tabular-nums ${
+            settled ? 'text-foreground' : 'text-muted-foreground'
+          }`}
+        >
+          {formatINR(amount)}
+        </p>
+        {overnight && (
+          <span
+            title="Shift ran past midnight"
+            className="inline-flex items-center gap-0.5 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300"
+          >
+            <Moon className="size-2.5" />
+            +1d
+          </span>
+        )}
+      </div>
+      <p className="text-[11px] tabular-nums text-muted-foreground lg:mt-0.5">
+        {formatHours(hours)}
+      </p>
+      {warning && (
+        <p className="mt-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400">{warning}</p>
+      )}
+    </div>
+  );
+}
+
+/** Avatar initial, tinted by position in the list. */
+function Avatar({ name, index, size = 'md' }: { name: string; index: number; size?: 'sm' | 'md' }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={`flex shrink-0 items-center justify-center rounded-full font-bold ${
+        AVATAR_TINTS[index % AVATAR_TINTS.length]
+      } ${size === 'sm' ? 'size-6 text-[10px]' : 'size-8 text-xs'}`}
+    >
+      {name.charAt(0).toUpperCase()}
+    </span>
+  );
+}
+
+// =============================================================================
+// Daily entry
+// =============================================================================
 
 function DayView() {
   const [date, setDate] = useState(() => istToday());
@@ -198,9 +410,7 @@ function DayView() {
   const reload = () => setRefetch((n) => n + 1);
 
   const patch = (employeeId: string, changes: Partial<EditableRow>) => {
-    setRows((prev) =>
-      prev.map((r) => (r.employee_id === employeeId ? { ...r, ...changes } : r))
-    );
+    setRows((prev) => prev.map((r) => (r.employee_id === employeeId ? { ...r, ...changes } : r)));
   };
 
   /** Put the chosen shift on everyone who has no times yet. */
@@ -248,7 +458,9 @@ function DayView() {
           };
         })
       );
-      toast.success(`Copied ${touched} entr${touched === 1 ? 'y' : 'ies'} from ${prev.date}.`);
+      toast.success(
+        `Copied ${touched} entr${touched === 1 ? 'y' : 'ies'} from ${formatDateLabel(prev.date)}.`
+      );
     } catch (err) {
       console.error('[attendance] copy previous day failed:', err);
       toast.error('Could not copy the previous day.');
@@ -302,105 +514,145 @@ function DayView() {
     reload();
   };
 
-  const isToday = date === istToday();
+  const today = istToday();
+  const isToday = date === today;
+  const offDays = totals.daysAbsent + totals.daysLeave + totals.daysWeekOff;
 
   return (
-    <div className="p-4 sm:p-6 space-y-4">
-      {/* ── Date navigation + bulk helpers ─────────────────────────────────── */}
-      <div className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
-        <div className="flex flex-wrap items-end gap-2">
-          <div>
-            <label htmlFor="attendance-date" className="text-[11px] font-medium text-muted-foreground">
-              Date
-            </label>
-            <div className="mt-1 flex items-center gap-1">
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Previous day"
-                onClick={() => setDate((d) => previousDay(d))}
-              >
-                <ChevronLeft className="size-4" />
-              </Button>
-              <Input
-                id="attendance-date"
-                type="date"
-                value={date}
-                max={istToday()}
-                onChange={(e) => setDate(e.target.value || istToday())}
-                className="w-[150px]"
-              />
-              <Button
-                variant="outline"
-                size="icon"
-                aria-label="Next day"
-                disabled={isToday}
-                onClick={() => setDate((d) => nextDay(d))}
-              >
-                <ChevronRight className="size-4" />
-              </Button>
-            </div>
+    <div className="space-y-4 p-4 sm:p-5">
+      {/* ── Date bar ───────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="flex items-center gap-2">
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Previous day"
+            onClick={() => setDate((d) => previousDay(d))}
+          >
+            <ChevronLeft className="size-4" />
+          </Button>
+
+          <div className="min-w-0 flex-1 sm:flex-none">
+            {/* The native picker is kept — it is the best date experience on a
+                phone — with a readable label above it. */}
+            <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+              <span className="truncate">{formatDateLabel(date)}</span>
+              {isToday && (
+                <span className="shrink-0 rounded-full bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                  Today
+                </span>
+              )}
+            </p>
+            <Input
+              type="date"
+              aria-label="Attendance date"
+              value={date}
+              max={today}
+              onChange={(e) => setDate(e.target.value || today)}
+              className="w-full sm:w-[152px]"
+            />
           </div>
 
-          <div className="flex items-end gap-1.5">
-            <div>
-              <label htmlFor="shift-in" className="text-[11px] font-medium text-muted-foreground">
-                Shift start
-              </label>
-              <Input
-                id="shift-in"
-                type="time"
-                value={shiftIn}
-                onChange={(e) => setShiftIn(e.target.value)}
-                className="mt-1 w-[110px]"
-              />
-            </div>
-            <div>
-              <label htmlFor="shift-out" className="text-[11px] font-medium text-muted-foreground">
-                Shift end
-              </label>
-              <Input
-                id="shift-out"
-                type="time"
-                value={shiftOut}
-                onChange={(e) => setShiftOut(e.target.value)}
-                className="mt-1 w-[110px]"
-              />
-            </div>
-            <Button variant="outline" onClick={applyShiftToAll} disabled={loading || rows.length === 0}>
-              <Wand2 className="size-3.5" />
-              Apply to all
-            </Button>
-          </div>
+          <Button
+            variant="outline"
+            size="icon"
+            aria-label="Next day"
+            disabled={isToday}
+            onClick={() => setDate((d) => nextDay(d))}
+          >
+            <ChevronRight className="size-4" />
+          </Button>
         </div>
 
-        <div className="flex flex-wrap items-center gap-2">
-          <Button variant="outline" onClick={copyPrevious} disabled={loading || rows.length === 0}>
-            <Copy className="size-3.5" />
-            Copy previous day
-          </Button>
-          <Button variant="outline" onClick={() => setShowRates(true)} disabled={rows.length === 0}>
+        <div className="flex items-center gap-2">
+          {!isToday && (
+            <Button variant="ghost" size="sm" onClick={() => setDate(today)}>
+              Jump to today
+            </Button>
+          )}
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setShowRates(true)}
+            disabled={rows.length === 0}
+          >
             <Wallet className="size-3.5" />
             Hourly rates
-          </Button>
-          <Button onClick={handleSave} disabled={saving || loading || dirtyRows.length === 0}>
-            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-            {dirtyRows.length > 0 ? `Save ${dirtyRows.length}` : 'Save'}
           </Button>
         </div>
       </div>
 
+      {/* ── Quick fill strip ───────────────────────────────────────────────── */}
+      {rows.length > 0 && (
+        <div className="rounded-xl border border-border bg-muted/30 p-3">
+          <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+            <Sparkles className="size-3" />
+            Quick fill
+          </p>
+          <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end">
+            <div className="flex items-end gap-2">
+              <div>
+                <label
+                  htmlFor="shift-in"
+                  className="mb-1 block text-[11px] font-medium text-muted-foreground"
+                >
+                  Shift start
+                </label>
+                <Input
+                  id="shift-in"
+                  type="time"
+                  value={shiftIn}
+                  onChange={(e) => setShiftIn(e.target.value)}
+                  className="w-[108px]"
+                />
+              </div>
+              <span className="pb-1.5 text-muted-foreground">&rarr;</span>
+              <div>
+                <label
+                  htmlFor="shift-out"
+                  className="mb-1 block text-[11px] font-medium text-muted-foreground"
+                >
+                  Shift end
+                </label>
+                <Input
+                  id="shift-out"
+                  type="time"
+                  value={shiftOut}
+                  onChange={(e) => setShiftOut(e.target.value)}
+                  className="w-[108px]"
+                />
+              </div>
+            </div>
+
+            <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:justify-end">
+              <Button variant="outline" onClick={applyShiftToAll} disabled={loading}>
+                <Sparkles className="size-3.5" />
+                Apply to everyone
+              </Button>
+              <Button variant="outline" onClick={copyPrevious} disabled={loading}>
+                <Copy className="size-3.5" />
+                Copy previous day
+              </Button>
+            </div>
+          </div>
+          <p className="mt-2 text-[11px] leading-relaxed text-muted-foreground">
+            Both fill the form only — nothing is saved until you press Save. Staff who already have
+            times are left alone.
+          </p>
+        </div>
+      )}
+
       {/* Rates not set yet — the calculation can't produce money without them. */}
       {needsRates && !loading && rows.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-xl border border-amber-200 bg-amber-50 p-3 text-xs dark:border-amber-800/40 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-start gap-2">
+        <div className="flex flex-col gap-2.5 rounded-xl border border-amber-300/60 bg-amber-50 p-3 dark:border-amber-800/40 dark:bg-amber-900/20 sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex items-start gap-2.5">
             <AlertTriangle className="mt-0.5 size-4 shrink-0 text-amber-600 dark:text-amber-400" />
-            <p className="text-amber-800 dark:text-amber-200">
-              No hourly rates set yet. Hours will still be recorded, but wages show as ₹0 until you
-              add a rate for each staff member.
+            <p className="text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+              No hourly rates set yet. Hours will still be recorded, but wages show as ₹0 until each
+              staff member has a rate.
             </p>
           </div>
-          <Button variant="outline" onClick={() => setShowRates(true)} className="shrink-0">
+          <Button variant="outline" size="sm" onClick={() => setShowRates(true)} className="shrink-0">
             Set rates
           </Button>
         </div>
@@ -408,22 +660,18 @@ function DayView() {
 
       {/* ── The grid ───────────────────────────────────────────────────────── */}
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
+        <SkeletonRows />
       ) : rows.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
-            <Users className="size-6 text-muted-foreground" />
-          </div>
-          <p className="text-sm font-medium text-foreground">No active staff</p>
-          <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-            Add a staff member above, then come back to record their attendance.
-          </p>
-        </div>
+        <EmptyState
+          icon={<Users className="size-6 text-muted-foreground" />}
+          title="No active staff"
+          hint="Add a staff member above, then come back to record their attendance."
+        />
       ) : (
         <div className="overflow-hidden rounded-xl border border-border">
-          <div className="hidden bg-muted/40 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid lg:grid-cols-[minmax(150px,1.5fr)_130px_110px_110px_92px_minmax(130px,1fr)] lg:gap-3">
+          <div
+            className={`hidden bg-muted/40 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground lg:grid lg:gap-3 ${GRID_DAY}`}
+          >
             <div>Staff</div>
             <div>Status</div>
             <div>Login</div>
@@ -432,36 +680,79 @@ function DayView() {
             <div className="text-right">Hours &amp; pay</div>
           </div>
 
-          {rows.map((row) => (
+          {rows.map((row, index) => (
             <DayRow
               key={row.employee_id}
               row={row}
+              index={index}
               dirty={!sameRow(editableOf(row), original[row.employee_id] ?? editableOf(row))}
               onChange={(changes) => patch(row.employee_id, changes)}
             />
           ))}
 
           {/* Day total */}
-          <div className="grid grid-cols-2 items-center gap-3 border-t-2 border-border bg-muted/50 px-3 py-3 text-sm lg:grid-cols-[minmax(150px,1.5fr)_130px_110px_110px_92px_minmax(130px,1fr)]">
-            <div className="font-semibold text-foreground lg:col-span-3">
-              {totals.daysWorked} of {rows.length} working
-              {totals.daysAbsent + totals.daysLeave + totals.daysWeekOff > 0 && (
-                <span className="ml-1.5 font-normal text-muted-foreground">
-                  ({[
+          <div className="flex flex-wrap items-center justify-between gap-3 border-t-2 border-border bg-muted/50 px-3 py-3">
+            <div className="text-sm">
+              <p className="font-semibold text-foreground">
+                {totals.daysWorked} of {rows.length} working
+              </p>
+              {offDays > 0 && (
+                <p className="mt-0.5 text-[11px] text-muted-foreground">
+                  {[
                     totals.daysAbsent > 0 ? `${totals.daysAbsent} absent` : null,
-                    totals.daysLeave > 0 ? `${totals.daysLeave} leave` : null,
-                    totals.daysWeekOff > 0 ? `${totals.daysWeekOff} off` : null,
+                    totals.daysLeave > 0 ? `${totals.daysLeave} on leave` : null,
+                    totals.daysWeekOff > 0 ? `${totals.daysWeekOff} week off` : null,
                   ]
                     .filter(Boolean)
-                    .join(', ')})
-                </span>
+                    .join(' · ')}
+                </p>
               )}
             </div>
-            <div className="hidden lg:col-span-2 lg:block" />
             <div className="text-right">
-              <p className="font-bold text-foreground">{formatINR(totals.totalAmount)}</p>
-              <p className="text-[11px] text-muted-foreground">{formatHours(totals.totalHours)} total</p>
+              <p className="text-base font-bold tabular-nums text-foreground">
+                {formatINR(totals.totalAmount)}
+              </p>
+              <p className="text-[11px] tabular-nums text-muted-foreground">
+                {formatHours(totals.totalHours)} total
+              </p>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* ── Save bar ───────────────────────────────────────────────────────────
+          Sticks to the bottom of the viewport while the grid runs past the fold,
+          so Save is always in reach on a phone without scrolling to find it. */}
+      {rows.length > 0 && (
+        <div className="sticky bottom-0 -mx-4 -mb-4 border-t border-border bg-card/95 px-4 py-3 backdrop-blur-sm sm:-mx-5 sm:-mb-5 sm:px-5">
+          <div className="flex items-center justify-between gap-3">
+            <p className="min-w-0 text-xs text-muted-foreground">
+              {dirtyRows.length === 0 ? (
+                <span className="flex items-center gap-1.5">
+                  <Check className="size-3.5 shrink-0 text-emerald-500" />
+                  All changes saved
+                </span>
+              ) : (
+                <span className="flex items-center gap-1.5">
+                  <span
+                    aria-hidden="true"
+                    className="size-1.5 shrink-0 animate-pulse rounded-full bg-amber-500"
+                  />
+                  <span className="truncate">
+                    <span className="font-semibold text-foreground">{dirtyRows.length}</span>{' '}
+                    unsaved {dirtyRows.length === 1 ? 'change' : 'changes'}
+                  </span>
+                </span>
+              )}
+            </p>
+            <Button
+              onClick={handleSave}
+              disabled={saving || loading || dirtyRows.length === 0}
+              className="shrink-0"
+            >
+              {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+              {saving ? 'Saving' : 'Save attendance'}
+            </Button>
           </div>
         </div>
       )}
@@ -483,10 +774,12 @@ function DayView() {
 /** One staff member's line in the daily grid. */
 function DayRow({
   row,
+  index,
   dirty,
   onChange,
 }: {
   row: AttendanceDayRow;
+  index: number;
   dirty: boolean;
   onChange: (changes: Partial<EditableRow>) => void;
 }) {
@@ -501,126 +794,97 @@ function DayRow({
 
   return (
     <div
-      className={`grid grid-cols-2 gap-x-3 gap-y-2 border-t border-border px-3 py-3 text-sm lg:grid-cols-[minmax(150px,1.5fr)_130px_110px_110px_92px_minmax(130px,1fr)] lg:items-center ${
-        dirty ? 'bg-primary/[0.04]' : ''
+      className={`grid grid-cols-2 gap-x-3 gap-y-3 border-t border-border px-3 py-3.5 transition-colors lg:gap-3 lg:py-3 ${GRID_DAY} lg:items-center ${
+        dirty ? 'bg-amber-50/60 dark:bg-amber-900/10' : 'hover:bg-muted/25'
       }`}
     >
       {/* Staff */}
       <div className="col-span-2 flex min-w-0 items-center gap-2.5 lg:col-span-1">
-        <span className="flex size-7 shrink-0 items-center justify-center rounded-full bg-indigo-100 text-xs font-bold text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
-          {row.employee_name.charAt(0).toUpperCase()}
-        </span>
+        <Avatar name={row.employee_name} index={index} />
         <div className="min-w-0">
-          <p className="flex items-center gap-1.5 truncate font-medium text-foreground">
-            {row.employee_name}
-            {row.recorded && !dirty && (
-              <Check className="size-3 shrink-0 text-emerald-500" aria-label="Saved" />
+          <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
+            <span className="truncate">{row.employee_name}</span>
+            {dirty ? (
+              <span
+                title="Unsaved"
+                className="size-1.5 shrink-0 rounded-full bg-amber-500"
+                aria-label="Unsaved change"
+              />
+            ) : (
+              row.recorded && (
+                <Check className="size-3.5 shrink-0 text-emerald-500" aria-label="Saved" />
+              )
             )}
           </p>
-          <p className="text-[11px] text-muted-foreground">
+          <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
             <span className="capitalize">{row.role}</span>
-            {row.hourly_rate > 0 ? ` · ₹${row.hourly_rate}/hr` : ' · no rate'}
+            {row.hourly_rate > 0 ? (
+              <> &middot; ₹{row.hourly_rate}/hr</>
+            ) : (
+              <> &middot; <span className="text-amber-600 dark:text-amber-400">no rate</span></>
+            )}
           </p>
         </div>
       </div>
 
       {/* Status */}
       <Field label="Status" className="col-span-2 lg:col-span-1">
-        <select
-          aria-label={`Attendance status for ${row.employee_name}`}
+        <StatusSelect
           value={row.status}
-          onChange={(e) => onChange({ status: e.target.value as AttendanceStatus })}
-          className="h-8 w-full rounded-lg border border-border bg-background px-2 text-sm"
-        >
-          {ATTENDANCE_STATUSES.map((status) => (
-            <option key={status} value={status}>
-              {ATTENDANCE_STATUS_LABELS[status]}
-            </option>
-          ))}
-        </select>
-      </Field>
-
-      {/* Login */}
-      <Field label="Login">
-        <Input
-          type="time"
-          aria-label={`Login time for ${row.employee_name}`}
-          value={row.login_time}
-          disabled={!payable}
-          onChange={(e) => onChange({ login_time: e.target.value })}
+          label={`Attendance status for ${row.employee_name}`}
+          onChange={(status) => onChange({ status })}
         />
       </Field>
 
-      {/* Logout */}
-      <Field label="Logout">
-        <Input
-          type="time"
-          aria-label={`Logout time for ${row.employee_name}`}
-          value={row.logout_time}
-          disabled={!payable}
-          onChange={(e) => onChange({ logout_time: e.target.value })}
-        />
-      </Field>
-
-      {/* Break */}
-      <Field label="Break (min)">
-        <Input
-          type="number"
-          min={0}
-          max={1440}
-          step={15}
-          aria-label={`Unpaid break minutes for ${row.employee_name}`}
-          value={row.break_minutes === 0 ? '' : String(row.break_minutes)}
-          placeholder="0"
-          disabled={!payable}
-          onChange={(e) => {
-            const parsed = Number(e.target.value);
-            onChange({
-              break_minutes: Number.isFinite(parsed) ? Math.min(1440, Math.max(0, parsed)) : 0,
-            });
-          }}
-        />
-      </Field>
-
-      {/* Result */}
-      <div className="col-span-2 text-right lg:col-span-1">
-        {payable ? (
-          <>
-            <p className="font-semibold text-foreground">{formatINR(result.amount)}</p>
-            <p className="flex items-center justify-end gap-1 text-[11px] text-muted-foreground">
-              {result.overnight && (
-                <Moon className="size-3 text-indigo-500" aria-label="Overnight shift" />
-              )}
-              {formatHours(result.hours)}
+      {/* A day that wasn't worked has no times to enter, so the three inputs are
+          replaced by a single note rather than left on screen greyed out. */}
+      {payable ? (
+        <>
+          <Field label="Login">
+            <Input
+              type="time"
+              aria-label={`Login time for ${row.employee_name}`}
+              value={row.login_time}
+              onChange={(e) => onChange({ login_time: e.target.value })}
+            />
+          </Field>
+          <Field label="Logout">
+            <Input
+              type="time"
+              aria-label={`Logout time for ${row.employee_name}`}
+              value={row.logout_time}
+              onChange={(e) => onChange({ logout_time: e.target.value })}
+            />
+          </Field>
+          <Field label="Break (min)">
+            <BreakInput
+              value={row.break_minutes}
+              label={`Unpaid break minutes for ${row.employee_name}`}
+              disabled={false}
+              onChange={(break_minutes) => onChange({ break_minutes })}
+            />
+          </Field>
+          <DayResult
+            amount={result.amount}
+            hours={result.hours}
+            overnight={result.overnight}
+            warning={result.warning}
+          />
+        </>
+      ) : (
+        <>
+          <div className="col-span-2 flex items-center lg:col-span-3">
+            <p className="text-xs text-muted-foreground">
+              {ATTENDANCE_STATUS_LABELS[row.status]} — no hours to record
             </p>
-          </>
-        ) : (
-          <p className="text-xs text-muted-foreground">{ATTENDANCE_STATUS_LABELS[row.status]} — unpaid</p>
-        )}
-        {result.warning && payable && (
-          <p className="mt-0.5 text-[11px] text-amber-600 dark:text-amber-400">{result.warning}</p>
-        )}
-      </div>
-    </div>
-  );
-}
-
-/** Wraps a control with a label that only shows on narrow screens. */
-function Field({
-  label,
-  children,
-  className = '',
-}: {
-  label: string;
-  children: React.ReactNode;
-  className?: string;
-}) {
-  return (
-    <div className={className}>
-      <span className="mb-0.5 block text-[11px] font-medium text-muted-foreground lg:hidden">
-        {label}
-      </span>
-      {children}
+          </div>
+          <div className="col-span-2 lg:col-span-1">
+            <p className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-sm font-semibold text-muted-foreground lg:bg-transparent lg:px-0 lg:py-0 lg:text-right">
+              Unpaid
+            </p>
+          </div>
+        </>
+      )}
     </div>
   );
 }
@@ -643,15 +907,22 @@ function RatesModal({
   );
   const [saving, setSaving] = useState(false);
 
+  const changed = rows.filter((r) => {
+    const raw = values[r.employee_id] ?? '';
+    return (raw === '' ? 0 : Number(raw)) !== r.hourly_rate;
+  });
+
   const handleSave = async () => {
+    if (changed.length === 0) {
+      toast.info('No rates changed.');
+      return;
+    }
     setSaving(true);
     const failures: string[] = [];
 
-    for (const row of rows) {
+    for (const row of changed) {
       const raw = values[row.employee_id] ?? '';
-      const rate = raw === '' ? 0 : Number(raw);
-      if (rate === row.hourly_rate) continue;
-      const res = await setEmployeeHourlyRate(row.employee_id, rate);
+      const res = await setEmployeeHourlyRate(row.employee_id, raw === '' ? 0 : Number(raw));
       if (!res.success) failures.push(`${row.employee_name}: ${res.error}`);
     }
 
@@ -660,45 +931,52 @@ function RatesModal({
       toast.error(failures[0]);
       return;
     }
-    toast.success('Hourly rates updated.');
+    toast.success(
+      `Updated ${changed.length} hourly rate${changed.length === 1 ? '' : 's'}.`
+    );
     onSaved();
   };
 
   return (
-    <Modal onClose={onClose}>
+    <Modal onClose={onClose} title="Hourly rates">
       <div className="flex items-start justify-between gap-3 border-b border-border px-5 py-4">
-        <div>
-          <h3 className="text-sm font-semibold text-foreground">Hourly rates</h3>
-          <p className="mt-0.5 text-xs text-muted-foreground">
-            Used to price every day recorded from now on. Days already saved keep the rate they were
-            saved with, so a raise never rewrites past wages.
+        <div className="min-w-0">
+          <h3 className="flex items-center gap-2 text-sm font-semibold text-foreground">
+            <Wallet className="size-4 text-indigo-500" />
+            Hourly rates
+          </h3>
+          <p className="mt-1 text-xs leading-relaxed text-muted-foreground">
+            Prices every day recorded from now on. Days already saved keep the rate they were saved
+            with, so a raise never rewrites past wages.
           </p>
         </div>
-        <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose}>
+        <Button variant="ghost" size="icon" aria-label="Close" onClick={onClose} className="shrink-0">
           <X className="size-4" />
         </Button>
       </div>
 
-      <div className="max-h-[55vh] space-y-2 overflow-y-auto px-5 py-4">
-        {rows.map((row) => (
-          <div key={row.employee_id} className="flex items-center gap-3">
+      <div className="max-h-[50vh] divide-y divide-border overflow-y-auto px-5">
+        {rows.map((row, index) => (
+          <div key={row.employee_id} className="flex items-center gap-3 py-3">
+            <Avatar name={row.employee_name} index={index} size="sm" />
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-medium text-foreground">{row.employee_name}</p>
               <p className="text-[11px] capitalize text-muted-foreground">{row.role}</p>
             </div>
-            <div className="flex items-center gap-1.5">
+            <div className="flex shrink-0 items-center gap-1">
               <IndianRupee className="size-3.5 text-muted-foreground" />
               <Input
                 type="number"
                 min={0}
                 step={10}
+                inputMode="numeric"
                 aria-label={`Hourly rate for ${row.employee_name}`}
                 value={values[row.employee_id] ?? ''}
                 placeholder="0"
                 onChange={(e) =>
                   setValues((prev) => ({ ...prev, [row.employee_id]: e.target.value }))
                 }
-                className="w-24"
+                className="w-20 text-right"
               />
               <span className="text-xs text-muted-foreground">/hr</span>
             </div>
@@ -706,14 +984,21 @@ function RatesModal({
         ))}
       </div>
 
-      <div className="flex justify-end gap-2 border-t border-border px-5 py-4">
-        <Button variant="outline" onClick={onClose} disabled={saving}>
-          Cancel
-        </Button>
-        <Button onClick={handleSave} disabled={saving}>
-          {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-          Save rates
-        </Button>
+      <div className="flex items-center justify-between gap-2 border-t border-border px-5 py-4">
+        <p className="text-xs text-muted-foreground">
+          {changed.length === 0
+            ? 'No changes'
+            : `${changed.length} rate${changed.length === 1 ? '' : 's'} changed`}
+        </p>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={onClose} disabled={saving}>
+            Cancel
+          </Button>
+          <Button onClick={handleSave} disabled={saving || changed.length === 0}>
+            {saving ? <Loader2 className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
+            Save rates
+          </Button>
+        </div>
       </div>
     </Modal>
   );
@@ -772,20 +1057,28 @@ function MonthView() {
     reload();
   };
 
+  const currentMonth = istCurrentMonth();
+
   return (
-    <div className="space-y-4 p-4 sm:p-6">
-      <div className="flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
-        <div>
-          <label htmlFor="attendance-month" className="text-[11px] font-medium text-muted-foreground">
-            Month
-          </label>
+    <div className="space-y-4 p-4 sm:p-5">
+      {/* ── Month bar ──────────────────────────────────────────────────────── */}
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="min-w-0">
+          <p className="mb-1 flex items-center gap-1.5 text-sm font-semibold text-foreground">
+            <span className="truncate">{formatMonthLabel(month)}</span>
+            {month === currentMonth && (
+              <span className="shrink-0 rounded-full bg-indigo-100 px-1.5 py-0.5 text-[10px] font-medium text-indigo-700 dark:bg-indigo-900/40 dark:text-indigo-300">
+                In progress
+              </span>
+            )}
+          </p>
           <Input
-            id="attendance-month"
             type="month"
+            aria-label="Payout month"
             value={month}
-            max={istCurrentMonth()}
-            onChange={(e) => setMonth(e.target.value || istCurrentMonth())}
-            className="mt-1 w-[170px]"
+            max={currentMonth}
+            onChange={(e) => setMonth(e.target.value || currentMonth)}
+            className="w-full sm:w-[168px]"
           />
         </div>
         <ExportButton
@@ -802,29 +1095,26 @@ function MonthView() {
             { header: 'Week Off', value: (r) => r.daysWeekOff },
             { header: 'Total Hours', value: (r) => r.totalHours },
             { header: 'Payable (INR)', value: (r) => r.totalAmount },
-            { header: 'Payroll', value: (r) => (r.payrollPaid ? 'Paid' : r.payrollExists ? 'Pending' : 'Not raised') },
+            {
+              header: 'Payroll',
+              value: (r) => (r.payrollPaid ? 'Paid' : r.payrollExists ? 'Pending' : 'Not raised'),
+            },
           ]}
         />
       </div>
 
       {loading ? (
-        <div className="flex items-center justify-center py-16">
-          <Loader2 className="size-6 animate-spin text-muted-foreground" />
-        </div>
+        <SkeletonRows />
       ) : summaries.length === 0 ? (
-        <div className="flex flex-col items-center justify-center py-16 text-center">
-          <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
-            <CalendarRange className="size-6 text-muted-foreground" />
-          </div>
-          <p className="text-sm font-medium text-foreground">Nothing to show for this month</p>
-          <p className="mt-1 max-w-xs text-xs text-muted-foreground">
-            Record attendance on the Daily entry tab and the monthly payout will build up here.
-          </p>
-        </div>
+        <EmptyState
+          icon={<CalendarRange className="size-6 text-muted-foreground" />}
+          title="Nothing to show for this month"
+          hint="Record attendance on the Daily entry tab and the monthly payout will build up here."
+        />
       ) : (
         <>
           {/* Month headline */}
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
             <SummaryCard
               icon={<CalendarDays className="size-4" />}
               tint="blue"
@@ -846,7 +1136,9 @@ function MonthView() {
           </div>
 
           <div className="overflow-hidden rounded-xl border border-border">
-            <div className="hidden bg-muted/40 px-3 py-2.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground lg:grid lg:grid-cols-[minmax(150px,1.4fr)_repeat(3,minmax(80px,0.7fr))_minmax(150px,1fr)] lg:gap-3">
+            <div
+              className={`hidden bg-muted/40 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground lg:grid lg:gap-3 ${GRID_MONTH}`}
+            >
               <div>Staff</div>
               <div className="text-center">Worked</div>
               <div className="text-center">Off</div>
@@ -854,87 +1146,102 @@ function MonthView() {
               <div className="text-right">Payable</div>
             </div>
 
-            {summaries.map((row) => (
-              <div key={row.employee_id}>
-                <div className="grid grid-cols-2 items-center gap-x-3 gap-y-2 border-t border-border px-3 py-3 text-sm lg:grid-cols-[minmax(150px,1.4fr)_repeat(3,minmax(80px,0.7fr))_minmax(150px,1fr)]">
-                  <div className="col-span-2 flex min-w-0 items-center gap-2 lg:col-span-1">
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setExpanded((id) => (id === row.employee_id ? null : row.employee_id))
-                      }
-                      aria-expanded={expanded === row.employee_id}
-                      className="flex min-w-0 items-center gap-2 text-left hover:opacity-80"
-                    >
-                      <ChevronDown
-                        className={`size-4 shrink-0 text-muted-foreground transition-transform ${
-                          expanded === row.employee_id ? 'rotate-180' : ''
-                        }`}
-                      />
-                      <div className="min-w-0">
-                        <p className="truncate font-medium text-foreground">{row.employee_name}</p>
-                        <p className="text-[11px] text-muted-foreground">
-                          <span className="capitalize">{row.role}</span>
-                          {row.hourly_rate > 0 ? ` · ₹${row.hourly_rate}/hr` : ''}
-                        </p>
-                      </div>
-                    </button>
-                  </div>
-
-                  <Field label="Worked" className="text-center">
-                    <span className="text-foreground">{row.daysWorked}</span>
-                  </Field>
-                  <Field label="Off" className="text-center">
-                    <span className="text-muted-foreground">
-                      {row.daysAbsent + row.daysLeave + row.daysWeekOff}
-                    </span>
-                  </Field>
-                  <Field label="Hours" className="lg:text-right">
-                    <span className="text-foreground">{formatHours(row.totalHours)}</span>
-                  </Field>
-
-                  <div className="col-span-2 flex items-center justify-between gap-2 lg:col-span-1 lg:justify-end">
-                    <p className="font-semibold text-foreground">{formatINR(row.totalAmount)}</p>
-                    {row.payrollPaid ? (
-                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 px-2 py-0.5 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
-                        <Check className="size-3" />
-                        Paid
-                      </span>
-                    ) : (
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        disabled={row.totalAmount <= 0 || pushing === row.employee_id}
-                        onClick={() => handlePush(row)}
+            {summaries.map((row, index) => {
+              const open = expanded === row.employee_id;
+              return (
+                <div key={row.employee_id}>
+                  {/* Three mobile columns so Worked / Off / Hours sit on one
+                      line without leaving a hole; five aligned columns from lg. */}
+                  <div
+                    className={`grid grid-cols-3 gap-x-3 gap-y-3 border-t border-border px-3 py-3.5 transition-colors lg:gap-3 lg:py-3 ${GRID_MONTH} lg:items-center ${
+                      open ? 'bg-muted/40' : 'hover:bg-muted/25'
+                    }`}
+                  >
+                    <div className="col-span-3 min-w-0 lg:col-span-1">
+                      <button
+                        type="button"
+                        onClick={() => setExpanded(open ? null : row.employee_id)}
+                        aria-expanded={open}
+                        className="flex w-full min-w-0 items-center gap-2 rounded-lg text-left transition-opacity hover:opacity-75"
                       >
-                        {pushing === row.employee_id ? (
-                          <Loader2 className="size-3 animate-spin" />
-                        ) : (
-                          <Send className="size-3" />
-                        )}
-                        {row.payrollExists ? 'Update payroll' : 'Send to payroll'}
-                      </Button>
-                    )}
+                        <ChevronDown
+                          className={`size-4 shrink-0 text-muted-foreground transition-transform ${
+                            open ? 'rotate-180' : ''
+                          }`}
+                        />
+                        <Avatar name={row.employee_name} index={index} size="sm" />
+                        <div className="min-w-0">
+                          <p className="truncate text-sm font-medium text-foreground">
+                            {row.employee_name}
+                          </p>
+                          <p className="truncate text-[11px] text-muted-foreground">
+                            <span className="capitalize">{row.role}</span>
+                            {row.hourly_rate > 0 && <> &middot; ₹{row.hourly_rate}/hr</>}
+                          </p>
+                        </div>
+                      </button>
+                    </div>
+
+                    <Field label="Worked" className="lg:text-center">
+                      <span className="text-sm tabular-nums text-foreground">{row.daysWorked}</span>
+                    </Field>
+                    <Field label="Off" className="lg:text-center">
+                      <span className="text-sm tabular-nums text-muted-foreground">
+                        {row.daysAbsent + row.daysLeave + row.daysWeekOff}
+                      </span>
+                    </Field>
+                    <Field label="Hours" className="lg:text-right">
+                      <span className="text-sm tabular-nums text-foreground">
+                        {formatHours(row.totalHours)}
+                      </span>
+                    </Field>
+
+                    <div className="col-span-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3 lg:col-span-1 lg:justify-end lg:border-0 lg:pt-0">
+                      <p className="text-base font-bold tabular-nums text-foreground lg:text-sm">
+                        {formatINR(row.totalAmount)}
+                      </p>
+                      {row.payrollPaid ? (
+                        <span className="inline-flex shrink-0 items-center gap-1 rounded-full bg-emerald-100 px-2 py-1 text-[11px] font-medium text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+                          <Check className="size-3" />
+                          Paid
+                        </span>
+                      ) : (
+                        <Button
+                          variant={row.payrollExists ? 'outline' : 'default'}
+                          size="sm"
+                          className="shrink-0"
+                          disabled={row.totalAmount <= 0 || pushing === row.employee_id}
+                          onClick={() => handlePush(row)}
+                        >
+                          {pushing === row.employee_id ? (
+                            <Loader2 className="size-3 animate-spin" />
+                          ) : (
+                            <Send className="size-3" />
+                          )}
+                          {row.payrollExists ? 'Update payroll' : 'Send to payroll'}
+                        </Button>
+                      )}
+                    </div>
                   </div>
+
+                  {open && (
+                    <EmployeeMonthEditor
+                      employeeId={row.employee_id}
+                      employeeName={row.employee_name}
+                      month={month}
+                      hourlyRate={row.hourly_rate}
+                      onSaved={reload}
+                    />
+                  )}
                 </div>
+              );
+            })}
 
-                {expanded === row.employee_id && (
-                  <EmployeeMonthEditor
-                    employeeId={row.employee_id}
-                    employeeName={row.employee_name}
-                    month={month}
-                    hourlyRate={row.hourly_rate}
-                    onSaved={reload}
-                  />
-                )}
-              </div>
-            ))}
-
-            <div className="grid grid-cols-2 items-center gap-3 border-t-2 border-border bg-muted/50 px-3 py-3 text-sm lg:grid-cols-[minmax(150px,1.4fr)_repeat(3,minmax(80px,0.7fr))_minmax(150px,1fr)]">
-              <div className="font-semibold text-foreground lg:col-span-4">Total</div>
-              <div className="text-right font-bold text-foreground lg:text-right">
+            <div className="flex items-center justify-between gap-3 border-t-2 border-border bg-muted/50 px-3 py-3">
+              <p className="text-sm font-semibold text-foreground">Total payable</p>
+              <p className="text-base font-bold tabular-nums text-foreground">
                 {formatINR(totals.amount)}
-              </div>
+              </p>
             </div>
           </div>
         </>
@@ -1020,8 +1327,6 @@ function EmployeeMonthEditor({
     setDays((prev) => ({ ...prev, [date]: { ...prev[date], ...changes } }));
   };
 
-  const rateFor = (date: string) => rates[date] ?? hourlyRate;
-
   const dirtyDates = useMemo(
     () =>
       allDates.filter((date) => {
@@ -1042,7 +1347,7 @@ function EmployeeMonthEditor({
             login_time: days[date].login_time || null,
             logout_time: days[date].logout_time || null,
             break_minutes: days[date].break_minutes,
-            // Inlined rather than via `rateFor` so the dependency list is honest.
+            // Inlined rather than via a helper so the dependency list is honest.
             hourly_rate: rates[date] ?? hourlyRate,
           }))
       ),
@@ -1112,15 +1417,15 @@ function EmployeeMonthEditor({
   }
 
   return (
-    <div className="border-t border-border bg-muted/20 px-3 py-3">
-      <div className="mb-3 flex flex-wrap items-center justify-between gap-2">
+    <div className="border-t border-border bg-muted/20 p-3">
+      <div className="mb-3 flex flex-col gap-2.5 sm:flex-row sm:items-center sm:justify-between">
         <p className="text-xs text-muted-foreground">
-          Every day in {month}. {formatHours(totals.totalHours)} ·{' '}
+          Every day in {formatMonthLabel(month)} &middot; {formatHours(totals.totalHours)} &middot;{' '}
           <span className="font-semibold text-foreground">{formatINR(totals.totalAmount)}</span>
         </p>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fillMonth}>
-            <Wand2 className="size-3" />
+            <Sparkles className="size-3" />
             Fill standard shift
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving || dirtyDates.length === 0}>
@@ -1130,7 +1435,7 @@ function EmployeeMonthEditor({
         </div>
       </div>
 
-      <div className="max-h-[420px] overflow-y-auto rounded-lg border border-border bg-background">
+      <div className="max-h-[460px] overflow-y-auto overscroll-contain rounded-xl border border-border bg-background">
         {allDates.map((date) => {
           const row = days[date];
           if (!row) return null;
@@ -1141,75 +1446,107 @@ function EmployeeMonthEditor({
             login_time: row.login_time || null,
             logout_time: row.logout_time || null,
             break_minutes: row.break_minutes,
-            hourly_rate: rateFor(date),
+            hourly_rate: rates[date] ?? hourlyRate,
           });
           const payable = isPayableStatus(row.status);
+          const isToday = date === today;
 
           return (
             <div
               key={date}
-              className={`flex flex-wrap items-center gap-2 border-b border-border px-2.5 py-2 text-xs last:border-b-0 ${
-                dirty ? 'bg-primary/[0.04]' : future ? 'opacity-50' : ''
+              className={`grid grid-cols-2 items-center gap-x-2.5 gap-y-2.5 border-b border-border px-2.5 py-2.5 last:border-b-0 lg:grid-cols-[84px_112px_100px_100px_68px_minmax(112px,auto)] lg:gap-2.5 lg:py-2 ${
+                dirty
+                  ? 'bg-amber-50/60 dark:bg-amber-900/10'
+                  : future
+                    ? 'opacity-45'
+                    : isWeekend(date)
+                      ? 'bg-muted/30'
+                      : ''
               }`}
             >
-              <div className="w-[86px] shrink-0">
-                <p className="font-medium text-foreground">{date.slice(8)} {weekdayLabel(date)}</p>
-                {isWeekend(date) && <p className="text-[10px] text-muted-foreground">Weekend</p>}
+              {/* Date */}
+              <div className="col-span-2 flex items-center gap-1.5 lg:col-span-1">
+                <p className="text-xs font-semibold tabular-nums text-foreground">
+                  {date.slice(8)} {weekdayLabel(date)}
+                </p>
+                {isToday && (
+                  <span className="rounded-full bg-emerald-100 px-1 py-0.5 text-[9px] font-medium text-emerald-700 dark:bg-emerald-900/40 dark:text-emerald-300">
+                    Today
+                  </span>
+                )}
+                {dirty && (
+                  <span
+                    aria-label="Unsaved change"
+                    className="size-1.5 rounded-full bg-amber-500"
+                  />
+                )}
               </div>
 
-              <select
-                aria-label={`Status on ${date}`}
-                value={row.status}
-                disabled={future}
-                onChange={(e) => patch(date, { status: e.target.value as AttendanceStatus })}
-                className="h-7 w-[104px] shrink-0 rounded-lg border border-border bg-background px-1.5 text-xs disabled:opacity-50"
-              >
-                {ATTENDANCE_STATUSES.map((status) => (
-                  <option key={status} value={status}>
-                    {ATTENDANCE_STATUS_LABELS[status]}
-                  </option>
-                ))}
-              </select>
+              <Field label="Status" className="col-span-2 lg:col-span-1">
+                <StatusSelect
+                  compact
+                  value={row.status}
+                  disabled={future}
+                  label={`Status on ${formatDateLabel(date)}`}
+                  onChange={(status) => patch(date, { status })}
+                />
+              </Field>
 
-              <Input
-                type="time"
-                aria-label={`Login time on ${date}`}
-                value={row.login_time}
-                disabled={!payable || future}
-                onChange={(e) => patch(date, { login_time: e.target.value })}
-                className="h-7 w-[104px] shrink-0 text-xs"
-              />
-              <Input
-                type="time"
-                aria-label={`Logout time on ${date}`}
-                value={row.logout_time}
-                disabled={!payable || future}
-                onChange={(e) => patch(date, { logout_time: e.target.value })}
-                className="h-7 w-[104px] shrink-0 text-xs"
-              />
-              <Input
-                type="number"
-                min={0}
-                max={1440}
-                step={15}
-                aria-label={`Break minutes on ${date}`}
-                value={row.break_minutes === 0 ? '' : String(row.break_minutes)}
-                placeholder="brk"
-                disabled={!payable || future}
-                onChange={(e) => {
-                  const parsed = Number(e.target.value);
-                  patch(date, {
-                    break_minutes: Number.isFinite(parsed) ? Math.min(1440, Math.max(0, parsed)) : 0,
-                  });
-                }}
-                className="h-7 w-[68px] shrink-0 text-xs"
-              />
-
-              <div className="ml-auto flex items-center gap-1.5 text-right">
-                {result.overnight && <Moon className="size-3 text-indigo-500" aria-label="Overnight" />}
-                <span className="text-muted-foreground">{formatHours(result.hours)}</span>
-                <span className="w-16 font-semibold text-foreground">{formatINR(result.amount)}</span>
-              </div>
+              {payable ? (
+                <>
+                  <Field label="In">
+                    <Input
+                      type="time"
+                      aria-label={`Login time on ${formatDateLabel(date)}`}
+                      value={row.login_time}
+                      disabled={future}
+                      onChange={(e) => patch(date, { login_time: e.target.value })}
+                      className="h-7 text-xs"
+                    />
+                  </Field>
+                  <Field label="Out">
+                    <Input
+                      type="time"
+                      aria-label={`Logout time on ${formatDateLabel(date)}`}
+                      value={row.logout_time}
+                      disabled={future}
+                      onChange={(e) => patch(date, { logout_time: e.target.value })}
+                      className="h-7 text-xs"
+                    />
+                  </Field>
+                  <Field label="Break">
+                    <BreakInput
+                      compact
+                      value={row.break_minutes}
+                      label={`Break minutes on ${formatDateLabel(date)}`}
+                      disabled={future}
+                      onChange={(break_minutes) => patch(date, { break_minutes })}
+                    />
+                  </Field>
+                  {/* One column on mobile so it pairs with Break instead of
+                      wrapping and leaving a hole. */}
+                  <div className="flex items-center justify-end gap-2 lg:col-span-1">
+                    {result.overnight && (
+                      <Moon className="size-3 shrink-0 text-indigo-500" aria-label="Overnight" />
+                    )}
+                    <span className="text-[11px] tabular-nums text-muted-foreground">
+                      {formatHours(result.hours)}
+                    </span>
+                    <span className="min-w-[52px] text-right text-xs font-semibold tabular-nums text-foreground">
+                      {formatINR(result.amount)}
+                    </span>
+                  </div>
+                </>
+              ) : (
+                <>
+                  <div className="col-span-2 lg:col-span-3">
+                    <p className="text-[11px] text-muted-foreground">No hours</p>
+                  </div>
+                  <div className="col-span-2 text-right lg:col-span-1">
+                    <span className="text-xs font-medium text-muted-foreground">Unpaid</span>
+                  </div>
+                </>
+              )}
             </div>
           );
         })}
@@ -1217,6 +1554,10 @@ function EmployeeMonthEditor({
     </div>
   );
 }
+
+// =============================================================================
+// Small presentational pieces
+// =============================================================================
 
 function SummaryCard({
   icon,
@@ -1235,10 +1576,59 @@ function SummaryCard({
     violet: 'bg-violet-100 text-violet-600 dark:bg-violet-900/30 dark:text-violet-400',
   };
   return (
-    <div className="rounded-xl border border-border p-3 sm:p-4">
-      <div className={`flex size-8 items-center justify-center rounded-lg ${tints[tint]}`}>{icon}</div>
-      <p className="mt-2.5 truncate text-base font-bold text-foreground sm:text-lg">{value}</p>
-      <p className="text-xs text-muted-foreground">{label}</p>
+    <div className="flex items-center gap-3 rounded-xl border border-border p-3 sm:block sm:p-4">
+      <div className={`flex size-9 shrink-0 items-center justify-center rounded-lg ${tints[tint]}`}>
+        {icon}
+      </div>
+      <div className="min-w-0 sm:mt-2.5">
+        <p className="truncate text-lg font-bold tabular-nums text-foreground">{value}</p>
+        <p className="text-xs text-muted-foreground">{label}</p>
+      </div>
+    </div>
+  );
+}
+
+/** Shape-of-the-content placeholder, rather than a lone spinner. */
+function SkeletonRows() {
+  return (
+    <div className="overflow-hidden rounded-xl border border-border" aria-busy="true">
+      <div className="h-9 border-b border-border bg-muted/40" />
+      {[0, 1, 2].map((i) => (
+        <div
+          key={i}
+          className="flex items-center gap-3 border-b border-border px-3 py-4 last:border-b-0"
+        >
+          <div className="size-8 shrink-0 animate-pulse rounded-full bg-muted" />
+          <div className="flex-1 space-y-2">
+            <div className="h-3 w-32 animate-pulse rounded bg-muted" />
+            <div className="h-2.5 w-20 animate-pulse rounded bg-muted" />
+          </div>
+          <div className="hidden h-8 w-28 animate-pulse rounded-lg bg-muted sm:block" />
+          <div className="hidden h-8 w-24 animate-pulse rounded-lg bg-muted lg:block" />
+          <div className="h-3 w-16 animate-pulse rounded bg-muted" />
+        </div>
+      ))}
+      <span className="sr-only">Loading attendance</span>
+    </div>
+  );
+}
+
+function EmptyState({
+  icon,
+  title,
+  hint,
+}: {
+  icon: React.ReactNode;
+  title: string;
+  hint: string;
+}) {
+  return (
+    <div className="flex flex-col items-center justify-center rounded-xl border border-dashed border-border px-6 py-14 text-center">
+      <div className="mb-3 flex size-12 items-center justify-center rounded-full bg-muted">
+        {icon}
+      </div>
+      <p className="text-sm font-medium text-foreground">{title}</p>
+      <p className="mt-1 max-w-xs text-xs leading-relaxed text-muted-foreground">{hint}</p>
     </div>
   );
 }
@@ -1247,17 +1637,31 @@ function SummaryCard({
  * Local modal, matching the private ones in `staff-client.tsx` and
  * `payroll-client.tsx` — this codebase has no shared modal primitive.
  */
-function Modal({ children, onClose }: { children: React.ReactNode; onClose: () => void }) {
+function Modal({
+  children,
+  onClose,
+  title,
+}: {
+  children: React.ReactNode;
+  onClose: () => void;
+  title: string;
+}) {
   useEffect(() => {
     const onKey = (e: KeyboardEvent) => {
       if (e.key === 'Escape') onClose();
     };
     document.addEventListener('keydown', onKey);
-    return () => document.removeEventListener('keydown', onKey);
+    // Stop the page behind from scrolling while the dialog is open.
+    const previousOverflow = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => {
+      document.removeEventListener('keydown', onKey);
+      document.body.style.overflow = previousOverflow;
+    };
   }, [onClose]);
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-50 flex items-end justify-center p-0 sm:items-center sm:p-4">
       <div
         className="absolute inset-0 bg-black/50 backdrop-blur-sm"
         onClick={onClose}
@@ -1266,8 +1670,8 @@ function Modal({ children, onClose }: { children: React.ReactNode; onClose: () =
       <div
         role="dialog"
         aria-modal="true"
-        aria-label="Hourly rates"
-        className="relative z-10 w-full max-w-md overflow-hidden rounded-2xl border border-border bg-card shadow-xl"
+        aria-label={title}
+        className="relative z-10 max-h-[92vh] w-full max-w-md overflow-hidden rounded-t-2xl border border-border bg-card shadow-2xl sm:rounded-2xl"
       >
         {children}
       </div>

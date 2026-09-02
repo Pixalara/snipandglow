@@ -16,6 +16,8 @@ import {
   daysInMonth,
   monthRange,
   weekdayLabel,
+  formatDateLabel,
+  formatMonthLabel,
   isWeekend,
   type AttendanceDayInput,
 } from './attendance';
@@ -317,6 +319,23 @@ describe('date helpers', () => {
   it('monthRange gives an inclusive first/last date for range queries', () => {
     expect(monthRange('2026-02')).toEqual({ start: '2026-02-01', end: '2026-02-28' });
     expect(monthRange('bad')).toBeNull();
+  });
+
+  it('formatDateLabel names the date it was given, not a timezone-shifted one', () => {
+    expect(formatDateLabel('2026-09-03')).toBe('Thu, 3 Sep 2026');
+    // First and last day of a month are where an off-by-one would show up.
+    expect(formatDateLabel('2026-01-01')).toBe('Thu, 1 Jan 2026');
+    expect(formatDateLabel('2026-12-31')).toBe('Thu, 31 Dec 2026');
+  });
+
+  it('formatDateLabel falls back to the raw value rather than showing junk', () => {
+    expect(formatDateLabel('not-a-date')).toBe('not-a-date');
+  });
+
+  it('formatMonthLabel spells out the month', () => {
+    expect(formatMonthLabel('2026-09')).toBe('September 2026');
+    expect(formatMonthLabel('2026-01')).toBe('January 2026');
+    expect(formatMonthLabel('bad')).toBe('bad');
   });
 
   it('weekdayLabel and isWeekend agree on a known date', () => {

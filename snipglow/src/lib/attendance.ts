@@ -289,11 +289,47 @@ export function monthRange(month: string): { start: string; end: string } | null
   return { start: days[0], end: days[days.length - 1] };
 }
 
+// Spelled out rather than derived from toLocaleDateString. `en-IN` renders
+// September as "Sept" and inserts a comma before the year, and the exact output
+// depends on the ICU data compiled into whichever Node build is running — so a
+// label that looked right locally could differ in production. These are fixed.
+const WEEKDAY_SHORT = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'] as const;
+const MONTH_SHORT = [
+  'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
+  'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
+] as const;
+const MONTH_LONG = [
+  'January', 'February', 'March', 'April', 'May', 'June',
+  'July', 'August', 'September', 'October', 'November', 'December',
+] as const;
+
 /** Short weekday label (`Mon`) for a `YYYY-MM-DD`, used in the month view. */
 export function weekdayLabel(date: string): string {
   const d = new Date(`${date}T12:00:00Z`);
   if (Number.isNaN(d.getTime())) return '';
-  return d.toLocaleDateString('en-IN', { weekday: 'short', timeZone: 'UTC' });
+  return WEEKDAY_SHORT[d.getUTCDay()];
+}
+
+/**
+ * `2026-09-03` → `Thu, 3 Sep 2026`.
+ *
+ * Read in UTC from a midday anchor, like the other helpers here, so the label
+ * always names the date that was passed in. Reading it in local time would shift
+ * the label by a day for anyone west of UTC.
+ */
+export function formatDateLabel(date: string): string {
+  const d = new Date(`${date}T12:00:00Z`);
+  if (Number.isNaN(d.getTime())) return date;
+  return `${WEEKDAY_SHORT[d.getUTCDay()]}, ${d.getUTCDate()} ${MONTH_SHORT[d.getUTCMonth()]} ${d.getUTCFullYear()}`;
+}
+
+/** `2026-09` → `September 2026`. */
+export function formatMonthLabel(month: string): string {
+  const m = /^(\d{4})-(\d{2})$/.exec(month);
+  if (!m) return month;
+  const index = Number(m[2]) - 1;
+  if (index < 0 || index > 11) return month;
+  return `${MONTH_LONG[index]} ${m[1]}`;
 }
 
 /** True for Sat/Sun, so the day view can suggest a week off. */
