@@ -36,6 +36,9 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
   const [specializations, setSpecializations] = useState(
     employee?.specializations?.join(', ') ?? ''
   );
+  const [hourlyRate, setHourlyRate] = useState(
+    employee?.hourly_rate ? String(employee.hourly_rate) : ''
+  );
   // Login provisioning (create mode only). When enabled, owner sets a password
   // and the staff member can log in with email + password.
   const [enableLogin, setEnableLogin] = useState(false);
@@ -62,6 +65,19 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
       setError('Branch assignment is required.');
       setIsSubmitting(false);
       return;
+    }
+    if (hourlyRate.trim() !== '') {
+      const rate = Number(hourlyRate);
+      if (!Number.isFinite(rate) || rate < 0) {
+        setError('Hourly rate must be a positive amount.');
+        setIsSubmitting(false);
+        return;
+      }
+      if (rate > 100000) {
+        setError('That hourly rate looks too high. Please check the amount.');
+        setIsSubmitting(false);
+        return;
+      }
     }
 
     if (!isEditing && enableLogin) {
@@ -96,6 +112,7 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
       role,
       branch_id: branchId,
       specializations: specs,
+      hourly_rate: hourlyRate.trim() === '' ? 0 : Number(hourlyRate),
       ...(!isEditing && enableLogin ? { password } : {}),
     };
 
@@ -215,6 +232,26 @@ export function EmployeeForm({ employee, branches, onClose }: EmployeeFormProps)
           onChange={(e) => setSpecializations(e.target.value)}
           placeholder="e.g., Hair Color, Bridal Makeup, Facials"
         />
+      </div>
+
+      {/* Hourly rate — drives the attendance and payout calculation */}
+      <div className="space-y-1.5">
+        <label htmlFor="employee-hourly-rate" className="text-sm font-medium text-foreground">
+          Hourly rate (optional)
+        </label>
+        <Input
+          id="employee-hourly-rate"
+          type="number"
+          min={0}
+          step={10}
+          value={hourlyRate}
+          onChange={(e) => setHourlyRate(e.target.value)}
+          placeholder="e.g., 300"
+        />
+        <p className="text-xs text-muted-foreground">
+          Used to work out hours worked and wages on the Attendance &amp; Pay panel. Changing it later
+          only affects days recorded from that point on.
+        </p>
       </div>
 
       {/* Login provisioning — create mode only */}

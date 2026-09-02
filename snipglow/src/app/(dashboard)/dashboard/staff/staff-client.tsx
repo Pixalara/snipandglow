@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
+import { StaffAttendance } from './staff-attendance';
 import { StaffPerformance } from './staff-performance';
 import { EmployeeForm } from './employee-form';
 import { deactivateEmployee, changeEmployeeRole, sendStaffWhatsAppCode, confirmStaffWhatsApp, resetEmployeePassword } from './actions';
@@ -348,6 +349,9 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
           />
         </div>
       )}
+
+      {/* Attendance & pay — owner only, same as payroll */}
+      {role === 'owner' && <StaffAttendance />}
 
       {/* Staff performance metrics */}
       {role === 'owner' && <StaffPerformance />}

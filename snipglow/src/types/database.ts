@@ -1,3 +1,7 @@
+// Attendance statuses live with the hours/pay logic in src/lib/attendance.ts,
+// because whether a status is payable is behaviour rather than just a shape.
+import type { AttendanceStatus } from '@/lib/attendance';
+
 // =============================================================================
 // Union Types / Enums
 // =============================================================================
@@ -99,6 +103,12 @@ export interface Employee {
   phone_verified_by_owner?: boolean;
   login_method?: 'otp' | 'oauth' | 'password';
   must_change_password?: boolean;
+  /**
+   * Current wage per hour in rupees (migration 049). Snapshotted onto each
+   * staff_attendance row at save time, so changing it never rewrites the pay
+   * already recorded for past days.
+   */
+  hourly_rate?: number;
 }
 
 /** A person who visits a Branch for services */
@@ -474,6 +484,97 @@ export interface UpsertPayrollInput {
   notes?: string;
 }
 
+// =============================================================================
+// Staff Attendance Types — migration 049
+//
+// `AttendanceStatus` and every hours/pay calculation live in
+// `src/lib/attendance.ts`, because whether a status is payable is behaviour, not
+// just a shape. Re-exported here so callers can keep importing types from
+// `@/types` as they do everywhere else.
+// =============================================================================
+
+export type { AttendanceStatus };
+
+/** One employee's record for one calendar day. */
+export interface StaffAttendance {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  employee_id: string;
+  /** `YYYY-MM-DD` in the salon's local calendar. */
+  work_date: string;
+  status: AttendanceStatus;
+  /** `HH:MM:SS` from Postgres TIME, or null until recorded. */
+  login_time: string | null;
+  logout_time: string | null;
+  /** Unpaid break, deducted from the shift length. */
+  break_minutes: number;
+  /**
+   * The rate that applied on THIS day, snapshotted at save time so a later raise
+   * never rewrites what was already paid.
+   */
+  hourly_rate: number;
+  notes: string | null;
+  created_at: string;
+  updated_at: string;
+}
+
+/** One row of the day-entry grid: the employee plus their record for that date. */
+export interface AttendanceDayRow {
+  employee_id: string;
+  employee_name: string;
+  role: UserRole;
+  /** Current rate from the employee record, used to prefill a new entry. */
+  hourly_rate: number;
+  status: AttendanceStatus;
+  /** `HH:MM` for an `<input type="time">`, or '' when not recorded. */
+  login_time: string;
+  logout_time: string;
+  break_minutes: number;
+  /** True when a row already exists for this employee and date. */
+  recorded: boolean;
+  /**
+   * `YYYY-MM-DD`. Omitted in the day view, where every row shares the one date
+   * held above the grid. Set when the rows are one employee across many dates.
+   */
+  work_date?: string;
+}
+
+/**
+ * One attendance entry the owner is saving.
+ *
+ * Carries its own `work_date` so a single save action serves both directions:
+ * the day view sends many employees for one date, and the month view sends many
+ * dates for one employee.
+ */
+export interface SaveAttendanceRow {
+  employee_id: string;
+  /** `YYYY-MM-DD`. */
+  work_date: string;
+  status: AttendanceStatus;
+  /** `HH:MM` or null. */
+  login_time: string | null;
+  logout_time: string | null;
+  break_minutes: number;
+}
+
+/** Per-employee month summary shown on the payday view. */
+export interface AttendanceMonthSummary {
+  employee_id: string;
+  employee_name: string;
+  role: UserRole;
+  hourly_rate: number;
+  daysWorked: number;
+  daysAbsent: number;
+  daysLeave: number;
+  daysWeekOff: number;
+  totalHours: number;
+  totalAmount: number;
+  /** Whether a payroll record already exists for this employee and month. */
+  payrollExists: boolean;
+  payrollPaid: boolean;
+}
+
 /** Input for marking payroll as paid */
 export interface MarkPayrollPaidInput {
   payroll_id: string;
@@ -638,6 +739,11 @@ export interface CreateEmployeeInput {
   role: UserRole;
   branch_id: string;
   specializations?: string[];
+  /**
+   * Pay rate per hour, in whole rupees. Drives the attendance calculation in
+   * `src/lib/attendance.ts`. Defaults to 0, which records hours without wages.
+   */
+  hourly_rate?: number;
   /**
    * Password the owner sets for a staff member's login. When provided, the
    * staff account is provisioned with email + password credentials and

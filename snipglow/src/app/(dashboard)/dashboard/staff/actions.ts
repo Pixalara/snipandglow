@@ -220,6 +220,7 @@ export async function createEmployee(input: CreateEmployeeInput): Promise<Action
       email: input.email?.trim().toLowerCase() || null,
       role: input.role,
       specializations: input.specializations ?? [],
+      hourly_rate: Math.max(0, Math.round(Number(input.hourly_rate) || 0)),
       is_active: true,
       login_method: wantsLogin ? 'password' : 'otp',
       // Password staff start UNVERIFIED — owner verifies WhatsApp before login.
@@ -533,6 +534,11 @@ export async function updateEmployee(
   if (input.role !== undefined) updateData.role = input.role;
   if (input.branch_id !== undefined) updateData.branch_id = input.branch_id;
   if (input.specializations !== undefined) updateData.specializations = input.specializations;
+  if (input.hourly_rate !== undefined) {
+    // Changing the rate only affects days recorded from here on — attendance
+    // rows keep the rate they were saved with (see attendance-actions.ts).
+    updateData.hourly_rate = Math.max(0, Math.round(Number(input.hourly_rate) || 0));
+  }
 
   const { data, error } = await supabase
     .from('employees')
