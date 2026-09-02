@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { DataTable, type Column } from '@/components/data-table';
 import { ExportButton } from '@/components/export-button';
 import { upsertPayroll, markPayrollPaid } from './actions';
+import { PayslipDocumentModal } from './payslip-document';
 import {
   BadgeDollarSign,
   Plus,
@@ -14,6 +15,7 @@ import {
   CheckCircle2,
   Clock,
   CreditCard,
+  FileText,
 } from 'lucide-react';
 import type { Employee, UserRole } from '@/types';
 
@@ -47,6 +49,7 @@ export function PayrollClient({ payrollRecords, employees, currentMonth, role }:
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<PayrollRow | undefined>(undefined);
   const [showPayModal, setShowPayModal] = useState<PayrollRow | null>(null);
+  const [showPayslip, setShowPayslip] = useState<PayrollRow | null>(null);
   const [selectedMonth, setSelectedMonth] = useState(currentMonth);
   const [payError, setPayError] = useState('');
   const [isPaying, setIsPaying] = useState(false);
@@ -192,6 +195,18 @@ export function PayrollClient({ payrollRecords, employees, currentMonth, role }:
               {new Date(row.paid_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
             </span>
           )}
+          {/* Available for paid AND pending records — staff often need the
+              payslip before the transfer clears. */}
+          <Button
+            variant="ghost"
+            size="sm"
+            className="rounded-lg text-xs"
+            onClick={() => setShowPayslip(row)}
+            title={`Payslip for ${row.employee_name}`}
+          >
+            <FileText className="size-3.5 mr-1" />
+            Payslip
+          </Button>
         </div>
       ),
     },
@@ -363,6 +378,16 @@ export function PayrollClient({ payrollRecords, employees, currentMonth, role }:
             </div>
           </form>
         </Modal>
+      )}
+
+      {/* Payslip preview + PDF download. Full-screen via its own portal, so it
+          deliberately does not use the narrow local Modal above. */}
+      {showPayslip && (
+        <PayslipDocumentModal
+          payrollId={showPayslip.id}
+          employeeName={showPayslip.employee_name}
+          onClose={() => setShowPayslip(null)}
+        />
       )}
     </div>
   );

@@ -6,6 +6,7 @@ import {
   isValidIndianPhone,
   formatPhoneE164,
   calculateInvoiceTotal,
+  amountInWordsINR,
 } from "./utils";
 
 // =============================================================================
@@ -262,5 +263,94 @@ describe("calculateInvoiceTotal", () => {
       gstRate: 12,
     });
     expect(result.total).toBe(result.taxableAmount + result.gstAmount);
+  });
+});
+
+// =============================================================================
+// amountInWordsINR
+//
+// This lands on payslips, which staff keep and occasionally take to a bank or a
+// landlord. A wrong figure in words next to a right figure in digits makes the
+// whole document look untrustworthy, so the grouping rules are pinned down here.
+// =============================================================================
+
+describe("amountInWordsINR", () => {
+  it("spells small amounts", () => {
+    expect(amountInWordsINR(0)).toBe("Rupees Zero Only");
+    expect(amountInWordsINR(1)).toBe("Rupees One Only");
+    expect(amountInWordsINR(15)).toBe("Rupees Fifteen Only");
+    expect(amountInWordsINR(40)).toBe("Rupees Forty Only");
+    expect(amountInWordsINR(99)).toBe("Rupees Ninety Nine Only");
+  });
+
+  it("spells hundreds without an 'and'", () => {
+    expect(amountInWordsINR(100)).toBe("Rupees One Hundred Only");
+    expect(amountInWordsINR(450)).toBe("Rupees Four Hundred Fifty Only");
+    expect(amountInWordsINR(909)).toBe("Rupees Nine Hundred Nine Only");
+  });
+
+  it("groups by the INDIAN system, not the Western one", () => {
+    // The whole point of this helper: 100000 is one lakh, not "one hundred
+    // thousand", and 10000000 is one crore, not "ten million".
+    expect(amountInWordsINR(1000)).toBe("Rupees One Thousand Only");
+    expect(amountInWordsINR(100000)).toBe("Rupees One Lakh Only");
+    expect(amountInWordsINR(10000000)).toBe("Rupees One Crore Only");
+    expect(amountInWordsINR(123456)).toBe(
+      "Rupees One Lakh Twenty Three Thousand Four Hundred Fifty Six Only"
+    );
+  });
+
+  it("spells a realistic salon payslip figure", () => {
+    // 22 days at 8h and Rs 350/hr.
+    expect(amountInWordsINR(61600)).toBe(
+      "Rupees Sixty One Thousand Six Hundred Only"
+    );
+    expect(amountInWordsINR(2450)).toBe(
+      "Rupees Two Thousand Four Hundred Fifty Only"
+    );
+  });
+
+  it("handles amounts spanning every group at once", () => {
+    expect(amountInWordsINR(11111111)).toBe(
+      "Rupees One Crore Eleven Lakh Eleven Thousand One Hundred Eleven Only"
+    );
+  });
+
+  it("recurses past 999 crore rather than running out of words", () => {
+    expect(amountInWordsINR(10000000000)).toBe("Rupees One Thousand Crore Only");
+  });
+
+  it("omits paise when the amount is whole", () => {
+    // Money is rounded to whole rupees everywhere in this codebase, so the
+    // common case must not read "and Zero Paise".
+    expect(amountInWordsINR(500)).toBe("Rupees Five Hundred Only");
+    expect(amountInWordsINR(500.0)).toBe("Rupees Five Hundred Only");
+  });
+
+  it("includes paise when there are any", () => {
+    expect(amountInWordsINR(500.5)).toBe("Rupees Five Hundred and Fifty Paise Only");
+    expect(amountInWordsINR(99.99)).toBe("Rupees Ninety Nine and Ninety Nine Paise Only");
+  });
+
+  it("converts paise without float drift", () => {
+    // 0.07 * 100 is 7.000000000000001 in binary floating point, so a naive
+    // implementation would render "Six Paise" after truncation.
+    expect(amountInWordsINR(1.07)).toBe("Rupees One and Seven Paise Only");
+    expect(amountInWordsINR(0.29)).toBe("Rupees Zero and Twenty Nine Paise Only");
+  });
+
+  it("rounds sub-paise precision to the nearest paisa", () => {
+    expect(amountInWordsINR(10.005)).toBe("Rupees Ten and One Paise Only");
+    expect(amountInWordsINR(10.004)).toBe("Rupees Ten Only");
+  });
+
+  it("prefixes negatives rather than rejecting them", () => {
+    // A month whose deductions exceed its earnings should still print truthfully.
+    expect(amountInWordsINR(-250)).toBe("Minus Rupees Two Hundred Fifty Only");
+  });
+
+  it("returns an empty string for non-finite input", () => {
+    expect(amountInWordsINR(NaN)).toBe("");
+    expect(amountInWordsINR(Infinity)).toBe("");
   });
 });

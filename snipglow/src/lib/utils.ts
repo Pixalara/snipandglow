@@ -162,6 +162,93 @@ export function formatPhoneE164(phone: string): string {
 }
 
 // =============================================================================
+// Amount in Words (Indian numbering system)
+// =============================================================================
+
+const ONES = [
+  "", "One", "Two", "Three", "Four", "Five", "Six", "Seven", "Eight", "Nine",
+  "Ten", "Eleven", "Twelve", "Thirteen", "Fourteen", "Fifteen", "Sixteen",
+  "Seventeen", "Eighteen", "Nineteen",
+];
+const TENS = [
+  "", "", "Twenty", "Thirty", "Forty", "Fifty", "Sixty", "Seventy", "Eighty", "Ninety",
+];
+
+/** 0-99 in words. */
+function twoDigitsToWords(n: number): string {
+  if (n < 20) return ONES[n];
+  const tens = TENS[Math.floor(n / 10)];
+  const ones = ONES[n % 10];
+  return ones ? `${tens} ${ones}` : tens;
+}
+
+/** 0-999 in words. */
+function threeDigitsToWords(n: number): string {
+  const hundreds = Math.floor(n / 100);
+  const rest = n % 100;
+  const parts: string[] = [];
+  if (hundreds) parts.push(`${ONES[hundreds]} Hundred`);
+  if (rest) parts.push(twoDigitsToWords(rest));
+  return parts.join(" ");
+}
+
+/**
+ * Spell a whole number using the INDIAN numbering system — crore, lakh,
+ * thousand, hundred — rather than the Western million/billion grouping.
+ *
+ * 123456 → "One Lakh Twenty Three Thousand Four Hundred Fifty Six"
+ */
+function wholeNumberToIndianWords(value: number): string {
+  if (value === 0) return "Zero";
+
+  const crore = Math.floor(value / 10000000);
+  const lakh = Math.floor((value % 10000000) / 100000);
+  const thousand = Math.floor((value % 100000) / 1000);
+  const rest = value % 1000;
+
+  const parts: string[] = [];
+  // Crores can exceed 999, so they recurse: 1,00,00,00,00,000 reads as
+  // "One Thousand Crore" rather than overflowing the vocabulary.
+  if (crore) parts.push(`${crore > 999 ? wholeNumberToIndianWords(crore) : threeDigitsToWords(crore)} Crore`);
+  if (lakh) parts.push(`${threeDigitsToWords(lakh)} Lakh`);
+  if (thousand) parts.push(`${threeDigitsToWords(thousand)} Thousand`);
+  if (rest) parts.push(threeDigitsToWords(rest));
+
+  return parts.join(" ");
+}
+
+/**
+ * Render a rupee amount in words, the way it appears on an Indian payslip or
+ * invoice: "Rupees Two Thousand Four Hundred Fifty Only".
+ *
+ * Paise are included only when present, so whole amounts — which is all this
+ * codebase produces, since money is rounded to whole rupees in `wallet.ts` and
+ * `attendance.ts` — read cleanly without a redundant "and Zero Paise".
+ *
+ * Negative values are prefixed with "Minus" rather than rejected, so a payslip
+ * whose deductions exceed its earnings still prints something truthful.
+ */
+export function amountInWordsINR(amount: number): string {
+  if (!Number.isFinite(amount)) return "";
+
+  const negative = amount < 0;
+  const absolute = Math.abs(amount);
+
+  // Work in paise to avoid float drift: 0.07 * 100 is 7.000000000000001.
+  const totalPaise = Math.round(absolute * 100);
+  const rupees = Math.floor(totalPaise / 100);
+  const paise = totalPaise % 100;
+
+  const parts: string[] = [];
+  if (negative) parts.push("Minus");
+  parts.push("Rupees", wholeNumberToIndianWords(rupees));
+  if (paise > 0) parts.push("and", twoDigitsToWords(paise), "Paise");
+  parts.push("Only");
+
+  return parts.join(" ");
+}
+
+// =============================================================================
 // Billing Calculation
 // =============================================================================
 
