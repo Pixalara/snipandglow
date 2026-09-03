@@ -26,18 +26,27 @@ const COLORS = ['#db2777', '#a21caf', '#7c3aed', '#0ea5e9', '#10b981', '#f59e0b'
 export function StaffPerformance() {
   const [days, setDays] = useState(30);
   const [data, setData] = useState<StaffPerformanceResult | null>(null);
-  const [loading, setLoading] = useState(true);
+
+  // `loading` is derived, not stored: whatever is on screen belongs to
+  // `loadedDays`, so it is stale exactly when that differs from the range we
+  // want. Setting a loading flag synchronously inside the effect instead would
+  // trigger the cascading render that react-hooks/set-state-in-effect warns
+  // about. Same approach as staff-attendance.tsx.
+  const [loadedDays, setLoadedDays] = useState<number | null>(null);
+  const loading = loadedDays !== days;
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
     getStaffPerformance(days)
       .then((res) => { if (active) setData(res); })
       .catch((err) => {
         // Previously uncaught, so a failed query left the panel spinning forever.
         console.error('[staff] performance query failed:', err);
+        if (active) setData(null);
       })
-      .finally(() => { if (active) setLoading(false); });
+      // Marked loaded either way, so a failed fetch shows the empty state
+      // rather than spinning forever.
+      .finally(() => { if (active) setLoadedDays(days); });
     return () => { active = false; };
   }, [days]);
 

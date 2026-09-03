@@ -437,8 +437,8 @@ export async function saveAttendance(
     0
   );
 
+  // One call now that attendance and payroll are tabs on the same route.
   revalidatePath('/dashboard/staff');
-  revalidatePath('/dashboard/payroll');
   return { success: true, data: { saved: payload.length, totalAmount } };
 }
 
@@ -572,7 +572,7 @@ export async function pushMonthToPayroll(
     }
   }
 
+  // One call now that attendance and payroll are tabs on the same route.
   revalidatePath('/dashboard/staff');
-  revalidatePath('/dashboard/payroll');
   return { success: true, data: { amount: row.totalAmount } };
 }

@@ -69,7 +69,7 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
       return { success: false, error: 'Failed to update payroll record. Please try again.' };
     }
 
-    revalidatePath('/dashboard/payroll');
+    revalidatePath('/dashboard/staff');
     return { success: true, data: data as unknown as Payroll };
   }
 
@@ -96,7 +96,7 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
     return { success: false, error: 'Failed to create payroll record. Please try again.' };
   }
 
-  revalidatePath('/dashboard/payroll');
+  revalidatePath('/dashboard/staff');
   return { success: true, data: data as unknown as Payroll };
 }
 
@@ -139,7 +139,7 @@ export async function markPayrollPaid(input: MarkPayrollPaidInput): Promise<Acti
     return { success: false, error: 'Failed to mark as paid. Please try again.' };
   }
 
-  revalidatePath('/dashboard/payroll');
+  revalidatePath('/dashboard/staff');
   return { success: true, data: undefined };
 }
 
@@ -179,6 +179,6 @@ export async function deletePayroll(id: string): Promise<ActionResult<void>> {
     return { success: false, error: 'Failed to delete payroll record. Please try again.' };
   }
 
-  revalidatePath('/dashboard/payroll');
+  revalidatePath('/dashboard/staff');
   return { success: true, data: undefined };
 }

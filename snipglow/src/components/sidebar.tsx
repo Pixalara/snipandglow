@@ -18,7 +18,6 @@ import {
   Settings,
   X,
   Wallet,
-  BadgeDollarSign,
   MessageCircle,
   Star,
   Headphones,
@@ -67,9 +66,11 @@ const navGroups: NavGroup[] = [
       { label: 'Services', href: '/dashboard/services', icon: Scissors, resource: 'services' },
       { label: 'Inventory', href: '/dashboard/inventory', icon: Package, resource: 'inventory' },
       { label: 'Revenue', href: '/dashboard/analytics', icon: BarChart3, resource: 'analytics' },
-      { label: 'Staff', href: '/dashboard/staff', icon: UserCog, resource: 'staff' },
+      // Roster, attendance, payroll and payslips are one module — see
+      // dashboard/staff/staff-workspace.tsx. The old /dashboard/payroll route
+      // still exists purely to redirect old bookmarks into the Payroll tab.
+      { label: 'Staff & Payroll', href: '/dashboard/staff', icon: UserCog, resource: 'staff' },
       { label: 'Expenses', href: '/dashboard/expenses', icon: Wallet, resource: 'expenses' },
-      { label: 'Payroll', href: '/dashboard/payroll', icon: BadgeDollarSign, resource: 'payroll' },
       { label: 'Branches', href: '/dashboard/branches', icon: Building2, resource: 'branches', enterpriseOnly: true },
     ],
   },

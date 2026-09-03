@@ -5,12 +5,9 @@ import { Button } from '@/components/ui/button';
 import { DataTable, type Column } from '@/components/data-table';
 import { RoleGuard } from '@/components/role-guard';
 import { RowActionsMenu, type RowAction } from '@/components/row-actions-menu';
-import { StaffAttendance } from './staff-attendance';
-import { StaffPerformance } from './staff-performance';
 import { EmployeeForm } from './employee-form';
 import { deactivateEmployee, changeEmployeeRole, sendStaffWhatsAppCode, confirmStaffWhatsApp, resetEmployeePassword } from './actions';
 import {
-  Users,
   Plus,
   UserCog,
   Shield,
@@ -295,30 +292,22 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-violet-500/10 via-violet-500/5 to-transparent border border-violet-200/50 dark:border-violet-800/30 p-6">
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30">
-              <Users className="size-5 text-violet-600 dark:text-violet-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Staff Management</h1>
-              <p className="text-sm text-muted-foreground">
-                {employees.filter(e => e.is_active).length} active · {employees.length} total team member{employees.length !== 1 ? 's' : ''}
-              </p>
-            </div>
-          </div>
-          <RoleGuard role={role} action="create" resource="staff">
-            <Button onClick={() => setShowForm(true)} className="rounded-xl gap-1.5">
-              <Plus className="size-4" />
-              Add Employee
-            </Button>
-          </RoleGuard>
-        </div>
-        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-violet-500/5" />
-        <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-violet-400/5" />
+    <div className="space-y-4">
+      {/* Toolbar. The module header and tabs live in staff-workspace.tsx, so this
+          panel only owns its own count and primary action. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">
+            {employees.filter((e) => e.is_active).length} active
+          </span>{' '}
+          &middot; {employees.length} total team member{employees.length !== 1 ? 's' : ''}
+        </p>
+        <RoleGuard role={role} action="create" resource="staff">
+          <Button onClick={() => setShowForm(true)} className="rounded-xl gap-1.5">
+            <Plus className="size-4" />
+            Add Employee
+          </Button>
+        </RoleGuard>
       </div>
 
       {/* Employee DataTable */}
@@ -350,11 +339,8 @@ export function StaffClient({ employees, branches, role }: StaffClientProps) {
         </div>
       )}
 
-      {/* Attendance & pay — owner only, same as payroll */}
-      {role === 'owner' && <StaffAttendance />}
-
-      {/* Staff performance metrics */}
-      {role === 'owner' && <StaffPerformance />}
+      {/* Attendance, payroll and performance are sibling tabs now — see
+          staff-workspace.tsx. This component is just the team roster. */}
 
       {/* Create/Edit Modal */}
       {showForm && (

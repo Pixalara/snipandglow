@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { DataTable, type Column } from '@/components/data-table';
 import { ExportButton } from '@/components/export-button';
-import { upsertPayroll, markPayrollPaid } from './actions';
+import { upsertPayroll, markPayrollPaid } from './payroll-actions';
 import { PayslipDocumentModal } from './payslip-document';
 import {
   BadgeDollarSign,
@@ -17,7 +17,7 @@ import {
   CreditCard,
   FileText,
 } from 'lucide-react';
-import type { Employee, UserRole } from '@/types';
+import type { Employee } from '@/types';
 
 // =============================================================================
 // PayrollClient — Interactive client wrapper for payroll management
@@ -42,10 +42,11 @@ interface PayrollClientProps {
   payrollRecords: PayrollRow[];
   employees: Employee[];
   currentMonth: string;
-  role: UserRole;
 }
 
-export function PayrollClient({ payrollRecords, employees, currentMonth, role }: PayrollClientProps) {
+// No `role` prop: the whole Staff & Payroll route is owner-gated in page.tsx, so
+// a second per-action role check here would be dead weight.
+export function PayrollClient({ payrollRecords, employees, currentMonth }: PayrollClientProps) {
   const [showForm, setShowForm] = useState(false);
   const [editingRecord, setEditingRecord] = useState<PayrollRow | undefined>(undefined);
   const [showPayModal, setShowPayModal] = useState<PayrollRow | null>(null);
@@ -213,28 +214,20 @@ export function PayrollClient({ payrollRecords, employees, currentMonth, role }:
   ];
 
   return (
-    <div className="space-y-6">
-      {/* Page Header */}
-      <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-green-500/10 via-green-500/5 to-transparent border border-green-200/50 dark:border-green-800/30 p-6">
-        <div className="relative z-10 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-          <div className="flex items-center gap-3">
-            <div className="flex size-11 items-center justify-center rounded-xl bg-green-100 dark:bg-green-900/30">
-              <BadgeDollarSign className="size-5 text-green-600 dark:text-green-400" />
-            </div>
-            <div>
-              <h1 className="text-xl font-bold text-foreground">Payroll</h1>
-              <p className="text-sm text-muted-foreground">
-                {filteredRecords.length} record{filteredRecords.length !== 1 ? 's' : ''} for {selectedMonth}
-              </p>
-            </div>
-          </div>
-          <Button onClick={() => setShowForm(true)} className="rounded-xl gap-1.5">
-            <Plus className="size-4" />
-            Add Salary
-          </Button>
-        </div>
-        <div className="absolute -right-6 -top-6 h-32 w-32 rounded-full bg-green-500/5" />
-        <div className="absolute -right-2 top-10 h-20 w-20 rounded-full bg-green-400/5" />
+    <div className="space-y-4">
+      {/* Toolbar. The module header and tabs live in staff-workspace.tsx, so this
+          panel only owns its own count and primary action. */}
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <p className="text-sm text-muted-foreground">
+          <span className="font-semibold text-foreground">
+            {filteredRecords.length} record{filteredRecords.length !== 1 ? 's' : ''}
+          </span>{' '}
+          for {selectedMonth}
+        </p>
+        <Button onClick={() => setShowForm(true)} className="rounded-xl gap-1.5">
+          <Plus className="size-4" />
+          Add Salary
+        </Button>
       </div>
 
       {/* Summary Cards */}
