@@ -41,13 +41,19 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
   const deductions = input.deductions ?? 0;
   const netSalary = input.base_salary + bonus - deductions;
 
-  // Check if a record already exists for this employee + month
+  // Check if a record already exists for this employee + month.
+  //
+  // maybeSingle, not single: single() treats "no rows" as an error, so the old
+  // code relied on discarding that error to reach the insert path below. This
+  // says what it means — null when absent — and still surfaces a real problem if
+  // more than one row somehow comes back. Migration 050's
+  // payroll_employee_month_unique constraint makes that last case impossible.
   const { data: existing } = await admin
     .from('payroll' as any)
     .select('id')
     .eq('employee_id', input.employee_id)
     .eq('month', input.month)
-    .single();
+    .maybeSingle();
 
   if (existing) {
     // Update existing record
@@ -93,6 +99,17 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
 
   if (error) {
     console.error('Payroll creation error:', error);
+    // 23505 is Postgres' unique violation. Reaching here means another writer
+    // created the same employee/month between our existence check above and this
+    // insert — a double-click, or "Send to payroll" racing a manual entry. The
+    // constraint from migration 050 turns that into a rejection rather than a
+    // duplicate row, so say what happened instead of "please try again".
+    if ((error as { code?: string }).code === '23505') {
+      return {
+        success: false,
+        error: 'A salary record for this employee and month already exists. Reload the page and edit it instead.',
+      };
+    }
     return { success: false, error: 'Failed to create payroll record. Please try again.' };
   }
 

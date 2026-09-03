@@ -564,10 +564,24 @@ export async function pushMonthToPayroll(
       net_salary: row.totalAmount,
       payment_status: 'pending',
       notes: note,
-    } as never) as unknown as Promise<{ error: { message: string } | null }>);
+    } as never) as unknown as Promise<{
+      error: { message: string; code?: string } | null;
+    }>);
 
     if (error) {
       console.error('[attendance] payroll insert failed:', error);
+      // 23505 is Postgres' unique violation, guarding
+      // payroll_employee_month_unique from migration 050. Reaching here means a
+      // payroll row for this employee and month appeared between the existence
+      // check above and this insert — most likely the owner also pressed Add
+      // Salary on the Payroll tab. Nothing is broken; the figures just need a
+      // reload before pushing again.
+      if (error.code === '23505') {
+        return {
+          success: false,
+          error: 'A payroll record for this month was just created elsewhere. Reload and try again.',
+        };
+      }
       return { success: false, error: 'Failed to create the payroll record. Please try again.' };
     }
   }
