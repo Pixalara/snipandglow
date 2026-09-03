@@ -6,6 +6,7 @@ import { StaffClient } from './staff-client';
 import { StaffAttendance } from './staff-attendance';
 import { PayrollClient, type PayrollRow } from './payroll-client';
 import { StaffPerformance } from './staff-performance';
+import { STAFF_TABS, type StaffTab } from './staff-tabs';
 import type { Branch, Employee, UserRole } from '@/types';
 
 // =============================================================================
@@ -25,45 +26,40 @@ import type { Branch, Employee, UserRole } from '@/types';
 // fire their own query on mount and three of the four would be wasted.
 // =============================================================================
 
-const TABS = [
-  {
-    value: 'members' as const,
+/**
+ * Presentation for each tab. The tab VALUES live in staff-tabs.ts because the
+ * server page validates `?tab=` against them and cannot import a runtime value
+ * from this 'use client' module — see the note at the top of that file.
+ */
+const TAB_META: Record<
+  StaffTab,
+  { label: string; short: string; icon: typeof Users; hint: string }
+> = {
+  members: {
     label: 'Team',
     short: 'Team',
     icon: Users,
     hint: 'Add staff, set roles and hourly rates',
   },
-  {
-    value: 'attendance' as const,
+  attendance: {
     label: 'Attendance',
     short: 'Hours',
     icon: Clock,
     hint: 'Record login and logout times',
   },
-  {
-    value: 'payroll' as const,
+  payroll: {
     label: 'Payroll',
     short: 'Pay',
     icon: BadgeDollarSign,
     hint: 'Salaries, payments and payslips',
   },
-  {
-    value: 'performance' as const,
+  performance: {
     label: 'Performance',
     short: 'Stats',
     icon: TrendingUp,
     hint: 'Revenue and customers per staff member',
   },
-];
-
-export type StaffTab = (typeof TABS)[number]['value'];
-
-const TAB_VALUES = TABS.map((t) => t.value);
-
-/** Narrow an untrusted `?tab=` value, so a bad link lands somewhere sensible. */
-export function parseStaffTab(value: string | undefined): StaffTab {
-  return TAB_VALUES.includes(value as StaffTab) ? (value as StaffTab) : 'members';
-}
+};
 
 interface StaffWorkspaceProps {
   employees: Employee[];
@@ -102,7 +98,7 @@ export function StaffWorkspace({
   };
 
   const activeStaff = employees.filter((e) => e.is_active).length;
-  const active = TABS.find((t) => t.value === tab) ?? TABS[0];
+  const active = TAB_META[tab];
 
   return (
     <div className="space-y-6">
@@ -129,26 +125,28 @@ export function StaffWorkspace({
             aria-label="Staff and payroll sections"
             className="-mx-1 flex items-center gap-1 overflow-x-auto rounded-xl border border-border bg-background/70 p-1 shadow-sm backdrop-blur-sm [scrollbar-width:none] sm:mx-0 [&::-webkit-scrollbar]:hidden"
           >
-            {TABS.map((t) => {
-              const isActive = tab === t.value;
+            {STAFF_TABS.map((value) => {
+              const meta = TAB_META[value];
+              const Icon = meta.icon;
+              const isActive = tab === value;
               return (
                 <button
-                  key={t.value}
+                  key={value}
                   type="button"
                   role="tab"
-                  id={`staff-tab-${t.value}`}
+                  id={`staff-tab-${value}`}
                   aria-selected={isActive}
-                  aria-controls={`staff-panel-${t.value}`}
-                  onClick={() => select(t.value)}
+                  aria-controls={`staff-panel-${value}`}
+                  onClick={() => select(value)}
                   className={`flex flex-1 shrink-0 items-center justify-center gap-1.5 rounded-lg px-3 py-2 text-xs font-medium whitespace-nowrap transition-all sm:text-sm ${
                     isActive
                       ? 'bg-violet-600 text-white shadow-sm'
                       : 'text-muted-foreground hover:bg-muted hover:text-foreground'
                   }`}
                 >
-                  <t.icon className="size-4 shrink-0" />
-                  <span className="sm:hidden">{t.short}</span>
-                  <span className="hidden sm:inline">{t.label}</span>
+                  <Icon className="size-4 shrink-0" />
+                  <span className="sm:hidden">{meta.short}</span>
+                  <span className="hidden sm:inline">{meta.label}</span>
                 </button>
               );
             })}

@@ -2,7 +2,11 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { istCurrentMonth } from '@/lib/attendance';
-import { StaffWorkspace, parseStaffTab } from './staff-workspace';
+import { StaffWorkspace } from './staff-workspace';
+// parseStaffTab comes from staff-tabs.ts, NOT from staff-workspace.tsx. A server
+// component cannot call a runtime value imported from a 'use client' module — it
+// arrives as a client reference proxy and throws when invoked. See staff-tabs.ts.
+import { parseStaffTab } from './staff-tabs';
 import type { PayrollRow } from './payroll-client';
 import type { Employee, Branch, UserRole } from '@/types';
 
@@ -37,6 +41,58 @@ interface PayrollRecord {
   paid_date: string | null;
   payment_method: string | null;
   notes: string | null;
+}
+
+/**
+ * Read the payroll rows for a tenant.
+ *
+ * Wrapped in try/catch on purpose. `createAdminClient()` asserts
+ * `SUPABASE_SERVICE_ROLE_KEY` with `!`, so supabase-js throws at construction if
+ * that variable is missing — and an uncaught throw here would take down the
+ * roster, attendance and performance tabs along with payroll. Before the merge
+ * those were separate routes and could not affect each other; keeping payroll's
+ * failures contained preserves that.
+ *
+ * Returns an empty list on any failure, which renders as an empty Payroll tab.
+ */
+async function loadPayrollRows(
+  tenantId: string,
+  employeeNames: Record<string, string>
+): Promise<PayrollRow[]> {
+  try {
+    const { data, error } = await (createAdminClient()
+      .from('payroll' as never)
+      .select('*')
+      .eq('tenant_id', tenantId)
+      .order('month', { ascending: false }) as unknown as Promise<{
+      data: PayrollRecord[] | null;
+      error: { message: string } | null;
+    }>);
+
+    if (error) {
+      // Most likely the table does not exist yet on this project.
+      console.error('[staff] payroll query failed:', error.message);
+      return [];
+    }
+
+    return (data ?? []).map((rec) => ({
+      id: rec.id,
+      employee_id: rec.employee_id,
+      employee_name: employeeNames[rec.employee_id] ?? 'Unknown',
+      month: rec.month,
+      base_salary: rec.base_salary,
+      bonus: rec.bonus ?? 0,
+      deductions: rec.deductions ?? 0,
+      net_salary: rec.net_salary,
+      payment_status: rec.payment_status ?? 'pending',
+      paid_date: rec.paid_date,
+      payment_method: rec.payment_method,
+      notes: rec.notes,
+    }));
+  } catch (err) {
+    console.error('[staff] payroll load threw:', err);
+    return [];
+  }
 }
 
 export default async function StaffPage({ searchParams }: StaffPageProps) {
@@ -94,16 +150,6 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
 
   const employees = (employeesRes.data ?? []) as Employee[];
 
-  // ── Payroll (admin client, explicit tenant scope) ────────────────────────
-  const { data: payrollRecords, error: payrollError } = await (createAdminClient()
-    .from('payroll' as never)
-    .select('*')
-    .eq('tenant_id', tenantId)
-    .order('month', { ascending: false }) as unknown as Promise<{
-    data: PayrollRecord[] | null;
-    error: { message: string } | null;
-  }>);
-
   // Names are keyed by BOTH the employee id and the auth user id, because some
   // older payroll rows stored the auth user id in employee_id.
   const employeeNames: Record<string, string> = {};
@@ -112,28 +158,7 @@ export default async function StaffPage({ searchParams }: StaffPageProps) {
     if (emp.auth_user_id) employeeNames[emp.auth_user_id] = emp.name;
   }
 
-  // A missing payroll table degrades to an empty tab rather than taking down the
-  // roster and attendance with it.
-  const rows: PayrollRow[] = payrollError
-    ? []
-    : (payrollRecords ?? []).map((rec) => ({
-        id: rec.id,
-        employee_id: rec.employee_id,
-        employee_name: employeeNames[rec.employee_id] ?? 'Unknown',
-        month: rec.month,
-        base_salary: rec.base_salary,
-        bonus: rec.bonus ?? 0,
-        deductions: rec.deductions ?? 0,
-        net_salary: rec.net_salary,
-        payment_status: rec.payment_status ?? 'pending',
-        paid_date: rec.paid_date,
-        payment_method: rec.payment_method,
-        notes: rec.notes,
-      }));
-
-  if (payrollError) {
-    console.error('[staff] payroll query failed:', payrollError.message);
-  }
+  const rows = await loadPayrollRows(tenantId, employeeNames);
 
   return (
     <StaffWorkspace
