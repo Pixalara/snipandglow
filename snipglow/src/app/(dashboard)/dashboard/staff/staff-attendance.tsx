@@ -84,11 +84,35 @@ import {
 const DEFAULT_SHIFT_IN = '10:00';
 const DEFAULT_SHIFT_OUT = '20:00';
 
-/** Shared column template, so the header and every row stay aligned. */
+// =============================================================================
+// Column templates.
+//
+// EVERY column is a fixed width except ONE `minmax(0,1fr)`. That is not a style
+// preference, it is what makes the rows line up at all.
+//
+// The header and each row are SEPARATE grid containers, and CSS resolves `fr` and
+// `auto` per container from that container's own content. So a row whose last
+// cell held "Enter login and logout time to calculate pay." sized its columns
+// differently from a row showing just "₹2,450", and the two visibly disagreed.
+// With one flexible column, `1fr` = width − Σ(fixed) − gaps, which is identical
+// for every row no matter what is inside it.
+//
+// Tiers are md and xl, not md and lg, because the sidebar appears at lg and eats
+// roughly the same width the viewport just gained — usable width is ~656px at
+// both 768px and 1024px, so lg keeps the compact widths and only xl gets roomier.
+// =============================================================================
+
 const GRID_DAY =
-  'lg:grid-cols-[minmax(150px,1.6fr)_132px_112px_112px_84px_minmax(132px,auto)]';
+  'md:grid-cols-[minmax(0,1fr)_112px_100px_100px_64px_112px] ' +
+  'xl:grid-cols-[minmax(0,1fr)_132px_112px_112px_84px_140px]';
+
 const GRID_MONTH =
-  'lg:grid-cols-[minmax(150px,1.5fr)_repeat(2,minmax(72px,0.6fr))_minmax(90px,0.8fr)_minmax(190px,auto)]';
+  'md:grid-cols-[minmax(0,1fr)_64px_64px_86px_180px] ' +
+  'xl:grid-cols-[minmax(0,1fr)_80px_80px_100px_210px]';
+
+const GRID_MONTH_DAY =
+  'md:grid-cols-[76px_104px_96px_96px_60px_104px] ' +
+  'xl:grid-cols-[84px_112px_100px_100px_68px_120px]';
 
 /** Rotated so a list of staff is scannable rather than a wall of one colour. */
 const AVATAR_TINTS = [
@@ -221,7 +245,7 @@ function Field({
 }) {
   return (
     <div className={`min-w-0 ${className}`}>
-      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground lg:hidden">
+      <span className="mb-1 block text-[10px] font-semibold uppercase tracking-wide text-muted-foreground md:hidden">
         {label}
       </span>
       {children}
@@ -300,22 +324,26 @@ function BreakInput({
   );
 }
 
-/** The money and hours for one row. Right-aligned from `lg` up. */
+/**
+ * The money and hours for one row. Right-aligned from `md` up.
+ *
+ * Deliberately does NOT render the warning. Warning text is long enough to wrap
+ * to several lines, and wrapping inside a fixed-width column made the row tall
+ * and lumpy. It is rendered by the caller on its own full-width line instead.
+ */
 function DayResult({
   amount,
   hours,
   overnight,
-  warning,
 }: {
   amount: number;
   hours: number;
   overnight: boolean;
-  warning: string | null;
 }) {
   const settled = hours > 0;
   return (
-    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 lg:bg-transparent lg:px-0 lg:py-0 lg:text-right">
-      <div className="flex items-baseline gap-1.5 lg:justify-end">
+    <div className="rounded-lg bg-muted/50 px-2.5 py-1.5 md:bg-transparent md:px-0 md:py-0 md:text-right">
+      <div className="flex items-baseline gap-1.5 md:justify-end">
         <p
           className={`text-sm font-semibold tabular-nums ${
             settled ? 'text-foreground' : 'text-muted-foreground'
@@ -333,12 +361,9 @@ function DayResult({
           </span>
         )}
       </div>
-      <p className="text-[11px] tabular-nums text-muted-foreground lg:mt-0.5">
+      <p className="text-[11px] tabular-nums text-muted-foreground md:mt-0.5">
         {formatHours(hours)}
       </p>
-      {warning && (
-        <p className="mt-1 text-[11px] leading-snug text-amber-600 dark:text-amber-400">{warning}</p>
-      )}
     </div>
   );
 }
@@ -670,7 +695,7 @@ function DayView() {
       ) : (
         <div className="overflow-hidden rounded-xl border border-border">
           <div
-            className={`hidden bg-muted/40 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground lg:grid lg:gap-3 ${GRID_DAY}`}
+            className={`hidden bg-muted/40 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid md:gap-x-2 xl:gap-x-3 ${GRID_DAY}`}
           >
             <div>Staff</div>
             <div>Status</div>
@@ -794,12 +819,12 @@ function DayRow({
 
   return (
     <div
-      className={`grid grid-cols-2 gap-x-3 gap-y-3 border-t border-border px-3 py-3.5 transition-colors lg:gap-3 lg:py-3 ${GRID_DAY} lg:items-center ${
+      className={`grid grid-cols-2 gap-x-3 gap-y-3 border-t border-border px-3 py-3.5 transition-colors md:items-center md:gap-x-2 md:gap-y-2 md:py-3 xl:gap-x-3 ${GRID_DAY} ${
         dirty ? 'bg-amber-50/60 dark:bg-amber-900/10' : 'hover:bg-muted/25'
       }`}
     >
       {/* Staff */}
-      <div className="col-span-2 flex min-w-0 items-center gap-2.5 lg:col-span-1">
+      <div className="col-span-2 flex min-w-0 items-center gap-2.5 md:col-span-1">
         <Avatar name={row.employee_name} index={index} />
         <div className="min-w-0">
           <p className="flex items-center gap-1.5 truncate text-sm font-medium text-foreground">
@@ -828,7 +853,7 @@ function DayRow({
       </div>
 
       {/* Status */}
-      <Field label="Status" className="col-span-2 lg:col-span-1">
+      <Field label="Status" className="col-span-2 md:col-span-1">
         <StatusSelect
           value={row.status}
           label={`Attendance status for ${row.employee_name}`}
@@ -868,18 +893,25 @@ function DayRow({
             amount={result.amount}
             hours={result.hours}
             overnight={result.overnight}
-            warning={result.warning}
           />
+
+          {/* Warnings get their own full-width line, so long text can never
+              stretch a column and knock the row out of alignment. */}
+          {result.warning && (
+            <p className="col-span-2 -mt-1 text-[11px] leading-snug text-amber-600 md:col-span-6 md:mt-0 md:text-right dark:text-amber-400">
+              {result.warning}
+            </p>
+          )}
         </>
       ) : (
         <>
-          <div className="col-span-2 flex items-center lg:col-span-3">
+          <div className="col-span-2 flex items-center md:col-span-3">
             <p className="text-xs text-muted-foreground">
               {ATTENDANCE_STATUS_LABELS[row.status]} — no hours to record
             </p>
           </div>
-          <div className="col-span-2 lg:col-span-1">
-            <p className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-sm font-semibold text-muted-foreground lg:bg-transparent lg:px-0 lg:py-0 lg:text-right">
+          <div className="col-span-2 md:col-span-1">
+            <p className="rounded-lg bg-muted/50 px-2.5 py-1.5 text-sm font-semibold text-muted-foreground md:bg-transparent md:px-0 md:py-0 md:text-right">
               Unpaid
             </p>
           </div>
@@ -1137,7 +1169,7 @@ function MonthView() {
 
           <div className="overflow-hidden rounded-xl border border-border">
             <div
-              className={`hidden bg-muted/40 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground lg:grid lg:gap-3 ${GRID_MONTH}`}
+              className={`hidden bg-muted/40 px-3 py-2.5 text-[10px] font-semibold uppercase tracking-wider text-muted-foreground md:grid md:gap-x-2 xl:gap-x-3 ${GRID_MONTH}`}
             >
               <div>Staff</div>
               <div className="text-center">Worked</div>
@@ -1153,11 +1185,11 @@ function MonthView() {
                   {/* Three mobile columns so Worked / Off / Hours sit on one
                       line without leaving a hole; five aligned columns from lg. */}
                   <div
-                    className={`grid grid-cols-3 gap-x-3 gap-y-3 border-t border-border px-3 py-3.5 transition-colors lg:gap-3 lg:py-3 ${GRID_MONTH} lg:items-center ${
+                    className={`grid grid-cols-3 gap-x-3 gap-y-3 border-t border-border px-3 py-3.5 transition-colors md:items-center md:gap-x-2 md:gap-y-2 md:py-3 xl:gap-x-3 ${GRID_MONTH} ${
                       open ? 'bg-muted/40' : 'hover:bg-muted/25'
                     }`}
                   >
-                    <div className="col-span-3 min-w-0 lg:col-span-1">
+                    <div className="col-span-3 min-w-0 md:col-span-1">
                       <button
                         type="button"
                         onClick={() => setExpanded(open ? null : row.employee_id)}
@@ -1182,22 +1214,22 @@ function MonthView() {
                       </button>
                     </div>
 
-                    <Field label="Worked" className="lg:text-center">
+                    <Field label="Worked" className="md:text-center">
                       <span className="text-sm tabular-nums text-foreground">{row.daysWorked}</span>
                     </Field>
-                    <Field label="Off" className="lg:text-center">
+                    <Field label="Off" className="md:text-center">
                       <span className="text-sm tabular-nums text-muted-foreground">
                         {row.daysAbsent + row.daysLeave + row.daysWeekOff}
                       </span>
                     </Field>
-                    <Field label="Hours" className="lg:text-right">
+                    <Field label="Hours" className="md:text-right">
                       <span className="text-sm tabular-nums text-foreground">
                         {formatHours(row.totalHours)}
                       </span>
                     </Field>
 
-                    <div className="col-span-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3 lg:col-span-1 lg:justify-end lg:border-0 lg:pt-0">
-                      <p className="text-base font-bold tabular-nums text-foreground lg:text-sm">
+                    <div className="col-span-3 flex items-center justify-between gap-2 border-t border-border/60 pt-3 md:col-span-1 md:justify-end md:border-0 md:pt-0">
+                      <p className="text-base font-bold tabular-nums text-foreground md:text-sm">
                         {formatINR(row.totalAmount)}
                       </p>
                       {row.payrollPaid ? (
@@ -1454,7 +1486,7 @@ function EmployeeMonthEditor({
           return (
             <div
               key={date}
-              className={`grid grid-cols-2 items-center gap-x-2.5 gap-y-2.5 border-b border-border px-2.5 py-2.5 last:border-b-0 lg:grid-cols-[84px_112px_100px_100px_68px_minmax(112px,auto)] lg:gap-2.5 lg:py-2 ${
+              className={`grid grid-cols-2 items-center gap-x-2.5 gap-y-2.5 border-b border-border px-2.5 py-2.5 last:border-b-0 md:gap-x-2 md:py-2 xl:gap-x-2.5 ${GRID_MONTH_DAY} ${
                 dirty
                   ? 'bg-amber-50/60 dark:bg-amber-900/10'
                   : future
@@ -1465,7 +1497,7 @@ function EmployeeMonthEditor({
               }`}
             >
               {/* Date */}
-              <div className="col-span-2 flex items-center gap-1.5 lg:col-span-1">
+              <div className="col-span-2 flex items-center gap-1.5 md:col-span-1">
                 <p className="text-xs font-semibold tabular-nums text-foreground">
                   {date.slice(8)} {weekdayLabel(date)}
                 </p>
@@ -1482,7 +1514,7 @@ function EmployeeMonthEditor({
                 )}
               </div>
 
-              <Field label="Status" className="col-span-2 lg:col-span-1">
+              <Field label="Status" className="col-span-2 md:col-span-1">
                 <StatusSelect
                   compact
                   value={row.status}
@@ -1525,7 +1557,7 @@ function EmployeeMonthEditor({
                   </Field>
                   {/* One column on mobile so it pairs with Break instead of
                       wrapping and leaving a hole. */}
-                  <div className="flex items-center justify-end gap-2 lg:col-span-1">
+                  <div className="flex items-center justify-end gap-2 md:col-span-1">
                     {result.overnight && (
                       <Moon className="size-3 shrink-0 text-indigo-500" aria-label="Overnight" />
                     )}
@@ -1539,10 +1571,10 @@ function EmployeeMonthEditor({
                 </>
               ) : (
                 <>
-                  <div className="col-span-2 lg:col-span-3">
+                  <div className="col-span-2 md:col-span-3">
                     <p className="text-[11px] text-muted-foreground">No hours</p>
                   </div>
-                  <div className="col-span-2 text-right lg:col-span-1">
+                  <div className="col-span-2 text-right md:col-span-1">
                     <span className="text-xs font-medium text-muted-foreground">Unpaid</span>
                   </div>
                 </>
@@ -1604,7 +1636,7 @@ function SkeletonRows() {
             <div className="h-2.5 w-20 animate-pulse rounded bg-muted" />
           </div>
           <div className="hidden h-8 w-28 animate-pulse rounded-lg bg-muted sm:block" />
-          <div className="hidden h-8 w-24 animate-pulse rounded-lg bg-muted lg:block" />
+          <div className="hidden h-8 w-24 animate-pulse rounded-lg bg-muted md:block" />
           <div className="h-3 w-16 animate-pulse rounded bg-muted" />
         </div>
       ))}
