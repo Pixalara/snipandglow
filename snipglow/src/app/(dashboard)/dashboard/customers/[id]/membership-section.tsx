@@ -3,7 +3,7 @@
 import { useMemo, useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Award, Plus, X, TrendingUp, CalendarCheck, IndianRupee, Scissors } from 'lucide-react';
+import { Award, Plus, X, TrendingUp, CalendarCheck, Receipt, Scissors } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { formatINR, formatDateIN } from '@/lib/utils';
@@ -91,14 +91,16 @@ export function MembershipSection({
               sub={usage.visitsThisMonth > 0 ? `${usage.visitsThisMonth} this month` : undefined}
             />
             <UsageStat
-              icon={<IndianRupee className="size-3.5" />}
-              label="Saved this month"
-              value={formatINR(usage.savedThisMonth)}
+              icon={<Receipt className="size-3.5" />}
+              label="Billed"
+              value={formatINR(usage.billedLifetime)}
+              sub={usage.billedThisMonth > 0 ? `${formatINR(usage.billedThisMonth)} this month` : undefined}
             />
             <UsageStat
               icon={<TrendingUp className="size-3.5" />}
-              label="Saved lifetime"
+              label="Saved"
               value={formatINR(usage.savedLifetime)}
+              sub={usage.savedThisMonth > 0 ? `${formatINR(usage.savedThisMonth)} this month` : undefined}
             />
           </div>
 

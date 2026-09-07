@@ -603,10 +603,14 @@ export interface MembershipServiceUsage {
 export interface MembershipUsageSummary {
   /** Attributed bills, all time. */
   visits: number;
+  /** Total the customer actually paid across all attributed bills (net of the
+   *  discount). billed + saved = the gross value they received. */
+  billedLifetime: number;
   /** Total saved across all attributed bills (services + products). */
   savedLifetime: number;
   /** Attributed bills in the current calendar month (IST). */
   visitsThisMonth: number;
+  billedThisMonth: number;
   savedThisMonth: number;
   /** created_at of the most recent attributed bill, or null. */
   lastUsedAt: string | null;
@@ -616,8 +620,10 @@ export interface MembershipUsageSummary {
 
 const EMPTY_USAGE: MembershipUsageSummary = {
   visits: 0,
+  billedLifetime: 0,
   savedLifetime: 0,
   visitsThisMonth: 0,
+  billedThisMonth: 0,
   savedThisMonth: 0,
   lastUsedAt: null,
   services: [],
@@ -638,13 +644,14 @@ export async function getCustomerMembershipUsage(
   // Bills attributed to a membership for this customer.
   const { data: invoiceData } = await (admin as any)
     .from('invoices')
-    .select('id, discount_amount, created_at')
+    .select('id, total, discount_amount, created_at')
     .eq('customer_id', customerId)
     .not('customer_membership_id', 'is', null)
     .order('created_at', { ascending: false });
 
   const invoices = (invoiceData ?? []) as {
     id: string;
+    total: number | null;
     discount_amount: number | null;
     created_at: string | null;
   }[];
@@ -657,15 +664,20 @@ export async function getCustomerMembershipUsage(
   const istMonthOf = (iso: string | null): string =>
     iso ? new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }).slice(0, 7) : '';
 
+  let billedLifetime = 0;
+  let billedThisMonth = 0;
   let savedLifetime = 0;
   let savedThisMonth = 0;
   let visitsThisMonth = 0;
   for (const inv of invoices) {
-    const amount = Number(inv.discount_amount) || 0;
-    savedLifetime += amount;
+    const saved = Number(inv.discount_amount) || 0;
+    const billed = Number(inv.total) || 0; // net amount the customer paid
+    savedLifetime += saved;
+    billedLifetime += billed;
     if (istMonthOf(inv.created_at) === currentMonth) {
       visitsThisMonth += 1;
-      savedThisMonth += amount;
+      savedThisMonth += saved;
+      billedThisMonth += billed;
     }
   }
 
@@ -690,9 +702,11 @@ export async function getCustomerMembershipUsage(
 
   return {
     visits: invoices.length,
+    billedLifetime,
     savedLifetime,
-    savedThisMonth,
     visitsThisMonth,
+    billedThisMonth,
+    savedThisMonth,
     lastUsedAt: invoices[0]?.created_at ?? null,
     services,
   };
