@@ -7,8 +7,8 @@ import { Award, Plus, X, TrendingUp, CalendarCheck, IndianRupee, Scissors } from
 import { Button } from '@/components/ui/button';
 import { Label } from '@/components/ui/label';
 import { formatINR, formatDateIN } from '@/lib/utils';
-import { assignCustomerMembership } from '../actions';
-import type { Membership } from '@/types';
+import { assignCustomerMembership, purchaseMembership } from '../actions';
+import type { Membership, PaymentMethod } from '@/types';
 import type { MembershipUsageSummary } from '../actions';
 
 // =============================================================================
@@ -190,12 +190,15 @@ function AssignMembershipModal({
   const [isPending, startTransition] = useTransition();
   // '' means "no plan" — i.e. remove the current membership.
   const [planId, setPlanId] = useState('');
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
   const [error, setError] = useState('');
 
   const selectedPlan = useMemo(
     () => availablePlans.find((p) => p.id === planId) ?? null,
     [availablePlans, planId]
   );
+  const price = selectedPlan ? Math.max(0, Math.round(Number(selectedPlan.price) || 0)) : 0;
+  const willCharge = price > 0;
 
   function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -209,12 +212,27 @@ function AssignMembershipModal({
     }
 
     startTransition(async () => {
-      const result = await assignCustomerMembership(customerId, planId || null);
+      // Removing a plan: no charge, just expire the current one.
+      if (!planId) {
+        const result = await assignCustomerMembership(customerId, null);
+        if (result.success) {
+          toast.success(`Membership removed for ${customerName}.`);
+          onClose();
+          router.refresh();
+        } else {
+          setError(result.error);
+          toast.error(result.error);
+        }
+        return;
+      }
+
+      // Assigning/changing a plan: bill the plan price, then activate.
+      const result = await purchaseMembership(customerId, planId, paymentMethod);
       if (result.success) {
         toast.success(
-          planId
-            ? `${selectedPlan?.name ?? 'Plan'} assigned to ${customerName}.`
-            : `Membership removed for ${customerName}.`
+          result.data.charged > 0
+            ? `${selectedPlan?.name ?? 'Plan'} activated · ${formatINR(result.data.charged)} billed${result.data.invoiceNumber ? ` (${result.data.invoiceNumber})` : ''}.`
+            : `${selectedPlan?.name ?? 'Plan'} activated for ${customerName}.`
         );
         onClose();
         router.refresh();
@@ -297,6 +315,30 @@ function AssignMembershipModal({
                 <span className="text-muted-foreground">Valid for</span>
                 <span className="font-medium text-foreground">{selectedPlan.validity_days} days</span>
               </div>
+              <div className="mt-2 flex items-center justify-between border-t border-border pt-2">
+                <span className="text-muted-foreground">Amount to charge now</span>
+                <span className="text-base font-bold text-violet-700 dark:text-violet-300">
+                  {willCharge ? formatINR(price) : 'Free'}
+                </span>
+              </div>
+            </div>
+          )}
+
+          {/* Payment method — only when there's a price to collect. The plan is
+              billed and activated together; nothing is added until it succeeds. */}
+          {willCharge && (
+            <div className="space-y-1.5">
+              <Label htmlFor="membership-payment">Payment method</Label>
+              <select
+                id="membership-payment"
+                value={paymentMethod}
+                onChange={(e) => setPaymentMethod(e.target.value as PaymentMethod)}
+                className="h-9 w-full rounded-lg border border-input bg-transparent px-2.5 text-sm outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+              >
+                <option value="cash">Cash</option>
+                <option value="upi">UPI</option>
+                <option value="card">Card</option>
+              </select>
             </div>
           )}
 
@@ -315,7 +357,13 @@ function AssignMembershipModal({
               className="rounded-xl bg-violet-600 text-white hover:bg-violet-700"
               disabled={isPending || (!planId && !activeMembership)}
             >
-              {isPending ? 'Saving…' : !planId && activeMembership ? 'Remove plan' : 'Save'}
+              {isPending
+                ? 'Processing…'
+                : !planId && activeMembership
+                  ? 'Remove plan'
+                  : willCharge
+                    ? `Charge ${formatINR(price)} & activate`
+                    : 'Activate plan'}
             </Button>
           </div>
         </form>

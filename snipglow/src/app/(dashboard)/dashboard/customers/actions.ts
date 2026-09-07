@@ -5,7 +5,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { normalizePhone, toTitleCase, isValidDateOfBirth } from '@/lib/utils';
 import { istCurrentMonth } from '@/lib/attendance';
-import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership } from '@/types';
+import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership, PaymentMethod } from '@/types';
 
 /** Shown when a phone can't be understood. Names the international case, since
  *  an Indian mobile "just works" and only foreign numbers need the hint. */
@@ -305,6 +305,146 @@ export async function assignCustomerMembership(
 
   revalidatePath('/dashboard/customers');
   return { success: true, data: undefined };
+}
+
+/**
+ * Sell a membership to a customer: raise a paid bill for the plan price, THEN
+ * activate the plan — in that order, so a failed bill never leaves a plan
+ * assigned for free. Mirrors the wallet top-up flow. Owner/manager only.
+ *
+ * A free plan (price 0) skips the bill and just activates. If activation fails
+ * after billing, the bill is rolled back so the customer is never charged for a
+ * plan they didn't receive.
+ */
+export async function purchaseMembership(
+  customerId: string,
+  membershipId: string,
+  paymentMethod: PaymentMethod
+): Promise<ActionResult<{ invoiceNumber: string; charged: number }>> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  const branchId = user.user_metadata?.branch_id;
+  const role = user.user_metadata?.role;
+  if (!tenantId || !branchId) {
+    return { success: false, error: 'No tenant or branch context found.' };
+  }
+  if (role !== 'owner' && role !== 'manager') {
+    return { success: false, error: 'Only owners or managers can sell a membership.' };
+  }
+  if (!customerId || !membershipId) {
+    return { success: false, error: 'Customer and plan are required.' };
+  }
+
+  const admin = createAdminClient();
+
+  const { data: plan } = await admin
+    .from('memberships')
+    .select('name, price, validity_days')
+    .eq('id', membershipId)
+    .eq('tenant_id', tenantId)
+    .eq('is_active', true)
+    .maybeSingle();
+
+  if (!plan) {
+    return { success: false, error: 'Membership plan not found or inactive.' };
+  }
+
+  const price = Math.max(0, Math.round(Number((plan as { price: number }).price) || 0));
+  const planName = (plan as { name: string }).name;
+  const validityDays = Number((plan as { validity_days: number }).validity_days) || 365;
+
+  if (price > 0 && !['cash', 'upi', 'card'].includes(paymentMethod)) {
+    return { success: false, error: 'Select a valid payment method.' };
+  }
+
+  // 1. Raise the bill FIRST. If it fails, nothing is assigned.
+  let invoiceId: string | null = null;
+  let invoiceNumber = '';
+  if (price > 0) {
+    const { data: invoice, error: invErr } = await (admin as any)
+      .from('invoices')
+      .insert({
+        tenant_id: tenantId,
+        branch_id: branchId,
+        customer_id: customerId,
+        invoice_number: '', // filled by trigger
+        subtotal: price,
+        discount_amount: 0,
+        discount_pct: 0,
+        gst_amount: 0,
+        gst_rate: 0,
+        total: price,
+        payment_method: paymentMethod,
+        payment_status: 'paid',
+        delivery_status: 'pending',
+        invoice_type: 'membership',
+        wallet_amount: 0,
+      })
+      .select('id, invoice_number')
+      .single();
+
+    if (invErr || !invoice) {
+      console.error('Membership invoice error:', invErr);
+      return { success: false, error: 'Failed to bill the membership. Please try again.' };
+    }
+    invoiceId = invoice.id as string;
+    invoiceNumber = (invoice.invoice_number as string) ?? '';
+
+    // Line item for the invoice/PDF. item_type='service' matches how the wallet
+    // recharge line is stored — the invoice_type is what marks it a membership.
+    await (admin as any).from('invoice_items').insert({
+      invoice_id: invoiceId,
+      service_id: null,
+      product_id: null,
+      item_type: 'service',
+      service_name: `Membership: ${planName}`,
+      unit_price: price,
+      quantity: 1,
+      discount_pct: 0,
+      discount_amount: 0,
+      line_total: price,
+    });
+  }
+
+  // 2. Only now activate the plan: expire any current one, insert the new one.
+  await admin
+    .from('customer_memberships')
+    .update({ status: 'expired' } as any)
+    .eq('customer_id', customerId)
+    .eq('status', 'active');
+
+  const startDate = new Date();
+  const endDate = new Date();
+  endDate.setDate(endDate.getDate() + validityDays);
+
+  const { error: assignErr } = await admin
+    .from('customer_memberships')
+    .insert({
+      customer_id: customerId,
+      membership_id: membershipId,
+      tenant_id: tenantId,
+      branch_id: branchId,
+      start_date: startDate.toISOString().split('T')[0],
+      end_date: endDate.toISOString().split('T')[0],
+      status: 'active',
+    } as any);
+
+  if (assignErr) {
+    // Roll back the bill so the customer isn't charged for a plan they didn't get.
+    if (invoiceId) {
+      await (admin as any).from('invoices').delete().eq('id', invoiceId);
+    }
+    console.error('Membership assign error:', assignErr);
+    return { success: false, error: 'Failed to activate the membership. Please try again.' };
+  }
+
+  revalidatePath(`/dashboard/customers/${customerId}`);
+  revalidatePath('/dashboard/customers');
+  revalidatePath('/dashboard/billing');
+  return { success: true, data: { invoiceNumber, charged: price } };
 }
 
 /**
