@@ -3,8 +3,10 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
+import { after } from 'next/server';
 import { normalizePhone, toTitleCase, isValidDateOfBirth } from '@/lib/utils';
 import { istCurrentMonth } from '@/lib/attendance';
+import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
 import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership, PaymentMethod } from '@/types';
 
 /** Shown when a phone can't be understood. Names the international case, since
@@ -439,6 +441,30 @@ export async function purchaseMembership(
     }
     console.error('Membership assign error:', assignErr);
     return { success: false, error: 'Failed to activate the membership. Please try again.' };
+  }
+
+  // WhatsApp the plan bill to the customer, the same way service bills and
+  // wallet top-ups are receipted. skipFeedback because a plan purchase is not a
+  // service visit, so it must not trigger a "rate your visit" ask. Best-effort
+  // in after() — a receipt failure must never fail the sale, which has already
+  // been billed and activated above.
+  if (invoiceId && invoiceNumber) {
+    const receipt = {
+      tenantId,
+      customerId,
+      items: [{ service_name: `Membership: ${planName}`, unit_price: price, quantity: 1 }],
+      invoiceNumber,
+      total: price,
+      paymentMethod,
+      skipFeedback: true,
+    };
+    after(async () => {
+      try {
+        await sendBillReceiptWithPdf(receipt);
+      } catch (e) {
+        console.error('[purchaseMembership] receipt send failed (non-fatal):', e);
+      }
+    });
   }
 
   revalidatePath(`/dashboard/customers/${customerId}`);
