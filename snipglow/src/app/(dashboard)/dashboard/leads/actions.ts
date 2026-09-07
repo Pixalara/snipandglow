@@ -3,7 +3,12 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { isValidIndianPhone, formatPhoneE164, toTitleCase } from '@/lib/utils';
+import { normalizePhone, toTitleCase } from '@/lib/utils';
+
+/** Same wording as the customer form — an Indian mobile works as-is, only an
+ *  international number needs the country-code hint. */
+const PHONE_ERROR =
+  'Please enter a valid phone number. For an international number, include the country code, e.g. +44 7911 123456.';
 import type { ActionResult, Lead, Customer, CreateLeadInput, UpdateLeadInput } from '@/types';
 
 // Note: The 'leads' table is created via migration 011 but not yet in generated types.
@@ -38,11 +43,10 @@ export async function createLead(input: CreateLeadInput): Promise<ActionResult<L
   if (!input.phone?.trim()) {
     return { success: false, error: 'Phone is required.' };
   }
-  if (!isValidIndianPhone(input.phone)) {
-    return { success: false, error: 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).' };
+  const formattedPhone = normalizePhone(input.phone);
+  if (!formattedPhone) {
+    return { success: false, error: PHONE_ERROR };
   }
-
-  const formattedPhone = formatPhoneE164(input.phone);
 
   const { data, error } = await (admin as any)
     .from('leads')
@@ -89,14 +93,19 @@ export async function updateLead(
     return { success: false, error: 'Only owners and managers can edit leads.' };
   }
 
-  // Validate phone if provided
-  if (input.phone && !isValidIndianPhone(input.phone)) {
-    return { success: false, error: 'Please enter a valid 10-digit Indian mobile number.' };
+  // Validate + canonicalise phone if provided.
+  let normalizedPhone: string | undefined;
+  if (input.phone !== undefined) {
+    const normalized = normalizePhone(input.phone);
+    if (!normalized) {
+      return { success: false, error: PHONE_ERROR };
+    }
+    normalizedPhone = normalized;
   }
 
   const updateData: Record<string, unknown> = { updated_at: new Date().toISOString() };
   if (input.name !== undefined) updateData.name = toTitleCase(input.name);
-  if (input.phone !== undefined) updateData.phone = formatPhoneE164(input.phone);
+  if (normalizedPhone !== undefined) updateData.phone = normalizedPhone;
   if (input.email !== undefined) updateData.email = input.email?.trim() || null;
   if (input.source !== undefined) updateData.source = input.source;
   if (input.status !== undefined) updateData.status = input.status;

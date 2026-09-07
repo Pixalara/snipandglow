@@ -3,8 +3,13 @@
 import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
-import { isValidIndianPhone, formatPhoneE164, toTitleCase, isValidDateOfBirth } from '@/lib/utils';
+import { normalizePhone, toTitleCase, isValidDateOfBirth } from '@/lib/utils';
 import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership } from '@/types';
+
+/** Shown when a phone can't be understood. Names the international case, since
+ *  an Indian mobile "just works" and only foreign numbers need the hint. */
+const PHONE_ERROR =
+  'Please enter a valid phone number. For an international number, include the country code, e.g. +44 7911 123456.';
 
 /**
  * Create a new customer with phone validation.
@@ -17,9 +22,11 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Action
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  // Validate phone
-  if (!isValidIndianPhone(input.phone)) {
-    return { success: false, error: 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).' };
+  // Validate + canonicalise phone. normalizePhone accepts an Indian mobile or an
+  // international number carrying a country code, and returns E.164 or null.
+  const formattedPhone = normalizePhone(input.phone);
+  if (!formattedPhone) {
+    return { success: false, error: PHONE_ERROR };
   }
 
   // Validate date of birth if provided
@@ -32,8 +39,6 @@ export async function createCustomer(input: CreateCustomerInput): Promise<Action
   if (!tenantId || !branchId) {
     return { success: false, error: 'No tenant or branch context found.' };
   }
-
-  const formattedPhone = formatPhoneE164(input.phone);
 
   const { data, error } = await supabase
     .from('customers')
@@ -71,9 +76,14 @@ export async function updateCustomer(id: string, input: UpdateCustomerInput): Pr
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  // Validate phone if provided
-  if (input.phone && !isValidIndianPhone(input.phone)) {
-    return { success: false, error: 'Please enter a valid 10-digit Indian mobile number.' };
+  // Validate + canonicalise phone if provided.
+  let normalizedPhone: string | undefined;
+  if (input.phone !== undefined) {
+    const normalized = normalizePhone(input.phone);
+    if (!normalized) {
+      return { success: false, error: PHONE_ERROR };
+    }
+    normalizedPhone = normalized;
   }
 
   // Validate date of birth if a non-null value is provided
@@ -83,7 +93,7 @@ export async function updateCustomer(id: string, input: UpdateCustomerInput): Pr
 
   const updateData: Record<string, unknown> = {};
   if (input.name !== undefined) updateData.name = toTitleCase(input.name);
-  if (input.phone !== undefined) updateData.phone = formatPhoneE164(input.phone);
+  if (normalizedPhone !== undefined) updateData.phone = normalizedPhone;
   if (input.email !== undefined) updateData.email = input.email?.trim() || null;
   if (input.gender !== undefined) updateData.gender = input.gender || null;
   if (input.date_of_birth !== undefined) updateData.date_of_birth = input.date_of_birth || null;
@@ -308,9 +318,10 @@ export async function createCustomerWithMembership(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  // Validate phone
-  if (!isValidIndianPhone(input.phone)) {
-    return { success: false, error: 'Please enter a valid 10-digit Indian mobile number (starting with 6-9).' };
+  // Validate + canonicalise phone.
+  const formattedPhone = normalizePhone(input.phone);
+  if (!formattedPhone) {
+    return { success: false, error: PHONE_ERROR };
   }
 
   // Validate date of birth if provided
@@ -324,7 +335,6 @@ export async function createCustomerWithMembership(
     return { success: false, error: 'No tenant or branch context found.' };
   }
 
-  const formattedPhone = formatPhoneE164(input.phone);
   const admin = createAdminClient();
 
   // Create customer

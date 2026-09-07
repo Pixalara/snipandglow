@@ -242,7 +242,13 @@ export function EditCustomerModal({
   const router = useRouter();
   const [isPending, startTransition] = useTransition();
   const [name, setName] = useState(customer.name);
-  const [phone, setPhone] = useState(customer.phone.replace('+91', ''));
+  // Show Indian numbers as the bare 10 digits (the familiar local form), but
+  // keep an international number in full +E.164 so it round-trips on save.
+  // Anchored startsWith, not a bare replace, so a foreign number that happens to
+  // contain "91" is never mangled.
+  const [phone, setPhone] = useState(
+    customer.phone.startsWith('+91') ? customer.phone.slice(3) : customer.phone
+  );
   const [email, setEmail] = useState(customer.email ?? '');
   const [gender, setGender] = useState(customer.gender ?? '');
   const [notes, setNotes] = useState(customer.notes ?? '');
@@ -398,7 +404,7 @@ export function EditCustomerModal({
               <Input
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="10-digit number"
+                placeholder="10-digit, or +44 7911 123456"
               />
             </div>
           </div>

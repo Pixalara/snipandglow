@@ -152,9 +152,11 @@ export default function NewCustomerPage() {
                 id="phone"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                placeholder="10-digit mobile number"
+                placeholder="10-digit mobile, or +44 7911 123456"
               />
-              <p className="text-xs text-muted-foreground">Indian mobile (starts with 6-9)</p>
+              <p className="text-xs text-muted-foreground">
+                Indian mobile needs no code. For an international number, add the country code (e.g. +44).
+              </p>
             </div>
           </div>
 

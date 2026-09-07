@@ -5,6 +5,8 @@ import {
   formatTimeIST,
   isValidIndianPhone,
   formatPhoneE164,
+  normalizePhone,
+  isValidPhone,
   calculateInvoiceTotal,
   amountInWordsINR,
 } from "./utils";
@@ -352,5 +354,97 @@ describe("amountInWordsINR", () => {
   it("returns an empty string for non-finite input", () => {
     expect(amountInWordsINR(NaN)).toBe("");
     expect(amountInWordsINR(Infinity)).toBe("");
+  });
+});
+
+// =============================================================================
+// normalizePhone / isValidPhone
+//
+// Phone is the customer's identity (UNIQUE(tenant_id, phone), and every WhatsApp
+// lookup matches on it). The rules that matter here are the ones that would
+// either corrupt a foreign number or, worse, quietly change how an existing
+// Indian number canonicalises — because that would split one customer into two.
+// =============================================================================
+
+describe("normalizePhone — India (must be unchanged from the old behaviour)", () => {
+  it("stores a bare 10-digit mobile as +91", () => {
+    expect(normalizePhone("9876543210")).toBe("+919876543210");
+    expect(normalizePhone("6543210987")).toBe("+916543210987");
+  });
+
+  it("accepts the same shapes the old formatter did", () => {
+    expect(normalizePhone("+919876543210")).toBe("+919876543210");
+    expect(normalizePhone("+91 98765 43210")).toBe("+919876543210");
+    expect(normalizePhone("98765-43210")).toBe("+919876543210");
+    // 91 country code without a plus.
+    expect(normalizePhone("919876543210")).toBe("+919876543210");
+  });
+
+  it("rejects a leading-0 number, exactly as the old validator did", () => {
+    // 0XXXXXXXXXX is ambiguous — Indian trunk prefix or a foreign domestic
+    // number — and isValidIndianPhone never accepted it, so neither do we.
+    expect(normalizePhone("09876543210")).toBeNull();
+  });
+
+  it("canonicalises every Indian spelling to one string, so dedup holds", () => {
+    const forms = ["9876543210", "+919876543210", "91 98765 43210", "+91-98765-43210"];
+    const canonical = forms.map((f) => normalizePhone(f));
+    expect(new Set(canonical)).toEqual(new Set(["+919876543210"]));
+  });
+});
+
+describe("normalizePhone — international", () => {
+  it("keeps a +country-code number as E.164", () => {
+    expect(normalizePhone("+447911123456")).toBe("+447911123456"); // UK
+    expect(normalizePhone("+1 415 555 1234")).toBe("+14155551234"); // US
+    expect(normalizePhone("+971 50 123 4567")).toBe("+971501234567"); // UAE
+    expect(normalizePhone("+61 2 9374 4000")).toBe("+61293744000"); // Australia
+  });
+
+  it("treats a 00 prefix as the international access code", () => {
+    expect(normalizePhone("00447911123456")).toBe("+447911123456");
+  });
+
+  it("matches what the WhatsApp webhook stores for the same number", () => {
+    // The webhook builds `+${message.from}` from the inbound digits. A UK
+    // customer added on the dashboard must land on the identical string, or a
+    // second customer row is created when they message.
+    const dashboard = normalizePhone("+44 7911 123456");
+    const webhook = `+${"447911123456"}`;
+    expect(dashboard).toBe(webhook);
+  });
+});
+
+describe("normalizePhone — refusals (never guess a country code)", () => {
+  it("rejects a bare non-Indian number rather than forcing +91 onto it", () => {
+    // A UK mobile typed without its code. The old formatPhoneE164 would have
+    // produced +9107911123456; refusing is the whole point of the change.
+    expect(normalizePhone("07911123456")).toBeNull();
+    // A bare US number (10 digits, starts 4) — indistinguishable from E.164
+    // without a code, so we refuse.
+    expect(normalizePhone("4155551234")).toBeNull();
+  });
+
+  it("rejects nonsense and empties", () => {
+    expect(normalizePhone("")).toBeNull();
+    expect(normalizePhone("   ")).toBeNull();
+    expect(normalizePhone(null)).toBeNull();
+    expect(normalizePhone(undefined)).toBeNull();
+    expect(normalizePhone("abcdef")).toBeNull();
+    expect(normalizePhone("12345")).toBeNull(); // too short even as E.164
+  });
+
+  it("rejects a country code beginning with 0 and over-long numbers", () => {
+    expect(normalizePhone("+0123456789")).toBeNull();
+    expect(normalizePhone("+1234567890123456")).toBeNull(); // 16 digits, over E.164 max
+  });
+});
+
+describe("isValidPhone", () => {
+  it("agrees with normalizePhone", () => {
+    expect(isValidPhone("9876543210")).toBe(true);
+    expect(isValidPhone("+447911123456")).toBe(true);
+    expect(isValidPhone("07911123456")).toBe(false);
+    expect(isValidPhone("")).toBe(false);
   });
 });

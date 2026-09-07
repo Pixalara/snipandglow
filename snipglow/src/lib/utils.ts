@@ -126,6 +126,73 @@ export function isValidIndianPhone(phone: string): boolean {
 }
 
 /**
+ * Reduce an all-digits string (no leading +) to a validated E.164 number, or
+ * null. E.164 allows at most 15 digits including the country code, and a country
+ * code never begins with 0, so both are rejected here.
+ */
+function digitsToE164(digits: string): string | null {
+  if (digits.length < 8 || digits.length > 15) return null;
+  if (digits.startsWith("0")) return null;
+  return `+${digits}`;
+}
+
+/**
+ * Canonicalise any phone number to E.164 (`+<countrycode><number>`), or return
+ * null when it can't be understood.
+ *
+ * India-first, so nothing about the existing Indian customer base changes: a
+ * bare 10-digit mobile (starting 6-9) is still read as Indian and stored as
+ * +91XXXXXXXXXX, exactly as before.
+ *
+ * An international number is accepted only when it carries a country code — a
+ * leading `+` or the `00` international prefix. That restriction is deliberate:
+ * a bare foreign number cannot be told apart from a mistyped Indian one, and
+ * guessing a country code onto it would corrupt the record and, because phone is
+ * the customer's identity, silently split their visit history and wallet across
+ * two rows. The customer form tells users to include the code for this reason.
+ *
+ * Producing the SAME canonical string the WhatsApp webhook stores (it uses the
+ * inbound number's real country code) is what keeps dashboard-created and
+ * WhatsApp-created records deduping to one customer.
+ */
+export function normalizePhone(raw: string | null | undefined): string | null {
+  if (raw == null) return null;
+  const trimmed = String(raw).trim();
+  if (!trimmed) return null;
+
+  const hasPlus = trimmed.startsWith("+");
+  const hasIntlPrefix = trimmed.startsWith("00");
+  const digits = trimmed.replace(/\D/g, "");
+  if (!digits) return null;
+
+  // Already international — trust the country code the user supplied.
+  if (hasPlus) return digitsToE164(digits);
+  if (hasIntlPrefix) return digitsToE164(digits.slice(2));
+
+  // India, typed with the 91 country code but no plus. Unambiguous (12 digits
+  // led by India's code) and matches the string the WhatsApp webhook stores.
+  if (digits.length === 12 && digits.startsWith("91")) return digitsToE164(digits);
+
+  // India, bare 10-digit mobile — unchanged from the original behaviour.
+  if (digits.length === 10 && /^[6-9]/.test(digits)) {
+    return `+91${digits}`;
+  }
+
+  // A bare number we cannot confidently place. Refuse rather than guess — a
+  // leading-0 number in particular is ambiguous (Indian trunk prefix vs. a
+  // foreign domestic number), and the original validator rejected it too.
+  return null;
+}
+
+/**
+ * True when a phone number can be understood: a valid Indian mobile, or an
+ * international number that carries a country code. See normalizePhone.
+ */
+export function isValidPhone(raw: string | null | undefined): boolean {
+  return normalizePhone(raw) !== null;
+}
+
+/**
  * Validate a Date of Birth ISO string (YYYY-MM-DD).
  * Rules:
  *  - Must be a real calendar date (rejects e.g. 2023-02-30).
