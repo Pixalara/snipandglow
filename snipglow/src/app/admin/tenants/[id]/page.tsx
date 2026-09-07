@@ -5,6 +5,7 @@ import { formatINR } from '@/lib/utils';
 import { notFound } from 'next/navigation';
 import Link from 'next/link';
 import { AdminGstEditor } from './gst-editor';
+import { AdminOwnerEmailEditor } from './owner-email-editor';
 import { AdminWhatsAppActivator } from './whatsapp-activator';
 import { AdminPlanEditor } from './plan-editor';
 import { PricingEditor } from './pricing-editor';
@@ -159,6 +160,12 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <Field label="Subscription End" value={formatISTDate(tenant.subscription_end)} />
         </Grid>
       </Section>
+
+      {/* Owner email — admin edit of the contact email shown in Profile above */}
+      <AdminOwnerEmailEditor
+        tenantId={tenantId}
+        currentEmail={ownerEmail === '—' ? '' : ownerEmail}
+      />
 
       {/* Billing Overview — invoices generated & amount invoiced by this tenant */}
       <Section title="Billing Overview">

@@ -515,3 +515,84 @@ export async function adminUpdateTenantPricing(
   revalidatePath('/admin/payments');
   return { success: true };
 }
+
+// =============================================================================
+// Admin — edit the salon owner's contact email.
+//
+// This is the email the tenant profile shows and that owner-facing mail uses.
+// It updates the owner's EMPLOYEE record only. It deliberately does NOT touch
+// the Supabase Auth login email: phone/WhatsApp signups use a synthetic address
+// (…@phone.snipandglow.com) as their login identifier, so rewriting it would
+// break their phone-OTP sign-in. Sign-in is unaffected by this change.
+// =============================================================================
+
+const OWNER_EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+export async function adminUpdateOwnerEmail(
+  tenantId: string,
+  email: string
+): Promise<{ success: boolean; error?: string }> {
+  const user = await requireAdmin();
+
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  const trimmed = email.trim().toLowerCase();
+  if (!trimmed) return { success: false, error: 'Enter an email address.' };
+  if (trimmed.length > 254 || !OWNER_EMAIL_RE.test(trimmed)) {
+    return { success: false, error: 'Enter a valid email address.' };
+  }
+
+  const admin = createAdminClient();
+
+  const { data: tenant } = await (admin
+    .from('tenants' as any)
+    .select('name')
+    .eq('id', tenantId)
+    .single() as any);
+  if (!tenant) return { success: false, error: 'Tenant not found.' };
+
+  // The owner's employee record holds the contact email the profile displays.
+  // Oldest owner row = the founding owner, matching what the page surfaces.
+  const { data: owner } = await (admin
+    .from('employees')
+    .select('id, email')
+    .eq('tenant_id', tenantId)
+    .eq('role', 'owner')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle() as any);
+
+  if (!owner) return { success: false, error: 'No owner record found for this tenant.' };
+
+  const previousEmail = (owner.email as string | null) ?? null;
+  if (previousEmail && previousEmail.toLowerCase() === trimmed) {
+    return { success: false, error: 'That is already the owner email.' };
+  }
+
+  const { error } = await (admin
+    .from('employees')
+    .update({ email: trimmed } as any)
+    .eq('id', owner.id) as any);
+
+  if (error) {
+    console.error('adminUpdateOwnerEmail error:', error);
+    return { success: false, error: 'Failed to update the owner email. Please try again.' };
+  }
+
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'update_owner_email',
+    targetType: 'tenant',
+    targetId: tenantId,
+    metadata: {
+      tenant_name: tenant.name,
+      employee_id: owner.id,
+      previous_email: previousEmail,
+      new_email: trimmed,
+    },
+  });
+
+  revalidatePath(`/admin/tenants/${tenantId}`);
+  return { success: true };
+}
