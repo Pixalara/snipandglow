@@ -51,14 +51,18 @@ export function MembershipSection({
           <div className="min-w-0">
             <p className="text-xs font-medium text-violet-700/80 dark:text-violet-400/80">Membership</p>
             {activeMembership ? (
-              <p className="text-lg font-bold leading-tight text-violet-700 dark:text-violet-300">
-                {activeMembership.membership_name}
-                <span className="ml-2 text-sm font-medium text-violet-600/80 dark:text-violet-400/80">
+              <>
+                {/* Name and detail on separate lines so a long plan name or the
+                    expiry date never has to share one line on a phone. */}
+                <p className="truncate text-base font-bold leading-tight text-violet-700 dark:text-violet-300 sm:text-lg">
+                  {activeMembership.membership_name}
+                </p>
+                <p className="text-xs font-medium text-violet-600/80 dark:text-violet-400/80">
                   {activeMembership.discount_pct}% off · expires {formatDateIN(activeMembership.end_date)}
-                </span>
-              </p>
+                </p>
+              </>
             ) : (
-              <p className="text-lg font-bold leading-tight text-violet-700/70 dark:text-violet-300/70">
+              <p className="text-base font-bold leading-tight text-violet-700/70 dark:text-violet-300/70 sm:text-lg">
                 No active plan
               </p>
             )}
@@ -83,7 +87,9 @@ export function MembershipSection({
       {/* Usage — only meaningful once the membership has actually been billed */}
       {usage.visits > 0 && (
         <div className="mt-4 space-y-3">
-          <div className="grid grid-cols-3 gap-2.5">
+          {/* Three metrics stay side by side down to the smallest phone, with
+              tighter spacing there; values scale rather than truncate. */}
+          <div className="grid grid-cols-3 gap-2 sm:gap-2.5">
             <UsageStat
               icon={<CalendarCheck className="size-3.5" />}
               label="Visits used"
@@ -164,13 +170,16 @@ function UsageStat({
   sub?: string;
 }) {
   return (
-    <div className="rounded-xl border border-violet-200/50 bg-white/50 p-3 dark:border-violet-800/30 dark:bg-black/10">
+    <div className="rounded-xl border border-violet-200/50 bg-white/50 p-2.5 dark:border-violet-800/30 dark:bg-black/10 sm:p-3">
       <div className="flex size-7 items-center justify-center rounded-lg bg-violet-100 text-violet-600 dark:bg-violet-900/40 dark:text-violet-400">
         {icon}
       </div>
-      <p className="mt-2 truncate text-base font-bold tabular-nums text-foreground">{value}</p>
-      <p className="text-[11px] leading-tight text-muted-foreground">{label}</p>
-      {sub && <p className="text-[11px] font-medium text-violet-600 dark:text-violet-400">{sub}</p>}
+      {/* No truncate on the value — a rupee figure has no break points, so
+          truncation would silently drop digits. It scales down on mobile and
+          wraps rather than hides. */}
+      <p className="mt-2 text-sm font-bold leading-tight tabular-nums text-foreground sm:text-base">{value}</p>
+      <p className="mt-0.5 text-[11px] leading-tight text-muted-foreground">{label}</p>
+      {sub && <p className="text-[11px] font-medium leading-tight text-violet-600 dark:text-violet-400">{sub}</p>}
     </div>
   );
 }
@@ -350,13 +359,21 @@ function AssignMembershipModal({
             </div>
           )}
 
-          <div className="flex items-center justify-end gap-2 pt-1">
-            <Button type="button" variant="outline" className="rounded-xl" onClick={onClose} disabled={isPending}>
+          {/* Stacked on mobile (primary on top via reverse) so the long
+              "Charge ₹X & activate" label can't overflow a narrow screen. */}
+          <div className="flex flex-col-reverse gap-2 pt-1 sm:flex-row sm:items-center sm:justify-end">
+            <Button
+              type="button"
+              variant="outline"
+              className="w-full rounded-xl sm:w-auto"
+              onClick={onClose}
+              disabled={isPending}
+            >
               Cancel
             </Button>
             <Button
               type="submit"
-              className="rounded-xl bg-violet-600 text-white hover:bg-violet-700"
+              className="w-full rounded-xl bg-violet-600 text-white hover:bg-violet-700 sm:w-auto"
               disabled={isPending || (!planId && !activeMembership)}
             >
               {isPending
