@@ -263,6 +263,12 @@ export interface Invoice {
   invoice_type?: 'service' | 'wallet_recharge';
   /** Portion of this bill paid from the customer's wallet (0 when none). */
   wallet_amount?: number;
+  /**
+   * The customer_memberships row that was active when this bill was raised, set
+   * only when a membership discount was actually applied (see migration 052).
+   * Drives the membership-usage view on the customer page.
+   */
+  customer_membership_id?: string | null;
 }
 
 /** A line item within an Invoice */

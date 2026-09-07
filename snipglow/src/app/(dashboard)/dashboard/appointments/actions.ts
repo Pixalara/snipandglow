@@ -445,23 +445,31 @@ export async function completeAndGenerateBill(
     }
   }
 
-  // 3. Determine the fallback discount % (membership or a manual default).
-  //    Per-item discounts (serviceDiscounts / product.discount_pct) override it.
+  // 3. Look up the customer's active membership once. Its rate is the fallback
+  //    discount for any un-priced line (per-item discounts still override it),
+  //    and its row id attributes this bill to the membership for the usage view
+  //    on the customer page.
   let fallbackPct = defaultDiscountPct ?? 0;
-  if (!defaultDiscountPct || defaultDiscountPct === 0) {
+  let customerMembershipId: string | null = null;
+  {
     const today = new Date().toISOString().split('T')[0];
     const { data: activeMembership } = await supabase
       .from('customer_memberships')
-      .select('membership_id, memberships(discount_pct)')
+      .select('id, memberships(discount_pct)')
       .eq('customer_id', appointment.customer_id)
       .eq('status', 'active')
       .gte('end_date', today)
+      .order('start_date', { ascending: false })
       .limit(1)
       .maybeSingle();
 
     if (activeMembership) {
-      const membership = activeMembership.memberships as unknown as { discount_pct: number } | null;
-      fallbackPct = membership?.discount_pct ?? 0;
+      customerMembershipId = (activeMembership as { id: string }).id ?? null;
+      // Only fall back to the plan rate when the caller didn't set a default.
+      if (!defaultDiscountPct || defaultDiscountPct === 0) {
+        const membership = activeMembership.memberships as unknown as { discount_pct: number } | null;
+        fallbackPct = membership?.discount_pct ?? 0;
+      }
     }
   }
 
@@ -541,6 +549,17 @@ export async function completeAndGenerateBill(
   if (invoiceError) {
     console.error('Invoice creation error:', invoiceError);
     return { success: false, error: 'Failed to generate bill.' };
+  }
+
+  // Attribute the bill to the customer's membership when it actually saved them
+  // money, powering the usage view on the customer page. Best-effort: a failure
+  // here must not fail an otherwise-complete bill. The column is absent from the
+  // stale generated types, so the cast is isolated to this stamp.
+  if (customerMembershipId && discountAmount > 0) {
+    await (supabase as any)
+      .from('invoices')
+      .update({ customer_membership_id: customerMembershipId })
+      .eq('id', invoice.id);
   }
 
   // 5b. Apply wallet balance atomically (row-locked, no overdraw). If it fails,

@@ -6,6 +6,8 @@ import { getLoyaltyTier, getAverageSpend, getVisitFrequency, getDaysSinceLastVis
 import { ProfileTabs } from './profile-tabs';
 import { EditCustomerButton } from './edit-customer-button';
 import { WalletSection } from './wallet-section';
+import { MembershipSection } from './membership-section';
+import { getAvailableMemberships, getCustomerMembershipUsage } from '../actions';
 import {
   VisitHistoryTable,
   BillingHistoryTable,
@@ -148,6 +150,13 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
     };
   }
 
+  // Membership card data: the plans the owner can assign, and how much this
+  // customer has actually used their membership.
+  const [availablePlans, membershipUsage] = await Promise.all([
+    getAvailableMemberships(),
+    getCustomerMembershipUsage(id),
+  ]);
+
   return (
     <div className="space-y-6">
       {/* Back Button + Book Appointment */}
@@ -206,6 +215,15 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
 
       {/* Wallet balance + Add Balance */}
       <WalletSection customerId={id} customerName={customer.name} balance={walletBalance} />
+
+      {/* Membership: assign/change/remove + usage analytics */}
+      <MembershipSection
+        customerId={id}
+        customerName={customer.name}
+        activeMembership={activeMembership}
+        usage={membershipUsage}
+        availablePlans={availablePlans}
+      />
 
       {/* Loyalty & Stats Card */}
       <LoyaltyStatsCard

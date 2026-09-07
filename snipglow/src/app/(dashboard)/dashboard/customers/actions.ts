@@ -4,6 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { normalizePhone, toTitleCase, isValidDateOfBirth } from '@/lib/utils';
+import { istCurrentMonth } from '@/lib/attendance';
 import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership } from '@/types';
 
 /** Shown when a phone can't be understood. Names the international case, since
@@ -411,5 +412,122 @@ export async function getLoyaltyConfig(): Promise<{ regular_min: number; silver_
     silver_min: saved?.silver_min ?? 5,
     gold_min: saved?.gold_min ?? 10,
     vip_min: saved?.vip_min ?? 25,
+  };
+}
+
+// =============================================================================
+// Membership usage
+//
+// "How often did this customer use their membership, how much has it saved them,
+// and on which services?" — answerable only because invoices now carry
+// customer_membership_id (migration 052). A bill counts as membership usage when
+// it was attributed to a membership, which the billing code does only when the
+// bill actually carried a discount.
+// =============================================================================
+
+/** One service the customer had discounted under their membership. */
+export interface MembershipServiceUsage {
+  name: string;
+  /** How many billed lines of this service were discounted under the plan. */
+  count: number;
+  /** Total rupees discounted on those lines. */
+  saved: number;
+}
+
+export interface MembershipUsageSummary {
+  /** Attributed bills, all time. */
+  visits: number;
+  /** Total saved across all attributed bills (services + products). */
+  savedLifetime: number;
+  /** Attributed bills in the current calendar month (IST). */
+  visitsThisMonth: number;
+  savedThisMonth: number;
+  /** created_at of the most recent attributed bill, or null. */
+  lastUsedAt: string | null;
+  /** Services discounted under the plan, richest saving first. */
+  services: MembershipServiceUsage[];
+}
+
+const EMPTY_USAGE: MembershipUsageSummary = {
+  visits: 0,
+  savedLifetime: 0,
+  visitsThisMonth: 0,
+  savedThisMonth: 0,
+  lastUsedAt: null,
+  services: [],
+};
+
+/**
+ * Usage figures for a customer's membership, derived from the invoices that
+ * carried a membership discount. Owner/manager reads via the admin client, like
+ * the other customer-page analytics.
+ */
+export async function getCustomerMembershipUsage(
+  customerId: string
+): Promise<MembershipUsageSummary> {
+  if (!customerId) return EMPTY_USAGE;
+
+  const admin = createAdminClient();
+
+  // Bills attributed to a membership for this customer.
+  const { data: invoiceData } = await (admin as any)
+    .from('invoices')
+    .select('id, discount_amount, created_at')
+    .eq('customer_id', customerId)
+    .not('customer_membership_id', 'is', null)
+    .order('created_at', { ascending: false });
+
+  const invoices = (invoiceData ?? []) as {
+    id: string;
+    discount_amount: number | null;
+    created_at: string | null;
+  }[];
+  if (invoices.length === 0) return EMPTY_USAGE;
+
+  // Bucket into lifetime and the current IST month. Derived in JS from each
+  // timestamp's IST calendar date, rather than a UTC SQL range, so the month
+  // boundary is the salon's local one.
+  const currentMonth = istCurrentMonth();
+  const istMonthOf = (iso: string | null): string =>
+    iso ? new Date(iso).toLocaleDateString('en-CA', { timeZone: 'Asia/Kolkata' }).slice(0, 7) : '';
+
+  let savedLifetime = 0;
+  let savedThisMonth = 0;
+  let visitsThisMonth = 0;
+  for (const inv of invoices) {
+    const amount = Number(inv.discount_amount) || 0;
+    savedLifetime += amount;
+    if (istMonthOf(inv.created_at) === currentMonth) {
+      visitsThisMonth += 1;
+      savedThisMonth += amount;
+    }
+  }
+
+  // Per-service breakdown from the service lines of those bills.
+  const { data: itemData } = await (admin as any)
+    .from('invoice_items')
+    .select('service_name, discount_amount, item_type')
+    .in('invoice_id', invoices.map((i) => i.id))
+    .eq('item_type', 'service');
+
+  const byService = new Map<string, { count: number; saved: number }>();
+  for (const item of (itemData ?? []) as { service_name: string; discount_amount: number | null }[]) {
+    const key = item.service_name || 'Service';
+    const current = byService.get(key) ?? { count: 0, saved: 0 };
+    current.count += 1;
+    current.saved += Number(item.discount_amount) || 0;
+    byService.set(key, current);
+  }
+  const services = [...byService.entries()]
+    .map(([name, v]) => ({ name, count: v.count, saved: v.saved }))
+    .sort((a, b) => b.saved - a.saved);
+
+  return {
+    visits: invoices.length,
+    savedLifetime,
+    savedThisMonth,
+    visitsThisMonth,
+    lastUsedAt: invoices[0]?.created_at ?? null,
+    services,
   };
 }
