@@ -379,16 +379,36 @@ export async function updateInvoicePayment(
   const { data: { user } } = await supabase.auth.getUser();
   if (!user) return { success: false, error: 'Not authenticated' };
 
-  const { error } = await supabase
+  // Match the permission matrix (permissions.ts): owners may correct how a bill
+  // was paid, managers may not. This mirrors the invoices_update RLS policy so
+  // the failure is a clear message here rather than a silent zero-row update.
+  const role = user.user_metadata?.role;
+  if (role !== 'owner') {
+    return { success: false, error: 'Only owners can edit an invoice payment.' };
+  }
+
+  const { data, error } = await supabase
     .from('invoices')
     .update({
       payment_method: updates.payment_method,
       payment_status: updates.payment_status,
     })
-    .eq('id', invoiceId);
+    .eq('id', invoiceId)
+    // Return the affected rows. Without this a write blocked by RLS — or one that
+    // matched no row — comes back with error === null and looks like success,
+    // which is exactly how the stale-value bug hid: the dialog said "updated"
+    // while nothing changed.
+    .select('id');
 
   if (error) {
+    console.error('[billing] invoice payment update failed:', error);
     return { success: false, error: 'Failed to update invoice. Please try again.' };
+  }
+  if (!data || data.length === 0) {
+    return {
+      success: false,
+      error: 'Could not update this invoice. Please refresh and try again.',
+    };
   }
 
   revalidatePath('/dashboard/billing');

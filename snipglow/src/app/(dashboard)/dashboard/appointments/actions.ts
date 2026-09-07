@@ -551,7 +551,11 @@ export async function completeAndGenerateBill(
       p_amount: walletUse,
     });
     if (debitErr) {
-      await supabase.from('invoices').delete().eq('id', invoice.id);
+      // Roll back via the admin client. `invoices` has no DELETE policy, so an
+      // RLS-scoped delete here would silently match zero rows and strand a paid
+      // invoice with no matching wallet debit. billing/actions.ts already does
+      // this the same way for its copy of this rollback.
+      await createAdminClient().from('invoices').delete().eq('id', invoice.id);
       const msg = String(debitErr.message || '');
       if (msg.includes('INSUFFICIENT_WALLET_BALANCE')) {
         return { success: false, error: 'Insufficient wallet balance.' };
