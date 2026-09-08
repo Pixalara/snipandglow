@@ -682,6 +682,13 @@ export interface CreateInvoiceInput {
    * of it was settled from the wallet. Re-validated and debited server-side.
    */
   wallet_amount?: number;
+  /**
+   * The amount actually collected, when it differs from the computed total
+   * (e.g. ₹400 charged on a ₹410 bill). When below the computed total, the
+   * shortfall is recorded as a bill-level discount and becomes the invoice
+   * total. Ignored when at or above the computed total.
+   */
+  collected_amount?: number;
 }
 
 /** Input for a single invoice line item */

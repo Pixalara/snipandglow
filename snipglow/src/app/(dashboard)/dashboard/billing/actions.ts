@@ -161,7 +161,36 @@ export async function createInvoice(
     })),
     gstRate: gstRate,
   });
-  const billDiscountPct = blendedDiscountPct(totals.subtotal, totals.discountAmount);
+
+  // A "collected amount" below the computed total is the owner charging a round
+  // figure the per-item discounts don't add up to (e.g. ₹400 on a ₹410 bill).
+  // The shortfall becomes a bill-level discount so the invoice total equals what
+  // was actually collected. GST stays correct: the collected figure is
+  // GST-inclusive, so the taxable base and tax are re-derived from it. A value
+  // at or above the computed total is ignored (collecting extra is not a bill).
+  let finalSubtotal = totals.subtotal;
+  let finalDiscount = totals.discountAmount;
+  let finalGst = totals.gstAmount;
+  let finalTotal = totals.total;
+
+  if (input.collected_amount != null) {
+    if (!Number.isFinite(input.collected_amount) || input.collected_amount < 0) {
+      return { success: false, error: 'Collected amount is invalid.' };
+    }
+    const collected = Math.round(input.collected_amount);
+    if (collected < totals.total) {
+      finalTotal = collected;
+      if (gstRate > 0) {
+        const taxable = Math.round(finalTotal / (1 + gstRate / 100));
+        finalGst = finalTotal - taxable;
+        finalDiscount = finalSubtotal - taxable;
+      } else {
+        finalGst = 0;
+        finalDiscount = finalSubtotal - finalTotal;
+      }
+    }
+  }
+  const billDiscountPct = blendedDiscountPct(finalSubtotal, finalDiscount);
 
   // --- Wallet pre-check ---------------------------------------------------
   // Re-read the balance server-side (never trust the client). The authoritative
@@ -177,7 +206,7 @@ export async function createInvoice(
     if (input.wallet_amount > balance) {
       return { success: false, error: `Insufficient wallet balance. Available: ₹${balance}.` };
     }
-    walletUse = clampWalletUse(input.wallet_amount, totals.total, balance);
+    walletUse = clampWalletUse(input.wallet_amount, finalTotal, balance);
   }
 
   // If the bill carried a discount and the customer holds a membership, capture
@@ -185,7 +214,7 @@ export async function createInvoice(
   // discounted bill counts as "using" the membership. A lookup failure must
   // never block billing — it just leaves the invoice unattributed.
   let customerMembershipId: string | null = null;
-  if (totals.discountAmount > 0) {
+  if (finalDiscount > 0) {
     const today = new Date().toISOString().split('T')[0];
     const { data: cm } = await supabase
       .from('customer_memberships')
@@ -208,12 +237,12 @@ export async function createInvoice(
       customer_id: input.customer_id,
       appointment_id: input.appointment_id ?? null,
       invoice_number: '', // trigger will generate
-      subtotal: totals.subtotal,
-      discount_amount: totals.discountAmount,
+      subtotal: finalSubtotal,
+      discount_amount: finalDiscount,
       discount_pct: billDiscountPct,
-      gst_amount: totals.gstAmount,
+      gst_amount: finalGst,
       gst_rate: gstRate,
-      total: totals.total,
+      total: finalTotal,
       payment_method: input.payment_method,
       payment_status: 'paid',
       delivery_status: 'pending',

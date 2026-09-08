@@ -66,6 +66,9 @@ export default function NewBillingPage() {
   const [gstRate, setGstRate] = useState(0);
   const [defaultDiscount, setDefaultDiscount] = useState(0);
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>('cash');
+  // Actual amount collected, when it differs from the computed total. Empty =
+  // charge the full total. A value below the total is recorded as a discount.
+  const [collectedInput, setCollectedInput] = useState('');
 
   // Wallet state
   const [walletBalance, setWalletBalance] = useState(0);
@@ -198,12 +201,37 @@ export default function NewBillingPage() {
     gstRate: gstEnabled ? gstRate : 0,
   });
 
+  // Collected amount: when the owner charges a round figure below the computed
+  // total (e.g. ₹400 on a ₹410 bill), the shortfall becomes a discount and the
+  // collected value becomes the bill total. Mirrors the server calculation so
+  // the summary matches the invoice that gets stored.
+  const collectedNum =
+    collectedInput.trim() === '' ? null : Math.round(Number(collectedInput));
+  const collectedApplies =
+    collectedNum != null &&
+    Number.isFinite(collectedNum) &&
+    collectedNum >= 0 &&
+    collectedNum < totals.total;
+  const effectiveTotal = collectedApplies ? (collectedNum as number) : totals.total;
+  let effGst = totals.gstAmount;
+  let effDiscount = totals.discountAmount;
+  if (collectedApplies) {
+    if (gstEnabled && gstRate > 0) {
+      const taxable = Math.round(effectiveTotal / (1 + gstRate / 100));
+      effGst = effectiveTotal - taxable;
+      effDiscount = totals.subtotal - taxable;
+    } else {
+      effGst = 0;
+      effDiscount = totals.subtotal - effectiveTotal;
+    }
+  }
+
   // Wallet application (display + clamp only; the server re-validates & debits).
   const requestedWallet = useWallet ? Number(walletAmountInput || 0) : 0;
-  const walletApplied = clampWalletUse(requestedWallet, totals.total, walletBalance);
-  const payable = Math.max(0, totals.total - walletApplied);
+  const walletApplied = clampWalletUse(requestedWallet, effectiveTotal, walletBalance);
+  const payable = Math.max(0, effectiveTotal - walletApplied);
   // True when the wallet covers the entire bill — no external payment is needed.
-  const fullyWallet = totals.total > 0 && walletApplied > 0 && payable === 0;
+  const fullyWallet = effectiveTotal > 0 && walletApplied > 0 && payable === 0;
 
   // When the default discount becomes known (membership loads / settings),
   // apply it to any line that hasn't been given its own discount yet.
@@ -388,6 +416,7 @@ export default function NewBillingPage() {
         payment_method: paymentMethod,
         gst_rate: gstEnabled ? gstRate : 0,
         wallet_amount: walletApplied > 0 ? walletApplied : undefined,
+        collected_amount: collectedApplies ? (collectedNum as number) : undefined,
       });
 
       setSubmitting(false);
@@ -815,7 +844,7 @@ export default function NewBillingPage() {
                     onChange={(e) => {
                       const on = e.target.checked;
                       setUseWallet(on);
-                      if (on) setWalletAmountInput(String(Math.min(walletBalance, totals.total)));
+                      if (on) setWalletAmountInput(String(Math.min(walletBalance, effectiveTotal)));
                     }}
                     className="size-4 rounded border-border text-primary focus:ring-primary/30"
                   />
@@ -833,7 +862,7 @@ export default function NewBillingPage() {
                       id="wallet-use-amount"
                       type="number"
                       min={0}
-                      max={Math.min(walletBalance, totals.total)}
+                      max={Math.min(walletBalance, effectiveTotal)}
                       value={walletAmountInput}
                       onChange={(e) => setWalletAmountInput(e.target.value)}
                       className="h-8 w-28 rounded-lg border border-input bg-transparent px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
@@ -841,7 +870,7 @@ export default function NewBillingPage() {
                     />
                     <button
                       type="button"
-                      onClick={() => setWalletAmountInput(String(Math.min(walletBalance, totals.total)))}
+                      onClick={() => setWalletAmountInput(String(Math.min(walletBalance, effectiveTotal)))}
                       className="text-xs font-medium text-primary hover:underline"
                     >
                       Max
@@ -878,13 +907,11 @@ export default function NewBillingPage() {
                 <span className="text-foreground">{formatINR(totals.subtotal)}</span>
               </div>
 
-              {totals.discountAmount > 0 && (
+              {effDiscount > 0 && (
                 <div className="flex items-center justify-between text-sm">
+                  <span className="text-green-600 dark:text-green-400">Discount</span>
                   <span className="text-green-600 dark:text-green-400">
-                    Discount (per item)
-                  </span>
-                  <span className="text-green-600 dark:text-green-400">
-                    −{formatINR(totals.discountAmount)}
+                    −{formatINR(effDiscount)}
                   </span>
                 </div>
               )}
@@ -892,15 +919,49 @@ export default function NewBillingPage() {
               {gstEnabled && (
                 <div className="flex items-center justify-between text-sm">
                   <span className="text-muted-foreground">GST ({gstRate}%)</span>
-                  <span className="text-foreground">+{formatINR(totals.gstAmount)}</span>
+                  <span className="text-foreground">+{formatINR(effGst)}</span>
                 </div>
+              )}
+
+              {/* Collected amount — charge a round figure the discounts don't
+                  add up to; the shortfall is recorded as a discount. */}
+              <div className="flex flex-wrap items-center justify-between gap-2 pt-1">
+                <label htmlFor="collected-amount" className="text-sm text-muted-foreground">
+                  Collected amount
+                </label>
+                <div className="relative w-28">
+                  <span className="pointer-events-none absolute left-2 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">
+                    ₹
+                  </span>
+                  <input
+                    id="collected-amount"
+                    type="number"
+                    min={0}
+                    inputMode="numeric"
+                    value={collectedInput}
+                    onChange={(e) => setCollectedInput(e.target.value)}
+                    placeholder={String(totals.total)}
+                    className="h-9 w-full rounded-lg border border-input bg-transparent pl-5 pr-2 text-right text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                    aria-label="Amount collected from the customer"
+                  />
+                </div>
+              </div>
+              {collectedApplies && (
+                <p className="text-xs text-green-600 dark:text-green-400">
+                  Auto discount of {formatINR(totals.total - effectiveTotal)} applied from the collected amount.
+                </p>
+              )}
+              {collectedNum != null && collectedNum > totals.total && (
+                <p className="text-xs text-muted-foreground">
+                  Collected amount is above the bill total — charging the full {formatINR(totals.total)}.
+                </p>
               )}
 
               <div className="border-t border-border pt-2 mt-2">
                 <div className="flex items-center justify-between">
                   <span className="text-base font-semibold text-foreground">Total</span>
                   <span className="text-lg font-bold text-foreground">
-                    {formatINR(totals.total)}
+                    {formatINR(effectiveTotal)}
                   </span>
                 </div>
 
