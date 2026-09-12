@@ -154,6 +154,9 @@ describe('Property 7: Not-connected tenants route through shared credentials', (
                 access_token_encrypted: encryptToken(token),
               },
             ],
+            // Plan-eligible so this property exercises the STATUS logic, not the
+            // plan gate (which is covered by its own property below).
+            tenants: [{ id: tenantId, plan_tier: 'pro' }],
           };
 
           const creds = await getCredentialsForTenant(tenantId);
@@ -194,6 +197,7 @@ describe('Property 8: Connected dedicated tenants route through decrypted dedica
                 access_token_encrypted: encryptToken(token),
               },
             ],
+            tenants: [{ id: tenantId, plan_tier: 'pro' }],
           };
 
           const creds = await getCredentialsForTenant(tenantId);
@@ -251,6 +255,7 @@ describe('Property 9: Decryption failure falls back to shared and records an err
                   access_token_encrypted: badCipher,
                 },
               ],
+              tenants: [{ id: tenantId, plan_tier: 'pro' }],
             };
 
             const creds = await getCredentialsForTenant(tenantId);
@@ -303,6 +308,7 @@ describe('Property 9: Decryption failure falls back to shared and records an err
                   access_token_encrypted: badCipher,
                 },
               ],
+              tenants: [{ id: tenantId, plan_tier: 'pro' }],
             };
 
             const creds = await getCredentialsForTenant(tenantId);
@@ -370,6 +376,86 @@ describe('Property 10: Inbound routing by dedicated phone number id', () => {
         },
       ),
       { numRuns: 100 },
+    );
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Plan gate: a dedicated WhatsApp number is a Pro/Growth capability
+// ---------------------------------------------------------------------------
+// Essentials (starter) tenants — and any tenant whose plan does not include a
+// dedicated number — must ALWAYS send from the shared platform number, even
+// when a fully connected dedicated row with a valid token is present. This
+// guarantees an Essentials tenant's messaging is never moved off the shared
+// Snip and Glow number, and that a downgraded tenant reverts automatically.
+describe('Plan gate: non-eligible plans never use dedicated credentials', () => {
+  it('routes a connected dedicated row to shared when the plan is not Pro/Growth', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.uuid(),
+        fc.string(),
+        fc.string({ minLength: 1 }),
+        fc.string({ minLength: 1 }),
+        fc.constantFrom('starter', '', 'unknown', 'STARTER'),
+        async (tenantId, token, phoneNumberId, wabaId, planTier) => {
+          store.tables = {
+            tenant_whatsapp_settings: [
+              {
+                tenant_id: tenantId,
+                mode: 'dedicated',
+                onboarding_status: 'connected',
+                phone_number_id: phoneNumberId,
+                waba_id: wabaId,
+                access_token_encrypted: encryptToken(token),
+              },
+            ],
+            tenants: [{ id: tenantId, plan_tier: planTier }],
+          };
+
+          const creds = await getCredentialsForTenant(tenantId);
+          // Not plan-eligible → shared platform credentials, never the dedicated token.
+          expect(creds).not.toBeNull();
+          expect(creds!.accessToken).toBe(PLATFORM_ACCESS_TOKEN);
+          expect(creds!.phoneNumberId).toBe(SHARED_PHONE_NUMBER_ID);
+          expect(creds!.businessAccountId).toBe(PLATFORM_WABA_ID);
+        },
+      ),
+      { numRuns: 50 },
+    );
+  });
+
+  it('routes a connected dedicated row to the dedicated number on Pro/Growth', async () => {
+    await fc.assert(
+      fc.asyncProperty(
+        fc.uuid(),
+        fc.string(),
+        fc.string({ minLength: 1 }),
+        fc.string({ minLength: 1 }),
+        fc.constantFrom('pro', 'enterprise'),
+        async (tenantId, token, phoneNumberId, wabaId, planTier) => {
+          store.tables = {
+            tenant_whatsapp_settings: [
+              {
+                tenant_id: tenantId,
+                mode: 'dedicated',
+                onboarding_status: 'connected',
+                phone_number_id: phoneNumberId,
+                waba_id: wabaId,
+                access_token_encrypted: encryptToken(token),
+              },
+            ],
+            tenants: [{ id: tenantId, plan_tier: planTier }],
+          };
+
+          const creds = await getCredentialsForTenant(tenantId);
+          // Eligible plan → the tenant's own decrypted dedicated credentials.
+          expect(creds).not.toBeNull();
+          expect(creds!.accessToken).toBe(token);
+          expect(creds!.phoneNumberId).toBe(phoneNumberId);
+          expect(creds!.businessAccountId).toBe(wabaId);
+        },
+      ),
+      { numRuns: 50 },
     );
   });
 });

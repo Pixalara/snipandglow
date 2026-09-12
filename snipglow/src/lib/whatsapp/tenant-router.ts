@@ -3,6 +3,7 @@ import { isSharedNumber, parseBookingSlug, getPlatformCredentials } from './conf
 import type { WhatsAppCredentials } from './config';
 import { decryptToken } from '@/lib/crypto/token-encryption';
 import type { OnboardingStatus } from './onboarding-status';
+import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
 
 /**
  * The subset of `tenant_whatsapp_settings` fields the router needs to decide
@@ -413,9 +414,33 @@ export async function getCredentialsForTenant(tenantId: string): Promise<WhatsAp
     .single() as any);
 
   const platform = getPlatformCredentials();
+
+  // Plan gate: a dedicated WhatsApp number is a Pro/Growth capability. An
+  // Essentials tenant — or one that has since downgraded — always sends from the
+  // shared platform number, even if a connected dedicated row still exists. We
+  // treat the dedicated settings as absent for a non-eligible plan so
+  // resolveCredentials fails closed to shared. plan_tier is read fresh so a plan
+  // change takes effect on the very next message.
+  const eligible = await isDedicatedWhatsAppEligible(admin, tenantId);
+  const effectiveSettings = eligible ? ((settings as DedicatedSettings) ?? null) : null;
+
   return resolveCredentials(
-    (settings as DedicatedSettings) ?? null,
+    effectiveSettings,
     platform,
     (reason) => console.error(`[Router] credentials for tenant ${tenantId}: ${reason}`),
   );
+}
+
+/**
+ * Whether the tenant's CURRENT plan includes a dedicated WhatsApp number.
+ * Read at send time so a downgrade reverts the tenant to the shared number
+ * immediately, without depending on the stored credentials being cleared.
+ */
+async function isDedicatedWhatsAppEligible(admin: any, tenantId: string): Promise<boolean> {
+  const { data: tenant } = await (admin
+    .from('tenants' as any)
+    .select('plan_tier')
+    .eq('id', tenantId)
+    .single() as any);
+  return planIncludesDedicatedWhatsApp((tenant as { plan_tier?: string | null } | null)?.plan_tier ?? null);
 }

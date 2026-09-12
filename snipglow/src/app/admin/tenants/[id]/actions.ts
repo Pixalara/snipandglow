@@ -7,6 +7,7 @@ import { computeSubscriptionWindow } from '@/lib/razorpay/subscription-window';
 import { encryptToken } from '@/lib/crypto/token-encryption';
 import { upsertDedicatedCredentials } from '@/lib/whatsapp/credential-store';
 import { recordOnboardingEvent } from '@/lib/whatsapp/onboarding-log';
+import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
 
 // =============================================================================
 // Admin — edit a tenant's GST details (even when locked).
@@ -114,14 +115,24 @@ export async function adminActivateDedicatedWhatsApp(
 
   const admin = createAdminClient();
 
-  // Confirm the tenant exists (and capture name for the audit log).
+  // Confirm the tenant exists (and capture name + plan for the gate/audit log).
   const { data: tenant } = await (admin
     .from('tenants' as any)
-    .select('name')
+    .select('name, plan_tier')
     .eq('id', tenantId)
     .single() as any);
 
   if (!tenant) return { success: false, error: 'Tenant not found.' };
+
+  // Dedicated WhatsApp is a Pro/Growth capability. Refuse to connect a dedicated
+  // number for an Essentials tenant so their messaging is never moved off the
+  // shared Snip and Glow number.
+  if (!planIncludesDedicatedWhatsApp((tenant as any).plan_tier)) {
+    return {
+      success: false,
+      error: 'Dedicated WhatsApp is available only on the Pro or Growth plan. Upgrade the tenant\u2019s plan first.',
+    };
+  }
 
   // Encrypt the access token before it ever touches the database (Req 4.1, 4.7).
   let accessTokenEncrypted: string;

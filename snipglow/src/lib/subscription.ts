@@ -32,6 +32,26 @@ export function planLabel(tier?: string | null): string {
   }
 }
 
+// =============================================================================
+// Dedicated WhatsApp eligibility (single source of truth).
+//
+// A dedicated WhatsApp number — the salon's own Cloud API number, so their
+// bookings, reminders, and bill receipts send/receive from their own WhatsApp
+// instead of the shared Snip and Glow number — is a paid-tier capability.
+// Essentials (starter) always uses the shared platform number.
+//
+// Used in two places so the rule can never drift:
+//   • admin activation refuses to connect a dedicated number for a non-eligible
+//     tenant, and
+//   • the WhatsApp router treats dedicated credentials as absent (falls back to
+//     shared) for any tenant whose current plan is not eligible — so a tenant
+//     that later downgrades reverts to the shared number automatically.
+// =============================================================================
+export function planIncludesDedicatedWhatsApp(tier?: string | null): boolean {
+  const t = (tier || '').toLowerCase();
+  return t === 'pro' || t === 'enterprise';
+}
+
 export interface SubscriptionState {
   isExpired: boolean;
   isTrial: boolean;
