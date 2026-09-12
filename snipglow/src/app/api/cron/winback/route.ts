@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
+import { getCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 
 // =============================================================================
@@ -28,6 +29,15 @@ export async function GET(request: NextRequest) {
   }
 
   const admin = createAdminClient();
+
+  // Resolve WhatsApp credentials per tenant (a dedicated tenant sends from its
+  // own number; everyone else uses the shared platform number). Memoised so
+  // each tenant resolves only once per run.
+  const credsCache = new Map<string, Awaited<ReturnType<typeof getCredentialsForTenant>>>();
+  const credsFor = async (tenantId: string) => {
+    if (!credsCache.has(tenantId)) credsCache.set(tenantId, await getCredentialsForTenant(tenantId));
+    return credsCache.get(tenantId) ?? credentials;
+  };
 
   // ── Plan gating ───────────────────────────────────────────────────────────
   // Win-back is a MARKETING feature — Pro & Growth only. Essentials (starter)
@@ -111,7 +121,7 @@ export async function GET(request: NextRequest) {
       if (!salonName) continue;
 
       // Send renewal_reminder template
-      await sendMessage(credentials, phone, {
+      await sendMessage(await credsFor(customer.tenant_id), phone, {
         type: 'template',
         template: {
           name: 'renewal_reminder',
@@ -178,7 +188,7 @@ export async function GET(request: NextRequest) {
       if (!salonName) continue;
 
       // Send winback_60_day template
-      await sendMessage(credentials, phone, {
+      await sendMessage(await credsFor(customer.tenant_id), phone, {
         type: 'template',
         template: {
           name: 'winback_60_day',

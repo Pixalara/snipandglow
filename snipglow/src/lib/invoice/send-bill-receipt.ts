@@ -15,7 +15,7 @@
 // =============================================================================
 
 import { createAdminClient } from '@/lib/supabase/admin';
-import { getPlatformCredentials } from '@/lib/whatsapp/config';
+import { getCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { generateInvoicePdfBuffer } from '@/lib/invoice/generate-pdf';
 import { uploadInvoicePdf } from '@/lib/invoice/upload-invoice';
@@ -166,7 +166,9 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
   try {
     console.log('[BillReceipt] Starting for customer:', customerId, 'tenant:', tenantId);
     const admin = createAdminClient();
-    const credentials = getPlatformCredentials();
+    // Resolve per-tenant credentials: a dedicated tenant sends from their own
+    // number; everyone else falls back to the shared platform number.
+    const credentials = await getCredentialsForTenant(tenantId);
     if (!credentials) {
       console.log('[BillReceipt] No credentials found');
       return;
@@ -378,7 +380,8 @@ export async function sendWalletRechargeReceipt(input: {
 
   try {
     const admin = createAdminClient();
-    const credentials = getPlatformCredentials();
+    // Resolve per-tenant credentials (dedicated number when connected, else shared).
+    const credentials = await getCredentialsForTenant(tenantId);
     if (!credentials) return;
 
     const { data: customer } = await admin

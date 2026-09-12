@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
+import { getCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 
 // =============================================================================
@@ -24,6 +25,15 @@ export async function GET(request: NextRequest) {
   }
 
   const admin = createAdminClient();
+
+  // Resolve WhatsApp credentials per tenant (a dedicated tenant sends from its
+  // own number; everyone else uses the shared platform number). Memoised so a
+  // tenant with many reminders resolves only once per run.
+  const credsCache = new Map<string, Awaited<ReturnType<typeof getCredentialsForTenant>>>();
+  const credsFor = async (tenantId: string) => {
+    if (!credsCache.has(tenantId)) credsCache.set(tenantId, await getCredentialsForTenant(tenantId));
+    return credsCache.get(tenantId) ?? credentials;
+  };
 
   // Get IST date/time
   const nowIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false });
@@ -82,7 +92,7 @@ export async function GET(request: NextRequest) {
 
       const phone = customer.phone.replace(/\D/g, '');
 
-      await sendMessage(credentials, phone, {
+      await sendMessage(await credsFor(appt.tenant_id), phone, {
         type: 'template',
         template: {
           name: 'appointment_reminder_v1',
@@ -155,7 +165,7 @@ export async function GET(request: NextRequest) {
 
         const phone = customer.phone.replace(/\D/g, '');
 
-        await sendMessage(credentials, phone, {
+        await sendMessage(await credsFor(appt.tenant_id), phone, {
           type: 'template',
           template: {
             name: 'appointment_reminder_v1',

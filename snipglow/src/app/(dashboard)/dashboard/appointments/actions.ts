@@ -4,7 +4,7 @@ import { createClient } from '@/lib/supabase/server';
 import { createAdminClient } from '@/lib/supabase/admin';
 import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
-import { getPlatformCredentials } from '@/lib/whatsapp/config';
+import { getCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
 import { calculatePerItemInvoiceTotal, blendedDiscountPct } from '@/lib/utils';
@@ -127,7 +127,8 @@ export async function createAppointment(
     const admin = createAdminClient();
     const { data: customer } = await admin.from('customers').select('name, phone').eq('id', input.customer_id).single();
     if (customer?.phone) {
-      const credentials = getPlatformCredentials();
+      // Dedicated tenants send the booking confirmation from their own number.
+      const credentials = await getCredentialsForTenant(tenantId);
       if (credentials) {
         // Get service names
         const svcIds = input.extra_service_ids || [input.service_id];
@@ -1082,7 +1083,7 @@ function formatTime12h(time: string): string {
 async function notifyCustomerCancellation(appointment: any) {
   try {
     const admin = createAdminClient();
-    const credentials = getPlatformCredentials();
+    const credentials = await getCredentialsForTenant(appointment.tenant_id);
     if (!credentials) return;
 
     // Get customer phone
@@ -1156,7 +1157,7 @@ async function notifyCustomerReschedule(
 ) {
   try {
     const admin = createAdminClient();
-    const credentials = getPlatformCredentials();
+    const credentials = await getCredentialsForTenant(appointment.tenant_id);
     if (!credentials) return;
 
     // Get customer phone
