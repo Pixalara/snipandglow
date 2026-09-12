@@ -32,18 +32,25 @@ export default async function DashboardPage() {
   const tenantId = user.user_metadata?.tenant_id;
   const role = (user.user_metadata?.role as UserRole) ?? 'staff';
 
-  // First-run tour: owners only, and only until it has been completed once for
-  // this salon (recorded in tenants.settings.tour_seen_at).
+  // First-run tour: owners only, shown once per salon (recorded in
+  // tenants.settings.tour_seen_at) AND only to salons that onboarded after the
+  // tour shipped. Existing salons predate the tour, so they have no
+  // tour_seen_at recorded — without the created-at cutoff every established
+  // tenant would be shown the "getting started" tour on their next login.
+  const TOUR_LAUNCH_CUTOFF = Date.parse('2026-08-27T00:00:00Z');
   let showTour = false;
   let salonName = '';
   if (tenantId && role === 'owner') {
     const { data: tenantRow } = await supabase
       .from('tenants')
-      .select('name, settings')
+      .select('name, settings, created_at')
       .eq('id', tenantId)
       .maybeSingle();
     salonName = (tenantRow?.name as string) ?? '';
-    showTour = !((tenantRow?.settings as Record<string, unknown> | null)?.tour_seen_at);
+    const tourSeen = !!((tenantRow?.settings as Record<string, unknown> | null)?.tour_seen_at);
+    const createdAtMs = tenantRow?.created_at ? Date.parse(tenantRow.created_at as string) : NaN;
+    const isNewSalon = Number.isFinite(createdAtMs) && createdAtMs >= TOUR_LAUNCH_CUTOFF;
+    showTour = isNewSalon && !tourSeen;
   }
 
   // Fetch quick stats
