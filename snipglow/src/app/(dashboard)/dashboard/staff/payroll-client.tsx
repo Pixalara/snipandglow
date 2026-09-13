@@ -196,18 +196,20 @@ export function PayrollClient({ payrollRecords, employees, currentMonth }: Payro
               {new Date(row.paid_date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short' })}
             </span>
           )}
-          {/* Available for paid AND pending records — staff often need the
-              payslip before the transfer clears. */}
-          <Button
-            variant="ghost"
-            size="sm"
-            className="rounded-lg text-xs"
-            onClick={() => setShowPayslip(row)}
-            title={`Payslip for ${row.employee_name}`}
-          >
-            <FileText className="size-3.5 mr-1" />
-            Payslip
-          </Button>
+          {/* Payslip is issued ONLY after the salary is marked paid — a payslip
+              for an unpaid month is misleading and its "paid on" line is blank. */}
+          {row.payment_status === 'paid' && (
+            <Button
+              variant="ghost"
+              size="sm"
+              className="rounded-lg text-xs"
+              onClick={() => setShowPayslip(row)}
+              title={`Payslip for ${row.employee_name}`}
+            >
+              <FileText className="size-3.5 mr-1" />
+              Payslip
+            </Button>
+          )}
         </div>
       ),
     },

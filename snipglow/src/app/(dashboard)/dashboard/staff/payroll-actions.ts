@@ -39,7 +39,9 @@ export async function upsertPayroll(input: UpsertPayrollInput): Promise<ActionRe
 
   const bonus = input.bonus ?? 0;
   const deductions = input.deductions ?? 0;
-  const netSalary = input.base_salary + bonus - deductions;
+  // Round to paise so floating-point addition can never leave a value like
+  // 2449.9999999999995 in the payroll ledger.
+  const netSalary = Math.round((input.base_salary + bonus - deductions) * 100) / 100;
 
   // Check if a record already exists for this employee + month.
   //

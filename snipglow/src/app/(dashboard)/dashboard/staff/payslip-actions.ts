@@ -181,6 +181,14 @@ export async function getPayslipDocument(
     return { success: false, error: 'That payroll record could not be found.' };
   }
 
+  // A payslip is a record of money actually paid. Refuse to issue one until the
+  // salary is marked paid, so it can never show a blank "paid on" date or imply
+  // a payment that hasn't happened. The UI hides the button too; this is the
+  // authoritative guard.
+  if (payroll.payment_status !== 'paid') {
+    return { success: false, error: 'Payslip is available only after this salary is marked as paid.' };
+  }
+
   const range = monthRange(payroll.month);
   if (!range) {
     return { success: false, error: `This record has an invalid month: ${payroll.month}` };

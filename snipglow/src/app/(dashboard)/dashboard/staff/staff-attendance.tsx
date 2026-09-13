@@ -17,7 +17,6 @@ import {
   Moon,
   Save,
   Send,
-  Sparkles,
   Users,
   Wallet,
   X,
@@ -611,7 +610,7 @@ function DayView() {
       {rows.length > 0 && (
         <div className="rounded-xl border border-border bg-muted/30 p-3">
           <p className="mb-2.5 flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
-            <Sparkles className="size-3" />
+            <Clock className="size-3" />
             Quick fill
           </p>
           <div className="flex flex-col gap-2.5 sm:flex-row sm:items-end">
@@ -651,7 +650,7 @@ function DayView() {
 
             <div className="flex flex-1 flex-col gap-2 sm:flex-row sm:justify-end">
               <Button variant="outline" onClick={applyShiftToAll} disabled={loading}>
-                <Sparkles className="size-3.5" />
+                <Users className="size-3.5" />
                 Apply to everyone
               </Button>
               <Button variant="outline" onClick={copyPrevious} disabled={loading}>
@@ -1457,7 +1456,7 @@ function EmployeeMonthEditor({
         </p>
         <div className="flex items-center gap-2">
           <Button variant="outline" size="sm" onClick={fillMonth}>
-            <Sparkles className="size-3" />
+            <Clock className="size-3" />
             Fill standard shift
           </Button>
           <Button size="sm" onClick={handleSave} disabled={saving || dirtyDates.length === 0}>
