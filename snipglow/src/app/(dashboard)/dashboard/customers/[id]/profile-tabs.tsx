@@ -11,10 +11,11 @@ interface ProfileTabsProps {
   visitHistory: React.ReactNode;
   billingHistory: React.ReactNode;
   walletHistory: React.ReactNode;
+  loyaltyHistory: React.ReactNode;
 }
 
-export function ProfileTabs({ visitHistory, billingHistory, walletHistory }: ProfileTabsProps) {
-  const [activeTab, setActiveTab] = useState<'visits' | 'billing' | 'wallet'>('visits');
+export function ProfileTabs({ visitHistory, billingHistory, walletHistory, loyaltyHistory }: ProfileTabsProps) {
+  const [activeTab, setActiveTab] = useState<'visits' | 'billing' | 'wallet' | 'loyalty'>('visits');
 
   const tabClass = (active: boolean) =>
     cn(
@@ -37,6 +38,9 @@ export function ProfileTabs({ visitHistory, billingHistory, walletHistory }: Pro
         <button onClick={() => setActiveTab('wallet')} className={tabClass(activeTab === 'wallet')}>
           Wallet
         </button>
+        <button onClick={() => setActiveTab('loyalty')} className={tabClass(activeTab === 'loyalty')}>
+          Points
+        </button>
       </div>
 
       {/* Tab Content */}
@@ -44,6 +48,7 @@ export function ProfileTabs({ visitHistory, billingHistory, walletHistory }: Pro
         {activeTab === 'visits' && visitHistory}
         {activeTab === 'billing' && billingHistory}
         {activeTab === 'wallet' && walletHistory}
+        {activeTab === 'loyalty' && loyaltyHistory}
       </div>
     </div>
   );

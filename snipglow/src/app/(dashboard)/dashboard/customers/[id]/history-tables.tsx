@@ -225,3 +225,80 @@ export function WalletHistoryTable({ transactions }: { transactions: WalletTxRow
     />
   );
 }
+
+
+// =============================================================================
+// Loyalty Points History Table
+// =============================================================================
+
+/** Serializable loyalty ledger row (points are SIGNED: +earn/+bonus, −redeem). */
+export interface LoyaltyTxRow {
+  id: string;
+  type: string;
+  points: number;
+  balance_after: number;
+  description: string | null;
+  created_at: string;
+}
+
+const LOYALTY_TYPE_META: Record<string, { label: string; className: string }> = {
+  earn: { label: 'Earned', className: 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400' },
+  bonus: { label: 'Bonus', className: 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400' },
+  redeem: { label: 'Redeemed', className: 'bg-rose-100 text-rose-700 dark:bg-rose-900/30 dark:text-rose-400' },
+  expire: { label: 'Expired', className: 'bg-gray-100 text-gray-700 dark:bg-gray-800/50 dark:text-gray-300' },
+  adjustment: { label: 'Adjustment', className: 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400' },
+};
+
+export function LoyaltyHistoryTable({ transactions }: { transactions: LoyaltyTxRow[] }) {
+  const columns: Column<LoyaltyTxRow>[] = [
+    {
+      key: 'type',
+      header: 'Type',
+      render: (row) => {
+        const meta = LOYALTY_TYPE_META[row.type] ?? { label: row.type, className: 'bg-gray-100 text-gray-700' };
+        return (
+          <span className={`inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium ${meta.className}`}>
+            {meta.label}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'points',
+      header: 'Points',
+      render: (row) => {
+        const positive = row.points > 0;
+        return (
+          <span className={`font-medium ${positive ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400'}`}>
+            {positive ? '+' : ''}{row.points.toLocaleString('en-IN')}
+          </span>
+        );
+      },
+    },
+    {
+      key: 'balance_after',
+      header: 'Balance',
+      render: (row) => <span className="font-medium text-foreground">{row.balance_after.toLocaleString('en-IN')} pts</span>,
+    },
+    {
+      key: 'description',
+      header: 'Note',
+      render: (row) => <span className="text-muted-foreground">{row.description ?? '—'}</span>,
+    },
+    {
+      key: 'date',
+      header: 'Date',
+      render: (row) => <span className="text-muted-foreground">{formatDateIN(row.created_at)}</span>,
+    },
+  ];
+
+  return (
+    <DataTable
+      columns={columns}
+      data={transactions}
+      getRowKey={(row) => row.id}
+      emptyMessage="No points activity yet"
+      emptyHint="Points earned and redeemed by this customer will appear here."
+    />
+  );
+}

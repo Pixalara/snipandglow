@@ -68,24 +68,31 @@ function buildPreviewHTML(doc: InvoiceDocument): string {
       : '';
 
   const walletUsed = doc.wallet_amount ?? 0;
+  const loyaltyUsed = doc.loyalty_amount ?? 0;
+  const loyaltyPts = doc.loyalty_points_redeemed ?? 0;
+  const loyaltyEarned = doc.loyalty_points_earned ?? 0;
   const isRecharge = doc.invoice_type === 'wallet_recharge';
+  const paidAfter = Math.max(0, doc.total - walletUsed - loyaltyUsed);
+  const earnedRow = !isRecharge && loyaltyEarned > 0
+    ? `<div style="display:flex;justify-content:space-between;color:#a21caf;padding:3px 0;"><span>Points Earned</span><span style="font-weight:600;">+ ${loyaltyEarned} pts</span></div>`
+    : '';
   const walletRows =
-    !isRecharge && walletUsed > 0
+    !isRecharge && (walletUsed > 0 || loyaltyUsed > 0)
       ? `<div style="margin-top:6px;">
-          <div style="display:flex;justify-content:space-between;color:#e11d48;padding:3px 0;">
-            <span>Wallet Used</span><span style="font-weight:600;">- ${formatINR(walletUsed)}</span>
-          </div>
+          ${walletUsed > 0 ? `<div style="display:flex;justify-content:space-between;color:#e11d48;padding:3px 0;"><span>Wallet Used</span><span style="font-weight:600;">- ${formatINR(walletUsed)}</span></div>` : ''}
+          ${loyaltyUsed > 0 ? `<div style="display:flex;justify-content:space-between;color:#e11d48;padding:3px 0;"><span>Points Redeemed${loyaltyPts > 0 ? ` (${loyaltyPts})` : ''}</span><span style="font-weight:600;">- ${formatINR(loyaltyUsed)}</span></div>` : ''}
           <div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;">
-            <span>Paid (${escapeHtml(doc.payment_method)})</span><span style="font-weight:600;color:#000;">${formatINR(Math.max(0, doc.total - walletUsed))}</span>
+            <span>Paid (${escapeHtml(doc.payment_method)})</span><span style="font-weight:600;color:#000;">${formatINR(paidAfter)}</span>
           </div>
-          ${doc.wallet_balance_after != null ? `<div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;"><span>Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span></div>` : ''}
+          ${doc.wallet_balance_after != null && walletUsed > 0 ? `<div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;"><span>Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span></div>` : ''}
+          ${earnedRow}
         </div>`
       : isRecharge
         ? `<div style="margin-top:6px;">
             ${(doc.wallet_promo ?? 0) > 0 ? `<div style="display:flex;justify-content:space-between;color:#a21caf;padding:3px 0;"><span>Promotional Bonus</span><span style="font-weight:600;">+ ${formatINR(doc.wallet_promo ?? 0)}</span></div>` : ''}
             ${doc.wallet_balance_after != null ? `<div style="display:flex;justify-content:space-between;color:#404040;padding:3px 0;"><span>New Wallet Balance</span><span style="font-weight:600;color:#000;">${formatINR(doc.wallet_balance_after)}</span></div>` : ''}
           </div>`
-        : '';
+        : (earnedRow ? `<div style="margin-top:6px;">${earnedRow}</div>` : '');
 
   const salon = doc.salon;
   const cust = doc.customer;

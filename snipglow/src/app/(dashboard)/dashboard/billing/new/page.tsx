@@ -8,10 +8,12 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
 import { SearchableSelect } from '@/components/searchable-select';
 import { calculatePerItemInvoiceTotal, formatINR } from '@/lib/utils';
 import { clampWalletUse } from '@/lib/wallet';
+import { clampPointsUse, pointsToRupees, rupeesToPoints, pointsForSpend, type LoyaltyPointsConfig } from '@/lib/loyalty-points';
 import { searchCustomers, getActiveServices } from '../../appointments/actions';
-import { createInvoice, getCustomerActiveMembership, getTenantGstSettings, getBillableProducts, type BillableProduct } from '../actions';
+import { createInvoice, getCustomerActiveMembership, getTenantGstSettings, getBillableProducts, getTenantLoyaltyConfig, type BillableProduct } from '../actions';
 import { getAvailableMemberships } from '../../customers/actions';
 import { getCustomerWalletBalance } from '../../customers/wallet-actions';
+import { getCustomerLoyalty } from '../../customers/loyalty-actions';
 import type { Service, PaymentMethod, Membership, CreateInvoiceItemInput } from '@/types';
 
 // =============================================================================
@@ -81,6 +83,12 @@ export default function NewBillingPage() {
   /** Bumped by the Retry button to re-run the lookup. */
   const [walletReloadKey, setWalletReloadKey] = useState(0);
 
+  // Loyalty points state
+  const [loyaltyConfig, setLoyaltyConfig] = useState<LoyaltyPointsConfig | null>(null);
+  const [loyaltyBalance, setLoyaltyBalance] = useState(0);
+  const [useLoyalty, setUseLoyalty] = useState(false);
+  const [loyaltyPointsInput, setLoyaltyPointsInput] = useState('');
+
   // UI state
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -92,11 +100,12 @@ export default function NewBillingPage() {
   // Load services, membership plans, and GST settings on mount
   useEffect(() => {
     async function loadData() {
-      const [svcData, membData, gstSettings, prodData] = await Promise.all([
+      const [svcData, membData, gstSettings, prodData, loyaltyCfg] = await Promise.all([
         getActiveServices(),
         getAvailableMemberships(),
         getTenantGstSettings(),
         getBillableProducts(),
+        getTenantLoyaltyConfig(),
       ]);
       setServices(svcData);
       setMembershipPlans(membData);
@@ -104,6 +113,7 @@ export default function NewBillingPage() {
       setGstEnabled(gstSettings.gst_enabled);
       setGstRate(gstSettings.gst_rate);
       setDefaultDiscount(gstSettings.discount_enabled ? gstSettings.discount_value : 0);
+      setLoyaltyConfig(loyaltyCfg);
     }
     loadData();
   }, []);
@@ -188,6 +198,21 @@ export default function NewBillingPage() {
     };
   }, [selectedCustomer, walletReloadKey]);
 
+  // Fetch loyalty points balance when a customer is selected.
+  useEffect(() => {
+    if (!selectedCustomer) {
+      setLoyaltyBalance(0);
+      setUseLoyalty(false);
+      setLoyaltyPointsInput('');
+      return;
+    }
+    let cancelled = false;
+    getCustomerLoyalty(selectedCustomer.id)
+      .then((l) => { if (!cancelled) setLoyaltyBalance(l.balance); })
+      .catch(() => { if (!cancelled) setLoyaltyBalance(0); });
+    return () => { cancelled = true; };
+  }, [selectedCustomer]);
+
   // Per-item discounts. Membership / tenant-default % becomes the default
   // discount on each line (the user can override any line).
   const membershipDiscount = activeMembership?.discount_pct ?? 0;
@@ -233,6 +258,32 @@ export default function NewBillingPage() {
   // True when the wallet covers the entire bill — no external payment is needed.
   const fullyWallet = effectiveTotal > 0 && walletApplied > 0 && payable === 0;
 
+  // Loyalty redemption (display + clamp only; the server re-validates & debits).
+  const loyaltyRedeemValue = loyaltyConfig?.redeemValue ?? 1;
+  const loyaltyActive = !!loyaltyConfig?.enabled && loyaltyBalance > 0 && loyaltyRedeemValue > 0;
+  // Ceiling: capped by balance, the tenant's max-redeem %, and the amount left
+  // after the wallet is applied.
+  const maxRedeemablePoints = loyaltyActive
+    ? Math.min(
+        clampPointsUse({
+          requestedPoints: loyaltyBalance,
+          balance: loyaltyBalance,
+          billTotal: effectiveTotal,
+          redeemValue: loyaltyRedeemValue,
+          maxRedeemPct: loyaltyConfig!.maxRedeemPct,
+        }),
+        rupeesToPoints(payable, loyaltyRedeemValue)
+      )
+    : 0;
+  const canRedeemLoyalty = loyaltyActive && maxRedeemablePoints > 0 && maxRedeemablePoints >= (loyaltyConfig?.minRedeem ?? 0);
+  const requestedLoyaltyPoints = useLoyalty ? Math.floor(Number(loyaltyPointsInput || 0)) : 0;
+  let loyaltyPointsApplied = Math.min(Math.max(0, requestedLoyaltyPoints), maxRedeemablePoints);
+  if (loyaltyPointsApplied < (loyaltyConfig?.minRedeem ?? 0)) loyaltyPointsApplied = 0;
+  const loyaltyValue = pointsToRupees(loyaltyPointsApplied, loyaltyRedeemValue);
+  const finalPayable = Math.max(0, payable - loyaltyValue);
+  // Points the customer will EARN on this bill (preview only; the DB awards it).
+  const pointsWillEarn = loyaltyConfig?.enabled ? pointsForSpend(effectiveTotal, loyaltyConfig.earnRate) : 0;
+
   // When the default discount becomes known (membership loads / settings),
   // apply it to any line that hasn't been given its own discount yet.
   useEffect(() => {
@@ -260,6 +311,9 @@ export default function NewBillingPage() {
     setWalletBalance(0);
     setUseWallet(false);
     setWalletAmountInput('');
+    setLoyaltyBalance(0);
+    setUseLoyalty(false);
+    setLoyaltyPointsInput('');
   }
 
   function handleAddLineItem() {
@@ -416,6 +470,7 @@ export default function NewBillingPage() {
         payment_method: paymentMethod,
         gst_rate: gstEnabled ? gstRate : 0,
         wallet_amount: walletApplied > 0 ? walletApplied : undefined,
+        loyalty_points: loyaltyPointsApplied > 0 ? loyaltyPointsApplied : undefined,
         collected_amount: collectedApplies ? (collectedNum as number) : undefined,
       });
 
@@ -880,6 +935,53 @@ export default function NewBillingPage() {
               </div>
             )}
 
+            {/* Redeem Loyalty Points */}
+            {canRedeemLoyalty && (
+              <div className="space-y-2 rounded-lg border border-fuchsia-200 dark:border-fuchsia-800/30 bg-fuchsia-50/50 dark:bg-fuchsia-900/10 p-3">
+                <label className="flex flex-wrap items-center gap-x-2 gap-y-1 cursor-pointer">
+                  <input
+                    type="checkbox"
+                    checked={useLoyalty}
+                    onChange={(e) => {
+                      const on = e.target.checked;
+                      setUseLoyalty(on);
+                      if (on) setLoyaltyPointsInput(String(maxRedeemablePoints));
+                    }}
+                    className="size-4 rounded border-border text-fuchsia-600 focus:ring-fuchsia-500/30"
+                  />
+                  <span className="text-sm font-medium text-foreground">✨ Redeem loyalty points</span>
+                  <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
+                    Balance: <span className="font-semibold text-foreground">{loyaltyBalance.toLocaleString('en-IN')} pts</span>
+                  </span>
+                </label>
+                {useLoyalty && (
+                  <div className="flex items-center gap-2">
+                    <label htmlFor="loyalty-points" className="text-xs text-muted-foreground whitespace-nowrap">
+                      Points:
+                    </label>
+                    <input
+                      id="loyalty-points"
+                      type="number"
+                      min={0}
+                      max={maxRedeemablePoints}
+                      value={loyaltyPointsInput}
+                      onChange={(e) => setLoyaltyPointsInput(e.target.value)}
+                      className="h-8 w-28 rounded-lg border border-input bg-transparent px-2 text-sm text-foreground outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50 dark:bg-input/30"
+                      aria-label="Points to redeem"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setLoyaltyPointsInput(String(maxRedeemablePoints))}
+                      className="text-xs font-medium text-fuchsia-600 hover:underline"
+                    >
+                      Max
+                    </button>
+                    <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">≈ {formatINR(loyaltyValue)} off</span>
+                  </div>
+                )}
+              </div>
+            )}
+
             {/* Per-item discounts are entered per line above. The customer's
                 membership / default discount is auto-applied as each line's
                 default and can be overridden per item. */}
@@ -965,20 +1067,38 @@ export default function NewBillingPage() {
                   </span>
                 </div>
 
-                {walletApplied > 0 && (
+                {(walletApplied > 0 || loyaltyValue > 0) && (
                   <div className="mt-2 space-y-2">
-                    <div className="flex items-center justify-between text-sm">
-                      <span className="text-violet-600 dark:text-violet-400">Wallet Used</span>
-                      <span className="text-violet-600 dark:text-violet-400">−{formatINR(walletApplied)}</span>
-                    </div>
+                    {walletApplied > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-violet-600 dark:text-violet-400">Wallet Used</span>
+                        <span className="text-violet-600 dark:text-violet-400">−{formatINR(walletApplied)}</span>
+                      </div>
+                    )}
+                    {loyaltyValue > 0 && (
+                      <div className="flex items-center justify-between text-sm">
+                        <span className="text-fuchsia-600 dark:text-fuchsia-400">
+                          Points Redeemed ({loyaltyPointsApplied.toLocaleString('en-IN')})
+                        </span>
+                        <span className="text-fuchsia-600 dark:text-fuchsia-400">−{formatINR(loyaltyValue)}</span>
+                      </div>
+                    )}
                     <div className="flex items-center justify-between">
                       <span className="text-base font-semibold text-foreground">Payable Now</span>
-                      <span className="text-lg font-bold text-foreground">{formatINR(payable)}</span>
+                      <span className="text-lg font-bold text-foreground">{formatINR(finalPayable)}</span>
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      Wallet balance after: {formatINR(Math.max(0, walletBalance - walletApplied))}
-                    </p>
+                    {walletApplied > 0 && (
+                      <p className="text-xs text-muted-foreground">
+                        Wallet balance after: {formatINR(Math.max(0, walletBalance - walletApplied))}
+                      </p>
+                    )}
                   </div>
+                )}
+
+                {pointsWillEarn > 0 && (
+                  <p className="mt-2 text-xs text-fuchsia-600 dark:text-fuchsia-400">
+                    ✨ Customer earns {pointsWillEarn.toLocaleString('en-IN')} points on this bill
+                  </p>
                 )}
               </div>
             </div>

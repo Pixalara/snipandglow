@@ -378,3 +378,64 @@ export async function updateBookingCapacity(input: {
   revalidatePath('/dashboard/settings');
   return { success: true, data: undefined };
 }
+
+/**
+ * Update the customer loyalty POINTS configuration (stored in tenants.settings,
+ * schemaless JSONB — no migration needed to add these keys). Validates ranges
+ * only when the feature is being enabled, and preserves every other settings key.
+ */
+export async function updateLoyaltySettings(input: {
+  loyalty_enabled: boolean;
+  loyalty_earn_rate: number;
+  loyalty_redeem_value: number;
+  loyalty_welcome_bonus: number;
+  loyalty_min_redeem: number;
+  loyalty_max_redeem_pct: number;
+}): Promise<ActionResult<void>> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  // Validate only when enabling — a disabled feature keeps whatever values.
+  if (input.loyalty_enabled) {
+    if (!(input.loyalty_earn_rate > 0)) return { success: false, error: 'Earn rate must be greater than 0.' };
+    if (!(input.loyalty_redeem_value > 0)) return { success: false, error: 'Point value must be greater than ₹0.' };
+    if (input.loyalty_welcome_bonus < 0) return { success: false, error: 'Welcome bonus cannot be negative.' };
+    if (input.loyalty_min_redeem < 0) return { success: false, error: 'Minimum redemption cannot be negative.' };
+    if (input.loyalty_max_redeem_pct < 1 || input.loyalty_max_redeem_pct > 100) {
+      return { success: false, error: 'Max redemption must be between 1% and 100%.' };
+    }
+  }
+
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .single();
+  const currentSettings = (tenant?.settings as Record<string, unknown>) ?? {};
+
+  const updatedSettings = {
+    ...currentSettings,
+    loyalty_enabled: input.loyalty_enabled,
+    loyalty_earn_rate: input.loyalty_earn_rate,
+    loyalty_redeem_value: input.loyalty_redeem_value,
+    loyalty_welcome_bonus: Math.round(input.loyalty_welcome_bonus),
+    loyalty_min_redeem: Math.round(input.loyalty_min_redeem),
+    loyalty_max_redeem_pct: Math.round(input.loyalty_max_redeem_pct),
+  };
+
+  const { error } = await supabase
+    .from('tenants')
+    .update({ settings: updatedSettings })
+    .eq('id', tenantId);
+  if (error) return { success: false, error: 'Failed to update loyalty settings.' };
+
+  revalidatePath('/dashboard/settings');
+  revalidatePath('/dashboard/billing');
+  revalidatePath('/dashboard/billing/new');
+  return { success: true, data: undefined };
+}

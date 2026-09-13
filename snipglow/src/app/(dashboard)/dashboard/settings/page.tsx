@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin/auth';
-import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard, DiscountSettingsCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard, DiscountSettingsCard, LoyaltySettingsCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -16,6 +16,7 @@ import {
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
 import { getSubscriptionState, planLabel, effectiveMonthlyPrice, amountPayable, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
+import { readLoyaltyConfig } from '@/lib/loyalty-points';
 import { RenewButton } from './renew-button';
 
 export default async function SettingsPage() {
@@ -97,6 +98,9 @@ export default async function SettingsPage() {
   // Discount settings
   const discountEnabled = (settings.discount_enabled as boolean) ?? false;
   const discountValue = (settings.discount_value as number) ?? 0;
+
+  // Loyalty points config (schemaless keys in settings JSONB, with defaults).
+  const loyalty = readLoyaltyConfig(settings);
 
   // Plan + billing cycle
   const planTier = (tenant as any).plan_tier ?? 'starter';
@@ -418,6 +422,16 @@ export default async function SettingsPage() {
       <DiscountSettingsCard
         discountEnabled={discountEnabled}
         discountValue={discountValue}
+      />
+
+      {/* Loyalty Points */}
+      <LoyaltySettingsCard
+        loyaltyEnabled={loyalty.enabled}
+        earnRate={loyalty.earnRate}
+        redeemValue={loyalty.redeemValue}
+        welcomeBonus={loyalty.welcomeBonus}
+        minRedeem={loyalty.minRedeem}
+        maxRedeemPct={loyalty.maxRedeemPct}
       />
 
       {/* WhatsApp Booking Link */}

@@ -6,15 +6,19 @@ import { getLoyaltyTier, getAverageSpend, getVisitFrequency, getDaysSinceLastVis
 import { ProfileTabs } from './profile-tabs';
 import { EditCustomerButton } from './edit-customer-button';
 import { WalletSection } from './wallet-section';
+import { LoyaltySection } from './loyalty-section';
 import { MembershipSection } from './membership-section';
 import { getAvailableMemberships, getCustomerMembershipUsage } from '../actions';
+import { readLoyaltyConfig } from '@/lib/loyalty-points';
 import {
   VisitHistoryTable,
   BillingHistoryTable,
   WalletHistoryTable,
+  LoyaltyHistoryTable,
   type VisitRow,
   type BillingHistoryRow,
   type WalletTxRow,
+  type LoyaltyTxRow,
 } from './history-tables';
 
 // =============================================================================
@@ -65,7 +69,7 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
   }
 
   // Fetch all data in parallel
-  const [appointmentsRes, invoicesRes, membershipRes, walletRes, walletTxRes] = await Promise.all([
+  const [appointmentsRes, invoicesRes, membershipRes, walletRes, walletTxRes, loyaltyRes, loyaltyTxRes, tenantRes] = await Promise.all([
     supabase
       .from('appointments')
       .select('id, appointment_date, start_time, service_id, employee_id')
@@ -96,6 +100,22 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
       .eq('customer_id', id)
       .order('created_at', { ascending: false })
       .limit(100),
+    (supabase as any)
+      .from('customer_loyalty')
+      .select('points_balance, lifetime_points')
+      .eq('customer_id', id)
+      .maybeSingle(),
+    (supabase as any)
+      .from('loyalty_transactions')
+      .select('id, type, points, balance_after, description, created_at')
+      .eq('customer_id', id)
+      .order('created_at', { ascending: false })
+      .limit(100),
+    supabase
+      .from('tenants')
+      .select('settings')
+      .eq('id', user.user_metadata?.tenant_id)
+      .maybeSingle(),
   ]);
 
   const walletBalance = (walletRes as any)?.data ? Number((walletRes as any).data.balance) || 0 : 0;
@@ -107,6 +127,21 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
     description: t.description ?? null,
     created_at: t.created_at ?? '',
   }));
+
+  // Loyalty points: balance, lifetime (drives tier) + ledger, plus the tenant's
+  // config so we only surface the card when it's meaningful.
+  const loyaltyBalance = (loyaltyRes as any)?.data ? Number((loyaltyRes as any).data.points_balance) || 0 : 0;
+  const loyaltyLifetime = (loyaltyRes as any)?.data ? Number((loyaltyRes as any).data.lifetime_points) || 0 : 0;
+  const loyaltyRows: LoyaltyTxRow[] = ((loyaltyTxRes as any)?.data ?? []).map((t: any) => ({
+    id: t.id,
+    type: t.type,
+    points: t.points,
+    balance_after: t.balance_after,
+    description: t.description ?? null,
+    created_at: t.created_at ?? '',
+  }));
+  const loyaltyCfg = readLoyaltyConfig(((tenantRes as any)?.data?.settings as Record<string, unknown>) ?? {});
+  const showLoyalty = loyaltyCfg.enabled || loyaltyLifetime > 0 || loyaltyBalance > 0;
 
   const apptList = appointmentsRes.data ?? [];
   const svcIds = [...new Set(apptList.map((a) => a.service_id).filter(Boolean))];
@@ -216,6 +251,17 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
       {/* Wallet balance + Add Balance */}
       <WalletSection customerId={id} customerName={customer.name} balance={walletBalance} />
 
+      {/* Loyalty points card (tier + balance + adjust) */}
+      {showLoyalty && (
+        <LoyaltySection
+          customerId={id}
+          customerName={customer.name}
+          balance={loyaltyBalance}
+          lifetime={loyaltyLifetime}
+          redeemValue={loyaltyCfg.redeemValue}
+        />
+      )}
+
       {/* Membership: assign/change/remove + usage analytics */}
       <MembershipSection
         customerId={id}
@@ -238,6 +284,7 @@ export default async function CustomerProfilePage({ params }: CustomerProfilePag
         visitHistory={<VisitHistoryTable appointments={visitRows} />}
         billingHistory={<BillingHistoryTable invoices={billingRows} />}
         walletHistory={<WalletHistoryTable transactions={walletRows} />}
+        loyaltyHistory={<LoyaltyHistoryTable transactions={loyaltyRows} />}
       />
     </div>
   );

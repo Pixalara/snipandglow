@@ -246,25 +246,43 @@ export function InvoicePDF({ doc }: { doc: InvoiceDocument }) {
                   <Text style={styles.grandTotalText}>{formatINR(doc.total)}</Text>
                 </View>
 
-                {/* Wallet breakdown (service bill paid partly/fully from wallet) */}
-                {doc.invoice_type !== 'wallet_recharge' && (doc.wallet_amount ?? 0) > 0 ? (
+                {/* Wallet + loyalty breakdown (service bill settled partly by wallet/points) */}
+                {doc.invoice_type !== 'wallet_recharge' && ((doc.wallet_amount ?? 0) > 0 || (doc.loyalty_amount ?? 0) > 0) ? (
                   <View style={{ marginTop: 6 }}>
-                    <View style={styles.totalLine}>
-                      <Text style={styles.discountLabel}>Wallet Used</Text>
-                      <Text style={styles.discountValue}>- {formatINR(doc.wallet_amount ?? 0)}</Text>
-                    </View>
+                    {(doc.wallet_amount ?? 0) > 0 ? (
+                      <View style={styles.totalLine}>
+                        <Text style={styles.discountLabel}>Wallet Used</Text>
+                        <Text style={styles.discountValue}>- {formatINR(doc.wallet_amount ?? 0)}</Text>
+                      </View>
+                    ) : null}
+                    {(doc.loyalty_amount ?? 0) > 0 ? (
+                      <View style={styles.totalLine}>
+                        <Text style={styles.discountLabel}>
+                          Points Redeemed{(doc.loyalty_points_redeemed ?? 0) > 0 ? ` (${doc.loyalty_points_redeemed})` : ''}
+                        </Text>
+                        <Text style={styles.discountValue}>- {formatINR(doc.loyalty_amount ?? 0)}</Text>
+                      </View>
+                    ) : null}
                     <View style={styles.totalLine}>
                       <Text style={styles.totalLabel}>Paid ({doc.payment_method})</Text>
                       <Text style={styles.totalValue}>
-                        {formatINR(Math.max(0, (doc.total ?? 0) - (doc.wallet_amount ?? 0)))}
+                        {formatINR(Math.max(0, (doc.total ?? 0) - (doc.wallet_amount ?? 0) - (doc.loyalty_amount ?? 0)))}
                       </Text>
                     </View>
-                    {doc.wallet_balance_after != null ? (
+                    {doc.wallet_balance_after != null && (doc.wallet_amount ?? 0) > 0 ? (
                       <View style={styles.totalLine}>
                         <Text style={styles.totalLabel}>Wallet Balance</Text>
                         <Text style={styles.totalValue}>{formatINR(doc.wallet_balance_after)}</Text>
                       </View>
                     ) : null}
+                  </View>
+                ) : null}
+
+                {/* Loyalty points earned on this visit */}
+                {doc.invoice_type !== 'wallet_recharge' && (doc.loyalty_points_earned ?? 0) > 0 ? (
+                  <View style={styles.totalLine}>
+                    <Text style={styles.totalLabel}>Points Earned</Text>
+                    <Text style={styles.totalValue}>+ {doc.loyalty_points_earned} pts</Text>
                   </View>
                 ) : null}
 

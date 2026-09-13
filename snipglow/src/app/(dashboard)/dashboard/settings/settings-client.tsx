@@ -3,8 +3,9 @@
 import { useState, useTransition, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateGstSettings, updateSalonProfile, updateDiscountSettings } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck } from 'lucide-react';
+import { updateGstSettings, updateSalonProfile, updateDiscountSettings, updateLoyaltySettings } from './actions';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck, Sparkles, Coins } from 'lucide-react';
+import { pointsForSpend, pointsToRupees } from '@/lib/loyalty-points';
 
 // =============================================================================
 // Salon Profile Card
@@ -1543,6 +1544,204 @@ export function BookingCapacityCard({ maxAppointmentsPerSlot: initialMax, slotDu
         <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
           {isPending ? 'Saving...' : 'Save Capacity Settings'}
         </Button>
+      </div>
+    </div>
+  );
+}
+
+
+// =============================================================================
+// Loyalty Points Card — configure the earn/redeem loyalty programme
+// =============================================================================
+
+/** Small labelled number field used across the loyalty config grid. */
+function LoyaltyField({
+  id, label, hint, value, min, max, step, onChange, prefix, suffix,
+}: {
+  id: string; label: string; hint: string; value: number;
+  min?: number; max?: number; step?: number;
+  onChange: (n: number) => void; prefix?: string; suffix?: string;
+}) {
+  return (
+    <div className="space-y-1.5">
+      <label htmlFor={id} className="text-sm font-medium text-foreground">{label}</label>
+      <div className="flex items-center gap-1.5">
+        {prefix && <span className="text-sm text-muted-foreground">{prefix}</span>}
+        <Input
+          id={id}
+          type="number"
+          min={min}
+          max={max}
+          step={step}
+          value={value}
+          onChange={(e) => onChange(Number(e.target.value))}
+          className="w-24"
+        />
+        {suffix && <span className="text-sm text-muted-foreground">{suffix}</span>}
+      </div>
+      <p className="text-xs text-muted-foreground">{hint}</p>
+    </div>
+  );
+}
+
+interface LoyaltySettingsProps {
+  loyaltyEnabled: boolean;
+  earnRate: number;
+  redeemValue: number;
+  welcomeBonus: number;
+  minRedeem: number;
+  maxRedeemPct: number;
+}
+
+export function LoyaltySettingsCard({
+  loyaltyEnabled: initialEnabled,
+  earnRate: initialEarn,
+  redeemValue: initialValue,
+  welcomeBonus: initialWelcome,
+  minRedeem: initialMin,
+  maxRedeemPct: initialMaxPct,
+}: LoyaltySettingsProps) {
+  const [isPending, startTransition] = useTransition();
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [earnRate, setEarnRate] = useState(initialEarn || 5);
+  const [redeemValue, setRedeemValue] = useState(initialValue || 1);
+  const [welcomeBonus, setWelcomeBonus] = useState(initialWelcome ?? 50);
+  const [minRedeem, setMinRedeem] = useState(initialMin ?? 100);
+  const [maxRedeemPct, setMaxRedeemPct] = useState(initialMaxPct || 50);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Live preview on a sample ₹1,000 bill so the owner sees the effect instantly.
+  const sampleBill = 1000;
+  const samplePoints = pointsForSpend(sampleBill, earnRate);
+  const samplePointsValue = pointsToRupees(samplePoints, redeemValue);
+
+  function handleSave() {
+    setError('');
+    setSuccess(false);
+    if (enabled) {
+      if (!(earnRate > 0)) { setError('Earn rate must be greater than 0.'); return; }
+      if (!(redeemValue > 0)) { setError('Point value must be greater than ₹0.'); return; }
+      if (maxRedeemPct < 1 || maxRedeemPct > 100) { setError('Max redemption must be between 1% and 100%.'); return; }
+    }
+    startTransition(async () => {
+      const result = await updateLoyaltySettings({
+        loyalty_enabled: enabled,
+        loyalty_earn_rate: earnRate,
+        loyalty_redeem_value: redeemValue,
+        loyalty_welcome_bonus: welcomeBonus,
+        loyalty_min_redeem: minRedeem,
+        loyalty_max_redeem_pct: maxRedeemPct,
+      });
+      if (result.success) { setSuccess(true); setTimeout(() => setSuccess(false), 3000); }
+      else setError(result.error);
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      {/* Header with a loyalty gradient accent */}
+      <div className="relative border-b border-border px-6 py-4 bg-gradient-to-r from-fuchsia-50 via-pink-50/60 to-transparent dark:from-fuchsia-950/20 dark:via-pink-950/10">
+        <div className="flex items-center gap-2">
+          <Sparkles className="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
+          <h2 className="text-sm font-semibold text-foreground">Loyalty Points</h2>
+          {initialEnabled && (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="size-3" /> Live
+            </span>
+          )}
+        </div>
+      </div>
+
+      <div className="p-6 space-y-5">
+        <p className="text-sm text-muted-foreground">
+          Reward customers with points every time they pay. Points turn into a discount on their next visit — a simple, automatic way to bring them back.
+        </p>
+
+        {/* Master toggle */}
+        <div className="flex items-center justify-between rounded-xl border border-border bg-muted/20 px-4 py-3">
+          <div>
+            <p className="text-sm font-medium text-foreground">Enable loyalty points</p>
+            <p className="text-xs text-muted-foreground">Turn the whole programme on or off</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled}
+            aria-label="Toggle loyalty points"
+            onClick={() => setEnabled(!enabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 ${
+              enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                enabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        {enabled && (
+          <>
+            {/* Live preview */}
+            <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-fuchsia-600 via-pink-600 to-purple-600 p-5 text-white shadow-lg">
+              <div className="absolute -right-6 -top-6 size-28 rounded-full bg-white/10 blur-2xl" />
+              <div className="relative">
+                <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/80">
+                  <Coins className="size-3.5" /> Live preview
+                </div>
+                <p className="mt-2 text-sm text-white/90">
+                  On a <span className="font-bold">₹{sampleBill.toLocaleString('en-IN')}</span> bill, a customer earns
+                </p>
+                <p className="mt-1 text-3xl font-extrabold leading-tight">
+                  {samplePoints} pts
+                  <span className="ml-1.5 text-base font-semibold text-white/80">≈ ₹{samplePointsValue.toLocaleString('en-IN')} back</span>
+                </p>
+                <p className="mt-2 text-xs text-white/80">
+                  New customers get a <span className="font-semibold text-white">{welcomeBonus}-point</span> welcome bonus · they can redeem up to <span className="font-semibold text-white">{maxRedeemPct}%</span> of any bill
+                </p>
+              </div>
+            </div>
+
+            {/* Config grid */}
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-x-5 gap-y-4">
+              <LoyaltyField id="loyalty-earn-rate" label="Earn rate" hint="points earned per ₹100 spent" value={earnRate} min={0} step={1} onChange={setEarnRate} />
+              <LoyaltyField id="loyalty-redeem-value" label="Point value" hint="₹ each point is worth when redeemed" value={redeemValue} min={0} step={0.5} onChange={setRedeemValue} prefix="₹" />
+              <LoyaltyField id="loyalty-welcome" label="Welcome bonus" hint="points on a customer's first visit" value={welcomeBonus} min={0} step={10} onChange={setWelcomeBonus} />
+              <LoyaltyField id="loyalty-max-pct" label="Max redemption" hint="most of a bill payable by points" value={maxRedeemPct} min={1} max={100} step={5} onChange={setMaxRedeemPct} suffix="%" />
+              <LoyaltyField id="loyalty-min" label="Minimum to redeem" hint="fewest points usable in one bill" value={minRedeem} min={0} step={10} onChange={setMinRedeem} />
+            </div>
+          </>
+        )}
+
+        {!enabled && (
+          <div className="rounded-lg bg-muted/50 px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              Loyalty points are off. Turn them on to start rewarding repeat customers automatically — points are earned on every bill and applied at checkout.
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+            <AlertTriangle className="size-4 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Loyalty settings saved!</p>
+          </div>
+        )}
+
+        <div className="pt-2">
+          <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
+            {isPending ? 'Saving...' : enabled ? 'Save loyalty programme' : 'Save'}
+          </Button>
+        </div>
       </div>
     </div>
   );

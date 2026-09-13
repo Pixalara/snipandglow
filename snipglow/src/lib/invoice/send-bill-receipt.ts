@@ -20,6 +20,7 @@ import { sendMessage } from '@/lib/whatsapp/templates';
 import { generateInvoicePdfBuffer } from '@/lib/invoice/generate-pdf';
 import { uploadInvoicePdf } from '@/lib/invoice/upload-invoice';
 import { formatINR } from '@/lib/utils';
+import { readLoyaltyConfig, pointsForSpend } from '@/lib/loyalty-points';
 import type { InvoiceDocument } from '@/app/(dashboard)/dashboard/billing/actions';
 
 export interface BillReceiptItem {
@@ -61,7 +62,7 @@ async function buildInvoiceDocument(
 
   const { data: invFull } = await (admin
     .from('invoices' as any)
-    .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id, invoice_type, wallet_amount')
+    .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id, invoice_type, wallet_amount, loyalty_amount, loyalty_points_redeemed')
     .eq('invoice_number', invoiceNumber)
     .eq('tenant_id', tenantId)
     .maybeSingle() as any);
@@ -84,6 +85,10 @@ async function buildInvoiceDocument(
   const walletAmount = Number(invFull.wallet_amount ?? 0);
   const invoiceType = (invFull.invoice_type as 'service' | 'wallet_recharge') ?? 'service';
   const walletBalanceAfter = (walletRes as any)?.data ? Number((walletRes as any).data.balance) : null;
+  const loyaltyCfgDoc = readLoyaltyConfig(settings);
+  const loyaltyRedeemed = Number(invFull.loyalty_points_redeemed ?? 0);
+  const loyaltyAmountDoc = Number(invFull.loyalty_amount ?? 0);
+  const loyaltyEarned = loyaltyCfgDoc.enabled ? pointsForSpend(Number(invFull.total ?? 0), loyaltyCfgDoc.earnRate) : 0;
 
   return {
     invoice_number: invFull.invoice_number,
@@ -103,6 +108,9 @@ async function buildInvoiceDocument(
     invoice_type: invoiceType,
     wallet_amount: walletAmount,
     wallet_balance_after: walletBalanceAfter,
+    loyalty_points_redeemed: loyaltyRedeemed,
+    loyalty_amount: loyaltyAmountDoc,
+    loyalty_points_earned: loyaltyEarned,
     items: (itemsRes.data ?? []).map((it: any) => ({
       service_name: it.service_name,
       unit_price: it.unit_price,

@@ -6,6 +6,7 @@ import { revalidatePath } from 'next/cache';
 import { after } from 'next/server';
 import { calculatePerItemInvoiceTotal, blendedDiscountPct } from '@/lib/utils';
 import { clampWalletUse } from '@/lib/wallet';
+import { readLoyaltyConfig, clampPointsUse, rupeesToPoints, pointsToRupees, pointsForSpend, DEFAULT_LOYALTY_POINTS_CONFIG, type LoyaltyPointsConfig } from '@/lib/loyalty-points';
 import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
 import type {
   ActionResult,
@@ -209,6 +210,40 @@ export async function createInvoice(
     walletUse = clampWalletUse(input.wallet_amount, finalTotal, balance);
   }
 
+  // --- Loyalty points pre-check ------------------------------------------
+  // Re-read the tenant config + the customer's balance server-side (never trust
+  // the client). Points cover at most the amount left after the wallet, at most
+  // the tenant's max-redeem %, and never more than the balance. The
+  // authoritative debit happens atomically AFTER the invoice exists
+  // (loyalty_redeem_for_invoice) but BEFORE the wallet debit, so a rollback that
+  // deletes the invoice is cleanly reversed by the loyalty delete trigger.
+  let loyaltyPoints = 0;
+  let loyaltyAmount = 0;
+  if (input.loyalty_points && input.loyalty_points > 0) {
+    const { data: tRow } = await (supabase as any)
+      .from('tenants').select('settings').eq('id', tenantId).maybeSingle();
+    const cfg = readLoyaltyConfig((tRow?.settings as Record<string, unknown>) ?? {});
+    if (cfg.enabled && cfg.redeemValue > 0) {
+      const { data: loyRow } = await (supabase as any)
+        .from('customer_loyalty').select('points_balance').eq('customer_id', input.customer_id).maybeSingle();
+      const balancePts = loyRow ? Number(loyRow.points_balance) : 0;
+      let pts = clampPointsUse({
+        requestedPoints: input.loyalty_points,
+        balance: balancePts,
+        billTotal: finalTotal,
+        redeemValue: cfg.redeemValue,
+        maxRedeemPct: cfg.maxRedeemPct,
+      });
+      // Points value can never exceed what's left after the wallet is applied.
+      const remaining = Math.max(0, finalTotal - walletUse);
+      pts = Math.min(pts, rupeesToPoints(remaining, cfg.redeemValue));
+      // Below the tenant's minimum-redeem threshold → apply nothing (non-fatal).
+      if (pts < cfg.minRedeem) pts = 0;
+      loyaltyPoints = pts;
+      loyaltyAmount = pointsToRupees(loyaltyPoints, cfg.redeemValue);
+    }
+  }
+
   // If the bill carried a discount and the customer holds a membership, capture
   // which membership it was, so the customer page can report real usage. Only a
   // discounted bill counts as "using" the membership. A lookup failure must
@@ -290,6 +325,33 @@ export async function createInvoice(
     console.error('Invoice items creation error:', itemsError);
     // Invoice was created but items failed — still return the invoice
     return { success: true, data: invoice as Invoice };
+  }
+
+  // --- Apply loyalty redemption (atomic, server-validated) ---------------
+  // Runs BEFORE the wallet debit on purpose: if it fails we delete the invoice
+  // and the BEFORE DELETE trigger reverses any earned/redeemed points. Applying
+  // it after the wallet debit could strand an already-decremented wallet balance.
+  if (loyaltyPoints > 0) {
+    const { error: redeemErr } = await (supabase as any).rpc('loyalty_redeem_for_invoice', {
+      p_invoice_id: invoice.id,
+      p_points: loyaltyPoints,
+    });
+    if (redeemErr) {
+      console.error('Loyalty redeem error:', redeemErr);
+      try {
+        const admin = createAdminClient();
+        await (admin.from('invoices' as any).delete().eq('id', invoice.id) as any);
+      } catch (rollbackErr) {
+        console.error('Loyalty redeem rollback (invoice delete) failed:', rollbackErr);
+      }
+      const msg = String(redeemErr.message || '');
+      return {
+        success: false,
+        error: msg.includes('INSUFFICIENT_POINTS')
+          ? 'Not enough loyalty points. Please refresh and try again.'
+          : 'Failed to apply loyalty points. Please try again.',
+      };
+    }
   }
 
   // --- Apply wallet payment (atomic, server-validated) -------------------
@@ -376,6 +438,8 @@ export async function createInvoice(
     total: totals.total,
     paymentMethod: input.payment_method,
     walletUse,
+    loyaltyPoints,
+    loyaltyAmount,
   };
   after(async () => {
     try {
@@ -397,7 +461,7 @@ export async function createInvoice(
   });
 
   revalidatePath('/dashboard/billing');
-  if (walletUse > 0) {
+  if (walletUse > 0 || loyaltyPoints > 0) {
     revalidatePath(`/dashboard/customers/${input.customer_id}`);
   }
   return { success: true, data: invoice as Invoice };
@@ -585,6 +649,11 @@ export interface InvoiceDocument {
   wallet_balance_after?: number | null;
   /** Promotional bonus credited on this wallet recharge (0 when none). */
   wallet_promo?: number;
+  /** Loyalty points redeemed on this bill and their ₹ value (0 when none). */
+  loyalty_points_redeemed?: number;
+  loyalty_amount?: number;
+  /** Loyalty points earned on this bill (0 when none / feature off). */
+  loyalty_points_earned?: number;
 }
 
 /**
@@ -606,7 +675,7 @@ export async function getInvoiceDocument(
   // Fetch invoice (RLS-scoped)
   const { data: invoice, error: invErr } = await (supabase as any)
     .from('invoices')
-    .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id, invoice_type, wallet_amount')
+    .select('id, invoice_number, created_at, payment_method, payment_status, subtotal, discount_pct, discount_amount, gst_rate, gst_amount, total, customer_id, branch_id, invoice_type, wallet_amount, loyalty_amount, loyalty_points_redeemed')
     .eq('id', invoiceId)
     .single();
 
@@ -646,6 +715,10 @@ export async function getInvoiceDocument(
   const walletBalanceAfter = (walletRes as any)?.data ? Number((walletRes as any).data.balance) : null;
   const walletPromo = (((promoRes as any)?.data ?? []) as { amount: number }[])
     .reduce((s, t) => s + Number(t.amount || 0), 0);
+  const loyaltyCfgDoc = readLoyaltyConfig(settings);
+  const loyaltyRedeemed = Number((invoice as any).loyalty_points_redeemed ?? 0);
+  const loyaltyAmountDoc = Number((invoice as any).loyalty_amount ?? 0);
+  const loyaltyEarned = loyaltyCfgDoc.enabled ? pointsForSpend(Number(invoice.total ?? 0), loyaltyCfgDoc.earnRate) : 0;
 
   const doc: InvoiceDocument = {
     invoice_number: invoice.invoice_number,
@@ -666,6 +739,9 @@ export async function getInvoiceDocument(
     wallet_amount: walletAmount,
     wallet_balance_after: walletBalanceAfter,
     wallet_promo: walletPromo,
+    loyalty_points_redeemed: loyaltyRedeemed,
+    loyalty_amount: loyaltyAmountDoc,
+    loyalty_points_earned: loyaltyEarned,
     items: (itemsRes.data ?? []).map((it: any) => ({
       service_name: it.service_name,
       unit_price: it.unit_price,
@@ -691,4 +767,23 @@ export async function getInvoiceDocument(
   };
 
   return { success: true, data: doc };
+}
+
+/**
+ * Read this tenant's loyalty points configuration for the POS. The client needs
+ * it to show the redeem UI, clamp the points, and preview what a bill will earn.
+ * Returns a disabled config when the feature is off or context is missing.
+ */
+export async function getTenantLoyaltyConfig(): Promise<LoyaltyPointsConfig> {
+  const supabase = await createClient();
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { ...DEFAULT_LOYALTY_POINTS_CONFIG, enabled: false };
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { ...DEFAULT_LOYALTY_POINTS_CONFIG, enabled: false };
+  const { data: tenant } = await supabase
+    .from('tenants')
+    .select('settings')
+    .eq('id', tenantId)
+    .single();
+  return readLoyaltyConfig((tenant?.settings as Record<string, unknown>) ?? {});
 }

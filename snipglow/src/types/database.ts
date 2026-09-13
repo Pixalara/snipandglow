@@ -263,6 +263,10 @@ export interface Invoice {
   invoice_type?: 'service' | 'wallet_recharge';
   /** Portion of this bill paid from the customer's wallet (0 when none). */
   wallet_amount?: number;
+  /** Loyalty points the customer redeemed on this bill (0 when none). */
+  loyalty_points_redeemed?: number;
+  /** Rupee value of the loyalty points redeemed on this bill (0 when none). */
+  loyalty_amount?: number;
   /**
    * The customer_memberships row that was active when this bill was raised, set
    * only when a membership discount was actually applied (see migration 052).
@@ -346,6 +350,45 @@ export interface WalletTransaction {
   type: WalletTransactionType;
   amount: number;
   /** Wallet balance immediately after this entry was applied. */
+  balance_after: number;
+  description: string | null;
+  created_by: string | null;
+  created_at: string;
+}
+
+// =============================================================================
+// Customer Loyalty Points Types (redeemable points — distinct from the
+// visit-based loyalty TIER in src/lib/loyalty.ts). See migration 054.
+// =============================================================================
+
+/** Loyalty ledger entry kind. Points are SIGNED (+earn/+bonus, −redeem/−expire). */
+export type LoyaltyTransactionType = 'earn' | 'redeem' | 'bonus' | 'adjustment' | 'expire';
+
+/** A customer's redeemable loyalty points balance (single source of truth). */
+export interface CustomerLoyalty {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  customer_id: string;
+  /** Points available to redeem right now. */
+  points_balance: number;
+  /** Total points ever earned; never decreases; drives the gamified tier. */
+  lifetime_points: number;
+  created_at: string;
+  updated_at: string;
+}
+
+/** An append-only loyalty ledger entry. */
+export interface LoyaltyTransaction {
+  id: string;
+  tenant_id: string;
+  branch_id: string;
+  customer_id: string;
+  invoice_id: string | null;
+  type: LoyaltyTransactionType;
+  /** Signed points delta (+ earned/bonus, − redeemed/expired). */
+  points: number;
+  /** Points balance immediately after this entry was applied. */
   balance_after: number;
   description: string | null;
   created_by: string | null;
@@ -682,6 +725,12 @@ export interface CreateInvoiceInput {
    * of it was settled from the wallet. Re-validated and debited server-side.
    */
   wallet_amount?: number;
+  /**
+   * Loyalty points to redeem against this bill (0/undefined = none). Their ₹
+   * value is recorded on the invoice as loyalty_amount; the invoice total still
+   * reflects the full bill value. Re-validated and debited server-side.
+   */
+  loyalty_points?: number;
   /**
    * The amount actually collected, when it differs from the computed total
    * (e.g. ₹400 charged on a ₹410 bill). When below the computed total, the
