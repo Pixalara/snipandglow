@@ -9,10 +9,9 @@ import {
   Download,
   Filter,
   Calendar,
-  User,
   FileText,
   Plus,
-  RefreshCw,
+  Pencil,
   Trash2,
 } from 'lucide-react';
 import type { AuditLog } from '@/types';
@@ -32,40 +31,184 @@ interface AuditLogClientProps {
 // Simplify description for salon owners
 // =============================================================================
 
-function simplifyDescription(actionType: string, resourceType: string, rawDescription: string): string {
-  const resource = resourceType?.toLowerCase() ?? '';
-  const action = actionType?.toLowerCase() ?? '';
+/** Simple past-tense verb per database action (no DB jargon like INSERT). */
+const ACTION_LABELS: Record<string, string> = {
+  insert: 'Added',
+  update: 'Edited',
+  delete: 'Removed',
+};
 
-  // Map technical descriptions to simple salon language
-  const actionVerbs: Record<string, string> = {
-    insert: 'Created',
-    update: 'Updated',
-    delete: 'Deleted',
-  };
+/** Natural noun that reads well after Added / Edited / Removed. */
+const RESOURCE_NOUNS: Record<string, string> = {
+  invoices: 'a bill',
+  invoice_items: 'a bill',
+  appointments: 'an appointment',
+  customers: 'a customer',
+  services: 'a service',
+  employees: 'a staff member',
+  memberships: 'a membership plan',
+  customer_memberships: "a customer's membership",
+  branches: 'a branch',
+  expenses: 'an expense',
+  payroll: 'a payroll record',
+  payroll_records: 'a payroll record',
+  attendance: 'an attendance entry',
+  leads: 'a lead',
+  products: 'a product',
+  inventory_movements: 'a stock change',
+  customer_wallets: 'a wallet balance',
+  wallet_transactions: 'a wallet entry',
+  customer_loyalty: 'loyalty points',
+  loyalty_transactions: 'loyalty points',
+};
 
-  const resourceLabels: Record<string, string> = {
-    invoices: 'a bill',
-    appointments: 'an appointment',
-    customers: 'customer info',
-    services: 'a service',
-    employees: 'staff member',
-    memberships: 'a membership',
-    branches: 'branch details',
-    expenses: 'an expense',
-    payroll: 'payroll record',
-    leads: 'a lead',
-    customer_memberships: 'customer membership',
-  };
+/** Friendly section name for the Resource column, e.g. invoices -> "Billing". */
+const RESOURCE_SECTIONS: Record<string, string> = {
+  invoices: 'Billing',
+  invoice_items: 'Billing',
+  appointments: 'Appointments',
+  customers: 'Customers',
+  services: 'Services',
+  employees: 'Staff',
+  memberships: 'Memberships',
+  customer_memberships: 'Memberships',
+  branches: 'Branches',
+  expenses: 'Expenses',
+  payroll: 'Payroll',
+  payroll_records: 'Payroll',
+  attendance: 'Payroll',
+  leads: 'Leads',
+  products: 'Inventory',
+  inventory_movements: 'Inventory',
+  customer_wallets: 'Wallet',
+  wallet_transactions: 'Wallet',
+  customer_loyalty: 'Loyalty Points',
+  loyalty_transactions: 'Loyalty Points',
+};
 
-  const verb = actionVerbs[action] ?? action;
-  const label = resourceLabels[resource] ?? resource;
+function titleCase(s: string): string {
+  return (s ?? '').replace(/\b\w/g, (c) => c.toUpperCase());
+}
 
-  // If raw description has useful info beyond "INSERT on X", use it
-  if (rawDescription && !rawDescription.match(/^(INSERT|UPDATE|DELETE) on \w+$/i)) {
-    return rawDescription;
+/** "Added" / "Edited" / "Removed" (falls back to a title-cased action). */
+function friendlyAction(actionType: string): string {
+  return ACTION_LABELS[actionType?.toLowerCase() ?? ''] ?? titleCase(actionType ?? '');
+}
+
+/** Friendly section name for the Resource column. */
+function friendlyResource(resourceType: string): string {
+  const key = resourceType?.toLowerCase() ?? '';
+  return RESOURCE_SECTIONS[key] ?? titleCase(key.replace(/_/g, ' '));
+}
+
+/** Human-friendly field names for the "changed X, Y" part of an edit. */
+const FIELD_LABELS: Record<string, string> = {
+  payment_method: 'payment method',
+  payment_status: 'payment status',
+  delivery_status: 'delivery status',
+  total: 'total',
+  subtotal: 'total',
+  discount_amount: 'discount',
+  discount_pct: 'discount',
+  gst_amount: 'GST',
+  gst_rate: 'GST rate',
+  wallet_amount: 'wallet payment',
+  loyalty_amount: 'points redeemed',
+  status: 'status',
+  appointment_date: 'date',
+  start_time: 'time',
+  end_time: 'time',
+  employee_id: 'assigned staff',
+  service_id: 'service',
+  name: 'name',
+  phone: 'phone',
+  email: 'email',
+  gender: 'gender',
+  date_of_birth: 'birthday',
+  notes: 'notes',
+  price: 'price',
+  stock_quantity: 'stock',
+  is_active: 'active status',
+  amount: 'amount',
+  category: 'category',
+};
+
+/** Row fields that change on their own and aren't worth reporting. */
+const IGNORED_FIELDS = new Set(['id', 'tenant_id', 'branch_id', 'created_at', 'updated_at', 'invoice_number']);
+
+/** A recognisable name for the specific record, pulled from the row snapshot. */
+function recordName(resourceType: string, data: Record<string, unknown> | null): string | null {
+  if (!data) return null;
+  const str = (v: unknown) => (typeof v === 'string' && v.trim() ? v.trim() : null);
+  switch (resourceType?.toLowerCase() ?? '') {
+    case 'invoices': {
+      const n = str(data.invoice_number);
+      return n ? `bill ${n}` : null;
+    }
+    case 'customers': {
+      const n = str(data.name);
+      return n ? `${n}'s details` : null;
+    }
+    case 'services':
+    case 'memberships':
+    case 'products': {
+      const n = str(data.name);
+      return n ? `"${n}"` : null;
+    }
+    case 'employees': {
+      const n = str(data.name);
+      return n ? `staff member ${n}` : null;
+    }
+    case 'expenses': {
+      const n = str(data.category) ?? str(data.title);
+      return n ? `an expense (${n})` : null;
+    }
+    case 'leads': {
+      const n = str(data.name);
+      return n ? `lead ${n}` : null;
+    }
+    default:
+      return null;
   }
+}
 
-  return `${verb} ${label}`;
+/** Human list of what changed between the old and new row (max 3 shown). */
+function changedFields(oldData: Record<string, unknown> | null, newData: Record<string, unknown> | null): string[] {
+  if (!oldData || !newData) return [];
+  const labels: string[] = [];
+  for (const key of Object.keys(newData)) {
+    if (IGNORED_FIELDS.has(key)) continue;
+    if (JSON.stringify(oldData[key]) === JSON.stringify(newData[key])) continue;
+    const label = FIELD_LABELS[key] ?? key.replace(/_/g, ' ');
+    if (!labels.includes(label)) labels.push(label);
+  }
+  return labels;
+}
+
+/**
+ * Turn a raw audit row into a plain sentence such as "Edited bill INV-1042 —
+ * changed payment method". App-level entries that already carry a human
+ * description are shown as-is; only the database-trigger pattern
+ * ("UPDATE on invoices") gets rewritten. Uses the row snapshot to name the exact
+ * record and, for edits, list what changed.
+ */
+function simplifyDescription(
+  log: Pick<AuditLog, 'action_type' | 'resource_type' | 'description' | 'old_data' | 'new_data'>
+): string {
+  const { action_type, resource_type, description, old_data, new_data } = log;
+  if (description && !/^(INSERT|UPDATE|DELETE) on \w+$/i.test(description)) {
+    return description;
+  }
+  const verb = friendlyAction(action_type);
+  const snapshot = (new_data ?? old_data) as Record<string, unknown> | null;
+  const specific = recordName(resource_type, snapshot);
+  const noun = specific ?? RESOURCE_NOUNS[resource_type?.toLowerCase() ?? ''] ?? friendlyResource(resource_type).toLowerCase();
+  let text = `${verb} ${noun}`;
+  if (action_type?.toLowerCase() === 'update') {
+    const fields = changedFields(old_data, new_data).slice(0, 3);
+    if (fields.length > 0) text += ` — changed ${fields.join(', ')}`;
+  }
+  return text;
 }
 
 /** Action type badge with icons */
@@ -80,7 +223,7 @@ function ActionBadge({ actionType }: { actionType: string }) {
     Icon = Plus;
   } else if (normalized === 'UPDATE') {
     colorClasses = 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-400';
-    Icon = RefreshCw;
+    Icon = Pencil;
   } else if (normalized === 'DELETE') {
     colorClasses = 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-400';
     Icon = Trash2;
@@ -89,7 +232,7 @@ function ActionBadge({ actionType }: { actionType: string }) {
   return (
     <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-0.5 text-xs font-medium ${colorClasses}`}>
       <Icon className="size-3" />
-      {normalized}
+      {friendlyAction(actionType)}
     </span>
   );
 }
@@ -128,9 +271,9 @@ export function AuditLogClient({ logs }: AuditLogClientProps) {
     const rows = filteredLogs.map((log) => [
       `${formatDateIN(log.created_at)}, ${formatTimeIST(log.created_at)}`,
       log.actor_name,
-      log.action_type,
-      log.resource_type,
-      simplifyDescription(log.action_type, log.resource_type, log.description),
+      friendlyAction(log.action_type),
+      friendlyResource(log.resource_type),
+      simplifyDescription(log),
     ]);
 
     const csvContent = [
@@ -186,8 +329,8 @@ export function AuditLogClient({ logs }: AuditLogClientProps) {
       key: 'resource',
       header: 'Resource',
       render: (row) => (
-        <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium capitalize text-foreground">
-          {row.resource_type}
+        <span className="inline-flex items-center rounded-md bg-muted px-2 py-0.5 text-xs font-medium text-foreground">
+          {friendlyResource(row.resource_type)}
         </span>
       ),
     },
@@ -195,7 +338,7 @@ export function AuditLogClient({ logs }: AuditLogClientProps) {
       key: 'description',
       header: 'Description',
       render: (row) => (
-        <span className="text-sm text-muted-foreground line-clamp-1">{simplifyDescription(row.action_type, row.resource_type, row.description)}</span>
+        <span className="text-sm text-muted-foreground line-clamp-1">{simplifyDescription(row)}</span>
       ),
     },
   ];
@@ -277,9 +420,9 @@ export function AuditLogClient({ logs }: AuditLogClientProps) {
               className="h-9 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-ring"
             >
               <option value="">All Actions</option>
-              <option value="INSERT">INSERT</option>
-              <option value="UPDATE">UPDATE</option>
-              <option value="DELETE">DELETE</option>
+              <option value="INSERT">Added</option>
+              <option value="UPDATE">Edited</option>
+              <option value="DELETE">Removed</option>
             </select>
           </div>
         </div>
