@@ -949,13 +949,13 @@ export default function NewBillingPage() {
                     }}
                     className="size-4 rounded border-border text-fuchsia-600 focus:ring-fuchsia-500/30"
                   />
-                  <span className="text-sm font-medium text-foreground">✨ Redeem loyalty points</span>
+                  <span className="text-sm font-medium text-foreground">Redeem loyalty points</span>
                   <span className="ml-auto text-xs text-muted-foreground whitespace-nowrap">
                     Balance: <span className="font-semibold text-foreground">{loyaltyBalance.toLocaleString('en-IN')} pts</span>
                   </span>
                 </label>
                 {useLoyalty && (
-                  <div className="flex items-center gap-2">
+                  <div className="flex flex-wrap items-center gap-2">
                     <label htmlFor="loyalty-points" className="text-xs text-muted-foreground whitespace-nowrap">
                       Points:
                     </label>
@@ -1097,7 +1097,7 @@ export default function NewBillingPage() {
 
                 {pointsWillEarn > 0 && (
                   <p className="mt-2 text-xs text-fuchsia-600 dark:text-fuchsia-400">
-                    ✨ Customer earns {pointsWillEarn.toLocaleString('en-IN')} points on this bill
+                    Customer earns {pointsWillEarn.toLocaleString('en-IN')} points on this bill
                   </p>
                 )}
               </div>

@@ -4,6 +4,7 @@ import dynamic from 'next/dynamic';
 import { createClient } from '@/lib/supabase/server';
 import { formatINR } from '@/lib/utils';
 import { getDailyQuote } from '@/lib/daily-quote';
+import { readLoyaltyConfig, getPointsTier } from '@/lib/loyalty-points';
 import {
   Calendar,
   Users,
@@ -12,6 +13,7 @@ import {
   Plus,
   TrendingUp,
   Clock,
+  Coins,
 } from 'lucide-react';
 import type { UserRole } from '@/types';
 import { WelcomeTour } from './welcome-tour';
@@ -133,6 +135,40 @@ export default async function DashboardPage() {
       .order('created_at', { ascending: false })
       .limit(5) as any);
     recentFeedback = (feedback ?? []) as { customer_name: string; rating: number; created_at: string }[];
+  }
+
+  // Loyalty points summary — owner/manager only, and only when the programme is
+  // enabled. Balances are RLS-scoped to this tenant.
+  let loyaltySummary: {
+    outstanding: number;
+    liability: number;
+    members: number;
+    top: { name: string; points: number; lifetime: number }[];
+  } | null = null;
+  if (tenantId && (role === 'owner' || role === 'manager')) {
+    const { data: tRow } = await supabase.from('tenants').select('settings').eq('id', tenantId).maybeSingle();
+    const cfg = readLoyaltyConfig((tRow?.settings as Record<string, unknown>) ?? {});
+    if (cfg.enabled) {
+      const [allRes, topRes] = await Promise.all([
+        (supabase as any).from('customer_loyalty').select('points_balance').eq('tenant_id', tenantId),
+        (supabase as any)
+          .from('customer_loyalty')
+          .select('points_balance, lifetime_points, customers(name)')
+          .eq('tenant_id', tenantId)
+          .gt('points_balance', 0)
+          .order('points_balance', { ascending: false })
+          .limit(5),
+      ]);
+      const balances = (((allRes as any)?.data ?? []) as { points_balance: number }[]);
+      const outstanding = balances.reduce((s, r) => s + Number(r.points_balance || 0), 0);
+      const members = balances.filter((r) => Number(r.points_balance) > 0).length;
+      const top = ((((topRes as any)?.data ?? []) as any[])).map((r) => ({
+        name: (r.customers?.name as string) ?? '—',
+        points: Number(r.points_balance || 0),
+        lifetime: Number(r.lifetime_points || 0),
+      }));
+      loyaltySummary = { outstanding, liability: Math.round(outstanding * cfg.redeemValue), members, top };
+    }
   }
 
   // Get greeting based on time (IST — server runs in UTC on Vercel)
@@ -335,8 +371,74 @@ export default async function DashboardPage() {
         </div>
       </div>
 
+      {/* Loyalty Points summary (owner/manager, when enabled) */}
+      {loyaltySummary && <LoyaltyDashboardCard summary={loyaltySummary} />}
+
       {/* Peak Hours & Appointments by Day */}
       <DashboardCharts dailyAppointments={dailyAppointments} peakHours={peakHours} />
+    </div>
+  );
+}
+
+// =============================================================================
+// Loyalty Points summary card (dashboard)
+// =============================================================================
+
+function LoyaltyDashboardCard({
+  summary,
+}: {
+  summary: { outstanding: number; liability: number; members: number; top: { name: string; points: number; lifetime: number }[] };
+}) {
+  return (
+    <div className="rounded-2xl border border-border bg-card shadow-sm overflow-hidden">
+      <div className="flex items-center justify-between gap-3 border-b border-border px-4 sm:px-6 py-4 bg-gradient-to-r from-fuchsia-50 via-pink-50/60 to-transparent dark:from-fuchsia-950/20 dark:via-pink-950/10">
+        <div className="flex items-center gap-2">
+          <Coins className="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
+          <h2 className="text-sm font-semibold text-foreground">Loyalty Points</h2>
+        </div>
+        <Link href="/dashboard/settings" className="shrink-0 text-xs font-medium text-fuchsia-700 dark:text-fuchsia-400 hover:underline">
+          Configure
+        </Link>
+      </div>
+      <div className="p-4 sm:p-6 space-y-5">
+        <div className="grid grid-cols-3 gap-2 sm:gap-3">
+          <div className="rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{summary.outstanding.toLocaleString('en-IN')}</p>
+            <p className="mt-0.5 text-[11px] sm:text-xs text-muted-foreground">points outstanding</p>
+          </div>
+          <div className="rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{formatINR(summary.liability)}</p>
+            <p className="mt-0.5 text-[11px] sm:text-xs text-muted-foreground">est. liability</p>
+          </div>
+          <div className="rounded-xl border border-border bg-muted/30 p-3">
+            <p className="text-lg sm:text-2xl font-bold text-foreground leading-tight">{summary.members.toLocaleString('en-IN')}</p>
+            <p className="mt-0.5 text-[11px] sm:text-xs text-muted-foreground">members</p>
+          </div>
+        </div>
+
+        {summary.top.length > 0 ? (
+          <div>
+            <p className="mb-2 text-xs font-semibold uppercase tracking-wide text-muted-foreground">Top members</p>
+            <ul className="space-y-1">
+              {summary.top.map((c, i) => {
+                const tier = getPointsTier(c.lifetime);
+                return (
+                  <li key={i} className="flex items-center justify-between gap-3 rounded-lg px-2 py-1.5 hover:bg-muted/50 transition-colors">
+                    <div className="flex min-w-0 items-center gap-2">
+                      <span className="shrink-0 text-base" aria-hidden>{tier.emoji}</span>
+                      <span className="truncate text-sm font-medium text-foreground">{c.name}</span>
+                      <span className="hidden shrink-0 text-[11px] text-muted-foreground sm:inline">{tier.label}</span>
+                    </div>
+                    <span className="shrink-0 text-sm font-semibold text-foreground">{c.points.toLocaleString('en-IN')} pts</span>
+                  </li>
+                );
+              })}
+            </ul>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">No points issued yet — they start accruing as customers pay their bills.</p>
+        )}
+      </div>
     </div>
   );
 }

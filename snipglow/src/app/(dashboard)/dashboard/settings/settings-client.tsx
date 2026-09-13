@@ -4,7 +4,7 @@ import { useState, useTransition, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { updateGstSettings, updateSalonProfile, updateDiscountSettings, updateLoyaltySettings } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck, Sparkles, Coins } from 'lucide-react';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck, Gift, Coins } from 'lucide-react';
 import { pointsForSpend, pointsToRupees } from '@/lib/loyalty-points';
 
 // =============================================================================
@@ -1643,7 +1643,7 @@ export function LoyaltySettingsCard({
       {/* Header with a loyalty gradient accent */}
       <div className="relative border-b border-border px-6 py-4 bg-gradient-to-r from-fuchsia-50 via-pink-50/60 to-transparent dark:from-fuchsia-950/20 dark:via-pink-950/10">
         <div className="flex items-center gap-2">
-          <Sparkles className="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
+          <Gift className="size-4 text-fuchsia-600 dark:text-fuchsia-400" />
           <h2 className="text-sm font-semibold text-foreground">Loyalty Points</h2>
           {initialEnabled && (
             <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">

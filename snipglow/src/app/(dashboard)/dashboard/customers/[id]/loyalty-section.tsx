@@ -10,7 +10,7 @@
 import { useState, useTransition } from 'react';
 import { useRouter } from 'next/navigation';
 import { toast } from 'sonner';
-import { Sparkles, Plus, Minus, X } from 'lucide-react';
+import { Gift, Plus, Minus, X } from 'lucide-react';
 import { getPointsTier } from '@/lib/loyalty-points';
 import { formatINR } from '@/lib/utils';
 import { adjustLoyaltyPoints } from '../loyalty-actions';
@@ -41,11 +41,11 @@ export function LoyaltySection({
         <div className="relative flex items-start justify-between gap-3">
           <div className="min-w-0">
             <div className="flex items-center gap-1.5 text-[11px] font-semibold uppercase tracking-wide text-white/80">
-              <Sparkles className="size-3.5" /> Loyalty Points
+              <Gift className="size-3.5" /> Loyalty Points
             </div>
-            <p className="mt-1 text-4xl font-extrabold leading-none">
+            <p className="mt-1 text-3xl sm:text-4xl font-extrabold leading-none">
               {balance.toLocaleString('en-IN')}
-              <span className="ml-1 text-lg font-semibold text-white/80">pts</span>
+              <span className="ml-1 text-base sm:text-lg font-semibold text-white/80">pts</span>
             </p>
             {worth > 0 && (
               <p className="mt-1 text-sm text-white/85">worth {formatINR(worth)} at checkout</p>
