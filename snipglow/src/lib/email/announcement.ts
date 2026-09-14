@@ -40,9 +40,17 @@ export interface AnnouncementCampaign {
    * 'reminder' switches to a warm amber palette that reads as time-sensitive
    * without looking alarming. Also changes the header tag wording.
    */
-  theme?: 'brand' | 'reminder';
+  theme?: 'brand' | 'reminder' | 'festival';
   /** Header tag text. Defaults to 'Product Update' (or 'Reminder' when theme='reminder'). */
   headerTag?: string;
+  /**
+   * Optional hero image shown centered at the top of the email body (e.g. a
+   * festival greeting graphic). MUST be a public https URL — email clients can
+   * only load absolute, remotely hosted images, never bundled/relative assets.
+   */
+  heroImageUrl?: string;
+  /** Alt text for the hero image (accessibility + shown when images are blocked). */
+  heroImageAlt?: string;
 }
 
 /** Palette per theme, used for the header, ticks and CTA. */
@@ -68,6 +76,19 @@ const THEMES = {
     eyebrowBg: '#fff7ed',
     eyebrowText: '#c2410c',
     tag: 'Reminder',
+  },
+  // Warm saffron -> maroon palette for festival greetings (Ganesh Chaturthi,
+  // Diwali, etc.). Celebratory without looking like an alert.
+  festival: {
+    headerFrom: '#f97316',
+    headerMid: '#ea580c',
+    headerTo: '#b91c1c',
+    solid: '#ea580c',
+    ctaFrom: '#f59e0b',
+    ctaTo: '#c2410c',
+    eyebrowBg: '#fff7ed',
+    eyebrowText: '#c2410c',
+    tag: 'Festive Wishes',
   },
 } as const;
 
@@ -194,6 +215,31 @@ export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
 };
 
 /**
+ * Preset: Ganesh Chaturthi festival greeting from Pixalara.
+ *
+ * A warm, non-salesy wish (no product bullets) with a centered 3D Ganesha hero
+ * image. The image must be publicly hosted — drop the artwork at
+ * public/festival/ganesh-chaturthi.png (served at the URL below after a deploy)
+ * or paste any public https image URL in the admin's "Hero image URL" field.
+ */
+export const GANESH_CHATURTHI_CAMPAIGN: AnnouncementCampaign = {
+  subject: 'Happy Ganesh Chaturthi from Pixalara \u{1F64F}',
+  eyebrow: 'Festival Greetings',
+  headline: 'Wishing you a blessed Ganesh Chaturthi',
+  greeting: 'Happy Ganesh Chaturthi, {salon} team! \u{1F64F}',
+  intro:
+    'As Lord Ganesha arrives to remove obstacles and bless new beginnings, all of us at Pixalara and SnipandGlow send you and your salon our warmest wishes. May this festive season fill your salon with joy, prosperity and a steady stream of happy customers. Ganpati Bappa Morya!',
+  bullets: [],
+  ctaLabel: 'Open SnipandGlow',
+  ctaUrl: 'https://snipandglow.com/dashboard',
+  footerNote: 'With warm regards, Team Pixalara.',
+  theme: 'festival',
+  headerTag: 'Festive Wishes',
+  heroImageUrl: 'https://snipandglow.com/festival/ganesh-chaturthi.png',
+  heroImageAlt: 'Lord Ganesha \u2014 Happy Ganesh Chaturthi',
+};
+
+/**
  * Ready-made campaigns the admin can load in one click. Add new feature
  * announcements here and they appear as preset buttons in the admin UI.
  */
@@ -203,6 +249,7 @@ export const CAMPAIGN_PRESETS: { key: string; label: string; campaign: Announcem
   { key: 'wallet', label: 'Customer Wallet', campaign: DEFAULT_CAMPAIGN },
   { key: 'online_renewal', label: 'Online Renewals', campaign: ONLINE_RENEWAL_CAMPAIGN },
   { key: 'renewal_reminder', label: 'Renewal Reminder', campaign: RENEWAL_REMINDER_CAMPAIGN },
+  { key: 'ganesh_chaturthi', label: 'Ganesh Chaturthi', campaign: GANESH_CHATURTHI_CAMPAIGN },
 ];
 
 function esc(s = ''): string {
@@ -217,7 +264,7 @@ export function renderAnnouncementEmail(
   const greetName = salonName && salonName.trim() ? `${esc(salonName.trim())} team` : 'there';
   const greetingLine = esc(campaign.greeting || 'Hi {salon},').replace('{salon}', greetName);
   const cta = campaign.ctaUrl || BRAND.site;
-  const th = THEMES[campaign.theme === 'reminder' ? 'reminder' : 'brand'];
+  const th = THEMES[campaign.theme === 'reminder' ? 'reminder' : campaign.theme === 'festival' ? 'festival' : 'brand'];
   const headerTag = campaign.headerTag?.trim() || th.tag;
   const subject = campaign.subject || 'An update from SnipandGlow';
   const preheader = (campaign.intro || '').slice(0, 140);
@@ -252,6 +299,12 @@ export function renderAnnouncementEmail(
 
   const footerNoteBlock = campaign.footerNote
     ? `<p style="font:400 13px/1.5 Arial,Helvetica,sans-serif;color:#94a3b8;margin:14px 0 0 0;">${esc(campaign.footerNote)}</p>`
+    : '';
+
+  // Centered hero image (festival greetings etc.). Only rendered when a public
+  // https URL is supplied; capped in width so it stays tidy on mobile.
+  const heroBlock = campaign.heroImageUrl
+    ? `<tr><td align="center" style="padding:26px 32px 0 32px;"><img src="${esc(campaign.heroImageUrl)}" alt="${esc(campaign.heroImageAlt || '')}" width="240" style="display:block;width:240px;max-width:80%;height:auto;margin:0 auto;border:0;" /></td></tr>`
     : '';
 
   const html = `<!DOCTYPE html>
@@ -318,6 +371,7 @@ export function renderAnnouncementEmail(
               </tr></table>
             </td>
           </tr>
+          ${heroBlock}
           <tr>
             <td class="sg-pad" style="padding:34px 32px 8px 32px;">
               ${campaign.eyebrow ? `<div style="display:inline-block;background:${th.eyebrowBg};color:${th.eyebrowText};font:700 11px/1 Arial,Helvetica,sans-serif;letter-spacing:0.5px;padding:7px 12px;border-radius:999px;text-transform:uppercase;">${esc(campaign.eyebrow)}</div>` : ''}

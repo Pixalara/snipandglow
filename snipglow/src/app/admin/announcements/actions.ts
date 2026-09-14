@@ -124,8 +124,14 @@ function normalizeCampaign(c: Partial<AnnouncementCampaign> | undefined): Announ
     footerNote: (src.footerNote ?? '').trim().slice(0, 200) || undefined,
     // Only known enum values are allowed through (never raw client markup).
     partnerBadge: src.partnerBadge === 'razorpay' ? 'razorpay' : undefined,
-    theme: src.theme === 'reminder' ? 'reminder' : 'brand',
+    theme: src.theme === 'reminder' ? 'reminder' : src.theme === 'festival' ? 'festival' : 'brand',
     headerTag: (src.headerTag ?? '').trim().slice(0, 40) || undefined,
+    // Hero image must be an absolute http(s) URL — anything else is dropped so a
+    // relative/asset path or injected value can never reach the sent email.
+    heroImageUrl: /^https?:\/\//i.test((src.heroImageUrl ?? '').trim())
+      ? (src.heroImageUrl as string).trim().slice(0, 500)
+      : undefined,
+    heroImageAlt: (src.heroImageAlt ?? '').trim().slice(0, 120) || undefined,
   };
 }
 

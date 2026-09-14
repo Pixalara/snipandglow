@@ -208,6 +208,14 @@ export function AnnouncementsClient({
             <label className={labelCls}>Intro (shown right after the greeting)</label>
             <textarea className={inputCls} rows={3} value={campaign.intro} onChange={(e) => setField('intro', e.target.value)} />
           </div>
+          <div>
+            <label className={labelCls}>Hero image URL <span className="text-muted-foreground/70">(optional — shown at the top; must be a public https link)</span></label>
+            <input className={inputCls} value={campaign.heroImageUrl ?? ''} onChange={(e) => setField('heroImageUrl', e.target.value)} placeholder="https://snipandglow.com/festival/ganesh-chaturthi.png" />
+          </div>
+          <div>
+            <label className={labelCls}>Hero image alt text (optional)</label>
+            <input className={inputCls} value={campaign.heroImageAlt ?? ''} onChange={(e) => setField('heroImageAlt', e.target.value)} placeholder="Lord Ganesha — Happy Ganesh Chaturthi" />
+          </div>
 
           {/* Bullets */}
           <div>
