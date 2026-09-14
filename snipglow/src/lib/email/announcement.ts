@@ -224,7 +224,9 @@ export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
  */
 export const GANESH_CHATURTHI_CAMPAIGN: AnnouncementCampaign = {
   subject: 'Happy Ganesh Chaturthi from Pixalara \u{1F64F}',
-  eyebrow: 'Festival Greetings',
+  // No eyebrow tag: the hero image + headline already say it's a festive
+  // greeting, so a separate "Festival Greetings" pill just repeats that.
+  eyebrow: '',
   headline: 'Wishing you a blessed Ganesh Chaturthi',
   greeting: 'Happy Ganesh Chaturthi, {salon} team! \u{1F64F}',
   intro:
