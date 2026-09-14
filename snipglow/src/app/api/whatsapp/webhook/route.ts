@@ -5,6 +5,8 @@ import { notifyOwner, notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerC
 import { createNotification } from '@/lib/notifications';
 import { resolveTenant, resolveTenantById, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
+import { mapMetaTemplateStatus } from '@/lib/whatsapp/template-management';
+import { updateTemplateStatus } from '@/lib/whatsapp/template-store';
 import crypto from 'crypto';
 
 // =============================================================================
@@ -57,6 +59,14 @@ export async function POST(request: NextRequest) {
 
     for (const entry of payload.entry ?? []) {
       for (const change of entry.changes ?? []) {
+        // Template review verdicts arrive on their own field, not 'messages'.
+        // A tenant's WABA (subscribed during dedicated onboarding) pushes these
+        // when a submitted marketing template is approved/rejected/paused.
+        if (change.field === 'message_template_status_update') {
+          await handleTemplateStatusUpdate(change.value);
+          continue;
+        }
+
         if (change.field !== 'messages') continue;
         const value = change.value;
 
@@ -88,6 +98,29 @@ async function handleStatuses(statuses: any[]) {
   for (const s of statuses) {
     await (admin.from('whatsapp_sessions').update({ status: s.status }).eq('message_id', s.id) as any);
   }
+}
+
+// =============================================================================
+// Template Review Handler
+// =============================================================================
+
+/**
+ * Apply a `message_template_status_update` from Meta to our local mirror. The
+ * event carries the template id + name/language and the new state (APPROVED /
+ * REJECTED / PAUSED / …); we normalise it and flip the stored row so the owner's
+ * composer reflects the verdict, capturing the reason on rejection.
+ */
+async function handleTemplateStatusUpdate(value: any) {
+  const status = mapMetaTemplateStatus(value?.event);
+  const metaTemplateId = value?.message_template_id != null ? String(value.message_template_id) : null;
+  const name = value?.message_template_name ?? null;
+  const language = value?.message_template_language ?? null;
+
+  const rawReason = value?.reason;
+  const rejectionReason =
+    rawReason && String(rawReason).toUpperCase() !== 'NONE' ? String(rawReason) : null;
+
+  await updateTemplateStatus({ metaTemplateId, name, language, status, rejectionReason });
 }
 
 // =============================================================================

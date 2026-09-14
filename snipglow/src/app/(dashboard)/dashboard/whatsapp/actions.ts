@@ -28,6 +28,18 @@ import { encryptToken } from '@/lib/crypto/token-encryption';
 import { subscribeWaba } from '@/lib/whatsapp/webhook-subscription';
 import { recordOnboardingEvent } from '@/lib/whatsapp/onboarding-log';
 import { notifyAdminOfSetupRequest } from '@/lib/whatsapp/setup-request-alert';
+import { getDedicatedCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
+import {
+  createTemplate,
+  normalizeTemplateName,
+  type TemplateCategory,
+  type TemplateStatus,
+} from '@/lib/whatsapp/template-management';
+import {
+  listTenantTemplates,
+  upsertSubmittedTemplate,
+  type TemplateRow,
+} from '@/lib/whatsapp/template-store';
 
 // =============================================================================
 // Dedicated WhatsApp Onboarding — auth guard + state read
@@ -698,5 +710,134 @@ export async function getWhatsAppLogs(): Promise<WhatsAppLogRow[]> {
   } catch (err) {
     console.error('[getWhatsAppLogs] Error:', err);
     return [];
+  }
+}
+
+// =============================================================================
+// Marketing Templates — Pro/owner gated create + list
+//
+// A Pro owner authors a marketing template (from a preset or free text) and we
+// submit it to Meta on THEIR OWN WABA via the Management API, then mirror it
+// locally so the composer can show its approval status. Creation is refused
+// unless the tenant has a fully connected dedicated number — we never create a
+// template on the shared Snip and Glow account.
+// =============================================================================
+
+/** Redacted view of a mirrored template returned to the owner UI. */
+export interface MarketingTemplateView {
+  id: string;
+  name: string;
+  language: string;
+  category: string;
+  status: TemplateStatus;
+  bodyText: string;
+  footerText: string | null;
+  exampleParams: string[];
+  rejectionReason: string | null;
+  createdAt: string;
+}
+
+function toTemplateView(row: TemplateRow): MarketingTemplateView {
+  return {
+    id: row.id,
+    name: row.name,
+    language: row.language,
+    category: row.category,
+    status: row.status,
+    bodyText: row.body_text,
+    footerText: row.footer_text,
+    exampleParams: Array.isArray(row.example_params) ? row.example_params : [],
+    rejectionReason: row.rejection_reason,
+    createdAt: row.created_at,
+  };
+}
+
+/**
+ * List the requesting owner's marketing templates (newest first). Tolerant:
+ * returns [] for a non-Pro/non-owner caller rather than throwing, so the UI can
+ * render its empty/upsell state.
+ */
+export async function getMarketingTemplates(): Promise<MarketingTemplateView[]> {
+  try {
+    const { tenantId } = await assertProOwner();
+    const rows = await listTenantTemplates(tenantId);
+    return rows.map(toTemplateView);
+  } catch {
+    return [];
+  }
+}
+
+/** Discriminated outcome of {@link submitMarketingTemplate}. Never carries a token. */
+export type SubmitTemplateResult =
+  | { ok: true; template: MarketingTemplateView }
+  | { ok: false; reason: string };
+
+/**
+ * Create a marketing template on the owner's own WABA and mirror it locally.
+ *
+ * Sequence:
+ *   1. {@link assertProOwner} — reject non-Pro/non-owner up front.
+ *   2. {@link getDedicatedCredentialsForTenant} — require a connected dedicated
+ *      number; `not_connected` otherwise (never falls back to the shared number).
+ *   3. {@link createTemplate} — validate + POST to Meta's Management API.
+ *   4. {@link upsertSubmittedTemplate} — record it locally as PENDING (Meta will
+ *      push the approval verdict to the webhook, which flips the status).
+ */
+export async function submitMarketingTemplate(input: {
+  name: string;
+  bodyText: string;
+  exampleParams: string[];
+  footerText?: string | null;
+  headerText?: string | null;
+  category?: TemplateCategory;
+  language?: string;
+}): Promise<SubmitTemplateResult> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, reason };
+  }
+
+  // Must have their OWN connected WABA — a template can only be created on the
+  // account that will send it, and never on the shared platform number.
+  const credentials = await getDedicatedCredentialsForTenant(tenantId);
+  if (!credentials) {
+    return { ok: false, reason: 'not_connected' };
+  }
+
+  const definition = {
+    name: normalizeTemplateName(input.name),
+    language: input.language || 'en',
+    category: (input.category ?? 'MARKETING') as TemplateCategory,
+    bodyText: input.bodyText,
+    exampleParams: input.exampleParams ?? [],
+    headerText: input.headerText ?? undefined,
+    footerText: input.footerText ?? undefined,
+  };
+
+  const result = await createTemplate(credentials, definition);
+  if (!result.ok) {
+    return { ok: false, reason: result.error ?? 'Template could not be created.' };
+  }
+
+  try {
+    const row = await upsertSubmittedTemplate(tenantId, {
+      name: definition.name,
+      language: definition.language,
+      category: definition.category,
+      bodyText: definition.bodyText,
+      headerText: definition.headerText ?? null,
+      footerText: definition.footerText ?? null,
+      exampleParams: definition.exampleParams,
+      status: result.status ?? 'PENDING',
+      metaTemplateId: result.metaTemplateId ?? null,
+    });
+    if (!row) return { ok: false, reason: 'Saved to WhatsApp but failed to record it locally.' };
+    return { ok: true, template: toTemplateView(row) };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Failed to save the template.';
+    return { ok: false, reason };
   }
 }

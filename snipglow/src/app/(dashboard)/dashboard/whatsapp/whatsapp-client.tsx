@@ -37,6 +37,7 @@ import {
   planGate,
   type OnboardingStatus,
 } from '@/lib/whatsapp/onboarding-status';
+import { TemplateComposer } from './template-composer';
 
 // =============================================================================
 // Global type declarations for Facebook SDK
@@ -85,6 +86,10 @@ type TabType = 'logs';
 const SHOW_CONNECT_CARD = false;
 
 export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
+  // Marketing template creation is a paid-tier capability (own WABA required).
+  const isPro = planTier === 'pro' || planTier === 'enterprise';
+  const [tab, setTab] = useState<'activity' | 'marketing'>('activity');
+
   return (
     <div className="space-y-6">
       {/* Page Header */}
@@ -105,7 +110,35 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
 
       {SHOW_CONNECT_CARD && <WhatsAppConnectCard planTier={planTier} />}
 
-      <WhatsAppLogsSection />
+      {isPro ? (
+        <>
+          <div className="flex items-center gap-1 border-b border-border">
+            {([
+              { key: 'activity', label: 'Activity' },
+              { key: 'marketing', label: 'Marketing Templates' },
+            ] as const).map((t) => (
+              <button
+                key={t.key}
+                onClick={() => setTab(t.key)}
+                className={cn(
+                  'relative px-4 py-2.5 text-sm font-medium transition-colors',
+                  tab === t.key
+                    ? 'text-emerald-600 dark:text-emerald-400'
+                    : 'text-muted-foreground hover:text-foreground'
+                )}
+              >
+                {t.label}
+                {tab === t.key && (
+                  <span className="absolute inset-x-2 -bottom-px h-0.5 rounded-full bg-emerald-500" />
+                )}
+              </button>
+            ))}
+          </div>
+          {tab === 'activity' ? <WhatsAppLogsSection /> : <TemplateComposer />}
+        </>
+      ) : (
+        <WhatsAppLogsSection />
+      )}
     </div>
   );
 }

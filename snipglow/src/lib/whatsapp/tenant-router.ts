@@ -432,6 +432,54 @@ export async function getCredentialsForTenant(tenantId: string): Promise<WhatsAp
 }
 
 /**
+ * Return the tenant's OWN dedicated WhatsApp credentials, or null.
+ *
+ * Unlike {@link getCredentialsForTenant}, this NEVER falls back to the shared
+ * platform number. It yields credentials only when the tenant is a plan-eligible,
+ * fully connected dedicated sender whose stored token decrypts. Used by actions
+ * that MUST target the tenant's own WABA — e.g. creating message templates, where
+ * silently using the platform account would create the template in the wrong
+ * business and let one tenant's content land on Snip and Glow's shared number.
+ */
+export async function getDedicatedCredentialsForTenant(
+  tenantId: string
+): Promise<WhatsAppCredentials | null> {
+  const admin = createAdminClient();
+
+  // Plan gate first: a downgraded tenant loses dedicated access immediately.
+  const eligible = await isDedicatedWhatsAppEligible(admin, tenantId);
+  if (!eligible) return null;
+
+  const { data: settings } = await (admin
+    .from('tenant_whatsapp_settings' as any)
+    .select('mode, onboarding_status, phone_number_id, waba_id, access_token_encrypted')
+    .eq('tenant_id', tenantId)
+    .single() as any);
+
+  if (
+    !settings ||
+    settings.mode !== 'dedicated' ||
+    settings.onboarding_status !== 'connected' ||
+    !settings.access_token_encrypted ||
+    !settings.phone_number_id ||
+    !settings.waba_id
+  ) {
+    return null;
+  }
+
+  try {
+    return {
+      accessToken: decryptToken(settings.access_token_encrypted),
+      phoneNumberId: settings.phone_number_id,
+      businessAccountId: settings.waba_id,
+    };
+  } catch {
+    // A stored token that no longer decrypts is unusable — fail closed.
+    return null;
+  }
+}
+
+/**
  * Whether the tenant's CURRENT plan includes a dedicated WhatsApp number.
  * Read at send time so a downgrade reverts the tenant to the shared number
  * immediately, without depending on the stored credentials being cleared.
