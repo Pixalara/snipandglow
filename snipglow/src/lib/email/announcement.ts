@@ -228,7 +228,8 @@ export const GANESH_CHATURTHI_CAMPAIGN: AnnouncementCampaign = {
   // greeting, so a separate "Festival Greetings" pill just repeats that.
   eyebrow: '',
   headline: 'Wishing you a blessed Ganesh Chaturthi',
-  greeting: 'Happy Ganesh Chaturthi, {salon} team! \u{1F64F}',
+  // {salon} already expands to "<Salon> team", so don't add "team" again here.
+  greeting: 'Happy Ganesh Chaturthi, {salon}! \u{1F64F}',
   intro:
     'As Lord Ganesha arrives to remove obstacles and bless new beginnings, all of us at Pixalara and SnipandGlow send you and your salon our warmest wishes. May this festive season fill your salon with joy, prosperity and a steady stream of happy customers. Ganpati Bappa Morya!',
   bullets: [],
