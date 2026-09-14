@@ -59,29 +59,58 @@ async function getOwnerEmailsByTenant(admin: ReturnType<typeof createAdminClient
 }
 
 /**
+ * Map of tenantId -> owner's CONTACT email from the employees table (real emails
+ * only). Phone/WhatsApp signups get a synthetic auth login email
+ * (…@phone.snipandglow.com), so their real address lives on the owner's employee
+ * record — set at signup or via the admin "Edit owner email" action. Without
+ * this source those tenants never appear as mailable in Announcements. Prefers
+ * the founding (oldest) owner, matching the tenant page.
+ */
+async function getOwnerEmployeeEmailsByTenant(admin: ReturnType<typeof createAdminClient>): Promise<Record<string, string>> {
+  const map: Record<string, string> = {};
+  const { data } = await (admin
+    .from('employees')
+    .select('tenant_id, email, role, created_at')
+    .eq('role', 'owner')
+    .order('created_at', { ascending: true }) as any);
+  for (const e of ((data ?? []) as { tenant_id: string | null; email: string | null }[])) {
+    if (!e.tenant_id || map[e.tenant_id]) continue; // keep the oldest owner's email
+    if (isRealEmail(e.email)) map[e.tenant_id] = (e.email as string).toLowerCase().trim();
+  }
+  return map;
+}
+
+/**
  * Build the full recipient list from Supabase: every tenant that has a real,
- * mailable email (owner login email preferred, salon contact email as fallback).
+ * mailable email — resolved as owner login email, then owner contact email
+ * (employees table), then the salon's settings contact email.
  */
 export async function getWalletRecipients(): Promise<{ configured: boolean; missingEnv: string[]; recipients: Recipient[] }> {
   await requireAdmin();
   const admin = createAdminClient();
 
-  const [{ data: tenants }, ownerEmails] = await Promise.all([
+  const [{ data: tenants }, ownerEmails, ownerEmployeeEmails] = await Promise.all([
     (admin
       .from('tenants' as any)
       .select('id, name, plan_tier, subscription_status, settings')
       .order('created_at', { ascending: false }) as any),
     getOwnerEmailsByTenant(admin),
+    getOwnerEmployeeEmailsByTenant(admin),
   ]);
 
   const recipients: Recipient[] = [];
   for (const t of (tenants ?? []) as any[]) {
     const ownerEmail = ownerEmails[t.id];
+    const employeeEmail = ownerEmployeeEmails[t.id];
     const settingsEmail = (t.settings as Record<string, unknown> | null)?.email as string | undefined;
     let email: string | null = null;
     let source: 'account' | 'settings' = 'account';
     if (isRealEmail(ownerEmail)) {
       email = ownerEmail;
+      source = 'account';
+    } else if (isRealEmail(employeeEmail)) {
+      // Phone signups: the real address is on the owner's employee record.
+      email = employeeEmail;
       source = 'account';
     } else if (isRealEmail(settingsEmail)) {
       email = settingsEmail!.toLowerCase().trim();
