@@ -117,11 +117,15 @@ describe('announcement templates', () => {
       'wallet',
       'online_renewal',
       'renewal_reminder',
+      'ganesh_chaturthi',
     ]);
     for (const p of CAMPAIGN_PRESETS) {
       expect(p.campaign.subject.length).toBeGreaterThan(0);
       expect(p.campaign.ctaUrl).toMatch(/^https:\/\//);
-      expect(p.campaign.bullets.length).toBeGreaterThan(0);
+      // Every campaign must carry body content. Feature announcements use
+      // bullets; a festival greeting has none and speaks through its intro.
+      const hasBody = p.campaign.bullets.length > 0 || p.campaign.intro.trim().length > 0;
+      expect(hasBody, `${p.key} has no body content`).toBe(true);
     }
   });
 

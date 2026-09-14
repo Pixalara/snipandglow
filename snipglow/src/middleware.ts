@@ -14,6 +14,24 @@ const adminPublicPaths = new Set(["/admin/login", "/admin/forbidden"]);
 // Routes that require authentication (dashboard section)
 const protectedPrefixes = ["/dashboard", "/onboarding", "/admin"];
 
+/**
+ * Build a redirect that carries over any auth cookies Supabase refreshed onto
+ * `source`. Calling `getUser()` can rotate the access/refresh tokens and write
+ * the new pair onto `supabaseResponse` via setAll. A bare
+ * `NextResponse.redirect()` starts from a clean response and therefore DROPS
+ * those Set-Cookie headers — the browser keeps the now-stale (rotated-away)
+ * tokens, the very next request fails auth, and the tenant is silently logged
+ * out. Copying the cookies onto the redirect preserves the refreshed session so
+ * navigation only ever ends at /login when the user is genuinely signed out.
+ */
+function redirectWithCookies(url: URL, source: NextResponse): NextResponse {
+  const redirect = NextResponse.redirect(url);
+  source.cookies.getAll().forEach((cookie) => {
+    redirect.cookies.set(cookie);
+  });
+  return redirect;
+}
+
 export async function middleware(request: NextRequest) {
   const pathname = request.nextUrl.pathname;
   const host = request.headers.get('host') || '';
@@ -86,7 +104,7 @@ export async function middleware(request: NextRequest) {
     } else {
       url.pathname = '/login';
     }
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url, supabaseResponse);
   }
 
   // Skip tenant checks for admin paths — admin users don't need tenant_id
@@ -114,14 +132,14 @@ export async function middleware(request: NextRequest) {
     const url = request.nextUrl.clone();
     url.pathname = step;
     url.search = "";
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url, supabaseResponse);
   }
 
   // Has tenant but on onboarding → redirect to dashboard
   if (tenantId && pathname.startsWith("/onboarding")) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
-    return NextResponse.redirect(url);
+    return redirectWithCookies(url, supabaseResponse);
   }
 
   // Inject tenant context headers for Server Components

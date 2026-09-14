@@ -239,7 +239,7 @@ export const GANESH_CHATURTHI_CAMPAIGN: AnnouncementCampaign = {
   theme: 'festival',
   headerTag: 'Festive Wishes',
   heroImageUrl: 'https://snipandglow.com/festival/ganesh-chaturthi.png',
-  heroImageAlt: 'Lord Ganesha \u2014 Happy Ganesh Chaturthi',
+  heroImageAlt: 'Lord Ganesha, Happy Ganesh Chaturthi',
 };
 
 /**

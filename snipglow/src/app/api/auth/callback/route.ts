@@ -33,9 +33,19 @@ export async function GET(request: NextRequest) {
     const { error } = await supabase.auth.exchangeCodeForSession(code);
 
     if (error) {
-      console.error('[Auth Callback] PKCE exchange failed:', error.message);
-      // Don't fail — redirect to dashboard and let client-side handle it
-      return NextResponse.redirect(`${origin}/login?error=auth_failed`);
+      console.error('[Auth Callback] PKCE exchange failed, handing off to client:', error.message);
+      // The browser that STARTED this OAuth flow still holds the PKCE code
+      // verifier (it generated and stored it before redirecting to Google).
+      // When the server copy is missing — e.g. the verifier cookie was written
+      // on a different host during domain canonicalisation — the server
+      // exchange fails even though the browser could complete it. That is the
+      // "first attempt errors, second works" bug. Instead of dead-ending at
+      // /login, hand the code to the client-side confirm page, which runs the
+      // exchange with the browser client that owns the verifier.
+      const confirmUrl = new URL(`${origin}/auth/confirm`);
+      confirmUrl.searchParams.set('code', code);
+      confirmUrl.searchParams.set('next', next);
+      return NextResponse.redirect(confirmUrl);
     }
 
     const { data: { user } } = await supabase.auth.getUser();

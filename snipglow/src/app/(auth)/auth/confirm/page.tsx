@@ -7,15 +7,22 @@ import { createClient } from '@/lib/supabase/client';
 import { nextSignupStep } from '@/lib/auth/signup-state';
 
 // =============================================================================
-// Auth Confirm — handles the IMPLICIT flow OAuth callback, where the access token
-// arrives in the URL hash (#access_token=...) and so can only be read in the
-// browser. The PKCE equivalent is /api/auth/callback.
+// Auth Confirm — the browser-side completion of an OAuth sign-in. It handles two
+// cases, both of which can only finish in the browser:
+//   1. IMPLICIT flow: the access token arrives in the URL hash (#access_token=)
+//      and is auto-read on client init.
+//   2. PKCE hand-off: /api/auth/callback normally exchanges the ?code= server
+//      side, but when its copy of the code verifier is missing (e.g. a transient
+//      failure, or the flow started on a different host) it forwards the code
+//      here. The browser client holds the verifier and auto-exchanges the code
+//      on init via detectSessionInUrl — which is precisely why we must NOT call
+//      exchangeCodeForSession by hand (see the effect below).
 //
-// Both must make the same routing decision, and both must require the WhatsApp
-// number before onboarding. That decision lives in `nextSignupStep` — this page
-// previously duplicated it twice (once in the listener, once in the fallback) and
-// the two copies had already diverged: the fallback checked
-// `user_metadata.tenant_id` while the listener queried the employees table.
+// The routing decision (dashboard vs finish-signup) lives in `nextSignupStep`,
+// shared with /api/auth/callback, /verify-phone and middleware so there is one
+// definition of "signup finished". This page previously duplicated it twice and
+// the copies had diverged: the fallback checked `user_metadata.tenant_id` while
+// the listener queried the employees table.
 // =============================================================================
 
 export default function AuthConfirmPage() {
@@ -56,21 +63,51 @@ export default function AuthConfirmPage() {
   useEffect(() => {
     const supabase = createClient();
 
-    // Supabase auto-processes the hash and emits SIGNED_IN.
+    // Resolve exactly once. Whichever signal arrives first — an auth event, an
+    // already-established session, or the fail-safe timeout — wins; the rest
+    // become no-ops.
+    let settled = false;
+    const enter = (user: User) => {
+      if (settled) return;
+      settled = true;
+      void routeUser(user);
+    };
+    const bail = () => {
+      if (settled) return;
+      settled = true;
+      router.replace('/login?error=auth_failed');
+    };
+
+    // Both entry paths (implicit #access_token hash, or the ?code= PKCE hand-off
+    // from /api/auth/callback) are auto-processed by the client on init: the
+    // browser owns the code verifier and exchanges it itself via
+    // detectSessionInUrl. We deliberately do NOT call exchangeCodeForSession
+    // here — the code is single-use and the verifier is deleted after the first
+    // exchange, so a manual retry would fail and bounce an already-signed-in
+    // user back to /login. We just wait for the resulting session.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
-      if (event === 'SIGNED_IN' && session?.user) {
-        void routeUser(session.user);
-      } else if (event === 'SIGNED_OUT' || (!session && event !== 'INITIAL_SESSION')) {
-        router.replace('/login?error=auth_failed');
+      if (session?.user) {
+        enter(session.user);
+      } else if (event === 'SIGNED_OUT') {
+        bail();
       }
     });
 
-    // Fallback for an already-established session, where no event fires.
+    // The singleton client may have finished initialising (and its exchange)
+    // before this effect subscribed, in which case SIGNED_IN won't replay.
+    // Reading the session directly closes that gap — getSession() awaits init.
     void supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session?.user) void routeUser(session.user);
+      if (session?.user) enter(session.user);
     });
 
-    return () => subscription.unsubscribe();
+    // Unrecoverable: the code was already consumed, or this browser never held
+    // the verifier. Don't spin on the loader forever — return to a clean login.
+    const failSafe = setTimeout(bail, 10000);
+
+    return () => {
+      clearTimeout(failSafe);
+      subscription.unsubscribe();
+    };
   }, [router, routeUser]);
 
   return (
