@@ -170,6 +170,25 @@ async function handleMessages(messages: any[], contacts: any[], metadata: any) {
   const phoneNumberId = metadata?.phone_number_id ?? '';
 
   for (const message of messages) {
+    // ── Idempotency guard ──────────────────────────────────────────────────
+    // WhatsApp re-delivers the same webhook (identical message id) when we don't
+    // ACK fast enough, and a number can be subscribed by more than one app —
+    // either way the same inbound event can arrive twice. Without this, every
+    // tap was processed twice (two rating prompts, two replies, ...). Atomically
+    // CLAIM the message id; if it was already claimed, this is a duplicate
+    // delivery, so skip it. A real DB error does NOT skip (better to risk a rare
+    // duplicate than silently drop a genuine message).
+    if (message.id) {
+      const { data: claimRows, error: claimErr } = await (admin
+        .from('whatsapp_processed_messages' as any)
+        .upsert({ message_id: message.id }, { onConflict: 'message_id', ignoreDuplicates: true })
+        .select('message_id') as any);
+      if (!claimErr && Array.isArray(claimRows) && claimRows.length === 0) {
+        console.log('[Webhook] duplicate delivery skipped for message', message.id);
+        continue;
+      }
+    }
+
     const contact = contacts?.find((c: any) => c.wa_id === message.from);
     const profileName = contact?.profile?.name ?? '';
     const customerPhone = message.from;
