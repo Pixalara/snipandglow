@@ -730,7 +730,7 @@ export default function HomePage() {
               <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
               The hidden cost of no-shows
             </div>
-            <h2 className="text-2xl sm:text-3xl font-bold text-slate-900 leading-tight">
+            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight tracking-tight">
               See how much no-shows are costing you
             </h2>
             <p className="text-slate-600 mt-2 text-sm sm:text-base max-w-xl mx-auto">
@@ -784,7 +784,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
-      <section className="py-8 sm:py-12 bg-white overflow-hidden">
+      <section className="py-14 sm:py-20 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -814,7 +814,7 @@ export default function HomePage() {
 
             {/* Right - Content */}
             <div className="reveal-right">
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
                 Effortless Bookings via{' '}
                 <span className="text-emerald-600">WhatsApp</span>
               </h2>
@@ -867,13 +867,13 @@ export default function HomePage() {
           </div>
         </div>
       </section>
-      <section className="py-8 sm:py-12 bg-white overflow-hidden">
+      <section className="py-14 sm:py-20 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             {/* Left - Content */}
             <div className="reveal-left">
-              <h2 className="text-3xl sm:text-4xl font-bold text-slate-900 leading-tight">
+              <h2 className="text-3xl sm:text-4xl font-extrabold text-slate-900 leading-tight tracking-tight">
                 Build Unbreakable{' '}
                 <span className="text-violet-600">Loyalty</span>
               </h2>
@@ -965,7 +965,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ANALYTICS & DASHBOARD ===== */}
-      <section className="py-8 sm:py-12 bg-white overflow-hidden">
+      <section className="py-14 sm:py-20 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
 
@@ -1030,11 +1030,11 @@ export default function HomePage() {
       </section>
 
       {/* ===== HOW IT WORKS (TIMELINE) ===== */}
-      <section id="how-it-works" className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
+      <section id="how-it-works" className="py-14 sm:py-20 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 sm:mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">How It Works</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Up and running in minutes</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Up and running in minutes</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">No tech skills needed. Set it up once and let automation handle the rest.</p>
           </div>
 
@@ -1121,11 +1121,11 @@ export default function HomePage() {
       </section>
 
       {/* ===== ROI SECTION ===== */}
-      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #faf5ff 50%, #ffffff 100%)' }}>
+      <section className="py-14 sm:py-20 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #faf5ff 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Real Results</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">What salon owners see in 30 days</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">What salon owners see in 30 days</h2>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 reveal">
             {[
@@ -1149,11 +1149,11 @@ export default function HomePage() {
       </section>
 
       {/* ===== TESTIMONIALS ===== */}
-      <section className="py-8 sm:py-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #faf5ff 50%, #ffffff 100%)' }}>
+      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #faf5ff 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-10 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Loved by salon owners</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Real salons. Real results.</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Real salons. Real results.</h2>
             <div className="flex items-center justify-center gap-2">
               <div className="flex">
                 {[...Array(5)].map((_, i) => (
@@ -1389,7 +1389,7 @@ export default function HomePage() {
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/60 px-4 py-1.5 mb-5">
               <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">The Difference</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">Running a salon, before and after</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-3 tracking-tight">Running a salon, before and after</h2>
             <p className="text-slate-400 text-sm sm:text-base">See exactly what changes when you switch to SnipandGlow</p>
           </div>
 
@@ -1454,7 +1454,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Features</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Everything your salon needs</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Everything your salon needs</h2>
             <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">One platform. No juggling apps.</p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
@@ -1829,7 +1829,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== PRO & GROWTH REQUIREMENTS ===== */}
-      <section className="py-8 sm:py-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #f0f4ff 50%, #fafafa 100%)' }}>
+      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #f0f4ff 50%, #fafafa 100%)' }}>
         {/* Subtle dot pattern */}
         <div className="absolute inset-0 opacity-[0.025]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(99 102 241) 1px, transparent 0)', backgroundSize: '32px 32px' }} />
 
@@ -1840,7 +1840,7 @@ export default function HomePage() {
               <Shield className="h-3.5 w-3.5 text-violet-600" />
               <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-violet-600 to-indigo-600 uppercase tracking-wider">Setup Prerequisites</span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-3 tracking-tight">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-3 tracking-tight">
               Requirements for Pro &amp; Growth Plans
             </h2>
             <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
@@ -1995,7 +1995,7 @@ export default function HomePage() {
                 Why salons choose Snip &amp; Glow
               </span>
             </div>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4 tracking-tight max-w-3xl mx-auto">
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight max-w-3xl mx-auto">
               Built for Indian salons, not copied from Western workflows.
             </h2>
             <p className="text-slate-500 text-sm sm:text-base max-w-2xl mx-auto leading-relaxed">
@@ -2198,9 +2198,9 @@ export default function HomePage() {
       </section>
 
       {/* ===== BOOK A DEMO SECTION ===== */}
-      <section className="py-8 sm:py-12 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #ede9fe 20%, #f5d0fe 50%, #ede9fe 80%, #f8fafc 100%)' }}>
+      <section className="py-14 sm:py-20 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #ede9fe 20%, #f5d0fe 50%, #ede9fe 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-4xl rounded-3xl px-5 py-10 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
-          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
+          <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-white mb-4 tracking-tight">
             Ready to run your salon like this?
           </h2>
           <p className="text-slate-400 mb-8 text-sm sm:text-base max-w-lg mx-auto">
@@ -2224,7 +2224,7 @@ export default function HomePage() {
       {showContactModal && <ContactSalesModal onClose={() => setShowContactModal(false)} />}
 
       {/* ===== RESOURCES SECTION ===== */}
-      <section className="py-8 sm:py-12 bg-white">
+      <section className="py-14 sm:py-20 bg-white">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="text-center mb-6 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-emerald-600 mb-2">Resources</p>
@@ -2263,11 +2263,11 @@ export default function HomePage() {
       </section>
 
       {/* ===== FAQ SECTION ===== */}
-      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
+      <section className="py-14 sm:py-20 relative" style={{ background: 'linear-gradient(180deg, #f8fafc 0%, #ffffff 20%, #ffffff 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">FAQ</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-slate-900 mb-4">Frequently Asked Questions</h2>
+            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Frequently Asked Questions</h2>
             <p className="text-slate-500 text-sm sm:text-base">Everything you need to know before getting started.</p>
           </div>
 
