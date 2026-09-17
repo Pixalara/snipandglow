@@ -1,10 +1,10 @@
 'use client';
 
-import { useState, useTransition, useEffect } from 'react';
+import { useState, useTransition, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateGstSettings, updateSalonProfile, updateDiscountSettings, updateLoyaltySettings } from './actions';
-import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck, Gift, Coins } from 'lucide-react';
+import { updateGstSettings, updateSalonProfile, updateSalonLogo, updateDiscountSettings, updateLoyaltySettings } from './actions';
+import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck, Gift, Coins, Upload, Loader2 } from 'lucide-react';
 import { pointsForSpend, pointsToRupees } from '@/lib/loyalty-points';
 
 // =============================================================================
@@ -20,6 +20,9 @@ interface SalonProfileProps {
     email: string;
     branchName: string;
     address: string;
+    city: string;
+    state: string;
+    logoUrl: string | null;
     operatingHours: Record<string, { open: string; close: string }> | null;
   };
 }
@@ -27,27 +30,53 @@ interface SalonProfileProps {
 export function SalonProfileCard({ profile }: SalonProfileProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [isPending, startTransition] = useTransition();
-  const [salonName, setSalonName] = useState(profile.salonName);
-  const [ownerName, setOwnerName] = useState(profile.ownerName);
-  const [phone, setPhone] = useState(profile.phone);
   const [address, setAddress] = useState(profile.address);
+  const [city, setCity] = useState(profile.city);
+  const [stateName, setStateName] = useState(profile.state);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
+
+  // Logo upload
+  const [logoUrl, setLogoUrl] = useState<string | null>(profile.logoUrl);
+  const [logoBusy, setLogoBusy] = useState(false);
+  const [logoError, setLogoError] = useState('');
+  const fileRef = useRef<HTMLInputElement>(null);
 
   // Format operating hours for display
   const hours = profile.operatingHours;
   const firstDay = hours ? Object.values(hours).find((h) => h?.open) : null;
   const hoursDisplay = firstDay ? `${firstDay.open} – ${firstDay.close}` : 'Not set';
 
+  const initial = (profile.salonName || 'S').trim().charAt(0).toUpperCase();
+
+  async function handleLogoChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setLogoError('');
+    setLogoBusy(true);
+    try {
+      const fd = new FormData();
+      fd.append('logo', file);
+      const res = await updateSalonLogo(fd);
+      if (res.success && res.url) setLogoUrl(res.url);
+      else setLogoError(res.error || 'Upload failed.');
+    } finally {
+      setLogoBusy(false);
+      if (fileRef.current) fileRef.current.value = '';
+    }
+  }
+
   function handleSave() {
     setError('');
     setSuccess(false);
     startTransition(async () => {
       const result = await updateSalonProfile({
-        salon_name: salonName.trim(),
-        owner_name: ownerName.trim(),
-        phone: phone.trim(),
+        salon_name: profile.salonName,
+        owner_name: profile.ownerName,
+        phone: profile.phone,
         address: address.trim(),
+        city: city.trim(),
+        state: stateName.trim(),
       });
       if (result.success) {
         setSuccess(true);
@@ -60,10 +89,9 @@ export function SalonProfileCard({ profile }: SalonProfileProps) {
   }
 
   function handleCancel() {
-    setSalonName(profile.salonName);
-    setOwnerName(profile.ownerName);
-    setPhone(profile.phone);
     setAddress(profile.address);
+    setCity(profile.city);
+    setStateName(profile.state);
     setIsEditing(false);
     setError('');
   }
@@ -102,6 +130,42 @@ export function SalonProfileCard({ profile }: SalonProfileProps) {
           </div>
         )}
 
+        {/* Logo — shown on the public booking page (falls back to the initial). */}
+        <div className="mb-5 flex items-center gap-4">
+          <div className="flex size-16 shrink-0 items-center justify-center overflow-hidden rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 text-white shadow-sm">
+            {logoUrl ? (
+              // eslint-disable-next-line @next/next/no-img-element
+              <img src={logoUrl} alt="Salon logo" className="size-full object-cover" />
+            ) : (
+              <span className="text-2xl font-bold">{initial}</span>
+            )}
+          </div>
+          <div className="min-w-0">
+            <p className="text-sm font-medium text-foreground">Salon logo</p>
+            <p className="text-xs text-muted-foreground">Shown on your booking page. PNG/JPG/WEBP, up to 2 MB.</p>
+            <div className="mt-2 flex items-center gap-2">
+              <input
+                ref={fileRef}
+                type="file"
+                accept="image/png,image/jpeg,image/webp,image/svg+xml"
+                onChange={handleLogoChange}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                className="rounded-lg h-8 gap-1.5 text-xs"
+                onClick={() => fileRef.current?.click()}
+                disabled={logoBusy}
+              >
+                {logoBusy ? <Loader2 className="size-3.5 animate-spin" /> : <Upload className="size-3.5" />}
+                {logoUrl ? 'Replace logo' : 'Upload logo'}
+              </Button>
+            </div>
+            {logoError && <p className="mt-1 text-xs text-red-600">{logoError}</p>}
+          </div>
+        </div>
+
         {isEditing ? (
           <div className="space-y-4">
             <div className="grid gap-4 sm:grid-cols-2">
@@ -125,10 +189,19 @@ export function SalonProfileCard({ profile }: SalonProfileProps) {
                 <Input value={profile.email} disabled className="opacity-60" />
                 <p className="text-xs text-muted-foreground">Linked to your Google account</p>
               </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">City</label>
+                <Input value={city} onChange={(e) => setCity(e.target.value)} placeholder="e.g. Mumbai" />
+              </div>
+              <div className="space-y-1.5">
+                <label className="text-xs font-medium text-muted-foreground">State</label>
+                <Input value={stateName} onChange={(e) => setStateName(e.target.value)} placeholder="e.g. Maharashtra" />
+              </div>
             </div>
             <div className="space-y-1.5">
               <label className="text-xs font-medium text-muted-foreground">Address</label>
               <Input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Salon address" />
+              <p className="text-xs text-muted-foreground">City &amp; State appear on your public booking page; the full address stays private.</p>
             </div>
             <div className="flex items-center gap-2 pt-2">
               <Button className="rounded-xl" onClick={handleSave} disabled={isPending}>
@@ -151,6 +224,7 @@ export function SalonProfileCard({ profile }: SalonProfileProps) {
               <ProfileField icon={<User className="size-3.5" />} label="Owner" value={profile.ownerName} />
               <ProfileField icon={<Phone className="size-3.5" />} label="Phone" value={profile.phone} />
               <ProfileField icon={<Mail className="size-3.5" />} label="Email" value={profile.email} />
+              <ProfileField icon={<MapPin className="size-3.5" />} label="City / State" value={[profile.city, profile.state].filter(Boolean).join(', ') || 'Not set'} />
               <ProfileField icon={<MapPin className="size-3.5" />} label="Address" value={profile.address || 'Not set'} />
               <ProfileField icon={<Clock className="size-3.5" />} label="Operating Hours" value={hoursDisplay} />
             </div>

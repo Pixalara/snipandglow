@@ -10,7 +10,8 @@ import type { AppointmentContext, WebOption } from '@/lib/booking/web-booking';
 
 interface SalonPublic {
   name: string;
-  address: string | null;
+  /** City, State — a short public location, not the full street address. */
+  location: string | null;
   phone: string | null;
   logoUrl: string | null;
   tenantCode: string;
@@ -93,10 +94,10 @@ export function RescheduleClient({ slug, appointmentId, salon, context, dates }:
             </div>
             <div className="min-w-0">
               <h1 className="truncate text-xl font-bold leading-tight">{salon.name}</h1>
-              {salon.address && (
+              {salon.location && (
                 <p className="mt-0.5 flex items-center gap-1 text-sm text-white/85">
                   <MapPin className="size-3.5 shrink-0" />
-                  <span className="truncate">{salon.address}</span>
+                  <span className="truncate">{salon.location}</span>
                 </p>
               )}
               <p className="mt-1 inline-flex items-center gap-1 rounded-full bg-white/15 px-2 py-0.5 text-[11px] font-medium text-white/90">

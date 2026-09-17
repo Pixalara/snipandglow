@@ -135,6 +135,9 @@ export default async function SettingsPage() {
     email: user.email ?? '',
     branchName: branchName,
     address: branchAddress,
+    city: (settings.city as string) ?? '',
+    state: (settings.state as string) ?? '',
+    logoUrl: (settings.logo_url as string) ?? null,
     operatingHours: branchOperatingHours,
   };
 

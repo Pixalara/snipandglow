@@ -88,6 +88,9 @@ export async function updateSalonProfile(input: {
   owner_name: string;
   phone: string;
   address: string;
+  /** City + state are shown on the public booking page instead of the full address. */
+  city?: string;
+  state?: string;
 }): Promise<ActionResult<void>> {
   const supabase = await createClient();
 
@@ -98,6 +101,15 @@ export async function updateSalonProfile(input: {
   const branchId = user.user_metadata?.branch_id;
   if (!tenantId) return { success: false, error: 'No tenant context found.' };
 
+  // Merge city/state into settings (used by the public booking header).
+  const { data: tenantRow } = await supabase.from('tenants').select('settings').eq('id', tenantId).single();
+  const currentSettings = (tenantRow?.settings as Record<string, unknown>) ?? {};
+  const updatedSettings = {
+    ...currentSettings,
+    city: toTitleCase((input.city ?? '').trim()) || null,
+    state: toTitleCase((input.state ?? '').trim()) || null,
+  };
+
   // Update tenant
   const { error: tenantError } = await supabase
     .from('tenants')
@@ -105,6 +117,7 @@ export async function updateSalonProfile(input: {
       name: toTitleCase(input.salon_name),
       owner_name: toTitleCase(input.owner_name),
       phone: input.phone,
+      settings: updatedSettings,
     })
     .eq('id', tenantId);
 
@@ -122,6 +135,45 @@ export async function updateSalonProfile(input: {
 
   revalidatePath('/dashboard/settings');
   return { success: true, data: undefined };
+}
+
+/**
+ * Upload/replace the salon logo. Stored in the public `logos` bucket and its URL
+ * saved to settings.logo_url, which the public booking page uses in its header
+ * (falling back to the salon initial when unset).
+ */
+export async function updateSalonLogo(
+  formData: FormData
+): Promise<{ success: boolean; error?: string; url?: string }> {
+  const supabase = await createClient();
+
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) return { success: false, error: 'Not authenticated' };
+
+  const tenantId = user.user_metadata?.tenant_id;
+  if (!tenantId) return { success: false, error: 'No tenant context found.' };
+
+  const file = formData.get('logo');
+  if (!(file instanceof File) || file.size === 0) return { success: false, error: 'Please choose an image.' };
+  if (!file.type.startsWith('image/')) return { success: false, error: 'That file is not an image.' };
+  if (file.size > 2 * 1024 * 1024) return { success: false, error: 'Image must be under 2 MB.' };
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const { uploadTenantLogo } = await import('@/lib/storage/upload-logo');
+  const up = await uploadTenantLogo(tenantId, bytes, file.type);
+  if (!up.ok) return { success: false, error: up.error };
+
+  const { data: tenantRow } = await supabase.from('tenants').select('settings').eq('id', tenantId).single();
+  const currentSettings = (tenantRow?.settings as Record<string, unknown>) ?? {};
+  const { error } = await supabase
+    .from('tenants')
+    .update({ settings: { ...currentSettings, logo_url: up.url } })
+    .eq('id', tenantId);
+
+  if (error) return { success: false, error: 'Uploaded, but saving the logo failed. Please try again.' };
+
+  revalidatePath('/dashboard/settings');
+  return { success: true, url: up.url };
 }
 
 /**

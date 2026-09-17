@@ -41,7 +41,7 @@ export default async function BookingPage({ params }: { params: Promise<{ slug: 
       slug={slug.toLowerCase()}
       salon={{
         name: salon.salonName,
-        address: salon.address,
+        location: [salon.city, salon.state].filter(Boolean).join(', ') || null,
         phone: salon.phone,
         logoUrl: salon.logoUrl,
         tenantCode: salon.tenantCode,

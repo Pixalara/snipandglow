@@ -450,9 +450,10 @@ function AppointmentListView({ appointments, role }: { appointments: Appointment
       render: (row) => (
         <span className={`inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium ${
           row.source === 'whatsapp_flow' ? 'bg-green-100 text-green-700 dark:bg-green-900/30 dark:text-green-400' :
+          row.source === 'web_booking' ? 'bg-fuchsia-100 text-fuchsia-700 dark:bg-fuchsia-900/30 dark:text-fuchsia-400' :
           'bg-blue-100 text-blue-700 dark:bg-blue-900/30 dark:text-blue-400'
         }`}>
-          {row.source === 'whatsapp_flow' ? 'WhatsApp' : 'Dashboard'}
+          {row.source === 'whatsapp_flow' ? 'WhatsApp' : row.source === 'web_booking' ? 'Web link' : 'Dashboard'}
         </span>
       ),
     },

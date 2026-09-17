@@ -23,6 +23,8 @@ export interface SalonContext {
   tenantCode: string;
   salonName: string;
   address: string | null;
+  city: string | null;
+  state: string | null;
   phone: string | null;
   logoUrl: string | null;
   settings: Record<string, unknown>;
@@ -159,6 +161,8 @@ export async function resolveSalonBySlug(slug: string): Promise<SalonContext | n
     tenantCode: tenant.tenant_code ?? '',
     salonName: (tenant.name ?? '').trim(),
     address: branch.address ?? null,
+    city: (settings.city as string) ?? null,
+    state: (settings.state as string) ?? null,
     phone: tenant.phone ?? null,
     logoUrl: (settings.logo_url as string) ?? null,
     settings,
