@@ -166,9 +166,9 @@ interface CreateButton {
 /** Component/payload shapes for the create request (kept loose for the API). */
 interface CreateComponent {
   type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
-  format?: 'TEXT';
+  format?: 'TEXT' | 'DOCUMENT' | 'IMAGE' | 'VIDEO';
   text?: string;
-  example?: { body_text?: string[][]; header_text?: string[] };
+  example?: { body_text?: string[][]; header_text?: string[]; header_handle?: string[] };
   buttons?: CreateButton[];
 }
 
@@ -367,7 +367,8 @@ export async function fetchTemplateDefinitions(
  * skipReason for the caller to surface ("create manually").
  */
 export function metaTemplateToCreatePayload(
-  t: MetaTemplateFull
+  t: MetaTemplateFull,
+  opts?: { documentHeaderHandle?: string }
 ): { payload?: CreateTemplatePayload; skipReason?: string } {
   const components: CreateComponent[] = [];
 
@@ -377,6 +378,12 @@ export function metaTemplateToCreatePayload(
     if (type === 'HEADER') {
       const format = (c.format || 'TEXT').toUpperCase();
       if (format !== 'TEXT') {
+        // A document header can be recreated when the caller has uploaded a
+        // sample and passed its handle; other media (image/video) still can't.
+        if (format === 'DOCUMENT' && opts?.documentHeaderHandle) {
+          components.push({ type: 'HEADER', format: 'DOCUMENT', example: { header_handle: [opts.documentHeaderHandle] } });
+          continue;
+        }
         return {
           skipReason: `has a ${format.toLowerCase()} header — create this template manually (media headers can't be auto-cloned)`,
         };

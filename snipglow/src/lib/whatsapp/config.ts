@@ -57,6 +57,15 @@ export function getAppSecret(): string {
 }
 
 /**
+ * Get the Meta App ID. Needed for the resumable upload API
+ * (`POST /{app-id}/uploads`), used to attach a sample document when cloning
+ * media-header templates onto a tenant's WABA.
+ */
+export function getMetaAppId(): string {
+  return process.env.META_APP_ID || '';
+}
+
+/**
  * WhatsApp Cloud API base URL
  */
 export const WA_API_VERSION = 'v21.0';

@@ -213,7 +213,7 @@ describe('metaTemplateToCreatePayload (clone transform)', () => {
     expect(payload!.components[1].buttons![0].example).toEqual(['https://www.snipandglow.com/cal/sample']);
   });
 
-  it('skips templates with a media (document) header', () => {
+  it('skips templates with a media (document) header when no handle is supplied', () => {
     const { payload, skipReason } = metaTemplateToCreatePayload(
       base([
         { type: 'HEADER', format: 'DOCUMENT', example: { header_handle: ['https://x/y.pdf'] } },
@@ -222,6 +222,34 @@ describe('metaTemplateToCreatePayload (clone transform)', () => {
     );
     expect(payload).toBeUndefined();
     expect(skipReason).toMatch(/document header/i);
+  });
+
+  it('emits a DOCUMENT header when a sample handle is supplied', () => {
+    const { payload, skipReason } = metaTemplateToCreatePayload(
+      base([
+        { type: 'HEADER', format: 'DOCUMENT', example: { header_handle: ['https://x/y.pdf'] } },
+        { type: 'BODY', text: 'Hi {{1}}', example: { body_text: [['Priya']] } },
+      ]),
+      { documentHeaderHandle: 'UPLOADED_HANDLE' }
+    );
+    expect(skipReason).toBeUndefined();
+    expect(payload!.components[0]).toMatchObject({
+      type: 'HEADER',
+      format: 'DOCUMENT',
+      example: { header_handle: ['UPLOADED_HANDLE'] },
+    });
+  });
+
+  it('still skips an image/video header even when a document handle is supplied', () => {
+    const { payload, skipReason } = metaTemplateToCreatePayload(
+      base([
+        { type: 'HEADER', format: 'IMAGE', example: { header_handle: ['https://x/y.png'] } },
+        { type: 'BODY', text: 'Hi {{1}}', example: { body_text: [['Priya']] } },
+      ]),
+      { documentHeaderHandle: 'UPLOADED_HANDLE' }
+    );
+    expect(payload).toBeUndefined();
+    expect(skipReason).toMatch(/image header/i);
   });
 
   it('skips templates with no body component', () => {

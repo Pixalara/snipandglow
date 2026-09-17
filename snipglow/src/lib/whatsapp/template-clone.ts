@@ -7,20 +7,29 @@
 // own number. Templates are WABA-scoped, so every dedicated tenant needs their
 // own copies — this automates that provisioning.
 //
-// Only APPROVED source templates in the requested categories are cloned
-// (UTILITY by default = booking/reschedule/reminder/receipt/feedback/owner
-// alerts). Templates already present on the target are skipped, and media-header
-// templates (which need a freshly uploaded media handle) are reported as
-// "create manually" rather than failed.
+// Only APPROVED source templates in the tenant allowlist are cloned. Templates
+// already present on the target are skipped. Document-header templates
+// (bill_receipt_v2, wallet_recharge_v1) are recreated by uploading a PII-free
+// sample PDF via the resumable upload API to obtain a header handle; other
+// media headers (image/video) are still reported as "create manually".
 // =============================================================================
 
-import type { WhatsAppCredentials } from './config';
+import { getMetaAppId, type WhatsAppCredentials } from './config';
+import { uploadResumableDocument } from './media-upload';
 import {
   fetchTemplateDefinitions,
   listTemplates,
   metaTemplateToCreatePayload,
   postTemplate,
+  type MetaTemplateFull,
 } from './template-management';
+
+/** The header format of a template's HEADER component, uppercased, or null. */
+function headerFormat(t: MetaTemplateFull): string | null {
+  const h = (t.components || []).find((c) => (c.type || '').toUpperCase() === 'HEADER');
+  const fmt = (h?.format || '').toUpperCase();
+  return fmt && fmt !== 'TEXT' ? fmt : null;
+}
 
 export interface CloneOutcome {
   name: string;
@@ -106,6 +115,30 @@ export async function cloneTemplates(
     (t) => t.status === 'APPROVED' && wanted.has((t.name || '').toLowerCase())
   );
 
+  // If any not-yet-present candidate needs a DOCUMENT header, upload one
+  // PII-free sample PDF and reuse its handle for all of them.
+  const needsDocHandle = candidates.some(
+    (t) => !existingKeys.has(`${t.name}|${t.language}`) && headerFormat(t) === 'DOCUMENT'
+  );
+  let docHandle: string | undefined;
+  let docHandleError: string | undefined;
+  if (needsDocHandle) {
+    const appId = getMetaAppId();
+    if (!appId) {
+      docHandleError = 'META_APP_ID is not set';
+    } else {
+      try {
+        const { buildSampleInvoicePdf } = await import('./sample-invoice-pdf');
+        const pdf = await buildSampleInvoicePdf();
+        const up = await uploadResumableDocument(appId, target.accessToken, pdf, 'sample-invoice.pdf');
+        if (up.ok) docHandle = up.handle;
+        else docHandleError = up.error;
+      } catch {
+        docHandleError = 'could not generate the sample PDF';
+      }
+    }
+  }
+
   const outcomes: CloneOutcome[] = [];
   for (const t of candidates) {
     const key = `${t.name}|${t.language}`;
@@ -114,7 +147,23 @@ export async function cloneTemplates(
       continue;
     }
 
-    const { payload, skipReason } = metaTemplateToCreatePayload(t);
+    // Media headers: auto-handle documents (when the sample uploaded), skip the rest.
+    const media = headerFormat(t);
+    if (media && media !== 'DOCUMENT') {
+      outcomes.push({ name: t.name, language: t.language, status: 'skipped', reason: `has a ${media.toLowerCase()} header — create this template manually` });
+      continue;
+    }
+    if (media === 'DOCUMENT' && !docHandle) {
+      outcomes.push({
+        name: t.name,
+        language: t.language,
+        status: 'skipped',
+        reason: docHandleError ? `document header sample upload failed: ${docHandleError}` : 'document header — create manually',
+      });
+      continue;
+    }
+
+    const { payload, skipReason } = metaTemplateToCreatePayload(t, { documentHeaderHandle: docHandle });
     if (!payload) {
       outcomes.push({ name: t.name, language: t.language, status: 'skipped', reason: skipReason ?? 'not cloneable' });
       continue;
