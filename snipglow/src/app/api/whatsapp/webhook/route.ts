@@ -3,6 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
 import { notifyOwner, notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel, notifyOwnerFeedback } from '@/lib/whatsapp/notify-owner';
 import { createNotification } from '@/lib/notifications';
+import { webBookingUrl } from '@/lib/booking/web-booking';
 import { resolveTenant, resolveTenantById, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { mapMetaTemplateStatus } from '@/lib/whatsapp/template-management';
@@ -411,130 +412,45 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
 
   switch (buttonId) {
     case 'book_appointment': {
-      const flowId = process.env.WHATSAPP_FLOW_ID;
-      const flowIdReturning = process.env.WHATSAPP_FLOW_ID_RETURNING;
-
-      // Fetch services for this tenant (WhatsApp Flow checkbox lists cap at ~20 items)
-      const { data: svcList } = await admin
-        .from('services')
-        .select('id, name, price, duration_minutes')
-        .eq('tenant_id', tenant.tenantId)
-        .eq('is_active', true)
-        .order('name')
-        .limit(20);
-
-      const services = (svcList ?? []).map((s: any) => ({
-        id: s.id,
-        title: `${s.name} - Rs.${s.price}`,
-      }));
-
-      // Check if customer already exists (returning customer)
+      // Open the salon-branded web booking page. This works for ALL tenants
+      // (shared + dedicated WhatsApp) because the appointment is created
+      // server-side on /book/[slug], rather than via a WABA-scoped WhatsApp
+      // Flow (which only exists on the platform WABA and fails for dedicated
+      // numbers like Bhakti's).
       const phoneE164Book = `+${phone}`;
-      const { data: existingCustomer } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Book).eq('tenant_id', tenant.tenantId).single() as any);
+      const { data: existingCustomer } = await (admin
+        .from('customers')
+        .select('name')
+        .eq('phone', phoneE164Book)
+        .eq('tenant_id', tenant.tenantId)
+        .maybeSingle() as any);
 
-      // ── Category-first flow (preferred for salons with large menus) ──
-      // Activates only when the category flow IDs are configured; otherwise we
-      // fall through to the legacy single-screen flow below (non-breaking).
-      const catFlowId = existingCustomer
-        ? process.env.WHATSAPP_FLOW_ID_CATEGORIES_RETURNING
-        : process.env.WHATSAPP_FLOW_ID_CATEGORIES;
-      if (catFlowId) {
-        const { data: catRows } = await admin
-          .from('services')
-          .select('category')
-          .eq('tenant_id', tenant.tenantId)
-          .eq('is_active', true)
-          .not('category', 'is', null);
-        const categories = [...new Set((catRows ?? []).map((r: any) => r.category).filter(Boolean))]
-          .sort()
-          .map((c: string) => ({ id: c, title: c }));
+      const { data: tenantRow } = await (admin
+        .from('tenants' as any)
+        .select('tenant_code')
+        .eq('id', tenant.tenantId)
+        .single() as any);
 
-        const catFlowToken = existingCustomer
-          ? JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName, customer_id: existingCustomer.id, customer_name: existingCustomer.name })
-          : JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName });
+      const bookingUrl = webBookingUrl(tenantRow?.tenant_code ?? '');
 
-        const catBody = existingCustomer
-          ? `Welcome back, *${existingCustomer.name}*! 👋\nBook your next appointment at *${tenant.salonName}*`
-          : `Book your appointment at *${tenant.salonName}*`;
+      const bodyText = existingCustomer?.name
+        ? `Welcome back, *${existingCustomer.name}*! 👋\nTap below to book your appointment at *${tenant.salonName}* ✨`
+        : `Tap below to book your appointment at *${tenant.salonName}* ✨`;
 
-        await sendMessage(tenant.credentials, phone, {
-          type: 'interactive',
-          interactive: {
-            type: 'flow',
-            body: { text: catBody },
-            action: {
-              name: 'flow',
-              parameters: {
-                flow_message_version: '3',
-                flow_id: catFlowId,
-                flow_cta: existingCustomer ? 'Quick Book' : 'Book Now',
-                mode: 'published',
-                flow_action: 'navigate',
-                flow_action_payload: {
-                  screen: 'CATEGORY_SCREEN',
-                  data: {
-                    categories: categories.length > 0 ? categories : [{ id: 'none', title: 'No categories available' }],
-                  },
-                },
-                flow_token: catFlowToken,
-              },
+      await sendMessage(tenant.credentials, phone, {
+        type: 'interactive',
+        interactive: {
+          type: 'cta_url',
+          body: { text: bodyText },
+          action: {
+            name: 'cta_url',
+            parameters: {
+              display_text: 'Book Appointment',
+              url: bookingUrl,
             },
           },
-        });
-        break;
-      }
-
-      // Pick the right flow: returning customer flow if available, else regular
-      const useFlowId = (existingCustomer && flowIdReturning) ? flowIdReturning : flowId;
-
-      if (useFlowId) {
-        // Generate smart dates and time slots based on salon operating hours
-        const { generateSmartSlots } = await import('@/lib/time-slots');
-        const { dates, timeSlots } = await generateSmartSlots(tenant.tenantId, tenant.branchId);
-
-        // Build flow_token with customer_id if returning customer
-        const flowToken = existingCustomer
-          ? JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName, customer_id: existingCustomer.id, customer_name: existingCustomer.name })
-          : JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName });
-
-        const bodyText = existingCustomer
-          ? `Welcome back, *${existingCustomer.name}*! 👋\nBook your next appointment at *${tenant.salonName}*`
-          : `Book your appointment at *${tenant.salonName}*`;
-
-        console.log('[Webhook] Sending flow:', useFlowId, 'returning:', !!existingCustomer);
-
-        await sendMessage(tenant.credentials, phone, {
-          type: 'interactive',
-          interactive: {
-            type: 'flow',
-            body: { text: bodyText },
-            action: {
-              name: 'flow',
-              parameters: {
-                flow_message_version: '3',
-                flow_id: useFlowId,
-                flow_cta: existingCustomer ? 'Quick Book' : 'Book Now',
-                mode: 'published',
-                flow_action: 'navigate',
-                flow_action_payload: {
-                  screen: 'BOOKING_SCREEN',
-                  data: {
-                    services: services.length > 0 ? services : [{ id: 'none', title: 'No services' }],
-                    dates,
-                    time_slots: timeSlots,
-                  },
-                },
-                flow_token: flowToken,
-              },
-            },
-          },
-        });
-      } else {
-        await sendMessage(tenant.credentials, phone, {
-          type: 'text',
-          text: { body: `To book at ${tenant.salonName}, please share:\n1. Service\n2. Date\n3. Time\n\nOur team will confirm shortly!` },
-        });
-      }
+        },
+      });
       break;
     }
 
