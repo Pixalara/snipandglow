@@ -399,27 +399,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== NO-SHOW LOSS CALCULATOR ===== */}
-      <section className="py-10 sm:py-14 bg-gradient-to-br from-violet-100/70 via-fuchsia-100/40 to-white overflow-hidden">
-        <div className="mx-auto max-w-3xl px-4 sm:px-6">
-          <div className="text-center mb-6">
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium mb-3">
-              <span className="h-1.5 w-1.5 rounded-full bg-amber-500 animate-pulse" />
-              The hidden cost of no-shows
-            </div>
-            <h2 className="text-2xl sm:text-3xl font-extrabold text-slate-900 leading-tight tracking-tight">
-              See how much no-shows are costing you
-            </h2>
-            <p className="text-slate-600 mt-2 text-sm sm:text-base max-w-xl mx-auto">
-              Drag the sliders to estimate your monthly loss, then let SnipandGlow win it back with automatic WhatsApp reminders.
-            </p>
-          </div>
-          <div className="max-w-md mx-auto">
-            <NoShowCalculator onCta={() => setShowDemoModal(true)} />
-          </div>
-        </div>
-      </section>
-
       {/* ===== TRUST BAR ===== */}
       <section className="py-6 sm:py-8 bg-white border-y border-slate-100">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
@@ -2177,70 +2156,6 @@ const TIME_SLOTS = [
   '11:00 AM', '12:00 PM', '01:00 PM', '02:00 PM',
   '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM',
 ];
-
-// =============================================================================
-// Interactive no-show loss calculator (hero)
-// =============================================================================
-function NoShowCalculator({ onCta }: { onCta: () => void }) {
-  const [missed, setMissed] = useState(2);
-  const [avgPrice, setAvgPrice] = useState(500);
-  const monthlyLoss = missed * avgPrice * 30;
-
-  return (
-    <div className="rounded-2xl border border-white/50 bg-white/15 backdrop-blur-md px-4 py-4 sm:px-5 shadow-lg shadow-slate-300/20">
-      <div className="flex items-start gap-3 mb-4">
-        <span className="text-xl shrink-0 mt-0.5">⚠️</span>
-        <p className="text-sm sm:text-base font-semibold text-slate-800 leading-snug">
-          How much are no-shows costing your salon?
-        </p>
-      </div>
-
-      <div className="space-y-4 mb-4">
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-medium text-slate-600">Missed appointments / day</label>
-            <span className="text-sm font-bold text-slate-900">{missed}</span>
-          </div>
-          <input
-            type="range" min={1} max={10} step={1} value={missed}
-            onChange={(e) => setMissed(Number(e.target.value))}
-            className="w-full accent-amber-500 cursor-pointer"
-            aria-label="Missed appointments per day"
-          />
-        </div>
-        <div>
-          <div className="flex items-center justify-between mb-1.5">
-            <label className="text-xs font-medium text-slate-600">Average service price</label>
-            <span className="text-sm font-bold text-slate-900">₹{avgPrice.toLocaleString('en-IN')}</span>
-          </div>
-          <input
-            type="range" min={200} max={3000} step={100} value={avgPrice}
-            onChange={(e) => setAvgPrice(Number(e.target.value))}
-            className="w-full accent-amber-500 cursor-pointer"
-            aria-label="Average service price"
-          />
-        </div>
-      </div>
-
-      <div className="rounded-xl bg-white/30 border border-white/50 px-4 py-3 mb-4">
-        <p className="text-sm text-slate-700 leading-snug">
-          You could be losing{' '}
-          <span className="text-red-600 font-bold text-lg sm:text-xl">₹{monthlyLoss.toLocaleString('en-IN')}</span>{' '}
-          every month.{' '}
-          <span className="text-slate-500">SnipandGlow sends automatic WhatsApp reminders before every visit.</span>
-        </p>
-      </div>
-
-      <button
-        onClick={onCta}
-        className="inline-flex items-center gap-2 rounded-xl bg-slate-900 px-4 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors shadow-sm"
-      >
-        Recover Lost Bookings
-        <ArrowRight className="h-3.5 w-3.5" />
-      </button>
-    </div>
-  );
-}
 
 // =============================================================================
 // Live activity FOMO toast
