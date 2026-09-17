@@ -225,47 +225,42 @@ export default function HomePage() {
       <StructuredData />
 
       {/* ===== NAVBAR ===== */}
-      <nav className="fixed top-0 left-0 right-0 z-50 bg-slate-900/95 backdrop-blur-xl shadow-lg shadow-slate-900/10">
-        <div className="mx-auto max-w-7xl px-4 sm:px-6 py-3 sm:py-3.5 flex items-center justify-between">
+      <nav className="fixed inset-x-0 top-0 z-50 border-b border-slate-200/70 bg-white/80 backdrop-blur-xl">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6 h-16 flex items-center justify-between gap-4">
           <Link href="/" className="flex items-center gap-2 min-w-0">
-            <span className="text-lg sm:text-xl font-bold tracking-tight">
-              <span className="text-white">snipand</span>
-              <span className="bg-gradient-to-r from-pink-400 via-fuchsia-400 to-violet-400 bg-clip-text text-transparent">glow</span>
+            <span className="text-lg sm:text-xl font-extrabold tracking-tight" style={{ fontFamily: 'var(--font-jakarta)' }}>
+              <span className="text-slate-900">snipand</span>
+              <span className="bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">glow</span>
             </span>
           </Link>
 
-          <div className="hidden md:flex items-center gap-7 text-sm text-slate-300">
-            <a href="#features" className="hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" className="hover:text-white transition-colors">How It Works</a>
-            <a href="#pricing" className="hover:text-white transition-colors">Pricing</a>
-            <Link href="/blog" className="hover:text-white transition-colors">Blog</Link>
+          <div className="hidden md:flex items-center gap-8 text-sm font-medium text-slate-600">
+            <a href="#features" className="hover:text-slate-900 transition-colors">Features</a>
+            <a href="#how-it-works" className="hover:text-slate-900 transition-colors">How it works</a>
+            <a href="#pricing" className="hover:text-slate-900 transition-colors">Pricing</a>
+            <Link href="/blog" className="hover:text-slate-900 transition-colors">Blog</Link>
           </div>
 
           <div className="flex items-center gap-2 sm:gap-3">
-            <button
-              onClick={() => setShowDemoModal(true)}
-              className="hidden md:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
-              style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
-            >
-              Book Free Setup Call
-            </button>
+            <span className="hidden lg:inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-2.5 py-1 text-[11px] font-medium text-slate-600">
+              <MetaMark className="h-3 w-5" /> <span className="font-bold text-[#0064E1]">Meta</span> Tech Provider
+            </span>
             <Link
               href="/login"
-              className="hidden md:inline-flex px-4 py-2 text-sm text-slate-300 border border-slate-600 rounded-full hover:border-slate-400 hover:text-white transition-all"
+              className="hidden md:inline-flex px-3.5 py-2 text-sm font-medium text-slate-600 hover:text-slate-900 transition-colors"
             >
               Login
             </Link>
             <Link
               href="/signup"
-              className="hidden md:inline-flex px-5 py-2 text-sm font-semibold text-white rounded-full transition-all hover:shadow-lg hover:shadow-pink-500/20"
-              style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}
+              className="hidden md:inline-flex items-center gap-1.5 rounded-full bg-slate-900 px-5 py-2 text-sm font-semibold text-white hover:bg-slate-800 transition-colors"
             >
-              Get Started
+              Start free trial
             </Link>
             {/* Mobile hamburger */}
             <button
               onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
-              className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg text-white hover:bg-slate-800 transition-colors"
+              className="md:hidden flex items-center justify-center h-10 w-10 rounded-lg text-slate-700 hover:bg-slate-100 transition-colors"
               aria-label="Toggle menu"
             >
               {mobileMenuOpen ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
@@ -275,20 +270,20 @@ export default function HomePage() {
 
         {/* Mobile menu dropdown */}
         {mobileMenuOpen && (
-          <div className="md:hidden border-t border-slate-800 bg-slate-900 px-4 py-4 space-y-3">
-            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Features</a>
-            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">How It Works</a>
-            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Pricing</a>
-            <Link href="/blog" onClick={() => setMobileMenuOpen(false)} className="block py-2 text-sm text-slate-300 hover:text-white transition-colors">Blog</Link>
-            <div className="pt-2 border-t border-slate-800 flex flex-col gap-2">
-              <button onClick={() => { setMobileMenuOpen(false); setShowDemoModal(true); }} className="flex items-center justify-center py-2.5 text-sm font-semibold text-white rounded-full transition-all" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
-                Book Free Setup Call
+          <div className="md:hidden border-t border-slate-200 bg-white px-4 py-4 space-y-1">
+            <a href="#features" onClick={() => setMobileMenuOpen(false)} className="block py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">Features</a>
+            <a href="#how-it-works" onClick={() => setMobileMenuOpen(false)} className="block py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">How it works</a>
+            <a href="#pricing" onClick={() => setMobileMenuOpen(false)} className="block py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">Pricing</a>
+            <Link href="/blog" onClick={() => setMobileMenuOpen(false)} className="block py-2.5 text-sm font-medium text-slate-700 hover:text-slate-900 transition-colors">Blog</Link>
+            <div className="pt-3 mt-2 border-t border-slate-100 flex flex-col gap-2">
+              <button onClick={() => { setMobileMenuOpen(false); setShowDemoModal(true); }} className="flex items-center justify-center rounded-full border border-slate-200 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50 transition-colors">
+                Book a setup call
               </button>
-              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm text-slate-300 border border-slate-600 rounded-full hover:text-white transition-all">
+              <Link href="/login" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center rounded-full border border-slate-200 py-2.5 text-sm font-medium text-slate-600 hover:bg-slate-50 transition-colors">
                 Login
               </Link>
-              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center py-2.5 text-sm font-semibold text-white rounded-full" style={{ background: 'linear-gradient(135deg, #ec4899, #8b5cf6)' }}>
-                Get Started
+              <Link href="/signup" onClick={() => setMobileMenuOpen(false)} className="flex items-center justify-center rounded-full bg-slate-900 py-2.5 text-sm font-semibold text-white hover:bg-slate-800 transition-colors">
+                Start free trial
               </Link>
             </div>
           </div>
@@ -296,93 +291,71 @@ export default function HomePage() {
       </nav>
 
       {/* ===== HERO ===== */}
-      <section className="relative flex items-center pt-20 sm:pt-24 pb-10 sm:pb-14 bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20 overflow-hidden">
-        {/* Colorful floating orbs */}
-        <div className="absolute top-1/4 left-1/6 w-96 h-96 bg-pink-200/30 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute top-1/2 right-1/6 w-80 h-80 bg-pink-200/25 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 left-1/2 w-72 h-72 bg-purple-200/20 rounded-full blur-3xl pointer-events-none" />
+      <section className="relative overflow-hidden bg-white pt-28 sm:pt-32 pb-12 sm:pb-16">
+        {/* Soft editorial glow */}
+        <div className="pointer-events-none absolute inset-0">
+          <div
+            className="absolute -top-32 left-1/2 h-[500px] w-[900px] max-w-[140%] -translate-x-1/2 rounded-full blur-3xl"
+            style={{ background: 'radial-gradient(closest-side, rgba(139,92,246,0.16), rgba(236,72,153,0.08), transparent)' }}
+          />
+        </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-stretch w-full">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
           {/* Left */}
-          <div className="flex flex-col gap-8 reveal-left min-w-0 overflow-hidden lg:overflow-visible lg:justify-between">
-            {/* Trust badges */}
+          <div className="flex flex-col gap-7 reveal-left min-w-0">
+            {/* Badges */}
             <div className="flex flex-wrap items-center gap-2">
-              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
-                <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
-                Your competitors just got smarter. Have you?
-              </div>
-              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-blue-100 bg-blue-50 text-xs font-medium">
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-medium">
                 <MetaMark className="h-3.5 w-6" />
                 <span className="font-bold text-[#0064E1]">Meta</span>
                 <span className="text-slate-500">Official Tech Provider</span>
-              </div>
+              </span>
+              <span className="inline-flex items-center gap-1.5 rounded-full border border-slate-200 bg-white px-3 py-1.5 text-xs font-medium text-slate-600">
+                <span className="flex">{[0, 1, 2, 3, 4].map((i) => (<Star key={i} className="h-3 w-3 fill-amber-400 text-amber-400" />))}</span>
+                Loved by salons across India
+              </span>
             </div>
 
-            <div className="space-y-4">
-              <h1 className="text-3xl sm:text-4xl lg:text-[3.5rem] font-bold leading-[1.1] tracking-tight text-slate-900">
-                Get More Salon Bookings
-                <br />
-                <span style={{ color: '#25D366' }}>From WhatsApp</span>
-              </h1>
-              <p className="text-lg sm:text-xl text-slate-700 font-medium">
-                Appointments. WhatsApp Reminders. Billing. All on Autopilot.
-              </p>
+            {/* Editorial headline */}
+            <h1
+              className="text-[2.5rem] leading-[1.05] sm:text-6xl lg:text-[4.25rem] font-extrabold tracking-tight text-slate-900"
+              style={{ fontFamily: 'var(--font-jakarta)' }}
+            >
+              Turn WhatsApp into your salon&apos;s{' '}
+              <span className="bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">booking engine</span>
+            </h1>
 
-              {/* Rolling text */}
-              <div className="text-xl sm:text-2xl max-w-lg min-h-[36px]">
-                <RollingText items={ROLLING_ITEMS} />
-              </div>
+            <p className="max-w-xl text-base sm:text-lg text-slate-500 leading-relaxed">
+              Bookings, reminders, billing and win-back campaigns — all automated on the official
+              WhatsApp Business Platform. Set it up once and keep every chair full.
+            </p>
+
+            {/* Rolling value line */}
+            <div className="text-lg sm:text-xl min-h-[32px]">
+              <RollingText items={ROLLING_ITEMS} />
             </div>
-
-            {/* Trust pills */}
-            <div className="grid grid-cols-2 gap-2 py-2">
-              {[
-                { icon: '⚡', label: 'Setup in 10 Minutes', sub: 'No tech skills needed' },
-                { icon: '🇮🇳', label: 'Built for Indian Salons', sub: 'WhatsApp, UPI, GST-ready' },
-                { icon: 'whatsapp', label: 'Book via WhatsApp', sub: 'No app download needed' },
-                { icon: '🎁', label: '15-Day Free Trial', sub: 'No card required' },
-              ].map(({ icon, label, sub }) => (
-                <div key={label} className="flex items-center gap-2 bg-white rounded-xl px-3 py-3 border border-slate-100 shadow-sm min-w-0">
-                  {icon === 'whatsapp' ? (
-                    <svg className="h-5 w-5 shrink-0" fill="#25D366" viewBox="0 0 24 24">
-                      <path d="M17.472 14.382c-.297-.149-1.758-.867-2.03-.967-.273-.099-.471-.148-.67.15-.197.297-.767.966-.94 1.164-.173.199-.347.223-.644.075-.297-.15-1.255-.463-2.39-1.475-.883-.788-1.48-1.761-1.653-2.059-.173-.297-.018-.458.13-.606.134-.133.298-.347.446-.52.149-.174.198-.298.298-.497.099-.198.05-.371-.025-.52-.075-.149-.669-1.612-.916-2.207-.242-.579-.487-.5-.669-.51-.173-.008-.371-.01-.57-.01-.198 0-.52.074-.792.372-.272.297-1.04 1.016-1.04 2.479 0 1.462 1.065 2.875 1.213 3.074.149.198 2.096 3.2 5.077 4.487.709.306 1.262.489 1.694.625.712.227 1.36.195 1.871.118.571-.085 1.758-.719 2.006-1.413.248-.694.248-1.289.173-1.413-.074-.124-.272-.198-.57-.347m-5.421 7.403h-.004a9.87 9.87 0 01-5.031-1.378l-.361-.214-3.741.982.998-3.648-.235-.374a9.86 9.86 0 01-1.51-5.26c.001-5.45 4.436-9.884 9.888-9.884 2.64 0 5.122 1.03 6.988 2.898a9.825 9.825 0 012.893 6.994c-.003 5.45-4.437 9.884-9.885 9.884m8.413-18.297A11.815 11.815 0 0012.05 0C5.495 0 .16 5.335.157 11.892c0 2.096.547 4.142 1.588 5.945L.057 24l6.305-1.654a11.882 11.882 0 005.683 1.448h.005c6.554 0 11.89-5.335 11.893-11.893a11.821 11.821 0 00-3.48-8.413z"/>
-                    </svg>
-                  ) : (
-                    <span className="text-lg shrink-0">{icon}</span>
-                  )}
-                  <div className="min-w-0">
-                    <p className="text-xs sm:text-sm font-bold text-slate-900 leading-tight">{label}</p>
-                    <p className="text-[11px] sm:text-xs text-slate-500 leading-tight mt-0.5">{sub}</p>
-                  </div>
-                </div>
-              ))}
-            </div>
-
-            {/* Benefit cards marquee moved below the hero grid for full-width roll */}
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row flex-wrap gap-3 sm:gap-4">
-              <button
-                onClick={() => setShowDemoModal(true)}
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 bg-gradient-to-r from-pink-500 to-violet-500 text-white font-semibold rounded-xl hover:from-pink-600 hover:to-violet-600 transition-colors text-sm shadow-md shadow-pink-200"
-              >
-                Book Free Setup Call
-                <ArrowRight className="h-4 w-4" />
-              </button>
+            <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 href="/signup"
-                className="inline-flex items-center justify-center gap-2 px-6 py-3 border border-slate-200 text-slate-600 rounded-xl hover:border-pink-300 hover:text-pink-600 transition-all text-sm bg-white"
+                className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-colors"
               >
-                Start Free Trial
+                Start free trial <ArrowRight className="h-4 w-4" />
               </Link>
+              <button
+                onClick={() => setShowDemoModal(true)}
+                className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+              >
+                Book a setup call
+              </button>
             </div>
 
-            {/* CTA microcopy - risk reversal */}
-            <div className="flex flex-wrap items-center gap-x-4 gap-y-1.5 -mt-4 text-xs text-slate-500">
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> No credit card</span>
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Setup in 10 mins</span>
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> 7-day refund</span>
-              <span className="inline-flex items-center gap-1"><CheckCircle2 className="h-3.5 w-3.5 text-emerald-500" /> Cancel anytime</span>
+            {/* Risk reversal */}
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm text-slate-500">
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> 15-day free trial</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> No credit card</span>
+              <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> Setup in 10 minutes</span>
             </div>
           </div>
 
