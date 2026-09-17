@@ -38,7 +38,34 @@ export interface CloneResult {
   failed: number;
 }
 
-const DEFAULT_CATEGORIES = ['UTILITY'];
+/**
+ * The templates a dedicated tenant actually sends from their OWN number:
+ * customer transactional messages + owner alerts.
+ *
+ * Deliberately an allowlist (not "all UTILITY") so the cloner never copies
+ * platform-ops templates that are only ever sent from the shared number
+ * (platform_signup_alert, trial_expiry_v1, staff_welcome_*), Meta's reserved
+ * `hello_world` sample, marketing templates, or superseded older versions
+ * (booking_confirmation, appointment_reminder, feedback_request, invoice_receipt)
+ * onto a tenant's account.
+ *
+ * bill_receipt_v2 and wallet_recharge_v1 carry a document header and can't be
+ * auto-cloned — they stay in the list so they're surfaced as "create manually"
+ * rather than silently missing.
+ */
+export const TENANT_TEMPLATE_NAMES = [
+  'booking_confirmation_v2',
+  'appointment_rescheduled_v1',
+  'appointment_reminder_v1',
+  'bill_receipt_v2',
+  'bill_receipt_v1',
+  'feedback_request_v1',
+  'wallet_recharge_v1',
+  'owner_booking_alert',
+  'owner_reschedule_alert',
+  'owner_cancel_alert',
+  'owner_feedback_alert',
+] as const;
 
 /**
  * Clone approved templates from `source` onto `target`.
@@ -47,7 +74,7 @@ const DEFAULT_CATEGORIES = ['UTILITY'];
 export async function cloneTemplates(
   source: WhatsAppCredentials,
   target: WhatsAppCredentials,
-  opts?: { categories?: string[] }
+  opts?: { names?: readonly string[] }
 ): Promise<CloneResult> {
   const empty = { outcomes: [] as CloneOutcome[], created: 0, skipped: 0, failed: 0 };
 
@@ -62,7 +89,7 @@ export async function cloneTemplates(
     };
   }
 
-  const categories = (opts?.categories ?? DEFAULT_CATEGORIES).map((c) => c.toUpperCase());
+  const wanted = new Set((opts?.names ?? TENANT_TEMPLATE_NAMES).map((n) => n.toLowerCase()));
 
   const src = await fetchTemplateDefinitions(source);
   if (!src.ok) {
@@ -74,9 +101,9 @@ export async function cloneTemplates(
   const existing = await listTemplates(target);
   const existingKeys = new Set(existing.map((t) => `${t.name}|${t.language}`));
 
-  // Worth cloning: approved on the source AND in the requested categories.
+  // Worth cloning: approved on the source AND in the tenant allowlist.
   const candidates = src.templates.filter(
-    (t) => t.status === 'APPROVED' && categories.includes((t.category || '').toUpperCase())
+    (t) => t.status === 'APPROVED' && wanted.has((t.name || '').toLowerCase())
   );
 
   const outcomes: CloneOutcome[] = [];

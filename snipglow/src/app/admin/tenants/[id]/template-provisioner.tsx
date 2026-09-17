@@ -37,11 +37,11 @@ export function AdminTemplateProvisioner({ tenantId, connected }: Props) {
       </div>
       <div className="p-4 space-y-3">
         <p className="text-xs text-muted-foreground">
-          Copies the platform&apos;s approved <span className="font-medium">Utility</span> templates
-          (booking, reschedule, reminders, receipt, feedback, owner alerts) onto this tenant&apos;s own
-          WhatsApp Business Account so they send from their number. Already-present templates are skipped, and
-          document-header templates (bill_receipt_v2, wallet_recharge_v1) must be created manually in Meta.
-          New templates enter Meta review — usually approved within a few hours.
+          Copies the standard transactional templates (booking, reschedule, reminders, receipt, feedback,
+          owner alerts) from the shared account onto this tenant&apos;s own WhatsApp Business Account so they
+          send from their number. Already-present templates are skipped, and document-header templates
+          (bill_receipt_v2, wallet_recharge_v1) must be created manually in Meta. New templates enter Meta
+          review — usually approved within a few hours.
         </p>
 
         {!connected && (
