@@ -5,7 +5,9 @@ import {
   validateDefinition,
   mapMetaTemplateStatus,
   buildCreatePayload,
+  metaTemplateToCreatePayload,
   type TemplateDefinition,
+  type MetaTemplateFull,
 } from './template-management';
 import { MARKETING_TEMPLATE_PRESETS } from './template-presets';
 
@@ -149,5 +151,89 @@ describe('marketing presets', () => {
       expect(blob, `${p.key} em dash`).not.toMatch(/\u2014/);
       expect(blob, `${p.key} en dash`).not.toMatch(/\u2013/);
     }
+  });
+});
+
+describe('metaTemplateToCreatePayload (clone transform)', () => {
+  const base = (components: MetaTemplateFull['components']): MetaTemplateFull => ({
+    name: 'booking_confirmation_v2',
+    language: 'en',
+    category: 'UTILITY',
+    status: 'APPROVED',
+    components,
+  });
+
+  it('carries over a body with its example, category and language', () => {
+    const { payload, skipReason } = metaTemplateToCreatePayload(
+      base([{ type: 'BODY', text: 'Hi {{1}}, booked for {{2}}.', example: { body_text: [['Priya', 'Haircut']] } }])
+    );
+    expect(skipReason).toBeUndefined();
+    expect(payload).toBeDefined();
+    expect(payload!.name).toBe('booking_confirmation_v2');
+    expect(payload!.category).toBe('UTILITY');
+    expect(payload!.language).toBe('en');
+    expect(payload!.components[0]).toMatchObject({
+      type: 'BODY',
+      text: 'Hi {{1}}, booked for {{2}}.',
+      example: { body_text: [['Priya', 'Haircut']] },
+    });
+  });
+
+  it('carries text header, footer and quick-reply + dynamic URL buttons (with the URL example)', () => {
+    const { payload } = metaTemplateToCreatePayload(
+      base([
+        { type: 'HEADER', format: 'TEXT', text: 'Booking at {{1}}', example: { header_text: ['Glow'] } },
+        { type: 'BODY', text: 'Hi {{1}}', example: { body_text: [['Priya']] } },
+        { type: 'FOOTER', text: 'See you soon' },
+        {
+          type: 'BUTTONS',
+          buttons: [
+            { type: 'QUICK_REPLY', text: 'Reschedule' },
+            { type: 'QUICK_REPLY', text: 'Cancel' },
+            { type: 'URL', text: 'Add to Calendar', url: 'https://www.snipandglow.com/cal/{{1}}', example: ['https://www.snipandglow.com/cal/abc'] },
+          ],
+        },
+      ])
+    );
+    const types = payload!.components.map((c) => c.type);
+    expect(types).toEqual(['HEADER', 'BODY', 'FOOTER', 'BUTTONS']);
+    expect(payload!.components[0]).toMatchObject({ type: 'HEADER', format: 'TEXT', example: { header_text: ['Glow'] } });
+    const buttons = payload!.components[3].buttons!;
+    expect(buttons.map((b) => b.type)).toEqual(['QUICK_REPLY', 'QUICK_REPLY', 'URL']);
+    expect(buttons[2]).toMatchObject({ type: 'URL', text: 'Add to Calendar', url: 'https://www.snipandglow.com/cal/{{1}}', example: ['https://www.snipandglow.com/cal/abc'] });
+  });
+
+  it('synthesises a URL example when a dynamic URL button has none', () => {
+    const { payload } = metaTemplateToCreatePayload(
+      base([
+        { type: 'BODY', text: 'Hi {{1}}', example: { body_text: [['Priya']] } },
+        { type: 'BUTTONS', buttons: [{ type: 'URL', text: 'Add to Calendar', url: 'https://www.snipandglow.com/cal/{{1}}' }] },
+      ])
+    );
+    expect(payload!.components[1].buttons![0].example).toEqual(['https://www.snipandglow.com/cal/sample']);
+  });
+
+  it('skips templates with a media (document) header', () => {
+    const { payload, skipReason } = metaTemplateToCreatePayload(
+      base([
+        { type: 'HEADER', format: 'DOCUMENT', example: { header_handle: ['https://x/y.pdf'] } },
+        { type: 'BODY', text: 'Hi {{1}}', example: { body_text: [['Priya']] } },
+      ])
+    );
+    expect(payload).toBeUndefined();
+    expect(skipReason).toMatch(/document header/i);
+  });
+
+  it('skips templates with no body component', () => {
+    const { payload, skipReason } = metaTemplateToCreatePayload(base([{ type: 'FOOTER', text: 'x' }]));
+    expect(payload).toBeUndefined();
+    expect(skipReason).toMatch(/no body/i);
+  });
+
+  it('normalises category to UTILITY when Meta reports something unexpected', () => {
+    const t = base([{ type: 'BODY', text: 'Hi' }]);
+    t.category = 'SOMETHING_ELSE';
+    const { payload } = metaTemplateToCreatePayload(t);
+    expect(payload!.category).toBe('UTILITY');
   });
 });

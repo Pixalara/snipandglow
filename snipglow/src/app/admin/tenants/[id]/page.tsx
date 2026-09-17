@@ -7,6 +7,7 @@ import Link from 'next/link';
 import { AdminGstEditor } from './gst-editor';
 import { AdminOwnerEmailEditor } from './owner-email-editor';
 import { AdminWhatsAppActivator } from './whatsapp-activator';
+import { AdminTemplateProvisioner } from './template-provisioner';
 import { AdminPlanEditor } from './plan-editor';
 import { PricingEditor } from './pricing-editor';
 import { PaymentHistoryTable, type PaymentRow } from '../../payment-history-table';
@@ -265,6 +266,12 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         tenantId={tenantId}
         onboardingStatus={waView?.onboardingStatus ?? null}
         setupRequest={setupRequest}
+      />
+
+      {/* Clone the platform's approved WhatsApp templates onto the tenant's dedicated WABA */}
+      <AdminTemplateProvisioner
+        tenantId={tenantId}
+        connected={waView?.onboardingStatus === 'connected'}
       />
 
       {/* GST Details — admin can edit even when locked for the tenant */}

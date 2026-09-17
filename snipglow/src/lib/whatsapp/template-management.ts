@@ -154,12 +154,22 @@ export function mapMetaTemplateStatus(raw: string | null | undefined): TemplateS
   }
 }
 
+/** Button shape for the create request (buttons are only produced by cloning). */
+interface CreateButton {
+  type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER' | 'COPY_CODE';
+  text: string;
+  url?: string;
+  phone_number?: string;
+  example?: string[];
+}
+
 /** Component/payload shapes for the create request (kept loose for the API). */
 interface CreateComponent {
-  type: 'HEADER' | 'BODY' | 'FOOTER';
+  type: 'HEADER' | 'BODY' | 'FOOTER' | 'BUTTONS';
   format?: 'TEXT';
   text?: string;
-  example?: { body_text?: string[][] };
+  example?: { body_text?: string[][]; header_text?: string[] };
+  buttons?: CreateButton[];
 }
 
 export interface CreateTemplatePayload {
@@ -215,8 +225,18 @@ export async function createTemplate(
   const validation = validateDefinition(def);
   if (!validation.ok) return { ok: false, error: validation.error };
 
-  const payload = buildCreatePayload(def);
+  return postTemplate(credentials, buildCreatePayload(def));
+}
 
+/**
+ * POST a fully-built create payload to the tenant's WABA. Shared by both the
+ * owner-facing create flow (via createTemplate) and the template cloner (which
+ * builds payloads directly from an existing template's components).
+ */
+export async function postTemplate(
+  credentials: WhatsAppCredentials,
+  payload: CreateTemplatePayload
+): Promise<CreateTemplateResult> {
   try {
     const res = await fetch(`${WA_BASE_URL}/${credentials.businessAccountId}/message_templates`, {
       method: 'POST',
@@ -273,4 +293,136 @@ export async function listTemplates(credentials: WhatsAppCredentials): Promise<M
     console.error('[WA Templates] list network error:', err);
     return [];
   }
+}
+
+// =============================================================================
+// Template CLONING support — read a template's full components from one WABA
+// and rebuild the create payload so it can be recreated on another WABA.
+// =============================================================================
+
+/** A button as returned by Meta's GET message_templates. */
+export interface MetaTemplateButton {
+  type: string; // QUICK_REPLY | URL | PHONE_NUMBER | COPY_CODE | ...
+  text?: string;
+  url?: string;
+  phone_number?: string;
+  example?: string[];
+}
+
+/** A component as returned by Meta's GET message_templates. */
+export interface MetaTemplateComponent {
+  type: string; // HEADER | BODY | FOOTER | BUTTONS
+  format?: string; // for HEADER: TEXT | DOCUMENT | IMAGE | VIDEO | LOCATION
+  text?: string;
+  example?: { body_text?: string[][]; header_text?: string[]; header_handle?: string[] };
+  buttons?: MetaTemplateButton[];
+}
+
+/** A full template (with components) as returned by Meta's GET message_templates. */
+export interface MetaTemplateFull {
+  id?: string;
+  name: string;
+  language: string;
+  category: string;
+  status: TemplateStatus;
+  components: MetaTemplateComponent[];
+}
+
+/**
+ * Fetch the FULL template definitions (including components) from a WABA. Used
+ * as the source for cloning. Distinct from listTemplates, which fetches only the
+ * light status fields for reconciliation.
+ */
+export async function fetchTemplateDefinitions(
+  credentials: WhatsAppCredentials
+): Promise<{ ok: boolean; templates: MetaTemplateFull[]; error?: string }> {
+  try {
+    const url = `${WA_BASE_URL}/${credentials.businessAccountId}/message_templates?fields=name,language,category,status,components&limit=200`;
+    const res = await fetch(url, { headers: { Authorization: `Bearer ${credentials.accessToken}` } });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      return { ok: false, templates: [], error: data?.error?.message || `Meta API error (${res.status})` };
+    }
+    const templates: MetaTemplateFull[] = (data?.data ?? []).map((t: Record<string, unknown>) => ({
+      id: t.id != null ? String(t.id) : undefined,
+      name: String(t.name ?? ''),
+      language: String(t.language ?? 'en'),
+      category: String(t.category ?? ''),
+      status: mapMetaTemplateStatus(t.status as string),
+      components: Array.isArray(t.components) ? (t.components as MetaTemplateComponent[]) : [],
+    }));
+    return { ok: true, templates };
+  } catch {
+    return { ok: false, templates: [], error: 'Could not reach WhatsApp. Please try again.' };
+  }
+}
+
+/**
+ * Rebuild a create payload from an existing template's components (PURE).
+ *
+ * Carries over BODY / TEXT-HEADER / FOOTER / BUTTONS (quick-reply, URL, phone)
+ * with their examples so the recreated template matches the source. Media
+ * (document/image/video) headers can't be auto-cloned — their example needs a
+ * freshly uploaded media handle on the target WABA — so those return a
+ * skipReason for the caller to surface ("create manually").
+ */
+export function metaTemplateToCreatePayload(
+  t: MetaTemplateFull
+): { payload?: CreateTemplatePayload; skipReason?: string } {
+  const components: CreateComponent[] = [];
+
+  for (const c of t.components || []) {
+    const type = (c.type || '').toUpperCase();
+
+    if (type === 'HEADER') {
+      const format = (c.format || 'TEXT').toUpperCase();
+      if (format !== 'TEXT') {
+        return {
+          skipReason: `has a ${format.toLowerCase()} header — create this template manually (media headers can't be auto-cloned)`,
+        };
+      }
+      const header: CreateComponent = { type: 'HEADER', format: 'TEXT', text: c.text };
+      if (c.example?.header_text?.length) header.example = { header_text: c.example.header_text };
+      components.push(header);
+    } else if (type === 'BODY') {
+      const body: CreateComponent = { type: 'BODY', text: c.text };
+      if (c.example?.body_text?.length) body.example = { body_text: c.example.body_text };
+      components.push(body);
+    } else if (type === 'FOOTER') {
+      if (c.text) components.push({ type: 'FOOTER', text: c.text });
+    } else if (type === 'BUTTONS') {
+      const buttons: CreateButton[] = (c.buttons || []).map((b) => {
+        const bt = (b.type || '').toUpperCase() as CreateButton['type'];
+        const btn: CreateButton = { type: bt, text: b.text || '' };
+        if (bt === 'URL') {
+          btn.url = b.url;
+          const hasVar = /\{\{\s*\d+\s*\}\}/.test(b.url || '');
+          if (b.example?.length) btn.example = b.example;
+          else if (hasVar) btn.example = [(b.url || '').replace(/\{\{\s*\d+\s*\}\}/g, 'sample')];
+        } else if (bt === 'PHONE_NUMBER') {
+          btn.phone_number = b.phone_number;
+        }
+        return btn;
+      });
+      if (buttons.length) components.push({ type: 'BUTTONS', buttons });
+    }
+    // Unknown component types are ignored.
+  }
+
+  if (!components.some((c) => c.type === 'BODY')) {
+    return { skipReason: 'template has no body component' };
+  }
+
+  const category = (t.category || 'UTILITY').toUpperCase();
+  const normalizedCategory: TemplateCategory =
+    category === 'MARKETING' || category === 'AUTHENTICATION' ? (category as TemplateCategory) : 'UTILITY';
+
+  return {
+    payload: {
+      name: normalizeTemplateName(t.name),
+      category: normalizedCategory,
+      language: t.language || 'en',
+      components,
+    },
+  };
 }

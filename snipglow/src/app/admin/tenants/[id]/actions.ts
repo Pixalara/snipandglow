@@ -9,6 +9,9 @@ import { upsertDedicatedCredentials } from '@/lib/whatsapp/credential-store';
 import { recordOnboardingEvent } from '@/lib/whatsapp/onboarding-log';
 import { subscribeWaba } from '@/lib/whatsapp/webhook-subscription';
 import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
+import { getPlatformCredentials } from '@/lib/whatsapp/config';
+import { getDedicatedCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
+import { cloneTemplates, type CloneResult } from '@/lib/whatsapp/template-clone';
 
 // =============================================================================
 // Admin — edit a tenant's GST details (even when locked).
@@ -223,6 +226,59 @@ export async function adminActivateDedicatedWhatsApp(
 
   revalidatePath(`/admin/tenants/${tenantId}`);
   return { success: true };
+}
+
+// =============================================================================
+// Admin — clone the platform's approved WhatsApp templates onto a tenant's
+// dedicated WABA.
+//
+// Templates are WhatsApp-Business-Account-scoped: a Pro tenant sending from
+// their own number needs their own copies of booking_confirmation_v2,
+// appointment_rescheduled_v1, the reminders, receipts, feedback ask, and owner
+// alerts. This reads the approved UTILITY templates from the shared Snip and
+// Glow account and recreates them on the tenant's account via the Graph API, so
+// no manual re-typing in Meta is needed. Media-header templates (bill_receipt_v2,
+// wallet_recharge_v1) can't be auto-cloned and are reported for manual creation.
+// =============================================================================
+
+export async function adminCloneWhatsAppTemplates(
+  tenantId: string
+): Promise<{ success: boolean; error?: string; result?: CloneResult }> {
+  const user = await requireAdmin();
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  const source = getPlatformCredentials();
+  if (!source) {
+    return { success: false, error: 'Platform WhatsApp is not configured (missing access token).' };
+  }
+
+  // Target the tenant's OWN WABA — never the shared account. Returns null unless
+  // the tenant is a plan-eligible, fully connected dedicated sender.
+  const target = await getDedicatedCredentialsForTenant(tenantId);
+  if (!target) {
+    return {
+      success: false,
+      error:
+        'This tenant is not connected on a dedicated WhatsApp number, so there is no account to create templates on. Connect their number first.',
+    };
+  }
+
+  const result = await cloneTemplates(source, target);
+
+  await logAdminAction({
+    adminUserId: user.id,
+    adminEmail: user.email || '',
+    action: 'clone_whatsapp_templates',
+    targetType: 'tenant',
+    targetId: tenantId,
+    metadata: { created: result.created, skipped: result.skipped, failed: result.failed },
+  });
+
+  return {
+    success: result.ok,
+    error: result.ok ? undefined : (result.error ?? `${result.failed} template(s) failed to create.`),
+    result,
+  };
 }
 
 // =============================================================================
