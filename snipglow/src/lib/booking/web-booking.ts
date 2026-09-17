@@ -299,6 +299,7 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
   const gender = ['male', 'female', 'other'].includes((input.gender || '').toLowerCase())
     ? (input.gender as string).toLowerCase()
     : null;
+  if (!gender) return { ok: false, error: 'Please select your gender.' };
   const dob = input.dateOfBirth && isValidDateOfBirth(input.dateOfBirth) ? input.dateOfBirth : null;
 
   const admin = createAdminClient();

@@ -1,6 +1,6 @@
 'use client';
 
-import { useMemo, useRef, useState, useTransition } from 'react';
+import { useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   Scissors, MapPin, Phone, Clock, Check, CheckCircle2, Loader2,
   ChevronLeft, User, Calendar,
@@ -78,7 +78,24 @@ export function BookingClient({ slug, salon, services, dates }: Props) {
   const phoneDigits = phone.replace(/\D/g, '');
   const phoneValid = /^[6-9]\d{9}$/.test(phoneDigits);
   const nameValid = name.trim().length >= 2;
-  const detailsValid = nameValid && phoneValid;
+  const genderValid = gender === 'male' || gender === 'female' || gender === 'other';
+  const detailsValid = nameValid && phoneValid && genderValid;
+
+  // Prefill the customer's own details from a previous booking on this device
+  // (no login on a public page — this saves returning customers from re-typing).
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem('sng_booking_customer');
+      if (!raw) return;
+      const p = JSON.parse(raw) as { name?: string; phone?: string; gender?: string; dob?: string };
+      if (p.name) setName(p.name);
+      if (p.phone) setPhone(p.phone);
+      if (p.gender) setGender(p.gender);
+      if (p.dob) setDob(p.dob);
+    } catch {
+      /* ignore malformed/blocked storage */
+    }
+  }, []);
 
   const canContinue =
     (step === 0 && selected.length > 0) ||
@@ -137,8 +154,20 @@ export function BookingClient({ slug, salon, services, dates }: Props) {
         gender: gender || undefined,
         dateOfBirth: dob || undefined,
       });
-      if (res.ok && res.summary) setSuccess(res.summary);
-      else setError(res.error || 'Something went wrong. Please try again.');
+      if (res.ok && res.summary) {
+        // Remember this device's customer for faster rebooking next time.
+        try {
+          localStorage.setItem(
+            'sng_booking_customer',
+            JSON.stringify({ name: name.trim(), phone: phoneDigits, gender, dob })
+          );
+        } catch {
+          /* ignore blocked storage */
+        }
+        setSuccess(res.summary);
+      } else {
+        setError(res.error || 'Something went wrong. Please try again.');
+      }
     });
   }
 
@@ -149,11 +178,8 @@ export function BookingClient({ slug, salon, services, dates }: Props) {
     setDate(null);
     setTime(null);
     setSlots([]);
-    setName('');
-    setPhone('');
-    setGender('');
-    setDob('');
     setError(null);
+    // Keep name/phone/gender/dob so "book another" doesn't force a re-type.
   }
 
   const initial = (salon.name || 'S').trim().charAt(0).toUpperCase();
@@ -570,9 +596,7 @@ function DetailsStep({
 
       {/* Gender (optional) */}
       <div className="space-y-1.5">
-        <label className="text-sm font-medium text-slate-700">
-          Gender <span className="font-normal text-slate-400">(optional)</span>
-        </label>
+        <label className="text-sm font-medium text-slate-700">Gender</label>
         <div className="grid grid-cols-3 gap-2">
           {(['male', 'female', 'other'] as const).map((g) => {
             const active = gender === g;
