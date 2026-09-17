@@ -38,6 +38,7 @@ import {
   type OnboardingStatus,
 } from '@/lib/whatsapp/onboarding-status';
 import { TemplateComposer } from './template-composer';
+import { CampaignComposer } from './campaign-composer';
 
 // =============================================================================
 // Global type declarations for Facebook SDK
@@ -88,7 +89,7 @@ const SHOW_CONNECT_CARD = false;
 export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
   // Marketing template creation is a paid-tier capability (own WABA required).
   const isPro = planTier === 'pro' || planTier === 'enterprise';
-  const [tab, setTab] = useState<'activity' | 'marketing'>('activity');
+  const [tab, setTab] = useState<'activity' | 'marketing' | 'campaign'>('activity');
 
   return (
     <div className="space-y-6">
@@ -116,6 +117,7 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
             {([
               { key: 'activity', label: 'Activity' },
               { key: 'marketing', label: 'Marketing Templates' },
+              { key: 'campaign', label: 'Send Campaign' },
             ] as const).map((t) => (
               <button
                 key={t.key}
@@ -134,7 +136,13 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
               </button>
             ))}
           </div>
-          {tab === 'activity' ? <WhatsAppLogsSection /> : <TemplateComposer />}
+          {tab === 'activity' ? (
+            <WhatsAppLogsSection />
+          ) : tab === 'marketing' ? (
+            <TemplateComposer />
+          ) : (
+            <CampaignComposer />
+          )}
         </>
       ) : (
         <WhatsAppLogsSection />

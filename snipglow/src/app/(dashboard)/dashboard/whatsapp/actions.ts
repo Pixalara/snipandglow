@@ -31,6 +31,7 @@ import { notifyAdminOfSetupRequest } from '@/lib/whatsapp/setup-request-alert';
 import { getDedicatedCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import {
   createTemplate,
+  listTemplates,
   normalizeTemplateName,
   type TemplateCategory,
   type TemplateStatus,
@@ -38,8 +39,11 @@ import {
 import {
   listTenantTemplates,
   upsertSubmittedTemplate,
+  updateTemplateStatus,
   type TemplateRow,
 } from '@/lib/whatsapp/template-store';
+import { sendMessage } from '@/lib/whatsapp/templates';
+import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
 
 // =============================================================================
 // Dedicated WhatsApp Onboarding — auth guard + state read
@@ -91,7 +95,8 @@ async function assertProOwner(): Promise<{ tenantId: string }> {
     .eq('id', tenantId)
     .single() as any);
 
-  if ((tenant as any)?.plan_tier !== 'pro') {
+  // Marketing/dedicated WhatsApp is a Pro OR Growth (enterprise) capability.
+  if (!planIncludesDedicatedWhatsApp((tenant as any)?.plan_tier)) {
     throw new AuthorizationError('not_pro'); // Req 1.5, 1.6
   }
 
@@ -840,4 +845,224 @@ export async function submitMarketingTemplate(input: {
     const reason = err instanceof Error ? err.message : 'Failed to save the template.';
     return { ok: false, reason };
   }
+}
+
+// =============================================================================
+// Marketing Templates — reconcile approval status from Meta
+//
+// The webhook is the primary source of a template's verdict, but a missed
+// webhook can leave a template stuck at PENDING. This lets the owner pull the
+// live statuses from their WABA on demand and refresh the local mirror.
+// =============================================================================
+
+export async function reconcileMarketingTemplates(): Promise<MarketingTemplateView[]> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch {
+    return [];
+  }
+
+  const credentials = await getDedicatedCredentialsForTenant(tenantId);
+  if (credentials) {
+    try {
+      const remote = await listTemplates(credentials);
+      for (const t of remote) {
+        // Don't clobber a REJECTED row's webhook-provided reason on reconcile.
+        if (t.status === 'REJECTED') continue;
+        await updateTemplateStatus({
+          metaTemplateId: t.metaTemplateId,
+          name: t.name,
+          language: t.language,
+          status: t.status,
+        });
+      }
+    } catch (err) {
+      console.error('[reconcileMarketingTemplates] failed:', err);
+    }
+  }
+
+  const rows = await listTenantTemplates(tenantId);
+  return rows.map(toTemplateView);
+}
+
+// =============================================================================
+// Marketing Campaign — audience + send
+//
+// Sends an APPROVED marketing template from the tenant's OWN connected WABA to a
+// chosen set of the salon's customers. Approved-only, dedicated-credentials
+// only, server-side recipient resolution (never trusts client phone numbers),
+// per-recipient name personalization, throttled, and logged.
+// =============================================================================
+
+/** Max recipients per campaign — keeps the send within a serverless timeout and
+ *  is a sensible guard-rail for a single blast. */
+const MAX_CAMPAIGN_RECIPIENTS = 200;
+
+export interface CampaignCustomer {
+  id: string;
+  name: string;
+  phone: string;
+  gender: string | null;
+  dateOfBirth: string | null;
+  lastVisitAt: string | null;
+}
+
+/** The tenant's customers for building a campaign audience (owner/Pro gated). */
+export async function getCampaignCustomers(): Promise<CampaignCustomer[]> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch {
+    return [];
+  }
+
+  const admin = createAdminClient();
+  const { data } = await (admin
+    .from('customers')
+    .select('id, name, phone, gender, date_of_birth, last_visit_at')
+    .eq('tenant_id', tenantId)
+    .order('name', { ascending: true })
+    .limit(1000) as any);
+
+  return ((data ?? []) as any[]).map((c) => ({
+    id: c.id,
+    name: c.name,
+    phone: c.phone,
+    gender: c.gender ?? null,
+    dateOfBirth: c.date_of_birth ?? null,
+    lastVisitAt: c.last_visit_at ?? null,
+  }));
+}
+
+export interface SendCampaignInput {
+  templateId: string;
+  customerIds: string[];
+  /** One value per template variable (index-aligned to {{1}}..{{N}}). */
+  variableValues: string[];
+  /** 0-based variable indexes to personalize with each customer's name. */
+  personalizeIndexes: number[];
+}
+
+export interface SendCampaignResult {
+  ok: boolean;
+  error?: string;
+  sent: number;
+  failed: number;
+  total: number;
+}
+
+export async function sendMarketingCampaign(input: SendCampaignInput): Promise<SendCampaignResult> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, error: reason, sent: 0, failed: 0, total: 0 };
+  }
+
+  // Must send from the tenant's OWN number where the template lives.
+  const credentials = await getDedicatedCredentialsForTenant(tenantId);
+  if (!credentials) return { ok: false, error: 'not_connected', sent: 0, failed: 0, total: 0 };
+
+  // Template must exist locally AND be APPROVED.
+  const tpl = (await listTenantTemplates(tenantId)).find((r) => r.id === input.templateId);
+  if (!tpl) return { ok: false, error: 'Template not found.', sent: 0, failed: 0, total: 0 };
+  if (tpl.status !== 'APPROVED') {
+    return { ok: false, error: 'This template is not approved yet, so it can\u2019t be sent.', sent: 0, failed: 0, total: 0 };
+  }
+
+  // How many variables the template body needs.
+  const placeholderCount = new Set(
+    [...tpl.body_text.matchAll(/\{\{\s*(\d+)\s*\}\}/g)].map((m) => Number(m[1]))
+  ).size;
+
+  const personalize = new Set((input.personalizeIndexes ?? []).map(Number));
+  const values = input.variableValues ?? [];
+
+  // Every non-personalized variable must have a value (Meta rejects blanks).
+  for (let i = 0; i < placeholderCount; i++) {
+    if (!personalize.has(i) && !(values[i] ?? '').trim()) {
+      return { ok: false, error: `Please fill in every template value (variable ${i + 1}).`, sent: 0, failed: 0, total: 0 };
+    }
+  }
+
+  const ids = Array.from(new Set((input.customerIds ?? []).filter(Boolean)));
+  if (ids.length === 0) return { ok: false, error: 'Select at least one customer.', sent: 0, failed: 0, total: 0 };
+  if (ids.length > MAX_CAMPAIGN_RECIPIENTS) {
+    return {
+      ok: false,
+      error: `Please select up to ${MAX_CAMPAIGN_RECIPIENTS} customers per campaign.`,
+      sent: 0,
+      failed: 0,
+      total: 0,
+    };
+  }
+
+  // Re-resolve recipients server-side (never trust client-supplied phones).
+  const admin = createAdminClient();
+  const { data: custRows } = await (admin
+    .from('customers')
+    .select('id, name, phone')
+    .eq('tenant_id', tenantId)
+    .in('id', ids) as any);
+
+  const seen = new Set<string>();
+  const recipients = ((custRows ?? []) as Array<{ id: string; name: string; phone: string }>).filter((c) => {
+    const digits = (c.phone || '').replace(/\D/g, '');
+    if (!digits || seen.has(digits)) return false;
+    seen.add(digits);
+    return true;
+  });
+
+  const total = recipients.length;
+  if (total === 0) return { ok: false, error: 'No valid recipients found.', sent: 0, failed: 0, total: 0 };
+
+  let sent = 0;
+  let failed = 0;
+
+  for (const c of recipients) {
+    const phoneDigits = (c.phone || '').replace(/\D/g, '');
+    const parameters = Array.from({ length: placeholderCount }, (_, i) => ({
+      type: 'text',
+      text: personalize.has(i) ? (c.name || 'there') : (values[i] ?? '').trim(),
+    }));
+
+    const res = await sendMessage(credentials, phoneDigits, {
+      type: 'template',
+      template: {
+        name: tpl.name,
+        language: { code: tpl.language || 'en' },
+        components: placeholderCount > 0 ? [{ type: 'body', parameters }] : [],
+      },
+    });
+
+    if (res.success) sent++;
+    else failed++;
+
+    try {
+      await (admin.from('whatsapp_sessions').insert({
+        tenant_id: tenantId,
+        message_id: `campaign_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        phone: phoneDigits,
+        direction: 'outbound',
+        template_name: tpl.name,
+        status: res.success ? 'sent' : 'failed',
+        metadata: { customer_name: c.name, campaign: true, error: res.error ?? null },
+      } as any) as any);
+    } catch {
+      /* logging is best-effort */
+    }
+
+    // Stay well under Meta's throughput ceiling.
+    await new Promise((r) => setTimeout(r, 60));
+  }
+
+  return {
+    ok: failed === 0,
+    error: failed > 0 ? `${failed} message${failed > 1 ? 's' : ''} could not be delivered.` : undefined,
+    sent,
+    failed,
+    total,
+  };
 }

@@ -14,6 +14,7 @@ import {
   Send,
   AlertTriangle,
   PauseCircle,
+  RefreshCw,
 } from 'lucide-react';
 import { MARKETING_TEMPLATE_PRESETS, type MarketingTemplatePreset } from '@/lib/whatsapp/template-presets';
 import { extractPlaceholders } from '@/lib/whatsapp/template-management';
@@ -57,6 +58,7 @@ function previewText(body: string, examples: string[]): string {
 export function TemplateComposer() {
   const [templates, setTemplates] = useState<MarketingTemplateView[]>([]);
   const [loading, setLoading] = useState(true);
+  const [reconciling, setReconciling] = useState(false);
 
   const [name, setName] = useState('');
   const [body, setBody] = useState('');
@@ -81,6 +83,20 @@ export function TemplateComposer() {
       /* tolerant: leave list as-is */
     } finally {
       setLoading(false);
+    }
+  }
+
+  // Pull the live approval statuses from Meta and refresh the local mirror — so
+  // a template isn't stuck at "In review" if a status webhook was missed.
+  async function handleRefreshStatus() {
+    setReconciling(true);
+    try {
+      const { reconcileMarketingTemplates } = await import('./actions');
+      setTemplates(await reconcileMarketingTemplates());
+    } catch {
+      /* tolerant */
+    } finally {
+      setReconciling(false);
     }
   }
 
@@ -298,7 +314,19 @@ export function TemplateComposer() {
 
       {/* Submitted templates */}
       <div>
-        <h3 className="text-sm font-semibold text-foreground mb-3">Your templates</h3>
+        <div className="mb-3 flex items-center justify-between">
+          <h3 className="text-sm font-semibold text-foreground">Your templates</h3>
+          {templates.length > 0 && (
+            <button
+              type="button"
+              onClick={handleRefreshStatus}
+              disabled={reconciling}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs text-muted-foreground transition-colors hover:bg-muted disabled:opacity-50"
+            >
+              <RefreshCw className={`size-3 ${reconciling ? 'animate-spin' : ''}`} /> Refresh status
+            </button>
+          )}
+        </div>
         {loading ? (
           <div className="flex items-center justify-center py-10">
             <Loader2 className="size-5 animate-spin text-emerald-500" />
