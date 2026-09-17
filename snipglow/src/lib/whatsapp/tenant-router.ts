@@ -319,11 +319,19 @@ export async function resolveTenant(
 export async function resolveTenantById(tenantId: string): Promise<TenantContext | null> {
   if (!tenantId) return null;
   const admin = createAdminClient();
-  const credentials = getPlatformCredentials();
+  // Dedicated-aware: a connected Pro tenant's OWN number, falling back to the
+  // shared number otherwise. Feedback ratings are routed here by the tenant id
+  // embedded in the rating row, so this MUST return the tenant's real sending
+  // number — otherwise the "thanks for rating" + "skip the wait" replies would
+  // go out from the shared Snip and Glow number instead of the salon's own.
+  const credentials = await getCredentialsForTenant(tenantId);
   if (!credentials) return null;
   const tenant = await getTenantDetails(admin, tenantId);
   if (!tenant) return null;
-  return { ...tenant, mode: 'shared', credentials };
+  const platform = getPlatformCredentials();
+  const mode: 'shared' | 'dedicated' =
+    platform && credentials.phoneNumberId === platform.phoneNumberId ? 'shared' : 'dedicated';
+  return { ...tenant, mode, credentials };
 }
 
 /**
