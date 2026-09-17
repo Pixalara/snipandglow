@@ -115,6 +115,17 @@ function isSlotConflict(error: unknown): boolean {
   return code === '23P01' || code === '23505';
 }
 
+/**
+ * All the ways the same Indian mobile might already be stored, so a returning
+ * customer is matched (and reused) regardless of how their number was first
+ * saved — canonical +91XXXXXXXXXX, bare 10-digit, 91-prefixed, or 0-prefixed.
+ * New records always use the canonical +91 form.
+ */
+function phoneVariants(e164: string): string[] {
+  const ten = e164.replace(/\D/g, '').slice(-10);
+  return [`+91${ten}`, `91${ten}`, ten, `0${ten}`];
+}
+
 // ── Slug → salon resolution ───────────────────────────────────────────────
 
 /**
@@ -308,7 +319,7 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
   const [servicesRes, apptsRes, customerRes] = await Promise.all([
     admin.from('services').select('id, name').in('id', serviceIds).eq('tenant_id', tenantId).eq('is_active', true),
     (admin.from('appointments').select('start_time, end_time, customer_id').eq('tenant_id', tenantId).eq('appointment_date', date).in('status', ['booked', 'confirmed']) as any),
-    (admin.from('customers').select('id, gender, date_of_birth').eq('phone', phoneE164).eq('tenant_id', tenantId).maybeSingle() as any),
+    (admin.from('customers').select('id, gender, date_of_birth').eq('tenant_id', tenantId).in('phone', phoneVariants(phoneE164)).order('created_at', { ascending: true }).limit(1) as any),
   ]);
 
   const services = (servicesRes.data ?? []) as Array<{ id: string; name: string }>;
@@ -335,16 +346,37 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
   const overlap = appts.filter((a) => startMin < toMinutes(a.end_time) && endMin > toMinutes(a.start_time)).length;
   if (overlap >= maxPerSlot) return { ok: false, error: 'That slot just filled up. Please choose another time.' };
 
-  // ── Resolve or create the customer ──
-  const existingCustomer = customerRes.data as { id: string; gender: string | null; date_of_birth: string | null } | null;
+  // ── Resolve or create the customer (phone is the unique identity per salon) ──
+  const existingCustomer = ((customerRes.data as any[])?.[0] ?? null) as
+    | { id: string; gender: string | null; date_of_birth: string | null }
+    | null;
   let customerId: string | null = existingCustomer?.id ?? null;
+
   if (!customerId) {
-    const { data: newCust } = await (admin
+    const insertRes = await (admin
       .from('customers')
       .insert({ tenant_id: tenantId, branch_id: branchId, name: customerName, phone: phoneE164, gender, date_of_birth: dob } as any)
       .select('id')
       .single() as any);
-    customerId = newCust?.id ?? null;
+
+    if (insertRes.error) {
+      // UNIQUE(tenant_id, phone) fired — a concurrent booking (or a row saved in
+      // another format) already created this customer. Reuse it; never duplicate.
+      if ((insertRes.error as { code?: string }).code === '23505') {
+        const { data: raced } = await (admin
+          .from('customers')
+          .select('id')
+          .eq('tenant_id', tenantId)
+          .in('phone', phoneVariants(phoneE164))
+          .order('created_at', { ascending: true })
+          .limit(1) as any);
+        customerId = raced?.[0]?.id ?? null;
+      } else {
+        console.error('[WebBooking] customer insert error:', insertRes.error);
+      }
+    } else {
+      customerId = insertRes.data?.id ?? null;
+    }
   } else {
     // Backfill missing profile info only — never overwrite curated values.
     const patch: Record<string, unknown> = {};
