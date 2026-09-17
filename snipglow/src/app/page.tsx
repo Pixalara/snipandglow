@@ -1494,14 +1494,12 @@ export default function HomePage() {
         
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-12 sm:mb-16 reveal">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-gradient-to-r from-pink-50 to-violet-50 border border-pink-100 mb-4">
-              <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-violet-600">PRICING</span>
-            </div>
-            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-bold text-slate-900 mb-4 tracking-tight">
-              Choose your plan
+            <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600 mb-3">Pricing</p>
+            <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight" style={{ fontFamily: 'var(--font-jakarta)' }}>
+              Simple, honest pricing
             </h2>
-            <p className="text-lg text-slate-600 max-w-2xl mx-auto leading-relaxed">
-              Start with Essentials. Step up to Pro for your own WhatsApp API. Scale to Growth for multi-branch mastery.
+            <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
+              Start with Essentials. Step up to Pro for your own WhatsApp number. Scale to Growth for multi-branch.
             </p>
           </div>
 
@@ -2107,7 +2105,7 @@ export default function HomePage() {
                 <div className="mt-7 flex flex-col sm:flex-row items-center justify-center gap-3">
                   <Link
                     href="/signup"
-                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/25"
+                    className="inline-flex w-full sm:w-auto items-center justify-center gap-2 px-7 py-3.5 rounded-full bg-white text-slate-900 text-sm font-semibold hover:bg-slate-100 transition-colors shadow-lg"
                   >
                     Start with Snip &amp; Glow
                     <ArrowRight className="h-4 w-4" />
@@ -2136,15 +2134,15 @@ export default function HomePage() {
           {/* Badge */}
           <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/50 px-4 py-1.5 mb-8">
             <span className="text-lg">🚀</span>
-            <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-violet-400 via-pink-400 to-orange-400 bg-clip-text text-transparent">
+            <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">
               Done-for-you setup
             </span>
           </div>
 
           {/* Heading */}
-          <h2 className="text-2xl sm:text-3xl lg:text-5xl font-bold text-white mb-4 leading-tight">
+          <h2 className="text-2xl sm:text-3xl lg:text-5xl font-extrabold text-white mb-4 leading-tight tracking-tight" style={{ fontFamily: 'var(--font-jakarta)' }}>
             We set it up{' '}
-            <span className="bg-gradient-to-r from-orange-400 via-pink-500 to-violet-500 bg-clip-text text-transparent italic">
+            <span className="bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent italic">
               for you.
             </span>
             <br />
@@ -2174,8 +2172,8 @@ export default function HomePage() {
           {/* CTA Button */}
           <Link
             href="/signup"
-            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 sm:px-10 py-4 rounded-2xl font-semibold text-white text-base shadow-lg shadow-pink-500/25 transition-transform hover:scale-105"
-            style={{ background: 'linear-gradient(135deg, #f97316, #ec4899, #8b5cf6)' }}
+            className="inline-flex items-center justify-center gap-2 w-full sm:w-auto px-8 sm:px-10 py-4 rounded-full font-semibold text-white text-base shadow-lg shadow-violet-500/25 transition-transform hover:scale-105"
+            style={{ background: 'linear-gradient(135deg, #d946ef, #7c3aed)' }}
           >
             <Zap className="h-5 w-5" />
             {"Get Started - It's Free"}
@@ -2210,8 +2208,8 @@ export default function HomePage() {
           </p>
           <button
             onClick={() => setShowDemoModal(true)}
-            className="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-8 py-3.5 rounded-full font-semibold text-white text-sm shadow-lg shadow-pink-500/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-pink-500/40"
-            style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}
+            className="inline-flex items-center justify-center gap-2.5 w-full sm:w-auto px-8 py-3.5 rounded-full font-semibold text-white text-sm shadow-lg shadow-violet-500/30 transition-all hover:scale-105 hover:shadow-xl hover:shadow-violet-500/40"
+            style={{ background: 'linear-gradient(135deg, #d946ef, #7c3aed)' }}
           >
             <svg className="h-4 w-4" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z"/></svg>
             Book a Live Demo
