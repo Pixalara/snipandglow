@@ -15,7 +15,7 @@ export default function AuthLayout({
           <Link href="/" className="flex items-center gap-2">
             <span className="text-lg font-bold tracking-tight">
               <span className="text-slate-900">snipand</span>
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+              <span className="bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">glow</span>
             </span>
           </Link>
           <Link href="/" className="text-sm text-slate-500 hover:text-slate-900 transition-colors">
@@ -27,8 +27,8 @@ export default function AuthLayout({
       {/* Content area */}
       <div className="flex-1 flex items-center justify-center px-4 py-12 relative overflow-hidden">
         {/* Background orbs */}
-        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-emerald-100/40 rounded-full blur-3xl pointer-events-none" />
-        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-blue-100/30 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-violet-100/50 rounded-full blur-3xl pointer-events-none" />
+        <div className="absolute bottom-1/4 right-1/4 w-80 h-80 bg-fuchsia-100/40 rounded-full blur-3xl pointer-events-none" />
 
         <div className="relative w-full max-w-md">
           {children}

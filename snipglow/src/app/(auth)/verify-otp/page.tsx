@@ -163,7 +163,7 @@ function VerifyOtpContent() {
     return (
       <div className="space-y-6">
         <div className="text-center space-y-2">
-          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-100 to-fuchsia-100 border border-pink-200 mx-auto mb-2">
+          <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-fuchsia-100 to-violet-100 border border-fuchsia-200 mx-auto mb-2">
             <UserPlus className="h-6 w-6 text-fuchsia-600" />
           </div>
           <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Let&apos;s get you set up</h1>
@@ -190,7 +190,7 @@ function VerifyOtpContent() {
 
           <Link
             href="/signup"
-            className="w-full flex items-center justify-center gap-2 min-h-[48px] h-12 rounded-xl bg-gradient-to-r from-pink-600 to-fuchsia-600 text-white font-semibold text-sm hover:from-pink-500 hover:to-fuchsia-500 transition-all shadow-lg"
+            className="w-full flex items-center justify-center gap-2 min-h-[48px] h-12 rounded-xl bg-gradient-to-r from-fuchsia-600 to-violet-600 text-white font-semibold text-sm hover:from-fuchsia-500 hover:to-violet-500 transition-all shadow-lg"
           >
             <UserPlus className="size-4" />
             Create your account

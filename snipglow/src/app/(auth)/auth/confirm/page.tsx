@@ -111,13 +111,13 @@ export default function AuthConfirmPage() {
   }, [router, routeUser]);
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-pink-50/30 to-fuchsia-50/20">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-white via-fuchsia-50/30 to-violet-50/20">
       <div className="text-center space-y-4">
-        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-pink-100 to-violet-100 border border-pink-200 mx-auto">
-          <span className="text-lg font-bold bg-gradient-to-r from-pink-500 to-violet-500 bg-clip-text text-transparent">S</span>
+        <div className="inline-flex items-center justify-center h-14 w-14 rounded-2xl bg-gradient-to-br from-fuchsia-100 to-violet-100 border border-fuchsia-200 mx-auto">
+          <span className="text-lg font-bold bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">S</span>
         </div>
         <div className="flex items-center gap-2 text-slate-500">
-          <div className="h-4 w-4 animate-spin rounded-full border-2 border-pink-500 border-t-transparent" />
+          <div className="h-4 w-4 animate-spin rounded-full border-2 border-fuchsia-500 border-t-transparent" />
           <span className="text-sm">Signing you in...</span>
         </div>
       </div>

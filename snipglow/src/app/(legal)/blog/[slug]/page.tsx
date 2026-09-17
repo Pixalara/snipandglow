@@ -37,7 +37,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
 
   return (
     <article className="max-w-3xl mx-auto">
-      <Link href="/blog" className="inline-flex items-center gap-1 text-sm text-pink-600 hover:text-pink-700 mb-6 transition-colors">
+      <Link href="/blog" className="inline-flex items-center gap-1 text-sm text-violet-600 hover:text-violet-700 mb-6 transition-colors">
         ← Back to Blog
       </Link>
 
@@ -52,7 +52,7 @@ export default async function BlogPostPage({ params }: BlogPostPageProps) {
       </p>
 
       <div
-        className="prose prose-slate max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-p:leading-relaxed prose-li:leading-relaxed prose-a:text-pink-600 prose-a:no-underline hover:prose-a:underline"
+        className="prose prose-slate max-w-none prose-headings:font-bold prose-h1:text-3xl prose-h2:text-xl prose-h2:mt-8 prose-h2:mb-4 prose-p:leading-relaxed prose-li:leading-relaxed prose-a:text-violet-600 prose-a:no-underline hover:prose-a:underline"
         dangerouslySetInnerHTML={{ __html: post.content }}
       />
     </article>

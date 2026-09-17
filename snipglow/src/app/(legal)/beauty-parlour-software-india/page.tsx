@@ -174,19 +174,19 @@ export default function BeautyParlourSoftwareIndiaPage() {
           Just sign up, get set up, and start taking bookings.
         </p>
 
-        <div className="not-prose mt-8 p-6 rounded-2xl bg-gradient-to-r from-rose-50 to-pink-50 border border-rose-100">
+        <div className="not-prose mt-8 p-6 rounded-2xl bg-gradient-to-r from-fuchsia-50 to-violet-50 border border-fuchsia-100">
           <p className="text-base font-semibold text-slate-900 mb-2">Start using Snip and Glow for your beauty parlour</p>
           <p className="text-sm text-slate-600 mb-4">₹799/month. 15-day free trial. Setup in 10 minutes.</p>
           <div className="flex flex-col sm:flex-row gap-3">
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-rose-600 text-white text-sm font-semibold hover:bg-rose-700 transition-colors"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl bg-violet-600 text-white text-sm font-semibold hover:bg-violet-700 transition-colors"
             >
               Start Free Trial
             </Link>
             <Link
               href="/#pricing"
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:border-rose-300 hover:text-rose-600 transition-colors"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-xl border border-slate-200 text-slate-600 text-sm font-semibold hover:border-violet-300 hover:text-violet-600 transition-colors"
             >
               See All Plans
             </Link>

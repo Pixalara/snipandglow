@@ -10,7 +10,7 @@ export default function LegalLayout({ children }: { children: React.ReactNode })
           <Link href="/" className="flex items-center gap-2">
             <span className="text-base sm:text-lg font-bold tracking-tight">
               <span className="text-slate-900">snipand</span>
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+              <span className="bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">glow</span>
             </span>
           </Link>
 

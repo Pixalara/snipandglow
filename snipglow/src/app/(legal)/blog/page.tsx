@@ -31,11 +31,11 @@ export default function BlogPage() {
             </div>
             <div className="p-5 space-y-3">
               <p className="text-xs text-slate-400">{new Date(post.date).toLocaleDateString('en-IN', { day: '2-digit', month: 'short', year: 'numeric' })}</p>
-              <h2 className="text-base font-semibold text-slate-900 group-hover:text-pink-600 transition-colors line-clamp-2">
+              <h2 className="text-base font-semibold text-slate-900 group-hover:text-violet-600 transition-colors line-clamp-2">
                 {post.title}
               </h2>
               <p className="text-sm text-slate-500 line-clamp-2">{post.excerpt}</p>
-              <span className="inline-flex items-center text-xs font-medium text-pink-600">
+              <span className="inline-flex items-center text-xs font-medium text-violet-600">
                 Read more →
               </span>
             </div>

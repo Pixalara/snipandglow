@@ -142,7 +142,7 @@ export default function LoginPage() {
             Welcome back
           </h1>
           <p className="text-sm text-slate-500">
-            Sign in to <span className="font-semibold text-slate-700">snipand</span><span className="font-semibold bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+            Sign in to <span className="font-semibold text-slate-700">snipand</span><span className="font-semibold bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">glow</span>
           </p>
         </div>
       </div>

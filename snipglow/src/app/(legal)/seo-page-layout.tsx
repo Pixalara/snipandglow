@@ -30,13 +30,13 @@ export function SeoPageLayout({
           <Link href="/" className="flex items-center gap-2">
             <span className="text-base sm:text-lg font-bold tracking-tight">
               <span className="text-slate-900">snipand</span>
-              <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+              <span className="bg-gradient-to-r from-fuchsia-500 to-violet-600 bg-clip-text text-transparent">glow</span>
             </span>
           </Link>
           <div className="flex items-center gap-3">
             <Link
               href="/signup"
-              className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-full bg-gradient-to-r from-pink-500 to-violet-500 hover:from-pink-600 hover:to-violet-600 transition-all"
+              className="hidden sm:inline-flex px-4 py-2 text-sm font-semibold text-white rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-600 hover:from-fuchsia-600 hover:to-violet-700 transition-all"
             >
               Start Free Trial
             </Link>
