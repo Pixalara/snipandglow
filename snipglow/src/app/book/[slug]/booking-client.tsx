@@ -50,6 +50,8 @@ export function BookingClient({ slug, salon, services, dates }: Props) {
   const [loadingSlots, setLoadingSlots] = useState(false);
   const [name, setName] = useState('');
   const [phone, setPhone] = useState('');
+  const [gender, setGender] = useState('');
+  const [dob, setDob] = useState(''); // YYYY-MM-DD
   const [error, setError] = useState<string | null>(null);
   const [success, setSuccess] = useState<{ services: string; dateTime: string } | null>(null);
   const [isPending, startTransition] = useTransition();
@@ -132,6 +134,8 @@ export function BookingClient({ slug, salon, services, dates }: Props) {
         phone,
         date,
         time,
+        gender: gender || undefined,
+        dateOfBirth: dob || undefined,
       });
       if (res.ok && res.summary) setSuccess(res.summary);
       else setError(res.error || 'Something went wrong. Please try again.');
@@ -147,6 +151,8 @@ export function BookingClient({ slug, salon, services, dates }: Props) {
     setSlots([]);
     setName('');
     setPhone('');
+    setGender('');
+    setDob('');
     setError(null);
   }
 
@@ -237,10 +243,14 @@ export function BookingClient({ slug, salon, services, dates }: Props) {
                 <DetailsStep
                   name={name}
                   phone={phone}
+                  gender={gender}
+                  dob={dob}
                   nameValid={nameValid}
                   phoneValid={phoneValid}
                   onName={setName}
                   onPhone={(v) => setPhone(v.replace(/\D/g, '').slice(0, 10))}
+                  onGender={setGender}
+                  onDob={setDob}
                 />
               )}
 
@@ -497,18 +507,27 @@ function DateTimeStep({
 function DetailsStep({
   name,
   phone,
+  gender,
+  dob,
   nameValid,
   phoneValid,
   onName,
   onPhone,
+  onGender,
+  onDob,
 }: {
   name: string;
   phone: string;
+  gender: string;
+  dob: string;
   nameValid: boolean;
   phoneValid: boolean;
   onName: (v: string) => void;
   onPhone: (v: string) => void;
+  onGender: (v: string) => void;
+  onDob: (v: string) => void;
 }) {
+  const todayIso = new Date().toISOString().slice(0, 10);
   return (
     <div className="space-y-5">
       <h2 className="text-lg font-bold text-slate-900">Your details</h2>
@@ -547,6 +566,52 @@ function DetailsStep({
           <p className="text-xs text-rose-600">Enter a valid 10-digit Indian mobile number.</p>
         )}
         <p className="text-xs text-slate-400">We&apos;ll send your booking confirmation here.</p>
+      </div>
+
+      {/* Gender (optional) */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-slate-700">
+          Gender <span className="font-normal text-slate-400">(optional)</span>
+        </label>
+        <div className="grid grid-cols-3 gap-2">
+          {(['male', 'female', 'other'] as const).map((g) => {
+            const active = gender === g;
+            return (
+              <button
+                key={g}
+                type="button"
+                onClick={() => onGender(active ? '' : g)}
+                className={cn(
+                  'rounded-xl border py-2.5 text-sm font-medium capitalize transition active:scale-95',
+                  active
+                    ? 'border-transparent bg-gradient-to-r from-pink-500 to-violet-500 text-white shadow-md shadow-fuchsia-500/30'
+                    : 'border-slate-200 bg-white text-slate-700 hover:border-fuchsia-300'
+                )}
+              >
+                {g}
+              </button>
+            );
+          })}
+        </div>
+      </div>
+
+      {/* Date of birth (optional) */}
+      <div className="space-y-1.5">
+        <label className="text-sm font-medium text-slate-700">
+          Date of birth <span className="font-normal text-slate-400">(optional)</span>
+        </label>
+        <div className="flex items-center gap-2 rounded-xl border border-slate-200 bg-white px-3 focus-within:border-fuchsia-400 focus-within:ring-1 focus-within:ring-fuchsia-300">
+          <Calendar className="size-4 shrink-0 text-slate-400" />
+          <input
+            type="date"
+            value={dob}
+            min="1950-01-01"
+            max={todayIso}
+            onChange={(e) => onDob(e.target.value)}
+            className="h-12 w-full bg-transparent text-slate-900 outline-none [color-scheme:light]"
+          />
+        </div>
+        <p className="text-xs text-slate-400">For a little birthday treat from the salon 🎂</p>
       </div>
 
       {!nameValid && name.length > 0 && (

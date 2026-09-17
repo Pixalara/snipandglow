@@ -31,6 +31,8 @@ export interface SubmitBookingInput {
   phone: string;
   date: string;
   time: string;
+  gender?: string;
+  dateOfBirth?: string;
 }
 
 /** Create the appointment (validates + persists + best-effort confirmation). */
@@ -48,6 +50,8 @@ export async function submitBooking(
     phone: input.phone,
     date: input.date,
     time: input.time,
+    gender: input.gender,
+    dateOfBirth: input.dateOfBirth,
   });
 }
 

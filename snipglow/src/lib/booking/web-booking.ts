@@ -16,6 +16,7 @@ import { getCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel } from '@/lib/whatsapp/notify-owner';
 import { createNotification } from '@/lib/notifications';
+import { isValidDateOfBirth } from '@/lib/utils';
 
 export interface SalonContext {
   tenantId: string;
@@ -265,6 +266,9 @@ export interface CreateWebBookingInput {
   phone: string;
   date: string;
   time: string; // "HH:MM:00"
+  /** Optional profile info captured at booking (for birthday wishes etc.). */
+  gender?: string;
+  dateOfBirth?: string; // "YYYY-MM-DD"
 }
 
 export interface CreateWebBookingResult {
@@ -290,13 +294,20 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
   const phoneE164 = toIndiaE164(input.phone);
   if (!phoneE164) return { ok: false, error: 'Please enter a valid 10-digit mobile number.' };
 
+  // Optional profile info (birthday wishes). Invalid values are ignored rather
+  // than blocking the booking — the form already constrains them client-side.
+  const gender = ['male', 'female', 'other'].includes((input.gender || '').toLowerCase())
+    ? (input.gender as string).toLowerCase()
+    : null;
+  const dob = input.dateOfBirth && isValidDateOfBirth(input.dateOfBirth) ? input.dateOfBirth : null;
+
   const admin = createAdminClient();
   const { tenantId, branchId, salonName } = salon;
 
   const [servicesRes, apptsRes, customerRes] = await Promise.all([
     admin.from('services').select('id, name').in('id', serviceIds).eq('tenant_id', tenantId).eq('is_active', true),
     (admin.from('appointments').select('start_time, end_time, customer_id').eq('tenant_id', tenantId).eq('appointment_date', date).in('status', ['booked', 'confirmed']) as any),
-    (admin.from('customers').select('id').eq('phone', phoneE164).eq('tenant_id', tenantId).maybeSingle() as any),
+    (admin.from('customers').select('id, gender, date_of_birth').eq('phone', phoneE164).eq('tenant_id', tenantId).maybeSingle() as any),
   ]);
 
   const services = (servicesRes.data ?? []) as Array<{ id: string; name: string }>;
@@ -324,14 +335,23 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
   if (overlap >= maxPerSlot) return { ok: false, error: 'That slot just filled up. Please choose another time.' };
 
   // ── Resolve or create the customer ──
-  let customerId: string | null = customerRes.data?.id ?? null;
+  const existingCustomer = customerRes.data as { id: string; gender: string | null; date_of_birth: string | null } | null;
+  let customerId: string | null = existingCustomer?.id ?? null;
   if (!customerId) {
     const { data: newCust } = await (admin
       .from('customers')
-      .insert({ tenant_id: tenantId, branch_id: branchId, name: customerName, phone: phoneE164 } as any)
+      .insert({ tenant_id: tenantId, branch_id: branchId, name: customerName, phone: phoneE164, gender, date_of_birth: dob } as any)
       .select('id')
       .single() as any);
     customerId = newCust?.id ?? null;
+  } else {
+    // Backfill missing profile info only — never overwrite curated values.
+    const patch: Record<string, unknown> = {};
+    if (gender && !existingCustomer!.gender) patch.gender = gender;
+    if (dob && !existingCustomer!.date_of_birth) patch.date_of_birth = dob;
+    if (Object.keys(patch).length > 0) {
+      await (admin.from('customers').update(patch as any).eq('id', customerId).eq('tenant_id', tenantId) as any);
+    }
   }
   if (!customerId) return { ok: false, error: 'Could not create your booking. Please try again.' };
 
