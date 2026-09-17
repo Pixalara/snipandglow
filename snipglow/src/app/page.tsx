@@ -119,20 +119,16 @@ function RollingText({ items }: { items: typeof ROLLING_ITEMS }) {
 // Tech Provider badges (hero chip, trust strip, footer).
 function MetaMark({ className = 'h-5 w-8' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 48 28" className={className} fill="none" aria-hidden="true">
+    <svg viewBox="0 0 640 512" className={className} aria-hidden="true">
       <defs>
-        <linearGradient id="sng-meta-grad" x1="0" y1="0" x2="48" y2="28" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0064E1" />
-          <stop offset="0.5" stopColor="#0082FB" />
+        <linearGradient id="sng-meta-grad" x1="0" y1="0" x2="640" y2="512" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0082FB" />
           <stop offset="1" stopColor="#0064E1" />
         </linearGradient>
       </defs>
       <path
-        d="M24 14C24 8 30 6 34 10C38 14 38 14 34 18C30 22 24 20 24 14C24 8 18 6 14 10C10 14 10 14 14 18C18 22 24 20 24 14Z"
-        stroke="url(#sng-meta-grad)"
-        strokeWidth="3.2"
-        strokeLinejoin="round"
-        strokeLinecap="round"
+        fill="url(#sng-meta-grad)"
+        d="M640 317.9c0 91.3-39.4 148.5-110.3 148.5c-62.6 0-95.8-34.6-156.9-136.6l-31.4-52.6c-8.3-12.5-14.5-24.2-21.2-35c-20.1 33.8-47.1 83-47.1 83c-67 116.6-104.6 141.2-156.9 141.2C43.42 466.4 0 409.1 0 320.5c0-143 79.78-278.1 183.9-278.1c50.2 0 93.8 24.68 144.8 89.5c37.1-50.1 78.1-89.5 130.6-89.5c99.1 0 180.7 125.7 180.7 275.5M287.4 192.2c-42.9-62.1-70.9-80.5-104.4-80.5c-61.9 0-113.78 106.1-113.78 210c0 48.5 18.48 75.7 49.58 75.7c30.2 0 49-19 103.2-103.8c0 0 24.7-39.1 65.4-101.4m243.8 205.2c32.2 0 46.9-27.5 46.9-74.9c0-124.2-54.3-225.42-123.2-225.42c-33.2 0-61.1 25.92-94.9 78.02c9.4 13.8 19.1 29 29.3 45.4l37.5 62.4c58.7 94.1 73.5 114.5 104.4 114.5"
       />
     </svg>
   );
@@ -300,11 +296,11 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
+        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 flex flex-col items-center text-center w-full">
           {/* Left */}
-          <div className="flex flex-col gap-7 reveal-left min-w-0">
+          <div className="flex flex-col items-center gap-7 reveal min-w-0 w-full">
             {/* Badges */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-medium">
                 <MetaMark className="h-3.5 w-6" />
                 <span className="font-bold text-[#0064E1]">Meta</span>
@@ -331,12 +327,12 @@ export default function HomePage() {
             </p>
 
             {/* Rolling value line */}
-            <div className="text-lg sm:text-xl min-h-[32px]">
+            <div className="flex justify-center text-lg sm:text-xl min-h-[32px]">
               <RollingText items={ROLLING_ITEMS} />
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3">
+            <div className="flex flex-col sm:flex-row gap-3 justify-center">
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-colors"
@@ -352,329 +348,10 @@ export default function HomePage() {
             </div>
 
             {/* Risk reversal */}
-            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm text-slate-500">
+            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm text-slate-500">
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> 15-day free trial</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> No credit card</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> Setup in 10 minutes</span>
-            </div>
-          </div>
-
-          {/* Right - WhatsApp Phone Mockup + no-show calculator */}
-          <div className="relative z-20 flex flex-col items-center gap-10 reveal-right mt-8 lg:mt-0">
-            <div className="relative">
-              {/* Layered ambient glow */}
-              <div className="absolute inset-0 rounded-[52px] blur-3xl scale-110" style={{ background: 'radial-gradient(ellipse, rgba(37,211,102,0.25) 0%, rgba(18,140,126,0.15) 40%, transparent 70%)' }} />
-              <div className="absolute -top-10 -right-10 w-48 h-48 rounded-full blur-3xl" style={{ background: 'rgba(236,72,153,0.15)' }} />
-              <div className="absolute -bottom-10 -left-10 w-48 h-48 rounded-full blur-3xl" style={{ background: 'rgba(139,92,246,0.15)' }} />
-
-              {/* iPhone 15 Pro shell */}
-              <div className="relative w-[272px] h-[572px] sm:w-[282px] sm:h-[592px] lg:w-[292px] lg:h-[612px] overflow-hidden"
-                style={{
-                  borderRadius: '50px',
-                  background: 'linear-gradient(160deg, #2a2a2a 0%, #1a1a1a 30%, #111 60%, #0d0d0d 100%)',
-                  border: '1px solid rgba(255,255,255,0.18)',
-                  boxShadow: '0 0 0 1px rgba(0,0,0,0.8), 0 50px 100px -20px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.1)',
-                }}>
-
-                {/* Titanium frame highlight */}
-                <div className="absolute inset-0 pointer-events-none" style={{ borderRadius: '50px', background: 'linear-gradient(135deg, rgba(255,255,255,0.08) 0%, transparent 50%)', zIndex: 30 }} />
-
-                {/* Side buttons */}
-                <div className="absolute -right-[2px] top-28 h-12 w-[3px] rounded-l-full" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
-                <div className="absolute -left-[2px] top-24 h-8 w-[3px] rounded-r-full" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
-                <div className="absolute -left-[2px] top-36 h-8 w-[3px] rounded-r-full" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
-                <div className="absolute -left-[2px] top-48 h-12 w-[3px] rounded-r-full" style={{ background: 'linear-gradient(180deg, #3a3a3a, #2a2a2a)' }} />
-
-                {/* Dynamic Island */}
-                <div className="absolute top-3.5 left-1/2 -translate-x-1/2 z-20 flex items-center justify-center gap-2.5"
-                  style={{ width: '100px', height: '28px', background: '#000', borderRadius: '20px', boxShadow: '0 0 0 1px rgba(255,255,255,0.06)' }}>
-                  <div className="w-2 h-2 rounded-full" style={{ background: '#1a1a1a', border: '1px solid #333' }} />
-                  <div className="w-3.5 h-3.5 rounded-full" style={{ background: 'radial-gradient(circle at 35% 35%, #2a2a2a, #111)', border: '1px solid #333' }} />
-                </div>
-
-                {/* Screen */}
-                <div className="absolute inset-0 flex flex-col" style={{ background: '#e5ddd5', paddingTop: '32px' }}>
-
-                  {/* WhatsApp Header - authentic */}
-                  <div className="shrink-0" style={{ background: 'linear-gradient(135deg, #075e54 0%, #0a7a6e 100%)', padding: '8px 12px 8px 12px' }}>
-                    <div className="flex items-center gap-2">
-                      <div className="relative shrink-0">
-                        <div className="relative h-8 w-8 rounded-full overflow-hidden" style={{ boxShadow: '0 2px 8px rgba(0,0,0,0.3)', border: '1.5px solid rgba(255,255,255,0.3)' }}>
-                          <Image src="/jksalonandspalogo.png" alt="JK Salon & Spa" fill sizes="32px" className="object-cover" priority />
-                        </div>
-                        <div className="absolute -bottom-0.5 -right-0.5 w-2.5 h-2.5 rounded-full bg-emerald-400" style={{ border: '2px solid #075e54' }} />
-                      </div>
-                      <div className="flex-1 min-w-0">
-                        <p className="text-[11.5px] font-semibold text-white leading-tight">JK Salon &amp; Spa</p>
-                        <p className="text-[8.5px] text-emerald-200 leading-tight">by Pixalara &middot; online</p>
-                      </div>
-                      <div className="flex items-center gap-2.5">
-                        <svg className="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 24 24"><path d="M6.62 10.79c1.44 2.83 3.76 5.14 6.59 6.59l2.2-2.2c.27-.27.67-.36 1.02-.24 1.12.37 2.33.57 3.57.57.55 0 1 .45 1 1V20c0 .55-.45 1-1 1-9.39 0-17-7.61-17-17 0-.55.45-1 1-1h3.5c.55 0 1 .45 1 1 0 1.25.2 2.45.57 3.57.11.35.03.74-.25 1.02l-2.2 2.2z"/></svg>
-                        <svg className="w-4 h-4 text-white/70" fill="currentColor" viewBox="0 0 24 24"><path d="M12 8c1.1 0 2-.9 2-2s-.9-2-2-2-2 .9-2 2 .9 2 2 2zm0 2c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2zm0 6c-1.1 0-2 .9-2 2s.9 2 2 2 2-.9 2-2-.9-2-2-2z"/></svg>
-                      </div>
-                    </div>
-                  </div>
-
-                  {/* Date chip */}
-                  <div className="flex justify-center py-1.5 shrink-0">
-                    <span className="text-[8.5px] text-slate-500 px-3 py-0.5 rounded-full" style={{ background: 'rgba(255,255,255,0.65)', backdropFilter: 'blur(4px)' }}>TODAY</span>
-                  </div>
-
-                  {/* Scroll animation - faster */}
-                  <style dangerouslySetInnerHTML={{ __html: `
-                    @keyframes chatScroll {
-                      0%,4%   { transform: translateY(0); }
-                      9%,13%  { transform: translateY(-160px); }
-                      18%,22% { transform: translateY(-320px); }
-                      27%,31% { transform: translateY(-480px); }
-                      36%,40% { transform: translateY(-640px); }
-                      45%,49% { transform: translateY(-800px); }
-                      54%,58% { transform: translateY(-960px); }
-                      63%,67% { transform: translateY(-1120px); }
-                      72%,76% { transform: translateY(-1280px); }
-                      81%,85% { transform: translateY(-1440px); }
-                      90%,94% { transform: translateY(-1600px); }
-                      99%,100%{ transform: translateY(0); }
-                    }
-                  `}} />
-
-                  <div className="flex-1 overflow-hidden">
-                    <div className="px-2 space-y-2" style={{ animation: 'chatScroll 40s cubic-bezier(0.4,0,0.2,1) infinite' }}>
-
-                      {/* 1. Customer sends friendly message */}
-                      <div className="flex justify-end">
-                        <div style={{ background: 'linear-gradient(135deg, #dcf8c6, #c8f0b0)', borderRadius: '14px 14px 2px 14px', padding: '6px 10px', maxWidth: '168px', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                          <p className="text-[10.5px] text-slate-800 leading-snug">Hi! I&apos;d like to book an appointment at JK Salon &amp; Spa ✨</p>
-                          <p className="text-[8px] text-slate-500 text-right mt-0.5">10:01 AM ✓✓</p>
-                        </div>
-                      </div>
-
-                      {/* 2. Welcome menu */}
-                      <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(0,0,0,0.05)' }}>
-                          <div className="px-3 py-2">
-                            <p className="text-[11px] font-bold text-slate-800">👋 Welcome to <span style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>!</p>
-                            <p className="text-[10px] text-slate-600 mt-0.5 leading-snug">Hi Priya, how can we help you today?</p>
-                            <p className="text-[8.5px] text-slate-400 italic mt-0.5">Powered by SnipandGlow</p>
-                          </div>
-                          <div style={{ borderTop: '1px solid #f0f0f0' }}>
-                            {[['📅 Book Appointment','#25d366'],['✂️ View Services','#128c7e'],['💬 Talk to Salon','#075e54']].map(([label,color]) => (
-                              <div key={label} className="px-3 py-1.5 text-center" style={{ borderBottom: '1px solid #f5f5f5' }}>
-                                <p className="text-[10px] font-semibold" style={{ color }}>{label}</p>
-                              </div>
-                            ))}
-                          </div>
-                          <p className="text-[8px] text-slate-400 text-right px-3 pb-1">10:01 AM</p>
-                        </div>
-                      </div>
-
-                      {/* 3. Customer taps Book */}
-                      <div className="flex justify-end">
-                        <div style={{ background: 'linear-gradient(135deg, #dcf8c6, #c8f0b0)', borderRadius: '14px 14px 2px 14px', padding: '6px 10px', maxWidth: '140px', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                          <p className="text-[10.5px] text-slate-800">📅 Book Appointment</p>
-                          <p className="text-[8px] text-slate-500 text-right mt-0.5">10:02 AM ✓✓</p>
-                        </div>
-                      </div>
-
-                      {/* 4. WhatsApp Flow form */}
-                      <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(37,211,102,0.15)' }}>
-                          <div className="px-3 py-2" style={{ background: 'linear-gradient(135deg, #075e54, #0a7a6e)' }}>
-                            <p className="text-[10.5px] font-bold text-white">📋 Book Your Appointment</p>
-                            <p className="text-[8.5px] text-emerald-200">JK Salon &amp; Spa</p>
-                          </div>
-                          <div className="px-2.5 py-2 space-y-1.5">
-                            {[['Services','✅ Haircut + Facial'],['Date','📅 Thu, 22 May 2026'],['Time','⏰ 2:30 PM']].map(([label,val]) => (
-                              <div key={label} className="rounded-lg px-2 py-1.5" style={{ background: '#f8f8f8', border: '1px solid #ebebeb' }}>
-                                <p className="text-[7.5px] text-slate-400 uppercase tracking-wider">{label}</p>
-                                <p className="text-[10px] text-slate-800 font-semibold">{val}</p>
-                              </div>
-                            ))}
-                            <div className="rounded-lg py-1.5 text-center" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)', boxShadow: '0 2px 6px rgba(37,211,102,0.3)' }}>
-                              <p className="text-[10.5px] text-white font-bold">✓ Confirm Booking</p>
-                            </div>
-                          </div>
-                          <p className="text-[8px] text-slate-400 text-right px-3 pb-1">10:02 AM</p>
-                        </div>
-                      </div>
-
-                      {/* 5. Booking Confirmed */}
-                      <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(37,211,102,0.2)' }}>
-                          <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #e8fdf0, #d0f7e0)' }}>
-                            <p className="text-[11px] font-bold text-emerald-800">✅ Booking Confirmed!</p>
-                          </div>
-                          <div className="px-3 py-2 space-y-0.5">
-                            {[['👤','Priya Sharma'],['✂️','Haircut, Facial'],['📅','22 May 2026, 2:30 PM'],['📍','JK Salon & Spa']].map(([icon,val]) => (
-                              <div key={val} className="flex items-center gap-1.5">
-                                <span className="text-[9px]">{icon}</span>
-                                <p className="text-[10px] text-slate-700">{val}</p>
-                              </div>
-                            ))}
-                            <div className="rounded-md px-2 py-1 mt-1" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                              <p className="text-[9px] text-emerald-700 font-medium">📲 Add to Google Calendar →</p>
-                            </div>
-                          </div>
-                          <div style={{ borderTop: '1px solid #f0f0f0', display: 'flex' }}>
-                            <div className="flex-1 py-1.5 text-center" style={{ borderRight: '1px solid #f0f0f0' }}>
-                              <p className="text-[9.5px] font-semibold text-amber-600">📅 Reschedule</p>
-                            </div>
-                            <div className="flex-1 py-1.5 text-center">
-                              <p className="text-[9.5px] font-semibold text-red-500">✕ Cancel</p>
-                            </div>
-                          </div>
-                          <p className="text-[8px] text-slate-400 text-right px-3 pb-1">10:03 AM</p>
-                        </div>
-                      </div>
-
-                      {/* 6. Bill Receipt */}
-                      <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(139,92,246,0.15)' }}>
-                          <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
-                            <p className="text-[10.5px] font-bold text-violet-800">🧾 Bill Receipt</p>
-                            <p className="text-[8.5px] text-violet-500">Invoice INV-SEE-0015</p>
-                          </div>
-                          <div className="px-2.5 py-2">
-                            <p className="text-[10px] text-slate-600 mb-1.5">Hi Priya, thank you for visiting! 😊</p>
-                            <div className="rounded-lg p-1.5 space-y-0.5" style={{ background: '#fafafa', border: '1px solid #f0f0f0' }}>
-                              <div className="flex justify-between text-[9.5px]"><span className="text-slate-500">Haircut</span><span className="font-semibold text-slate-800">Rs.300</span></div>
-                              <div className="flex justify-between text-[9.5px]"><span className="text-slate-500">Facial</span><span className="font-semibold text-slate-800">Rs.800</span></div>
-                              <div className="flex justify-between text-[9.5px] text-amber-600"><span>👑 Membership (20%)</span><span>-Rs.220</span></div>
-                              <div className="flex justify-between text-[10px] font-bold text-emerald-700 pt-0.5" style={{ borderTop: '1px solid #e8e8e8' }}><span>Total</span><span>Rs.880</span></div>
-                            </div>
-                            <div className="rounded-md px-2 py-1 mt-1.5" style={{ background: '#f0fdf4', border: '1px solid #bbf7d0' }}>
-                              <p className="text-[9px] text-emerald-700 font-semibold">💡 Next time, skip the wait!</p>
-                              <p className="text-[8.5px] text-emerald-600">Book in advance via WhatsApp →</p>
-                            </div>
-                          </div>
-                          <p className="text-[8px] text-slate-400 text-right px-3 pb-1">5:30 PM</p>
-                        </div>
-                      </div>
-
-                      {/* 7. Feedback request */}
-                      <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(251,191,36,0.25)' }}>
-                          <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #fffbeb, #fef3c7)' }}>
-                            <p className="text-[10.5px] font-bold text-amber-800">⭐ How was your experience?</p>
-                          </div>
-                          <div className="px-3 py-2">
-                            <p className="text-[10px] text-slate-600 mb-1.5">Your feedback helps us serve you better:</p>
-                            <div style={{ borderTop: '1px solid #f0f0f0' }}>
-                              {[['⭐⭐⭐⭐⭐ Loved it!','#f59e0b'],['⭐⭐⭐ It was okay','#6b7280'],['😞 Not satisfied','#ef4444']].map(([label,color]) => (
-                                <div key={label} className="px-3 py-1.5 text-center" style={{ borderBottom: '1px solid #f8f8f8' }}>
-                                  <p className="text-[9.5px] font-semibold" style={{ color }}>{label}</p>
-                                </div>
-                              ))}
-                            </div>
-                          </div>
-                          <p className="text-[8px] text-slate-400 text-right px-3 pb-1">5:31 PM</p>
-                        </div>
-                      </div>
-
-                      {/* 8. Customer gives 5 stars */}
-                      <div className="flex justify-end">
-                        <div style={{ background: 'linear-gradient(135deg, #dcf8c6, #c8f0b0)', borderRadius: '14px 14px 2px 14px', padding: '6px 10px', maxWidth: '140px', boxShadow: '0 1px 3px rgba(0,0,0,0.12)' }}>
-                          <p className="text-[12px] text-slate-800">⭐⭐⭐⭐⭐ Loved it!</p>
-                          <p className="text-[8px] text-slate-500 text-right mt-0.5">5:32 PM ✓✓</p>
-                        </div>
-                      </div>
-
-                      {/* 9. Thank you */}
-                      <div className="flex justify-start">
-                        <div className="px-3 py-2" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.08)', border: '1px solid rgba(0,0,0,0.05)' }}>
-                          <p className="text-[10px] text-slate-700 leading-snug">🎉 Thank you for the 5-star rating! We&apos;re thrilled you loved your experience at <span className="font-bold" style={{ color: '#075e54' }}>JK Salon &amp; Spa</span>. See you again! 💇</p>
-                          <p className="text-[8px] text-slate-400 text-right mt-1">5:32 PM</p>
-                        </div>
-                      </div>
-
-                      {/* 10. 30-day reminder */}
-                      <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 1px 4px rgba(0,0,0,0.1)', border: '1px solid rgba(139,92,246,0.2)' }}>
-                          <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #f5f3ff, #ede9fe)' }}>
-                            <p className="text-[10.5px] font-bold text-violet-800">💜 Time for a Touch-Up!</p>
-                            <p className="text-[8.5px] text-violet-500">30 days since last visit</p>
-                          </div>
-                          <div className="px-3 py-2">
-                            <p className="text-[10px] text-slate-600 leading-snug mb-1.5">Hi Priya! Your hair is due for a refresh ✨ Book your next appointment now!</p>
-                            <div className="rounded-lg py-1.5 text-center" style={{ background: 'linear-gradient(135deg, #7c3aed, #6d28d9)', boxShadow: '0 2px 6px rgba(124,58,237,0.3)' }}>
-                              <p className="text-[10px] text-white font-bold">📅 Book Now</p>
-                            </div>
-                          </div>
-                          <p className="text-[8px] text-slate-400 text-right px-3 pb-1">Jun 21, 10:00 AM</p>
-                        </div>
-                      </div>
-
-                      {/* 11. 60-day win-back */}
-                      <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(217,70,239,0.2)' }}>
-                          <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #faf5ff, #f5d0fe)' }}>
-                            <p className="text-[10.5px] font-bold text-fuchsia-800">💖 We Miss You, Priya!</p>
-                            <p className="text-[8.5px] text-fuchsia-500">60 days since last visit</p>
-                          </div>
-                          <div className="px-3 py-2">
-                            <p className="text-[10px] text-slate-600 leading-snug mb-1.5">It&apos;s been 2 months - come back for some self-care! We have a special offer just for you 🎁</p>
-                            <div className="rounded-lg p-2 text-center mb-1.5" style={{ background: 'linear-gradient(135deg, #faf5ff, #f5d0fe)', border: '1px solid rgba(217,70,239,0.25)' }}>
-                              <p className="text-[14px] font-black text-fuchsia-600">15% OFF</p>
-                              <p className="text-[8.5px] text-slate-500">Code: <span className="font-bold text-slate-700">MISSYOU15</span></p>
-                            </div>
-                            <div style={{ borderTop: '1px solid #f0f0f0', display: 'flex', gap: '0' }}>
-                              <div className="flex-1 py-1.5 text-center" style={{ borderRight: '1px solid #f0f0f0' }}>
-                                <p className="text-[9.5px] font-bold text-fuchsia-600">🎁 Claim Offer</p>
-                              </div>
-                              <div className="flex-1 py-1.5 text-center">
-                                <p className="text-[9.5px] font-semibold text-blue-500">✂️ Services</p>
-                              </div>
-                            </div>
-                          </div>
-                          <p className="text-[8px] text-slate-400 text-right px-3 pb-1">Jul 21, 11:00 AM</p>
-                        </div>
-                      </div>
-
-                    </div>
-                  </div>
-
-                  {/* Input bar - authentic iPhone WhatsApp */}
-                  <div className="shrink-0 px-2 py-1.5 flex items-center gap-1.5" style={{ background: '#f0f0f0' }}>
-                    <div className="flex items-center justify-center w-7 h-7 rounded-full" style={{ background: '#e0e0e0' }}>
-                      <svg className="w-3.5 h-3.5 text-slate-500" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-2 14.5v-9l6 4.5-6 4.5z"/></svg>
-                    </div>
-                    <div className="flex-1 bg-white rounded-full h-7 flex items-center px-3" style={{ border: '1px solid #e0e0e0' }}>
-                      <p className="text-[10px] text-slate-400">Type a message</p>
-                    </div>
-                    <div className="flex items-center justify-center w-7 h-7 rounded-full" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)', boxShadow: '0 2px 6px rgba(37,211,102,0.4)' }}>
-                      <ArrowRight className="h-3 w-3 text-white" />
-                    </div>
-                  </div>
-                </div>
-              </div>
-
-
-
-              {/* Floating badge - bottom left (hidden on mobile) */}
-              <div className="hidden lg:block absolute -bottom-6 -left-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-fuchsia-100 flex items-center justify-center">
-                    <Bell className="h-4 w-4 text-fuchsia-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-900">No-shows down 70%</p>
-                    <p className="text-[10px] text-slate-500">Auto reminders working</p>
-                  </div>
-                </div>
-              </div>
-
-              {/* Floating badge - top right (hidden on mobile) */}
-              <div className="hidden lg:block absolute -top-6 -right-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
-                <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-violet-100 flex items-center justify-center">
-                    <TrendingUp className="h-4 w-4 text-violet-600" />
-                  </div>
-                  <div>
-                    <p className="text-xs font-semibold text-slate-900">+28% retention</p>
-                    <p className="text-[10px] text-slate-500">This month</p>
-                  </div>
-                </div>
-              </div>
             </div>
           </div>
         </div>
