@@ -13,12 +13,15 @@ interface Props {
   salonName: string;
   tenantCode: string;
   bookingSlug: string;
+  /** Digits-only WhatsApp number (E.164 without +): the salon's own number when
+   *  connected on a paid plan, else the shared Snip and Glow number. */
+  whatsappNumber: string;
 }
 
-export function BookingLandingClient({ salonName, tenantCode, bookingSlug }: Props) {
+export function BookingLandingClient({ salonName, tenantCode, bookingSlug, whatsappNumber }: Props) {
   // WhatsApp link with friendly message that includes salon name
   const friendlyMessage = `Hi! 👋 I'd like to book an appointment at ${salonName} ✨`;
-  const whatsappUrl = `https://wa.me/919448895147?text=${encodeURIComponent(friendlyMessage)}`;
+  const whatsappUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(friendlyMessage)}`;
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center p-4">

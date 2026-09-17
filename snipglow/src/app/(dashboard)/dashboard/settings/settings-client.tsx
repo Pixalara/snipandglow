@@ -608,16 +608,22 @@ interface QrCodeGeneratorProps {
 interface WhatsAppBookingLinkProps {
   tenantCode: string;
   salonName: string;
+  /**
+   * Digits-only WhatsApp number the booking link points to (E.164 without +).
+   * A connected Pro/Growth tenant gets THEIR own number here; everyone else
+   * gets the shared Snip and Glow number. Resolved server-side in page.tsx.
+   */
+  whatsappNumber: string;
 }
 
-export function WhatsAppBookingLinkCard({ tenantCode, salonName }: WhatsAppBookingLinkProps) {
+export function WhatsAppBookingLinkCard({ tenantCode, salonName, whatsappNumber }: WhatsAppBookingLinkProps) {
   const [copied, setCopied] = useState(false);
 
   const slug = tenantCode.replace('-', '').toLowerCase() + '_' + salonName.toLowerCase().replace(/\s+/g, '_');
   const shortCode = tenantCode.replace('-', '').toUpperCase(); // e.g., SNG001
   // Message includes salon name + code for reliable routing
   const friendlyMessage = `Hi! I'd like to book an appointment at ${salonName.trim()} [${shortCode}]`;
-  const bookingUrl = `https://wa.me/919448895147?text=${encodeURIComponent(friendlyMessage)}`;
+  const bookingUrl = `https://wa.me/${whatsappNumber}?text=${encodeURIComponent(friendlyMessage)}`;
   const landingUrl = `https://www.snipandglow.com/book/${shortCode.toLowerCase()}`;
 
   function handleCopy() {

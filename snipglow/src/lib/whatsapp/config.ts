@@ -13,6 +13,11 @@ export interface WhatsAppCredentials {
 export const PLATFORM_PHONE_NUMBER_ID = '1165461446644735';
 export const PLATFORM_WABA_ID = '1245944267357075';
 
+// The shared number's DISPLAY digits (E.164 without +), used to build wa.me
+// booking links for tenants that are NOT on their own dedicated number. A Pro/
+// Growth tenant that has connected their own number overrides this with theirs.
+export const PLATFORM_WA_NUMBER = '919448895147';
+
 /**
  * Get platform-level WhatsApp credentials (Snip and Glow's shared number).
  * Used for shared mode — salons that don't have their own WhatsApp API.

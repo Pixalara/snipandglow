@@ -15,8 +15,10 @@ import {
   Receipt,
 } from 'lucide-react';
 import type { SubscriptionStatus } from '@/types';
-import { getSubscriptionState, planLabel, effectiveMonthlyPrice, amountPayable, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
+import { getSubscriptionState, planLabel, effectiveMonthlyPrice, amountPayable, getBillingCycle, billingCycleLabel, planIncludesDedicatedWhatsApp } from '@/lib/subscription';
 import { readLoyaltyConfig } from '@/lib/loyalty-points';
+import { getSettings } from '@/lib/whatsapp/credential-store';
+import { PLATFORM_WA_NUMBER } from '@/lib/whatsapp/config';
 import { RenewButton } from './renew-button';
 
 export default async function SettingsPage() {
@@ -109,6 +111,20 @@ export default async function SettingsPage() {
   const planMonthly = effectiveMonthlyPrice(planTier, billingCycle, settings);
   // Exactly what Razorpay will charge on renewal (1 month or 12 months).
   const renewalAmount = amountPayable(planTier, billingCycle, settings);
+
+  // WhatsApp booking-link number. A connected Pro/Growth tenant points customers
+  // at THEIR own number; everyone else uses the shared Snip and Glow number.
+  // Read at request time so the link flips over the moment a dedicated number is
+  // connected (or reverts if the plan is downgraded).
+  const waSettings = await getSettings(tenantId);
+  const dedicatedDigits = (waSettings?.display_phone_number ?? '').replace(/\D/g, '');
+  const bookingWhatsAppNumber =
+    planIncludesDedicatedWhatsApp(planTier) &&
+    waSettings?.mode === 'dedicated' &&
+    waSettings?.onboarding_status === 'connected' &&
+    dedicatedDigits
+      ? dedicatedDigits
+      : PLATFORM_WA_NUMBER;
 
   // Salon profile data
   const salonProfile = {
@@ -438,6 +454,7 @@ export default async function SettingsPage() {
       <WhatsAppBookingLinkCard
         tenantCode={(tenant as any).tenant_code ?? 'SNG-000'}
         salonName={tenant.name ?? ''}
+        whatsappNumber={bookingWhatsAppNumber}
       />
 
       {/* Google Review Link */}
