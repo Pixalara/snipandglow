@@ -11,7 +11,8 @@ import { subscribeWaba } from '@/lib/whatsapp/webhook-subscription';
 import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
 import { getPlatformCredentials } from '@/lib/whatsapp/config';
 import { getDedicatedCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
-import { cloneTemplates, type CloneResult } from '@/lib/whatsapp/template-clone';
+import { cloneTemplates, type CloneResult, TENANT_TEMPLATE_NAMES } from '@/lib/whatsapp/template-clone';
+import { listTemplates } from '@/lib/whatsapp/template-management';
 
 // =============================================================================
 // Admin — edit a tenant's GST details (even when locked).
@@ -279,6 +280,54 @@ export async function adminCloneWhatsAppTemplates(
     error: result.ok ? undefined : (result.error ?? `${result.failed} template(s) failed to create.`),
     result,
   };
+}
+
+// =============================================================================
+// Admin — read the live approval status of the templates on a tenant's WABA.
+//
+// Lets the admin watch cloned templates move PENDING -> APPROVED (or catch a
+// REJECTED one) without leaving the dashboard. Read-only; targets the tenant's
+// own dedicated account.
+// =============================================================================
+
+export interface TemplateStatusRow {
+  name: string;
+  language: string;
+  category: string;
+  status: string;
+  /** True when this is one of the standard per-tenant templates the app sends. */
+  core: boolean;
+}
+
+export async function adminListWhatsAppTemplates(
+  tenantId: string
+): Promise<{ success: boolean; error?: string; templates?: TemplateStatusRow[] }> {
+  await requireAdmin();
+  if (!tenantId) return { success: false, error: 'Tenant ID required.' };
+
+  const target = await getDedicatedCredentialsForTenant(tenantId);
+  if (!target) {
+    return {
+      success: false,
+      error: 'This tenant is not connected on a dedicated WhatsApp number.',
+    };
+  }
+
+  const coreSet = new Set<string>(TENANT_TEMPLATE_NAMES);
+  const statusOrder: Record<string, number> = { REJECTED: 0, PENDING: 1, PAUSED: 2, DISABLED: 3, APPROVED: 4 };
+
+  const templates: TemplateStatusRow[] = (await listTemplates(target))
+    .map((t) => ({ name: t.name, language: t.language, category: t.category, status: t.status, core: coreSet.has(t.name) }))
+    // Things needing attention first (rejected/pending), then approved; core
+    // templates before extras; then alphabetical.
+    .sort((a, b) => {
+      const s = (statusOrder[a.status] ?? 5) - (statusOrder[b.status] ?? 5);
+      if (s !== 0) return s;
+      if (a.core !== b.core) return a.core ? -1 : 1;
+      return a.name.localeCompare(b.name);
+    });
+
+  return { success: true, templates };
 }
 
 // =============================================================================
