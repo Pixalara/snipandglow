@@ -101,6 +101,17 @@ export function toIndiaE164(raw: string): string | null {
   return null;
 }
 
+/**
+ * True when a Postgres write error is a genuine slot conflict — a unique (23505)
+ * or exclusion (23P01) violation, e.g. the no_customer_duplicate_booking GiST
+ * constraint firing on a race. Any other code (check/FK/not-null/…) is a real
+ * error we should surface plainly rather than mislabel as "slot taken".
+ */
+function isSlotConflict(error: unknown): boolean {
+  const code = (error as { code?: string } | null)?.code;
+  return code === '23P01' || code === '23505';
+}
+
 // ── Slug → salon resolution ───────────────────────────────────────────────
 
 /**
@@ -347,7 +358,10 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
 
   if (apptError) {
     console.error('[WebBooking] appointment insert error:', apptError);
-    return { ok: false, error: 'That slot is no longer available. Please choose another time.' };
+    if (isSlotConflict(apptError)) {
+      return { ok: false, error: 'That slot was just taken. Please choose another time.' };
+    }
+    return { ok: false, error: "Sorry, we couldn't complete your booking. Please try again in a moment." };
   }
 
   const serviceNames = services.map((s) => s.name).join(', ');
@@ -545,7 +559,10 @@ export async function createWebReschedule(input: CreateWebRescheduleInput): Prom
 
   if (updErr) {
     console.error('[WebReschedule] update error:', updErr);
-    return { ok: false, error: 'That slot is no longer available. Please choose another time.' };
+    if (isSlotConflict(updErr)) {
+      return { ok: false, error: 'That slot was just taken. Please choose another time.' };
+    }
+    return { ok: false, error: "Sorry, we couldn't reschedule your appointment. Please try again in a moment." };
   }
 
   const serviceNames = svcList.map((s) => s.name).join(', ') || 'Appointment';
