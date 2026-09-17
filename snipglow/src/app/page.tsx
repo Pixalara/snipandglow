@@ -115,6 +115,60 @@ function RollingText({ items }: { items: typeof ROLLING_ITEMS }) {
   );
 }
 
+// Meta infinity mark in the official brand blue gradient. Used in the Meta
+// Tech Provider badges (hero chip, trust strip, footer).
+function MetaMark({ className = 'h-5 w-8' }: { className?: string }) {
+  return (
+    <svg viewBox="0 0 48 28" className={className} fill="none" aria-hidden="true">
+      <defs>
+        <linearGradient id="sng-meta-grad" x1="0" y1="0" x2="48" y2="28" gradientUnits="userSpaceOnUse">
+          <stop stopColor="#0064E1" />
+          <stop offset="0.5" stopColor="#0082FB" />
+          <stop offset="1" stopColor="#0064E1" />
+        </linearGradient>
+      </defs>
+      <path
+        d="M24 14C24 8 30 6 34 10C38 14 38 14 34 18C30 22 24 20 24 14C24 8 18 6 14 10C10 14 10 14 14 18C18 22 24 20 24 14Z"
+        stroke="url(#sng-meta-grad)"
+        strokeWidth="3.2"
+        strokeLinejoin="round"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+// Premium "Official Meta Tech Provider" trust strip shown right below the hero.
+function MetaTechProviderStrip() {
+  return (
+    <section aria-label="Official Meta Tech Provider" className="relative border-y border-slate-100 bg-white py-9 sm:py-12">
+      <div className="mx-auto max-w-5xl px-4 sm:px-6">
+        <div className="flex flex-col items-center gap-5 text-center reveal">
+          <div className="inline-flex items-center gap-2.5 rounded-full border border-blue-100 bg-blue-50/70 px-4 py-2 shadow-sm">
+            <MetaMark className="h-5 w-8" />
+            <span className="text-sm font-extrabold tracking-tight text-[#0064E1]">Meta</span>
+            <span className="h-3.5 w-px bg-blue-200" />
+            <span className="text-xs font-semibold text-slate-600">Official Tech Provider</span>
+          </div>
+          <h2 className="max-w-2xl text-xl sm:text-2xl lg:text-3xl font-bold tracking-tight text-slate-900">
+            Built on the official WhatsApp Business Platform
+          </h2>
+          <p className="max-w-2xl text-sm sm:text-base text-slate-500 leading-relaxed">
+            Snip &amp; Glow is a verified{' '}
+            <span className="font-semibold text-slate-700">Meta Business Tech Provider</span>. Your bookings,
+            reminders and campaigns run on WhatsApp&apos;s official API — secure, compliant and built to scale.
+          </p>
+          <div className="mt-1 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs sm:text-sm font-medium text-slate-500">
+            <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[#0082FB]" /> Verified Business API</span>
+            <span className="inline-flex items-center gap-1.5"><Shield className="h-4 w-4 text-[#0082FB]" /> End-to-end encrypted</span>
+            <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[#0082FB]" /> Green-tick ready</span>
+          </div>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 export default function HomePage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -251,10 +305,17 @@ export default function HomePage() {
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-10 lg:gap-16 items-stretch w-full">
           {/* Left */}
           <div className="flex flex-col gap-8 reveal-left min-w-0 overflow-hidden lg:overflow-visible lg:justify-between">
-            {/* Trust badge */}
-            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
-              <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
-              Your competitors just got smarter. Have you?
+            {/* Trust badges */}
+            <div className="flex flex-wrap items-center gap-2">
+              <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-pink-200 bg-pink-50 text-pink-700 text-xs font-medium">
+                <span className="h-1.5 w-1.5 rounded-full bg-pink-500 animate-pulse" />
+                Your competitors just got smarter. Have you?
+              </div>
+              <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full border border-blue-100 bg-blue-50 text-xs font-medium">
+                <MetaMark className="h-3.5 w-6" />
+                <span className="font-bold text-[#0064E1]">Meta</span>
+                <span className="text-slate-500">Official Tech Provider</span>
+              </div>
             </div>
 
             <div className="space-y-4">
@@ -645,6 +706,9 @@ export default function HomePage() {
           </div>
         </div>
       </section>
+
+      {/* ===== OFFICIAL META TECH PROVIDER ===== */}
+      <MetaTechProviderStrip />
 
       {/* ===== BENEFIT CARDS — full-width infinite marquee ===== */}
       <section className="py-6 sm:py-8 bg-white border-b border-slate-100 overflow-hidden">
@@ -2346,6 +2410,19 @@ export default function HomePage() {
             >
               Start Free Trial
             </Link>
+          </div>
+
+          {/* Meta tech provider credit */}
+          <div className="flex flex-col items-center gap-2 py-6 border-b border-slate-800/60">
+            <div className="inline-flex items-center gap-2.5 rounded-full border border-slate-700/70 bg-slate-800/50 px-4 py-2">
+              <MetaMark className="h-4 w-7" />
+              <span className="text-sm font-bold text-white">Meta</span>
+              <span className="h-3 w-px bg-slate-600" />
+              <span className="text-xs font-medium text-slate-300">Official Tech Provider</span>
+            </div>
+            <p className="text-xs text-slate-500">
+              Powered by the official WhatsApp Business Platform · Meta Verified Business API
+            </p>
           </div>
 
           {/* Middle row: Copyright + Crafted by */}
