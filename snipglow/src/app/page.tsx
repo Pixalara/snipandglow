@@ -82,7 +82,7 @@ const ROLLING_ITEMS = [
   { text: 'Send reminders - zero no-shows.', color: 'from-blue-500 to-indigo-500' },
   { text: 'Generate bills in seconds.', color: 'from-violet-500 to-purple-500' },
   { text: 'Collect feedback after every visit.', color: 'from-amber-500 to-orange-500' },
-  { text: 'Bring back inactive customers on autopilot.', color: 'from-pink-500 to-rose-500' },
+  { text: 'Bring back inactive customers on autopilot.', color: 'from-fuchsia-500 to-violet-500' },
 ];
 
 function RollingText({ items }: { items: typeof ROLLING_ITEMS }) {
@@ -606,20 +606,20 @@ export default function HomePage() {
 
                       {/* 11. 60-day win-back */}
                       <div className="flex justify-start">
-                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(236,72,153,0.2)' }}>
-                          <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #fdf2f8, #fce7f3)' }}>
-                            <p className="text-[10.5px] font-bold text-pink-800">💖 We Miss You, Priya!</p>
-                            <p className="text-[8.5px] text-pink-500">60 days since last visit</p>
+                        <div className="overflow-hidden" style={{ background: '#fff', borderRadius: '2px 14px 14px 14px', maxWidth: '210px', boxShadow: '0 2px 8px rgba(0,0,0,0.12)', border: '1px solid rgba(217,70,239,0.2)' }}>
+                          <div className="px-3 py-1.5" style={{ background: 'linear-gradient(135deg, #faf5ff, #f5d0fe)' }}>
+                            <p className="text-[10.5px] font-bold text-fuchsia-800">💖 We Miss You, Priya!</p>
+                            <p className="text-[8.5px] text-fuchsia-500">60 days since last visit</p>
                           </div>
                           <div className="px-3 py-2">
                             <p className="text-[10px] text-slate-600 leading-snug mb-1.5">It&apos;s been 2 months - come back for some self-care! We have a special offer just for you 🎁</p>
-                            <div className="rounded-lg p-2 text-center mb-1.5" style={{ background: 'linear-gradient(135deg, #fdf2f8, #fce7f3)', border: '1px solid rgba(236,72,153,0.25)' }}>
-                              <p className="text-[14px] font-black text-pink-600">15% OFF</p>
+                            <div className="rounded-lg p-2 text-center mb-1.5" style={{ background: 'linear-gradient(135deg, #faf5ff, #f5d0fe)', border: '1px solid rgba(217,70,239,0.25)' }}>
+                              <p className="text-[14px] font-black text-fuchsia-600">15% OFF</p>
                               <p className="text-[8.5px] text-slate-500">Code: <span className="font-bold text-slate-700">MISSYOU15</span></p>
                             </div>
                             <div style={{ borderTop: '1px solid #f0f0f0', display: 'flex', gap: '0' }}>
                               <div className="flex-1 py-1.5 text-center" style={{ borderRight: '1px solid #f0f0f0' }}>
-                                <p className="text-[9.5px] font-bold text-pink-600">🎁 Claim Offer</p>
+                                <p className="text-[9.5px] font-bold text-fuchsia-600">🎁 Claim Offer</p>
                               </div>
                               <div className="flex-1 py-1.5 text-center">
                                 <p className="text-[9.5px] font-semibold text-blue-500">✂️ Services</p>
@@ -653,8 +653,8 @@ export default function HomePage() {
               {/* Floating badge - bottom left (hidden on mobile) */}
               <div className="hidden lg:block absolute -bottom-6 -left-16 bg-white border border-slate-200 rounded-2xl px-4 py-3 shadow-lg shadow-slate-200/60">
                 <div className="flex items-center gap-2">
-                  <div className="h-8 w-8 rounded-full bg-pink-100 flex items-center justify-center">
-                    <Bell className="h-4 w-4 text-pink-600" />
+                  <div className="h-8 w-8 rounded-full bg-fuchsia-100 flex items-center justify-center">
+                    <Bell className="h-4 w-4 text-fuchsia-600" />
                   </div>
                   <div>
                     <p className="text-xs font-semibold text-slate-900">No-shows down 70%</p>
@@ -688,20 +688,20 @@ export default function HomePage() {
         <div className="relative w-full overflow-hidden benefit-marquee-mask">
           <div className="flex gap-3 benefit-marquee px-2">
             {[
-              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
+              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
               { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
               { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
               { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
-              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
+              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
               { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
               { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
               { icon: '📦', title: 'Product Inventory', desc: 'Track stock & sell retail on any bill', accent: 'from-teal-500 to-cyan-500', ring: 'ring-teal-100', titleColor: 'text-teal-700' },
               // Duplicate for seamless loop
-              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-pink-500 to-rose-500', ring: 'ring-pink-100', titleColor: 'text-pink-700' },
+              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
               { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
               { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
               { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
-              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-pink-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
+              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
               { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
               { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
               { icon: '📦', title: 'Product Inventory', desc: 'Track stock & sell retail on any bill', accent: 'from-teal-500 to-cyan-500', ring: 'ring-teal-100', titleColor: 'text-teal-700' },
@@ -723,7 +723,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== NO-SHOW LOSS CALCULATOR ===== */}
-      <section className="py-10 sm:py-14 bg-gradient-to-br from-pink-100/70 via-violet-100/60 to-white overflow-hidden">
+      <section className="py-10 sm:py-14 bg-gradient-to-br from-violet-100/70 via-fuchsia-100/40 to-white overflow-hidden">
         <div className="mx-auto max-w-3xl px-4 sm:px-6">
           <div className="text-center mb-6">
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full border border-amber-200 bg-amber-50 text-amber-700 text-xs font-medium mb-3">
@@ -748,7 +748,7 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex flex-col items-center gap-5">
             <p className="text-center text-sm sm:text-base font-semibold text-slate-700">
-              Trusted by <span className="text-pink-600">500+ salons &amp; spas</span> across India
+              Trusted by <span className="text-violet-600">500+ salons &amp; spas</span> across India
             </p>
             <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-x-10">
               {[
@@ -1015,7 +1015,7 @@ export default function HomePage() {
 
                 {/* Free Setup & Onboarding */}
                 <div className="feature-card-item">
-                  <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #ec4899, #be185d)' }}>
+                  <div className="flex items-center justify-center w-11 h-11 rounded-xl mb-4" style={{ background: 'linear-gradient(135deg, #d946ef, #7c3aed)' }}>
                     <svg className="w-5 h-5 text-white" fill="currentColor" viewBox="0 0 24 24"><path d="M12 2L4.5 20.29l.71.71L12 18l6.79 3 .71-.71z"/></svg>
                   </div>
                   <h3 className="text-2xl sm:text-3xl font-bold text-slate-900 mb-3">Free Setup &amp; Onboarding</h3>
@@ -1042,14 +1042,14 @@ export default function HomePage() {
             {/* Step 1 */}
             <div className="flex flex-col lg:grid lg:grid-cols-2 lg:gap-16 items-center reveal">
               <div className="w-full lg:text-right mb-6 lg:mb-0">
-                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-pink-100 text-pink-700 text-xs font-semibold mb-3">Step 1</div>
+                <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-fuchsia-100 text-fuchsia-700 text-xs font-semibold mb-3">Step 1</div>
                 <h3 className="text-xl sm:text-2xl font-bold text-slate-900 mb-2">Add your salon details</h3>
                 <p className="text-slate-500 text-sm sm:text-base leading-relaxed">Enter your services, staff, and working hours. Takes less than 5 minutes.</p>
               </div>
               <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
                 <div className="flex items-center gap-3 mb-4">
-                  <div className="h-10 w-10 rounded-xl bg-pink-100 flex items-center justify-center shrink-0">
-                    <Scissors className="h-5 w-5 text-pink-600" />
+                  <div className="h-10 w-10 rounded-xl bg-fuchsia-100 flex items-center justify-center shrink-0">
+                    <Scissors className="h-5 w-5 text-fuchsia-600" />
                   </div>
                   <div>
                     <p className="text-sm font-semibold text-slate-900">Snip and Glow by Pixalara</p>
@@ -1078,7 +1078,7 @@ export default function HomePage() {
                         <p className="text-sm font-medium text-slate-900">{appt.name}</p>
                         <p className="text-xs text-slate-500">{appt.service} - {appt.time}</p>
                       </div>
-                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-pink-100 text-pink-700' : appt.status === 'Reminded' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
+                      <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${appt.status === 'Confirmed' ? 'bg-fuchsia-100 text-fuchsia-700' : appt.status === 'Reminded' ? 'bg-fuchsia-100 text-fuchsia-700' : 'bg-amber-100 text-amber-700'}`}>{appt.status}</span>
                     </div>
                   ))}
                 </div>
@@ -1100,7 +1100,7 @@ export default function HomePage() {
               <div className="w-full bg-white rounded-2xl border border-slate-100 shadow-sm p-5 sm:p-6">
                 <div className="space-y-3">
                   {[
-                    { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-pink-100 text-pink-600' },
+                    { icon: Bell, label: '24h reminder sent to Priya', color: 'bg-fuchsia-100 text-fuchsia-600' },
                     { icon: FileText, label: 'Invoice ₹450 generated', color: 'bg-fuchsia-100 text-fuchsia-600' },
                     { icon: Gift, label: 'Loyalty points added', color: 'bg-violet-100 text-violet-600' },
                     { icon: Repeat2, label: 'Re-booking nudge scheduled', color: 'bg-purple-100 text-purple-600' },
@@ -1110,7 +1110,7 @@ export default function HomePage() {
                         <Icon className="h-4 w-4" />
                       </div>
                       <p className="text-sm text-slate-700">{label}</p>
-                      <CheckCircle2 className="h-4 w-4 text-pink-500 ml-auto shrink-0" />
+                      <CheckCircle2 className="h-4 w-4 text-fuchsia-500 ml-auto shrink-0" />
                     </div>
                   ))}
                 </div>
@@ -1121,7 +1121,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== ROI SECTION ===== */}
-      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fffbfe 50%, #ffffff 100%)' }}>
+      <section className="py-8 sm:py-12 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #faf5ff 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-8 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Real Results</p>
@@ -1129,7 +1129,7 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-6 reveal">
             {[
-              { numValue: 70, suffix: '%', label: 'Fewer no-shows', sub: 'Thanks to auto reminders', icon: Bell, color: 'bg-pink-50 text-pink-600' },
+              { numValue: 70, suffix: '%', label: 'Fewer no-shows', sub: 'Thanks to auto reminders', icon: Bell, color: 'bg-fuchsia-50 text-fuchsia-600' },
               { numValue: 28, prefix: '+', suffix: '%', label: 'Client retention', sub: 'Re-booking nudges work', icon: Repeat2, color: 'bg-fuchsia-50 text-fuchsia-600' },
               { numValue: 3, suffix: 'hrs', label: 'Saved per day', sub: 'No manual follow-ups', icon: Clock, color: 'bg-violet-50 text-violet-600' },
             ].map(({ numValue, prefix, suffix, label, sub, icon: Icon, color }) => (
@@ -1149,7 +1149,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== TESTIMONIALS ===== */}
-      <section className="py-8 sm:py-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #fdf2f8 50%, #ffffff 100%)' }}>
+      <section className="py-8 sm:py-12 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #faf5ff 50%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="text-center mb-10 reveal">
             <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Loved by salon owners</p>
@@ -1170,7 +1170,7 @@ export default function HomePage() {
             const row1: Review[] = [
               {
                 name: 'Neha Thakur', salon: 'Glow & Grace Salon', city: 'Shimla',
-                initials: 'NT', color: 'bg-pink-100 text-pink-700',
+                initials: 'NT', color: 'bg-fuchsia-100 text-fuchsia-700',
                 quote: 'Half my clients used to forget their slots in tourist season. The automatic WhatsApp reminders cut our no-shows by almost 70% in the first month.',
                 metric: 'No-shows down ~70%',
               },
@@ -1194,7 +1194,7 @@ export default function HomePage() {
               },
               {
                 name: 'Imran Sheikh', salon: 'Kings Grooming Lounge', city: 'Lucknow',
-                initials: 'IS', color: 'bg-rose-100 text-rose-700',
+                initials: 'IS', color: 'bg-fuchsia-100 text-fuchsia-700',
                 quote: 'No-shows reduced a lot after reminders started going out. Very useful for us.',
                 metric: 'Fewer no-shows',
               },
@@ -1212,7 +1212,7 @@ export default function HomePage() {
               },
               {
                 name: 'Ritika Bansal', salon: 'Velvet Touch Beauty', city: 'Chandigarh',
-                initials: 'RB', color: 'bg-pink-100 text-pink-700',
+                initials: 'RB', color: 'bg-fuchsia-100 text-fuchsia-700',
                 quote: 'The win-back message brought back many old clients. Slow days are much better now.',
                 metric: 'Old clients return',
               },
@@ -1274,7 +1274,7 @@ export default function HomePage() {
               },
               {
                 name: 'Karan Malhotra', salon: 'Fade Factory', city: 'Amritsar',
-                initials: 'KM', color: 'bg-rose-100 text-rose-700',
+                initials: 'KM', color: 'bg-fuchsia-100 text-fuchsia-700',
                 quote: 'Clients book even at night on WhatsApp. In the morning my day is already full.',
                 metric: 'After-hours bookings',
               },
@@ -1292,7 +1292,7 @@ export default function HomePage() {
               },
               {
                 name: 'Nisha Rana', salon: 'Pretty Petals Salon', city: 'Jammu',
-                initials: 'NR', color: 'bg-pink-100 text-pink-700',
+                initials: 'NR', color: 'bg-fuchsia-100 text-fuchsia-700',
                 quote: 'Whole setup was done in one afternoon. Support replies very fast on WhatsApp.',
                 metric: 'Quick support',
               },
@@ -1356,8 +1356,8 @@ export default function HomePage() {
             return (
               <div className="relative reveal">
                 {/* edge fades */}
-                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 sm:w-24 bg-gradient-to-r from-[#fdf2f8] to-transparent" />
-                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 sm:w-24 bg-gradient-to-l from-[#fdf2f8] to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 left-0 z-10 w-10 sm:w-24 bg-gradient-to-r from-[#faf5ff] to-transparent" />
+                <div className="pointer-events-none absolute inset-y-0 right-0 z-10 w-10 sm:w-24 bg-gradient-to-l from-[#faf5ff] to-transparent" />
                 <div className="flex flex-col gap-5">
                   <div className="testimonial-row overflow-hidden">
                     <div className="testimonial-track">
@@ -1380,14 +1380,14 @@ export default function HomePage() {
       <section className="py-10 sm:py-16 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 6%, #0f172a 94%, #ffffff 100%)' }}>
         {/* Background glow */}
         <div className="absolute inset-0 flex items-center justify-center pointer-events-none">
-          <div className="w-[800px] h-[400px] rounded-full blur-3xl opacity-20" style={{ background: 'radial-gradient(ellipse, #ec4899 0%, #8b5cf6 50%, transparent 70%)' }} />
+          <div className="w-[800px] h-[400px] rounded-full blur-3xl opacity-20" style={{ background: 'radial-gradient(ellipse, #d946ef 0%, #7c3aed 50%, transparent 70%)' }} />
         </div>
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
           {/* Header */}
           <div className="text-center mb-12 reveal">
             <div className="inline-flex items-center gap-2 rounded-full border border-slate-700 bg-slate-800/60 px-4 py-1.5 mb-5">
-              <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-pink-400 to-violet-400 bg-clip-text text-transparent">The Difference</span>
+              <span className="text-xs font-semibold uppercase tracking-widest bg-gradient-to-r from-fuchsia-400 to-violet-400 bg-clip-text text-transparent">The Difference</span>
             </div>
             <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-3">Running a salon, before and after</h2>
             <p className="text-slate-400 text-sm sm:text-base">See exactly what changes when you switch to SnipandGlow</p>
@@ -1441,7 +1441,7 @@ export default function HomePage() {
 
           {/* Bottom CTA */}
           <div className="text-center mt-10 reveal">
-            <Link href="/signup" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 text-white font-semibold text-sm hover:from-pink-600 hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/20">
+            <Link href="/signup" className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white font-semibold text-sm hover:from-fuchsia-600 hover:to-violet-600 transition-colors shadow-lg shadow-violet-500/20">
               Switch to the smart way
               <ArrowRight className="h-4 w-4" />
             </Link>
@@ -1459,14 +1459,14 @@ export default function HomePage() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
             {[
-              { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-pink-100 text-pink-600' },
+              { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges - all sent automatically.', color: 'bg-green-100 text-green-600' },
               { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: Wallet, title: 'Customer Wallet', desc: 'Prepaid balance per customer — top up, auto-deduct on bills, with instant WhatsApp receipts.', color: 'bg-emerald-100 text-emerald-600' },
               { icon: Package, title: 'Product Inventory', desc: 'Track retail products, stock levels, and purchase costs. Sell products on any bill — stock updates automatically.', color: 'bg-teal-100 text-teal-600' },
               { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
               { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
-              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns - all running on autopilot while you focus on clients.', color: 'bg-pink-100 text-pink-600' },
+              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns - all running on autopilot while you focus on clients.', color: 'bg-fuchsia-100 text-fuchsia-600' },
               { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
               { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
               { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
@@ -1512,7 +1512,7 @@ export default function HomePage() {
               aria-checked={billingCycle === 'yearly'}
               aria-label="Toggle billing cycle"
               onClick={() => setBillingCycle((c) => (c === 'yearly' ? 'monthly' : 'yearly'))}
-              className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full transition-colors ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-pink-500 to-violet-500' : 'bg-slate-300'}`}
+              className={`relative inline-flex h-7 w-14 shrink-0 items-center rounded-full transition-colors ${billingCycle === 'yearly' ? 'bg-gradient-to-r from-fuchsia-500 to-violet-500' : 'bg-slate-300'}`}
             >
               <span className={`inline-block h-5 w-5 transform rounded-full bg-white shadow transition-transform ${billingCycle === 'yearly' ? 'translate-x-8' : 'translate-x-1'}`} />
             </button>
@@ -1523,11 +1523,11 @@ export default function HomePage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
 
             {/* ── ESSENTIALS ─────────────────────────────────── */}
-            <div className="relative flex flex-col rounded-3xl overflow-hidden border border-pink-200 bg-gradient-to-b from-pink-50 to-white shadow-md hover:shadow-xl transition-shadow duration-300">
+            <div className="relative flex flex-col rounded-3xl overflow-hidden border border-fuchsia-200 bg-gradient-to-b from-fuchsia-50 to-white shadow-md hover:shadow-xl transition-shadow duration-300">
               {/* Top badge */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-rose-400 blur-lg opacity-50" />
-                <div className="relative bg-gradient-to-r from-pink-500 to-rose-400 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
+                <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500 to-violet-400 blur-lg opacity-50" />
+                <div className="relative bg-gradient-to-r from-fuchsia-500 to-violet-400 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
                   MOST POPULAR
                 </div>
               </div>
@@ -1535,7 +1535,7 @@ export default function HomePage() {
               <div className="grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
                 {/* Row 1 - Header (description grows) */}
                 <div className="mb-8 flex flex-col">
-                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-rose-400 shadow-lg shadow-pink-400/30 mb-4">
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-400 shadow-lg shadow-fuchsia-400/30 mb-4">
                     <Scissors className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-slate-900 mb-1">Essentials</h3>
@@ -1546,7 +1546,7 @@ export default function HomePage() {
                 </div>
 
                 {/* Row 2 - Pricing */}
-                <div className="mb-8 pb-8 border-b border-pink-100">
+                <div className="mb-8 pb-8 border-b border-fuchsia-100">
                   {billingCycle === 'yearly' ? (
                     <>
                       <p className="text-sm text-slate-400 line-through mb-1">₹{PRICING.essentials.monthly}/month</p>
@@ -1578,7 +1578,7 @@ export default function HomePage() {
 
                 {/* Row 4 - Features */}
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-pink-500 mb-3">Everything you need</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-fuchsia-500 mb-3">Everything you need</p>
                   {[
                     { title: 'Core Operations', desc: 'Appointments, billing, staff, expenses & payroll' },
                     { title: 'Up to 5 Staff Logins', desc: 'Give 5 team members their own secure dashboard access' },
@@ -1592,8 +1592,8 @@ export default function HomePage() {
                     { title: 'Support & Security', desc: 'In-app tickets, audit logs & 24hr response' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-pink-100">
-                        <CheckCircle2 className="h-3 w-3 text-pink-600" />
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-fuchsia-100">
+                        <CheckCircle2 className="h-3 w-3 text-fuchsia-600" />
                       </span>
                       <div>
                         <p className="text-sm font-semibold text-slate-800">{title}</p>
@@ -1602,7 +1602,7 @@ export default function HomePage() {
                     </div>
                   ))}
 
-                  <div className="pt-5 mt-5 border-t border-pink-100 space-y-2">
+                  <div className="pt-5 mt-5 border-t border-fuchsia-100 space-y-2">
                     <p className="text-[10px] font-bold uppercase tracking-widest text-slate-400 mb-2">Not included</p>
                     {['Own WhatsApp Business API', 'Marketing broadcasts', 'Win-back campaigns (30 & 60 day)', 'Multi-branch management'].map((f) => (
                       <div key={f} className="flex items-center gap-2.5">
@@ -1621,12 +1621,12 @@ export default function HomePage() {
             <div className="relative flex flex-col rounded-3xl overflow-hidden shadow-2xl shadow-violet-900/40">
               {/* Solid dark background */}
               <div className="absolute inset-0 bg-gradient-to-b from-violet-950 via-violet-900 to-slate-900" />
-              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/15 via-transparent to-pink-500/10 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-violet-500/15 via-transparent to-violet-500/10 pointer-events-none" />
 
               {/* Top badge */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-pink-500 blur-lg opacity-60" />
-                <div className="relative bg-gradient-to-r from-violet-500 to-pink-500 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
+                <div className="absolute inset-0 bg-gradient-to-r from-violet-500 to-violet-500 blur-lg opacity-60" />
+                <div className="relative bg-gradient-to-r from-violet-500 to-violet-500 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
                   BEST VALUE
                 </div>
               </div>
@@ -1634,7 +1634,7 @@ export default function HomePage() {
               <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
                 {/* Row 1 - Header */}
                 <div className="mb-8 flex flex-col">
-                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-400 to-pink-500 shadow-lg shadow-violet-500/40 mb-4">
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-400 to-violet-500 shadow-lg shadow-violet-500/40 mb-4">
                     <Smartphone className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-1">Pro</h3>
@@ -1691,7 +1691,7 @@ export default function HomePage() {
                     { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com included with your domain' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-pink-500">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 to-violet-500">
                         <CheckCircle2 className="h-3 w-3 text-white" />
                       </span>
                       <div>
@@ -1717,12 +1717,12 @@ export default function HomePage() {
             <div className="relative flex flex-col rounded-3xl overflow-hidden shadow-2xl shadow-slate-900/50">
               {/* Solid dark background */}
               <div className="absolute inset-0 bg-gradient-to-b from-slate-900 via-slate-800 to-slate-900" />
-              <div className="absolute inset-0 bg-gradient-to-br from-pink-500/10 via-transparent to-violet-500/10 pointer-events-none" />
+              <div className="absolute inset-0 bg-gradient-to-br from-fuchsia-500/10 via-transparent to-violet-500/10 pointer-events-none" />
 
               {/* Top badge */}
               <div className="relative">
-                <div className="absolute inset-0 bg-gradient-to-r from-pink-500 to-violet-500 blur-lg opacity-60" />
-                <div className="relative bg-gradient-to-r from-pink-500 to-violet-500 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
+                <div className="absolute inset-0 bg-gradient-to-r from-fuchsia-500 to-violet-500 blur-lg opacity-60" />
+                <div className="relative bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white text-[11px] font-extrabold tracking-widest uppercase text-center py-2">
                   PREMIUM
                 </div>
               </div>
@@ -1730,7 +1730,7 @@ export default function HomePage() {
               <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
                 {/* Row 1 - Header */}
                 <div className="mb-8 flex flex-col">
-                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-500/30 mb-4">
+                  <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-500 shadow-lg shadow-violet-500/30 mb-4">
                     <BarChart3 className="h-5 w-5 text-white" />
                   </div>
                   <h3 className="text-2xl font-bold text-white mb-1">Growth</h3>
@@ -1773,7 +1773,7 @@ export default function HomePage() {
 
                 {/* Row 4 - Features */}
                 <div className="space-y-3">
-                  <p className="text-[10px] font-bold uppercase tracking-widest text-pink-400 mb-3">Everything in Pro, plus</p>
+                  <p className="text-[10px] font-bold uppercase tracking-widest text-fuchsia-400 mb-3">Everything in Pro, plus</p>
                   {[
                     { title: 'Multi-Branch Management', desc: 'Centralized dashboard, branch reports & inter-branch transfers' },
                     { title: '10 Staff Logins Per Branch', desc: 'Each branch gets up to 10 team members with their own dashboard access' },
@@ -1786,7 +1786,7 @@ export default function HomePage() {
                     { title: 'Free Business Email Setup', desc: 'Professional email like contact@yoursalon.com included with your domain' },
                   ].map(({ title, desc }) => (
                     <div key={title} className="flex items-start gap-3">
-                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-pink-500 to-violet-500">
+                      <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-fuchsia-500 to-violet-500">
                         <CheckCircle2 className="h-3 w-3 text-white" />
                       </span>
                       <div>
@@ -1796,7 +1796,7 @@ export default function HomePage() {
                     </div>
                   ))}
 
-                  <div className="pt-5 mt-5 border-t border-slate-700/50 rounded-xl bg-pink-500/10 border border-pink-500/20 p-4">
+                  <div className="pt-5 mt-5 border-t border-slate-700/50 rounded-xl bg-fuchsia-500/10 border border-fuchsia-500/20 p-4">
                     <p className="text-xs font-semibold text-white mb-2">🚀 Perfect for:</p>
                     <ul className="text-xs text-slate-300 space-y-1">
                       <li>• Multi-location salon chains</li>
@@ -1982,16 +1982,16 @@ export default function HomePage() {
       </section>
 
       {/* ===== WHY SNIP & GLOW — COMPARISON ===== */}
-      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #fdf2f8 50%, #fafafa 100%)' }}>
+      <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #faf5ff 50%, #fafafa 100%)' }}>
         {/* Soft brand glow */}
-        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-72 w-[36rem] rounded-full bg-pink-200/30 blur-3xl pointer-events-none" />
+        <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-72 w-[36rem] rounded-full bg-violet-200/40 blur-3xl pointer-events-none" />
 
         <div className="relative mx-auto max-w-5xl px-4 sm:px-6">
           {/* Header */}
           <div className="text-center mb-10 sm:mb-12 reveal">
-            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-pink-100 shadow-sm mb-4">
-              <Scissors className="h-3.5 w-3.5 text-pink-600" />
-              <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-violet-600 uppercase tracking-wider">
+            <div className="inline-flex items-center gap-2 px-4 py-1.5 rounded-full bg-white border border-fuchsia-100 shadow-sm mb-4">
+              <Scissors className="h-3.5 w-3.5 text-fuchsia-600" />
+              <span className="text-xs font-semibold text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-violet-600 uppercase tracking-wider">
                 Why salons choose Snip &amp; Glow
               </span>
             </div>
@@ -2027,11 +2027,11 @@ export default function HomePage() {
                         <th scope="col" className="text-left align-bottom p-4 text-xs font-semibold uppercase tracking-wider text-slate-400 w-[34%]">
                           Decision factor
                         </th>
-                        <th scope="col" className="p-4 rounded-t-2xl text-white bg-gradient-to-br from-pink-500 to-violet-500 shadow-lg shadow-pink-200/60 w-[33%]">
+                        <th scope="col" className="p-4 rounded-t-2xl text-white bg-gradient-to-br from-fuchsia-500 to-violet-500 shadow-lg shadow-violet-200/60 w-[33%]">
                           <span className="flex items-center justify-center gap-2 text-base font-bold">
                             <Scissors className="h-4 w-4" /> Snip &amp; Glow
                           </span>
-                          <span className="mt-1 block text-[11px] font-medium text-pink-50/90">Built for Indian salons</span>
+                          <span className="mt-1 block text-[11px] font-medium text-fuchsia-50/90">Built for Indian salons</span>
                         </th>
                         <th scope="col" className="p-4 align-bottom text-base font-semibold text-slate-500 w-[33%]">
                           Other Salon Software
@@ -2044,7 +2044,7 @@ export default function HomePage() {
                           <th scope="row" className="text-left p-4 border-b border-slate-100 text-sm font-semibold text-slate-900">
                             {r.factor}
                           </th>
-                          <td className={`p-4 bg-pink-50/70 border-b border-pink-100 ${i === rows.length - 1 ? 'rounded-b-2xl' : ''}`}>
+                          <td className={`p-4 bg-fuchsia-50/70 border-b border-fuchsia-100 ${i === rows.length - 1 ? 'rounded-b-2xl' : ''}`}>
                             <span className="flex items-start gap-2.5 text-sm text-slate-800 leading-snug">
                               <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-500" />
                               {r.us}
@@ -2067,9 +2067,9 @@ export default function HomePage() {
                   {rows.map((r) => (
                     <div key={r.factor} className="rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
                       <p className="text-[11px] font-semibold uppercase tracking-wider text-slate-400">{r.factor}</p>
-                      <div className="mt-3 rounded-xl border border-pink-100 bg-gradient-to-br from-pink-50 to-violet-50 p-3">
-                        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-pink-600 to-violet-600">
-                          <Scissors className="h-3 w-3 text-pink-600" /> Snip &amp; Glow
+                      <div className="mt-3 rounded-xl border border-fuchsia-100 bg-gradient-to-br from-fuchsia-50 to-violet-50 p-3">
+                        <p className="flex items-center gap-1.5 text-[11px] font-bold uppercase tracking-wide text-transparent bg-clip-text bg-gradient-to-r from-fuchsia-600 to-violet-600">
+                          <Scissors className="h-3 w-3 text-fuchsia-600" /> Snip &amp; Glow
                         </p>
                         <p className="mt-1.5 flex items-start gap-2 text-sm text-slate-800 leading-snug">
                           <CheckCircle2 className="h-4 w-4 shrink-0 mt-0.5 text-emerald-500" />
@@ -2093,7 +2093,7 @@ export default function HomePage() {
           {/* Conversion block */}
           <div className="mt-10 sm:mt-12 reveal">
             <div className="relative overflow-hidden rounded-3xl bg-slate-900 px-6 py-10 sm:px-12 sm:py-12 text-center">
-              <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-pink-500/20 blur-3xl pointer-events-none" />
+              <div className="absolute -right-16 -top-16 h-56 w-56 rounded-full bg-fuchsia-500/20 blur-3xl pointer-events-none" />
               <div className="absolute -left-16 -bottom-16 h-56 w-56 rounded-full bg-violet-500/20 blur-3xl pointer-events-none" />
               <div className="relative">
                 <h3 className="text-xl sm:text-2xl lg:text-3xl font-bold text-white max-w-2xl mx-auto tracking-tight">
@@ -2127,7 +2127,7 @@ export default function HomePage() {
       <section className="relative py-14 sm:py-20 overflow-hidden" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #0f172a 8%, #1e1b4b 50%, #0f172a 92%, #ffffff 100%)' }}>
         {/* Subtle radial glow */}
         <div className="absolute inset-0 flex items-center justify-center">
-          <div className="w-[600px] h-[400px] rounded-full bg-gradient-to-r from-violet-600/20 via-pink-500/10 to-orange-500/20 blur-3xl" />
+          <div className="w-[600px] h-[400px] rounded-full bg-gradient-to-r from-violet-600/20 via-fuchsia-500/10 to-violet-500/20 blur-3xl" />
         </div>
 
         <div className="relative z-10 mx-auto max-w-3xl px-4 sm:px-6 text-center reveal">
@@ -2182,7 +2182,7 @@ export default function HomePage() {
           {/* Trust points */}
           <div className="flex flex-col sm:flex-row items-center justify-center gap-4 sm:gap-6 mt-8 text-sm text-slate-400">
             <span className="flex items-center gap-1.5">
-              <CheckCircle2 className="h-4 w-4 text-pink-400" />
+              <CheckCircle2 className="h-4 w-4 text-fuchsia-400" />
               No credit card required
             </span>
             <span className="flex items-center gap-1.5">
@@ -2198,7 +2198,7 @@ export default function HomePage() {
       </section>
 
       {/* ===== BOOK A DEMO SECTION ===== */}
-      <section className="py-8 sm:py-12 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #e9d5ff 20%, #fce7f3 50%, #e9d5ff 80%, #f8fafc 100%)' }}>
+      <section className="py-8 sm:py-12 px-4 sm:px-6" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #ede9fe 20%, #f5d0fe 50%, #ede9fe 80%, #f8fafc 100%)' }}>
         <div className="mx-auto max-w-4xl rounded-3xl px-5 py-10 sm:px-12 sm:py-16 text-center" style={{ background: 'linear-gradient(160deg, #1e293b 0%, #0f172a 50%, #1e1b4b 100%)' }}>
           <h2 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-white mb-4">
             Ready to run your salon like this?
@@ -2361,9 +2361,9 @@ export default function HomePage() {
             <Link href="/" className="flex items-center gap-2">
               <span className="text-xl font-bold tracking-tight">
                 <span className="text-white">snipand</span>
-                <span className="bg-gradient-to-r from-pink-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
+                <span className="bg-gradient-to-r from-fuchsia-500 via-fuchsia-500 to-violet-500 bg-clip-text text-transparent">glow</span>
               </span>
-              <span className="h-2 w-2 rounded-full bg-pink-400 animate-pulse" />
+              <span className="h-2 w-2 rounded-full bg-fuchsia-400 animate-pulse" />
             </Link>
 
             {/* Nav links */}
@@ -2377,7 +2377,7 @@ export default function HomePage() {
             {/* CTA */}
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-gradient-to-r from-pink-500 to-violet-500 text-white text-sm font-semibold hover:from-pink-600 hover:to-violet-600 transition-colors shadow-lg shadow-pink-500/20"
+              className="inline-flex items-center justify-center px-5 py-2.5 rounded-full bg-gradient-to-r from-fuchsia-500 to-violet-500 text-white text-sm font-semibold hover:from-fuchsia-600 hover:to-violet-600 transition-colors shadow-lg shadow-violet-500/20"
             >
               Start Free Trial
             </Link>
@@ -2400,8 +2400,8 @@ export default function HomePage() {
           <div className="py-6 text-center">
             <p className="text-sm text-slate-500">
               &copy; {new Date().getFullYear()} SnipandGlow - <span className="text-slate-400">Snip and Glow by Pixalara</span>. WhatsApp CRM built for salon owners. Crafted with{' '}
-              <span className="text-pink-500">❤️</span> by{' '}
-              <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-pink-400 hover:text-pink-300 font-medium transition-colors">
+              <span className="text-fuchsia-500">❤️</span> by{' '}
+              <a href="https://pixalara.io" target="_blank" rel="noopener noreferrer" className="text-fuchsia-400 hover:text-fuchsia-300 font-medium transition-colors">
                 Pixalara LLP
               </a>
               {' '}- A DPIIT Recognized Technology Company by Govt. of India
@@ -2674,7 +2674,7 @@ function StickyMobileCTA({ onDemo }: { onDemo: () => void }) {
         </button>
         <Link
           href="/signup"
-          className="flex-[1.5] inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-pink-500 to-violet-500 px-3 py-3 text-sm font-semibold text-white shadow-md shadow-pink-200 active:scale-95 transition-transform"
+          className="flex-[1.5] inline-flex items-center justify-center gap-1.5 rounded-xl bg-gradient-to-r from-fuchsia-500 to-violet-500 px-3 py-3 text-sm font-semibold text-white shadow-md shadow-violet-200 active:scale-95 transition-transform"
         >
           Start Free Trial
           <ArrowRight className="h-4 w-4" />
@@ -2772,8 +2772,8 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
       <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
         <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
         <div className="relative z-10 w-full max-w-md rounded-3xl bg-white p-8 shadow-2xl text-center">
-          <div className="flex size-16 items-center justify-center rounded-full bg-pink-100 mx-auto mb-4">
-            <CheckCircle2 className="size-8 text-pink-600" />
+          <div className="flex size-16 items-center justify-center rounded-full bg-fuchsia-100 mx-auto mb-4">
+            <CheckCircle2 className="size-8 text-fuchsia-600" />
           </div>
           <h3 className="text-xl font-bold text-slate-900 mb-2">Demo Booked!</h3>
           <p className="text-slate-500 text-sm mb-6">
@@ -2796,7 +2796,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-lg rounded-3xl bg-white shadow-2xl overflow-hidden max-h-[90vh] overflow-y-auto">
         {/* Header with gradient */}
-        <div className="relative px-6 py-5" style={{ background: 'linear-gradient(135deg, #f97316, #ec4899)' }}>
+        <div className="relative px-6 py-5" style={{ background: 'linear-gradient(135deg, #d946ef, #7c3aed)' }}>
           <button
             onClick={onClose}
             className="absolute top-4 right-4 flex size-8 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
@@ -2823,7 +2823,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
                 placeholder="Your Name"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-100 focus:outline-none transition-all"
                 required
               />
             </div>
@@ -2836,7 +2836,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
                 placeholder="Mobile Number"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-100 focus:outline-none transition-all"
                 required
               />
             </div>
@@ -2853,13 +2853,13 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
                 placeholder="Salon/Business Name"
                 value={salonName}
                 onChange={(e) => setSalonName(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-100 focus:outline-none transition-all"
               />
             </div>
             <select
               value={businessType}
               onChange={(e) => setBusinessType(e.target.value)}
-              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+              className="w-full rounded-xl border border-slate-200 bg-slate-50 px-4 py-3 text-sm text-slate-700 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-100 focus:outline-none transition-all"
             >
               <option value="">Select Business Type</option>
               <option value="salon">Salon</option>
@@ -2882,7 +2882,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
                 value={date}
                 onChange={(e) => setDate(e.target.value)}
                 min={getMinDate()}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-100 focus:outline-none transition-all"
                 required
               />
             </div>
@@ -2896,7 +2896,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
                 placeholder="City / Area"
                 value={city}
                 onChange={(e) => setCity(e.target.value)}
-                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-pink-400 focus:ring-2 focus:ring-pink-100 focus:outline-none transition-all"
+                className="w-full rounded-xl border border-slate-200 bg-slate-50 pl-10 pr-4 py-3 text-sm text-slate-700 placeholder:text-slate-400 focus:border-fuchsia-400 focus:ring-2 focus:ring-fuchsia-100 focus:outline-none transition-all"
               />
             </div>
           </div>
@@ -2912,8 +2912,8 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
                   onClick={() => setSelectedSlot(slot)}
                   className={`rounded-xl border py-2.5 px-2 text-sm font-medium transition-all ${
                     selectedSlot === slot
-                      ? 'border-pink-500 bg-pink-50 text-pink-600 shadow-sm'
-                      : 'border-slate-200 text-slate-600 hover:border-pink-300 hover:bg-pink-50/50'
+                      ? 'border-fuchsia-500 bg-fuchsia-50 text-fuchsia-600 shadow-sm'
+                      : 'border-slate-200 text-slate-600 hover:border-fuchsia-300 hover:bg-fuchsia-50/50'
                   }`}
                 >
                   {slot}
@@ -2928,7 +2928,7 @@ function DemoBookingModal({ onClose }: { onClose: () => void }) {
             disabled={!isFormValid || submitting}
             className="w-full py-3.5 rounded-xl font-semibold text-sm transition-all disabled:opacity-50 disabled:cursor-not-allowed"
             style={{
-              background: isFormValid ? 'linear-gradient(135deg, #f97316, #ec4899)' : '#e2e8f0',
+              background: isFormValid ? 'linear-gradient(135deg, #d946ef, #7c3aed)' : '#e2e8f0',
               color: isFormValid ? 'white' : '#94a3b8',
             }}
           >
@@ -3025,7 +3025,7 @@ function ContactSalesModal({ onClose }: { onClose: () => void }) {
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative z-10 w-full max-w-sm rounded-2xl bg-white shadow-2xl overflow-hidden">
         {/* Header */}
-        <div className="px-6 py-5 bg-gradient-to-r from-violet-600 to-pink-500">
+        <div className="px-6 py-5 bg-gradient-to-r from-violet-600 to-violet-500">
           <button
             onClick={onClose}
             className="absolute top-4 right-4 flex size-7 items-center justify-center rounded-full bg-white/20 text-white hover:bg-white/30 transition-colors"
@@ -3083,7 +3083,7 @@ function ContactSalesModal({ onClose }: { onClose: () => void }) {
             type="submit"
             disabled={submitting || !isFormValid}
             className="w-full py-3 rounded-xl font-semibold text-sm text-white transition-all disabled:opacity-50"
-            style={{ background: 'linear-gradient(135deg, #7c3aed, #ec4899)' }}
+            style={{ background: 'linear-gradient(135deg, #7c3aed, #d946ef)' }}
           >
             {submitting ? 'Sending...' : 'Send'}
           </button>
