@@ -7,6 +7,7 @@ import { computeSubscriptionWindow } from '@/lib/razorpay/subscription-window';
 import { encryptToken } from '@/lib/crypto/token-encryption';
 import { upsertDedicatedCredentials } from '@/lib/whatsapp/credential-store';
 import { recordOnboardingEvent } from '@/lib/whatsapp/onboarding-log';
+import { subscribeWaba } from '@/lib/whatsapp/webhook-subscription';
 import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
 
 // =============================================================================
@@ -158,20 +159,38 @@ export async function adminActivateDedicatedWhatsApp(
     return { success: false, error: `Failed to store credentials: ${message}` };
   }
 
-  // Flip the tenant to a fully connected dedicated state in a single update.
+  // Subscribe the WABA to our app's webhook so INBOUND messages (customer
+  // bookings, replies, feedback) actually reach us. Without this the number can
+  // send but never receive. Previously this manual path only flipped
+  // webhook_status to 'active' in the DB WITHOUT ever calling the Graph API to
+  // subscribe — so dedicated numbers silently received nothing.
+  const subscription = await subscribeWaba(wabaId, accessToken);
+
+  // Flip the tenant to a connected dedicated state. webhook_status reflects the
+  // REAL subscription result rather than an optimistic 'active'.
   const { error: statusError } = await (admin
     .from('tenant_whatsapp_settings' as any)
     .update({
       mode: 'dedicated',
       onboarding_status: 'connected',
-      webhook_status: 'active',
-      onboarding_error: null,
+      webhook_status: subscription.ok ? 'active' : 'inactive',
+      onboarding_error: subscription.ok ? null : (subscription.errorReason ?? 'Webhook subscription failed'),
       onboarding_updated_at: new Date().toISOString(),
     })
     .eq('tenant_id', tenantId) as any);
 
   if (statusError) {
     return { success: false, error: `Failed to activate: ${statusError.message}` };
+  }
+
+  // Credentials are stored and outbound works, but if the webhook subscription
+  // failed the number won't RECEIVE messages. Surface it so the admin can fix
+  // the token scope (needs whatsapp_business_management) and re-activate.
+  if (!subscription.ok) {
+    return {
+      success: false,
+      error: `Credentials saved, but subscribing the number to the webhook failed (${subscription.errorReason ?? 'unknown'}). The salon can send but will NOT receive messages until this succeeds — confirm the token has whatsapp_business_management and click Re-activate.`,
+    };
   }
 
   // Mark any open manual setup request as completed (best-effort).
