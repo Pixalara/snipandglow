@@ -14,7 +14,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
-import { notifyOwnerNewBooking, notifyOwnerReschedule } from '@/lib/whatsapp/notify-owner';
+import { notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel } from '@/lib/whatsapp/notify-owner';
 import { createNotification } from '@/lib/notifications';
 
 export interface SalonContext {
@@ -81,6 +81,11 @@ export function webBookingUrl(tenantCode: string): string {
 /** Absolute URL of the reschedule page for a specific appointment. */
 export function webRescheduleUrl(tenantCode: string, appointmentId: string): string {
   return `${webBookingUrl(tenantCode)}/reschedule/${appointmentId}`;
+}
+
+/** Absolute URL of the cancel page for a specific appointment. */
+export function webCancelUrl(tenantCode: string, appointmentId: string): string {
+  return `${webBookingUrl(tenantCode)}/cancel/${appointmentId}`;
 }
 
 /**
@@ -397,7 +402,7 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
 
 // ── Reschedule an existing appointment ───────────────────────────────────────
 
-export interface RescheduleContext {
+export interface AppointmentContext {
   appointmentId: string;
   customerName: string;
   serviceNames: string;
@@ -419,14 +424,14 @@ function serviceIdsOf(row: { service_id?: string | null; whatsapp_flow_ref?: str
 }
 
 /**
- * Load the details a customer needs to reschedule a specific appointment.
- * Returns null when the appointment doesn't exist for this salon or is no
- * longer reschedulable (cancelled/completed).
+ * Load the details a customer needs to reschedule or cancel a specific
+ * appointment. Returns null when the appointment doesn't exist for this salon
+ * or is no longer actionable (cancelled/completed).
  */
-export async function getRescheduleContext(
+export async function getAppointmentContext(
   salon: SalonContext,
   appointmentId: string
-): Promise<RescheduleContext | null> {
+): Promise<AppointmentContext | null> {
   if (!appointmentId) return null;
   const admin = createAdminClient();
 
@@ -592,6 +597,89 @@ export async function createWebReschedule(input: CreateWebRescheduleInput): Prom
     }
   } catch (err) {
     console.error('[WebReschedule] notification error (non-fatal):', err);
+  }
+
+  return { ok: true, summary: { services: serviceNames, dateTime: dateTimeFormatted } };
+}
+
+// ── Cancel an existing appointment ───────────────────────────────────────────
+
+export interface CreateWebCancellationInput {
+  salon: SalonContext;
+  appointmentId: string;
+}
+
+/**
+ * Cancel an existing appointment (sets status = 'cancelled', scoped to the
+ * salon). Fires a best-effort owner alert, dashboard notification, and a
+ * customer text confirmation. The web success screen is the primary customer
+ * confirmation (there is no customer-facing cancel template).
+ */
+export async function createWebCancellation(input: CreateWebCancellationInput): Promise<CreateWebBookingResult> {
+  const { salon, appointmentId } = input;
+  if (!appointmentId) return { ok: false, error: 'This appointment can no longer be cancelled.' };
+
+  const admin = createAdminClient();
+  const { tenantId, salonName } = salon;
+
+  const { data: appt } = await (admin
+    .from('appointments')
+    .select('id, customer_id, service_id, whatsapp_flow_ref, appointment_date, start_time, status')
+    .eq('id', appointmentId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle() as any);
+
+  if (!appt || !['booked', 'confirmed'].includes(appt.status)) {
+    return { ok: false, error: 'This appointment can no longer be cancelled.' };
+  }
+
+  const { error: updErr } = await (admin
+    .from('appointments')
+    .update({ status: 'cancelled' } as any)
+    .eq('id', appointmentId)
+    .eq('tenant_id', tenantId)
+    .in('status', ['booked', 'confirmed']) as any);
+
+  if (updErr) {
+    console.error('[WebCancel] update error:', updErr);
+    return { ok: false, error: 'Could not cancel your appointment. Please try again.' };
+  }
+
+  const serviceIds = serviceIdsOf(appt);
+  const { data: svcRows } = await (admin.from('services').select('name').in('id', serviceIds).eq('tenant_id', tenantId) as any);
+  const serviceNames = ((svcRows ?? []) as Array<{ name: string }>).map((s) => s.name).join(', ') || 'Appointment';
+  const dateLabel = new Date(appt.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
+  const dateTimeFormatted = `${dateLabel}, ${label12h((appt.start_time as string).substring(0, 5))}`;
+
+  // ── Best-effort notifications (never block/fail the cancellation) ──
+  try {
+    const { data: cust } = await (admin
+      .from('customers').select('name, phone').eq('id', appt.customer_id).eq('tenant_id', tenantId).maybeSingle() as any);
+    const customerName = (cust?.name as string) || 'Customer';
+    const phoneDigits = ((cust?.phone as string) || '').replace(/\D/g, '');
+
+    const credentials = await getCredentialsForTenant(tenantId);
+    if (credentials) {
+      await Promise.allSettled([
+        // Customer confirmation — free-form text (only delivers inside the 24h window).
+        phoneDigits
+          ? sendMessage(credentials, phoneDigits, {
+              type: 'text',
+              text: { body: `Your appointment at ${salonName || 'the salon'} on ${dateTimeFormatted} has been cancelled. Reply "Book" anytime to schedule a new one.` },
+            })
+          : Promise.resolve(),
+        notifyOwnerCancel(admin, credentials, tenantId, salonName || 'Your Salon', customerName, phoneDigits),
+        createNotification(
+          tenantId,
+          'cancel',
+          'Appointment Cancelled',
+          `${customerName} cancelled ${serviceNames} on ${dateTimeFormatted}`,
+          { customer_name: customerName, customer_phone: phoneDigits }
+        ),
+      ]);
+    }
+  } catch (err) {
+    console.error('[WebCancel] notification error (non-fatal):', err);
   }
 
   return { ok: true, summary: { services: serviceNames, dateTime: dateTimeFormatted } };

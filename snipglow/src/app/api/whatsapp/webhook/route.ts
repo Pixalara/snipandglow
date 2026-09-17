@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
 import { notifyOwner, notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel, notifyOwnerFeedback } from '@/lib/whatsapp/notify-owner';
 import { createNotification } from '@/lib/notifications';
-import { webBookingUrl, webRescheduleUrl } from '@/lib/booking/web-booking';
+import { webBookingUrl, webRescheduleUrl, webCancelUrl } from '@/lib/booking/web-booking';
 import { resolveTenant, resolveTenantById, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { mapMetaTemplateStatus } from '@/lib/whatsapp/template-management';
@@ -613,59 +613,63 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     }
 
     case 'cancel_appointment': {
-      // Find the customer's most recent active appointment
+      // Open the web cancel page for the customer's upcoming appointment.
+      // Works for ALL tenants (shared + dedicated) — the cancellation happens
+      // server-side, and the page also offers a "reschedule instead" option.
       const phoneE164Cancel = `+${phone}`;
-      const { data: custCancel } = await (admin.from('customers').select('id').eq('phone', phoneE164Cancel).eq('tenant_id', tenant.tenantId).single() as any);
+      const { data: custCancel } = await (admin
+        .from('customers')
+        .select('id, name')
+        .eq('phone', phoneE164Cancel)
+        .eq('tenant_id', tenant.tenantId)
+        .maybeSingle() as any);
 
-      if (custCancel) {
-        const { data: activeAppt } = await (admin
-          .from('appointments')
-          .select('id, service_id, appointment_date, start_time, whatsapp_flow_ref')
-          .eq('customer_id', custCancel.id)
-          .eq('tenant_id', tenant.tenantId)
-          .in('status', ['booked', 'confirmed'])
-          .order('appointment_date', { ascending: true })
-          .limit(1)
-          .single() as any);
-
-        if (activeAppt) {
-          // Get service names for display
-          let svcNames = '';
-          try {
-            const extraIds = activeAppt.whatsapp_flow_ref ? JSON.parse(activeAppt.whatsapp_flow_ref) : null;
-            const svcIds = Array.isArray(extraIds) && extraIds.length > 0 ? extraIds : [activeAppt.service_id];
-            const { data: svcs } = await admin.from('services').select('name').in('id', svcIds);
-            svcNames = svcs?.map((s: any) => s.name).join(', ') || '';
-          } catch { svcNames = ''; }
-
-          const dateLabel = new Date(activeAppt.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
-          const timeLabel = formatTime12hWebhook(activeAppt.start_time);
-
-          await sendMessage(tenant.credentials, phone, {
-            type: 'interactive',
-            interactive: {
-              type: 'button',
-              body: { text: `Are you sure you want to cancel your appointment?\n\n✂️ ${svcNames}\n📅 ${dateLabel}, ${timeLabel}\n📍 ${tenant.salonName}` },
-              action: {
-                buttons: [
-                  { type: 'reply', reply: { id: `confirm_cancel_${activeAppt.id}`, title: 'Yes, Cancel' } },
-                  { type: 'reply', reply: { id: 'keep_appointment', title: 'Keep It' } },
-                ],
-              },
-            },
-          });
-        } else {
-          await sendMessage(tenant.credentials, phone, {
-            type: 'text',
-            text: { body: `You don't have any upcoming appointments to cancel. Reply "Book" to schedule one!` },
-          });
-        }
-      } else {
-        await sendMessage(tenant.credentials, phone, {
-          type: 'text',
-          text: { body: `You don't have any upcoming appointments. Reply "Book" to schedule one!` },
-        });
+      const noCancelMsg = `You don't have any upcoming appointments to cancel. Reply "Book" to schedule one!`;
+      if (!custCancel) {
+        await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: noCancelMsg } });
+        break;
       }
+
+      // Earliest upcoming appointment (today or later, IST).
+      const todayISTCancel = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false }).split(',')[0].trim();
+      const { data: upcomingCancel } = await (admin
+        .from('appointments')
+        .select('id')
+        .eq('tenant_id', tenant.tenantId)
+        .eq('customer_id', custCancel.id)
+        .in('status', ['booked', 'confirmed'])
+        .gte('appointment_date', todayISTCancel)
+        .order('appointment_date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(1)
+        .maybeSingle() as any);
+
+      if (!upcomingCancel) {
+        await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: noCancelMsg } });
+        break;
+      }
+
+      const { data: tenantRowCancel } = await (admin
+        .from('tenants' as any)
+        .select('tenant_code')
+        .eq('id', tenant.tenantId)
+        .single() as any);
+      const cancelUrl = webCancelUrl(tenantRowCancel?.tenant_code ?? '', upcomingCancel.id);
+
+      await sendMessage(tenant.credentials, phone, {
+        type: 'interactive',
+        interactive: {
+          type: 'cta_url',
+          body: { text: `Hi *${custCancel.name}*! 👋\nTap below to manage or cancel your appointment at *${tenant.salonName}*.` },
+          action: {
+            name: 'cta_url',
+            parameters: {
+              display_text: 'Cancel appointment',
+              url: cancelUrl,
+            },
+          },
+        },
+      });
       break;
     }
 

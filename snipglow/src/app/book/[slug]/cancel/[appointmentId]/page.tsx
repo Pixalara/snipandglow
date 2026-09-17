@@ -1,25 +1,24 @@
 import { notFound } from 'next/navigation';
 import type { Metadata } from 'next';
 import { resolveSalonBySlug, getAppointmentContext } from '@/lib/booking/web-booking';
-import { generateSmartSlots } from '@/lib/time-slots';
-import { RescheduleClient } from './reschedule-client';
+import { CancelClient } from './cancel-client';
 
 // =============================================================================
-// Public Reschedule Page — /book/sng009/reschedule/<appointmentId>
+// Public Cancel Page — /book/sng009/cancel/<appointmentId>
 //
-// Opened from the WhatsApp "Reschedule" button. Loads the customer's existing
-// appointment and lets them move it to a new date/time. Works for ALL tenants
-// (shared + dedicated) since the update happens server-side.
+// Opened from the WhatsApp "Cancel" button. Loads the customer's existing
+// appointment and lets them cancel it. Works for ALL tenants (shared +
+// dedicated) since the cancellation happens server-side.
 // =============================================================================
 
 export const dynamic = 'force-dynamic';
 
 export const metadata: Metadata = {
-  title: 'Reschedule your appointment',
+  title: 'Cancel your appointment',
   robots: { index: false, follow: false },
 };
 
-export default async function ReschedulePage({
+export default async function CancelPage({
   params,
 }: {
   params: Promise<{ slug: string; appointmentId: string }>;
@@ -39,20 +38,16 @@ export default async function ReschedulePage({
     tenantCode: salon.tenantCode,
   };
 
-  // Appointment missing / already cancelled / completed.
   if (!context) {
     return <ExpiredNotice salonName={salon.salonName} bookSlug={slug.toLowerCase()} />;
   }
 
-  const slots = await generateSmartSlots(salon.tenantId, salon.branchId);
-
   return (
-    <RescheduleClient
+    <CancelClient
       slug={slug.toLowerCase()}
       appointmentId={appointmentId}
       salon={salonPublic}
       context={context}
-      dates={slots.dates}
     />
   );
 }
@@ -61,9 +56,9 @@ function ExpiredNotice({ salonName, bookSlug }: { salonName: string; bookSlug: s
   return (
     <div className="flex min-h-screen items-center justify-center bg-gradient-to-b from-rose-50 via-white to-violet-50 p-6">
       <div className="w-full max-w-sm rounded-3xl bg-white p-7 text-center shadow-xl">
-        <h1 className="text-lg font-bold text-slate-900">Nothing to reschedule</h1>
+        <h1 className="text-lg font-bold text-slate-900">Nothing to cancel</h1>
         <p className="mt-2 text-sm text-slate-500">
-          This appointment at {salonName} is no longer active — it may have been cancelled or already completed.
+          This appointment at {salonName} is no longer active — it may have already been cancelled or completed.
         </p>
         <a
           href={`/book/${bookSlug}`}

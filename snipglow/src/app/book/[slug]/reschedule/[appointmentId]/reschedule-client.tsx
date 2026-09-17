@@ -6,7 +6,7 @@ import {
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { getSlotsForDate, submitReschedule } from '../../actions';
-import type { RescheduleContext, WebOption } from '@/lib/booking/web-booking';
+import type { AppointmentContext, WebOption } from '@/lib/booking/web-booking';
 
 interface SalonPublic {
   name: string;
@@ -20,7 +20,7 @@ interface Props {
   slug: string;
   appointmentId: string;
   salon: SalonPublic;
-  context: RescheduleContext;
+  context: AppointmentContext;
   dates: WebOption[];
 }
 
