@@ -1,5 +1,5 @@
 import { afterEach, beforeEach, describe, expect, it } from 'vitest';
-import { toIndiaE164, webBookingUrl } from './web-booking';
+import { toIndiaE164, webBookingUrl, webRescheduleUrl } from './web-booking';
 
 describe('toIndiaE164', () => {
   it('accepts a bare 10-digit Indian mobile', () => {
@@ -43,5 +43,22 @@ describe('webBookingUrl', () => {
   it('honours NEXT_PUBLIC_APP_URL and trims a trailing slash', () => {
     process.env.NEXT_PUBLIC_APP_URL = 'https://snipandglow.com/';
     expect(webBookingUrl('SNG-042')).toBe('https://snipandglow.com/book/sng042');
+  });
+});
+
+describe('webRescheduleUrl', () => {
+  const original = process.env.NEXT_PUBLIC_APP_URL;
+  beforeEach(() => {
+    delete process.env.NEXT_PUBLIC_APP_URL;
+  });
+  afterEach(() => {
+    if (original === undefined) delete process.env.NEXT_PUBLIC_APP_URL;
+    else process.env.NEXT_PUBLIC_APP_URL = original;
+  });
+
+  it('appends the appointment id under the booking slug', () => {
+    expect(webRescheduleUrl('SNG-009', 'appt-123')).toBe(
+      'https://www.snipandglow.com/book/sng009/reschedule/appt-123'
+    );
   });
 });

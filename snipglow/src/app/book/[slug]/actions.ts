@@ -12,6 +12,7 @@ import {
   resolveSalonBySlug,
   getAvailableSlotsForDate,
   createWebBooking,
+  createWebReschedule,
   type WebOption,
   type CreateWebBookingResult,
 } from '@/lib/booking/web-booking';
@@ -44,6 +45,23 @@ export async function submitBooking(
     serviceIds: input.serviceIds,
     customerName: input.customerName,
     phone: input.phone,
+    date: input.date,
+    time: input.time,
+  });
+}
+
+/** Move an existing appointment to a new date/time. */
+export async function submitReschedule(
+  slug: string,
+  appointmentId: string,
+  input: { date: string; time: string }
+): Promise<CreateWebBookingResult> {
+  const salon = await resolveSalonBySlug(slug);
+  if (!salon) return { ok: false, error: 'This salon booking link is no longer active.' };
+
+  return createWebReschedule({
+    salon,
+    appointmentId,
     date: input.date,
     time: input.time,
   });

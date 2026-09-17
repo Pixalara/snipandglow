@@ -3,7 +3,7 @@ import { createAdminClient } from '@/lib/supabase/admin';
 import { getWebhookVerifyToken, getAppSecret, getPlatformCredentials } from '@/lib/whatsapp/config';
 import { notifyOwner, notifyOwnerNewBooking, notifyOwnerReschedule, notifyOwnerCancel, notifyOwnerFeedback } from '@/lib/whatsapp/notify-owner';
 import { createNotification } from '@/lib/notifications';
-import { webBookingUrl } from '@/lib/booking/web-booking';
+import { webBookingUrl, webRescheduleUrl } from '@/lib/booking/web-booking';
 import { resolveTenant, resolveTenantById, type TenantContext } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { mapMetaTemplateStatus } from '@/lib/whatsapp/template-management';
@@ -552,107 +552,63 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
     }
 
     case 'reschedule_appointment': {
-      // Use WhatsApp Flow for reschedule (single form: services + date + time)
-      const flowId = process.env.WHATSAPP_FLOW_ID_RETURNING || process.env.WHATSAPP_FLOW_ID;
+      // Open the web reschedule page for the customer's upcoming appointment.
+      // Works for ALL tenants (shared + dedicated) — the update happens
+      // server-side rather than via a WABA-scoped WhatsApp Flow.
       const phoneE164Resched = `+${phone}`;
-      const { data: custResched } = await (admin.from('customers').select('id, name').eq('phone', phoneE164Resched).eq('tenant_id', tenant.tenantId).single() as any);
+      const { data: custResched } = await (admin
+        .from('customers')
+        .select('id, name')
+        .eq('phone', phoneE164Resched)
+        .eq('tenant_id', tenant.tenantId)
+        .maybeSingle() as any);
 
-      if (custResched && flowId) {
-        // ── Category-first reschedule flow (env-gated, non-breaking) ──
-        const catFlowIdResched = process.env.WHATSAPP_FLOW_ID_CATEGORIES_RETURNING;
-        if (catFlowIdResched) {
-          const { data: catRows } = await admin
-            .from('services')
-            .select('category')
-            .eq('tenant_id', tenant.tenantId)
-            .eq('is_active', true)
-            .not('category', 'is', null);
-          const categories = [...new Set((catRows ?? []).map((r: any) => r.category).filter(Boolean))]
-            .sort()
-            .map((c: string) => ({ id: c, title: c }));
+      const noUpcomingMsg = `You don't have any upcoming appointments to reschedule. Reply "Book" to schedule one!`;
+      if (!custResched) {
+        await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: noUpcomingMsg } });
+        break;
+      }
 
-          await sendMessage(tenant.credentials, phone, {
-            type: 'interactive',
-            interactive: {
-              type: 'flow',
-              body: { text: `📅 *Reschedule your appointment* at *${tenant.salonName}*\n\nPick a service, date and time:` },
-              action: {
-                name: 'flow',
-                parameters: {
-                  flow_message_version: '3',
-                  flow_id: catFlowIdResched,
-                  flow_cta: 'Reschedule Now',
-                  mode: 'published',
-                  flow_action: 'navigate',
-                  flow_action_payload: {
-                    screen: 'CATEGORY_SCREEN',
-                    data: {
-                      categories: categories.length > 0 ? categories : [{ id: 'none', title: 'No categories available' }],
-                    },
-                  },
-                  flow_token: JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName, customer_id: custResched.id, customer_name: custResched.name, is_reschedule: true }),
-                },
-              },
-            },
-          });
-          break;
-        }
+      // Earliest upcoming appointment (today or later, IST).
+      const todayIST = new Date().toLocaleString('en-CA', { timeZone: 'Asia/Kolkata', hour12: false }).split(',')[0].trim();
+      const { data: upcoming } = await (admin
+        .from('appointments')
+        .select('id')
+        .eq('tenant_id', tenant.tenantId)
+        .eq('customer_id', custResched.id)
+        .in('status', ['booked', 'confirmed'])
+        .gte('appointment_date', todayIST)
+        .order('appointment_date', { ascending: true })
+        .order('start_time', { ascending: true })
+        .limit(1)
+        .maybeSingle() as any);
 
-        // Fetch services (WhatsApp Flow checkbox lists cap at ~20 items)
-        const { data: svcList } = await admin
-          .from('services')
-          .select('id, name, price, duration_minutes')
-          .eq('tenant_id', tenant.tenantId)
-          .eq('is_active', true)
-          .order('name')
-          .limit(20);
+      if (!upcoming) {
+        await sendMessage(tenant.credentials, phone, { type: 'text', text: { body: noUpcomingMsg } });
+        break;
+      }
 
-        const services = (svcList ?? []).map((s: any) => ({
-          id: s.id,
-          title: `${s.name} - Rs.${s.price}`,
-        }));
+      const { data: tenantRowResched } = await (admin
+        .from('tenants' as any)
+        .select('tenant_code')
+        .eq('id', tenant.tenantId)
+        .single() as any);
+      const rescheduleUrl = webRescheduleUrl(tenantRowResched?.tenant_code ?? '', upcoming.id);
 
-        // Generate smart dates and time slots
-        const { generateSmartSlots } = await import('@/lib/time-slots');
-        const { dates, timeSlots } = await generateSmartSlots(tenant.tenantId, tenant.branchId);
-
-        await sendMessage(tenant.credentials, phone, {
-          type: 'interactive',
-          interactive: {
-            type: 'flow',
-            body: { text: `📅 *Reschedule your appointment* at *${tenant.salonName}*\n\nPick a new date and time:` },
-            action: {
-              name: 'flow',
-              parameters: {
-                flow_message_version: '3',
-                flow_id: flowId,
-                flow_cta: 'Reschedule Now',
-                mode: 'published',
-                flow_action: 'navigate',
-                flow_action_payload: {
-                  screen: 'BOOKING_SCREEN',
-                  data: {
-                    services: services.length > 0 ? services : [{ id: 'none', title: 'No services' }],
-                    dates,
-                    time_slots: timeSlots,
-                  },
-                },
-                flow_token: JSON.stringify({ phone, tenant_id: tenant.tenantId, branch_id: tenant.branchId, salon_name: tenant.salonName, customer_id: custResched.id, customer_name: custResched.name, is_reschedule: true }),
-              },
+      await sendMessage(tenant.credentials, phone, {
+        type: 'interactive',
+        interactive: {
+          type: 'cta_url',
+          body: { text: `Hi *${custResched.name}*! 👋\nTap below to pick a new date and time for your appointment at *${tenant.salonName}*.` },
+          action: {
+            name: 'cta_url',
+            parameters: {
+              display_text: 'Reschedule',
+              url: rescheduleUrl,
             },
           },
-        });
-      } else if (!custResched) {
-        await sendMessage(tenant.credentials, phone, {
-          type: 'text',
-          text: { body: `You don't have any upcoming appointments to reschedule. Reply "Book" to schedule one!` },
-        });
-      } else {
-        await sendMessage(tenant.credentials, phone, {
-          type: 'text',
-          text: { body: `To reschedule, please share your preferred new date and time. The team will confirm shortly!` },
-        });
-      }
+        },
+      });
       break;
     }
 

@@ -14,7 +14,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import { sendMessage } from '@/lib/whatsapp/templates';
-import { notifyOwnerNewBooking } from '@/lib/whatsapp/notify-owner';
+import { notifyOwnerNewBooking, notifyOwnerReschedule } from '@/lib/whatsapp/notify-owner';
 import { createNotification } from '@/lib/notifications';
 
 export interface SalonContext {
@@ -76,6 +76,11 @@ export function webBookingUrl(tenantCode: string): string {
   const base = (process.env.NEXT_PUBLIC_APP_URL || 'https://www.snipandglow.com').replace(/\/+$/, '');
   const slug = (tenantCode || '').replace(/-/g, '').toLowerCase();
   return `${base}/book/${slug}`;
+}
+
+/** Absolute URL of the reschedule page for a specific appointment. */
+export function webRescheduleUrl(tenantCode: string, appointmentId: string): string {
+  return `${webBookingUrl(tenantCode)}/reschedule/${appointmentId}`;
 }
 
 /**
@@ -385,6 +390,208 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
     }
   } catch (err) {
     console.error('[WebBooking] notification error (non-fatal):', err);
+  }
+
+  return { ok: true, summary: { services: serviceNames, dateTime: dateTimeFormatted } };
+}
+
+// ── Reschedule an existing appointment ───────────────────────────────────────
+
+export interface RescheduleContext {
+  appointmentId: string;
+  customerName: string;
+  serviceNames: string;
+  durationMinutes: number;
+  currentDate: string;
+  currentTime: string; // "HH:MM:SS"
+  currentLabel: string; // "Mon, 5 Aug · 2:30 PM"
+}
+
+/** Parse the service ids stored on an appointment (multi-service in whatsapp_flow_ref). */
+function serviceIdsOf(row: { service_id?: string | null; whatsapp_flow_ref?: string | null }): string[] {
+  try {
+    const parsed = row.whatsapp_flow_ref ? JSON.parse(row.whatsapp_flow_ref) : null;
+    if (Array.isArray(parsed) && parsed.length > 0) return parsed;
+  } catch {
+    /* not JSON — fall through */
+  }
+  return row.service_id ? [row.service_id] : [];
+}
+
+/**
+ * Load the details a customer needs to reschedule a specific appointment.
+ * Returns null when the appointment doesn't exist for this salon or is no
+ * longer reschedulable (cancelled/completed).
+ */
+export async function getRescheduleContext(
+  salon: SalonContext,
+  appointmentId: string
+): Promise<RescheduleContext | null> {
+  if (!appointmentId) return null;
+  const admin = createAdminClient();
+
+  const { data: appt } = await (admin
+    .from('appointments')
+    .select('id, customer_id, service_id, whatsapp_flow_ref, appointment_date, start_time, status')
+    .eq('id', appointmentId)
+    .eq('tenant_id', salon.tenantId)
+    .maybeSingle() as any);
+
+  if (!appt || !['booked', 'confirmed'].includes(appt.status)) return null;
+
+  const serviceIds = serviceIdsOf(appt);
+  const [svcRes, custRes] = await Promise.all([
+    (admin.from('services').select('name, duration_minutes').in('id', serviceIds).eq('tenant_id', salon.tenantId) as any),
+    (admin.from('customers').select('name').eq('id', appt.customer_id).eq('tenant_id', salon.tenantId).maybeSingle() as any),
+  ]);
+
+  const svcRows = (svcRes.data ?? []) as Array<{ name: string; duration_minutes: number }>;
+  const serviceNames = svcRows.map((s) => s.name).join(', ') || 'Appointment';
+  const durationMinutes = svcRows.reduce((sum, s) => sum + (Number(s.duration_minutes) || 30), 0) || 30;
+
+  const startHHMM = (appt.start_time as string).substring(0, 5);
+  const dateLabel = new Date(appt.appointment_date + 'T12:00:00+05:30').toLocaleDateString('en-IN', {
+    timeZone: 'Asia/Kolkata', weekday: 'short', day: 'numeric', month: 'short',
+  });
+
+  return {
+    appointmentId: appt.id,
+    customerName: (custRes.data?.name as string) || 'there',
+    serviceNames,
+    durationMinutes,
+    currentDate: appt.appointment_date,
+    currentTime: appt.start_time,
+    currentLabel: `${dateLabel} · ${label12h(startHHMM)}`,
+  };
+}
+
+export interface CreateWebRescheduleInput {
+  salon: SalonContext;
+  appointmentId: string;
+  date: string;
+  time: string; // "HH:MM:00"
+}
+
+/**
+ * Move an existing appointment to a new date/time (in place — same appointment,
+ * services and employee). Re-validates the new slot (excluding this appointment
+ * from the capacity count), then fires a best-effort reschedule confirmation.
+ */
+export async function createWebReschedule(input: CreateWebRescheduleInput): Promise<CreateWebBookingResult> {
+  const { salon, appointmentId, date, time } = input;
+  if (!appointmentId) return { ok: false, error: 'This appointment can no longer be rescheduled.' };
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(date) || !/^\d{2}:\d{2}:\d{2}$/.test(time)) return { ok: false, error: 'Please choose a date and time.' };
+
+  const admin = createAdminClient();
+  const { tenantId, salonName } = salon;
+
+  const { data: appt } = await (admin
+    .from('appointments')
+    .select('id, customer_id, service_id, whatsapp_flow_ref, status')
+    .eq('id', appointmentId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle() as any);
+
+  if (!appt || !['booked', 'confirmed'].includes(appt.status)) {
+    return { ok: false, error: 'This appointment can no longer be rescheduled.' };
+  }
+
+  const serviceIds = serviceIdsOf(appt);
+  const settings = salon.settings as any;
+  const maxPerSlot: number = Number(settings.max_appointments_per_slot) || 1;
+
+  // Duration from the appointment's services (fall back to the configured slot).
+  const { data: svcRows } = await (admin
+    .from('services').select('name, duration_minutes').in('id', serviceIds).eq('tenant_id', tenantId) as any);
+  const svcList = (svcRows ?? []) as Array<{ name: string; duration_minutes: number }>;
+  const duration = svcList.reduce((sum, s) => sum + (Number(s.duration_minutes) || 30), 0) || Number(settings.slot_duration_minutes) || 30;
+
+  const startMin = toMinutes(time);
+  const endMin = startMin + duration;
+  const endTime = `${String(Math.floor(endMin / 60)).padStart(2, '0')}:${String(endMin % 60).padStart(2, '0')}:00`;
+
+  // ── Re-validate the new slot ──
+  if ((settings.blocked_dates || []).includes(date)) return { ok: false, error: 'That date is not available. Please choose another.' };
+  const blockedForDate = (settings.blocked_slots || []).find((b: any) => b.date === date);
+  if (blockedForDate?.slots?.includes(time.substring(0, 5))) return { ok: false, error: 'That time is not available. Please choose another slot.' };
+
+  const now = istNow();
+  if (date === now.date && startMin <= now.minutes + 60) {
+    return { ok: false, error: 'That time has already passed. Please pick a later slot.' };
+  }
+
+  // Capacity — count overlapping appointments on the new date, excluding THIS one.
+  const { data: apptRows } = await (admin
+    .from('appointments')
+    .select('start_time, end_time')
+    .eq('tenant_id', tenantId)
+    .eq('appointment_date', date)
+    .in('status', ['booked', 'confirmed'])
+    .neq('id', appointmentId) as any);
+  const overlap = ((apptRows ?? []) as Array<{ start_time: string; end_time: string }>)
+    .filter((a) => startMin < toMinutes(a.end_time) && endMin > toMinutes(a.start_time)).length;
+  if (overlap >= maxPerSlot) return { ok: false, error: 'That slot just filled up. Please choose another time.' };
+
+  const { error: updErr } = await (admin
+    .from('appointments')
+    .update({ appointment_date: date, start_time: time, end_time: endTime } as any)
+    .eq('id', appointmentId)
+    .eq('tenant_id', tenantId) as any);
+
+  if (updErr) {
+    console.error('[WebReschedule] update error:', updErr);
+    return { ok: false, error: 'That slot is no longer available. Please choose another time.' };
+  }
+
+  const serviceNames = svcList.map((s) => s.name).join(', ') || 'Appointment';
+  const dateLabel = new Date(date + 'T12:00:00+05:30').toLocaleDateString('en-IN', { timeZone: 'Asia/Kolkata', day: 'numeric', month: 'short', year: 'numeric' });
+  const dateTimeFormatted = `${dateLabel}, ${label12h(time.substring(0, 5))}`;
+
+  // ── Best-effort notifications (never block/fail the reschedule) ──
+  try {
+    const { data: cust } = await (admin
+      .from('customers').select('name, phone').eq('id', appt.customer_id).eq('tenant_id', tenantId).maybeSingle() as any);
+    const customerName = (cust?.name as string) || 'Customer';
+    const phoneDigits = ((cust?.phone as string) || '').replace(/\D/g, '');
+
+    const credentials = await getCredentialsForTenant(tenantId);
+    if (credentials && phoneDigits) {
+      const calendarToken = Buffer.from(
+        [`${serviceNames} at ${salonName || 'Salon'}`, date, time, endTime, salonName || ''].join('|')
+      ).toString('base64url');
+
+      await Promise.allSettled([
+        sendMessage(credentials, phoneDigits, {
+          type: 'template',
+          template: {
+            name: 'appointment_rescheduled_v1',
+            language: { code: 'en' },
+            components: [
+              {
+                type: 'body',
+                parameters: [
+                  { type: 'text', text: customerName },
+                  { type: 'text', text: serviceNames },
+                  { type: 'text', text: dateTimeFormatted },
+                  { type: 'text', text: salonName || 'Your Salon' },
+                ],
+              },
+              { type: 'button', sub_type: 'url', index: '2', parameters: [{ type: 'text', text: calendarToken }] },
+            ],
+          },
+        }),
+        notifyOwnerReschedule(admin, credentials, tenantId, salonName || 'Your Salon', customerName, phoneDigits, serviceNames, dateTimeFormatted),
+        createNotification(
+          tenantId,
+          'reschedule',
+          'Appointment Rescheduled',
+          `${customerName} rescheduled to ${dateTimeFormatted}`,
+          { customer_name: customerName, customer_phone: phoneDigits }
+        ),
+      ]);
+    }
+  } catch (err) {
+    console.error('[WebReschedule] notification error (non-fatal):', err);
   }
 
   return { ok: true, summary: { services: serviceNames, dateTime: dateTimeFormatted } };
