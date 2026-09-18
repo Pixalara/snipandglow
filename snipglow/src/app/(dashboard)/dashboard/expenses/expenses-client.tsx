@@ -8,6 +8,7 @@ import { DataTable, type Column } from '@/components/data-table';
 import { ExportButton } from '@/components/export-button';
 import { RoleGuard } from '@/components/role-guard';
 import { createExpense, updateExpense, deleteExpense } from './actions';
+import { ExpensesCharts } from './expenses-charts';
 import {
   Wallet,
   Plus,
@@ -247,6 +248,9 @@ export function ExpensesClient({ expenses, role }: ExpensesClientProps) {
           <span className="text-2xl font-bold text-foreground mt-1 block">{expenses.length}</span>
         </div>
       </div>
+
+      {/* Spending charts */}
+      {expenses.length > 0 && <ExpensesCharts expenses={expenses} />}
 
       {/* Filter */}
       <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3">

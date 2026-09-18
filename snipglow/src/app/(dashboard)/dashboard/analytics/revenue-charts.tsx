@@ -1,8 +1,8 @@
 'use client';
 
 import {
-  LineChart,
-  Line,
+  AreaChart,
+  Area,
   XAxis,
   YAxis,
   CartesianGrid,
@@ -11,7 +11,6 @@ import {
   PieChart,
   Pie,
   Cell,
-  Legend,
 } from 'recharts';
 import { formatINR } from '@/lib/utils';
 import type { DailyRevenue, ServiceRevenue, PaymentBreakdown } from './actions';
@@ -29,6 +28,9 @@ const PAYMENT_COLORS: Record<string, string> = {
   other: '#94a3b8',
 };
 
+// Vibrant, cohesive palette for ranking the top services.
+const SERVICE_COLORS = ['#8b5cf6', '#d946ef', '#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#3b82f6'];
+
 export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: RevenueChartsProps) {
   return (
     <div className="space-y-6">
@@ -39,24 +41,38 @@ export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: R
           <EmptyChart message="No revenue data for this period" />
         ) : (
           <ResponsiveContainer width="100%" height={280}>
-            <LineChart data={dailyRevenue} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
-              <CartesianGrid strokeDasharray="3 3" className="stroke-border" />
-              <XAxis dataKey="label" tick={{ fontSize: 11 }} className="text-muted-foreground" />
+            <AreaChart data={dailyRevenue} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
+              <defs>
+                <linearGradient id="revAreaFill" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="0%" stopColor="#8b5cf6" stopOpacity={0.35} />
+                  <stop offset="95%" stopColor="#8b5cf6" stopOpacity={0.02} />
+                </linearGradient>
+                <linearGradient id="revAreaStroke" x1="0" y1="0" x2="1" y2="0">
+                  <stop offset="0%" stopColor="#6366f1" />
+                  <stop offset="50%" stopColor="#8b5cf6" />
+                  <stop offset="100%" stopColor="#d946ef" />
+                </linearGradient>
+              </defs>
+              <CartesianGrid strokeDasharray="3 3" className="stroke-border" vertical={false} />
+              <XAxis dataKey="label" tick={{ fontSize: 11 }} className="text-muted-foreground" tickLine={false} axisLine={false} />
               <YAxis
                 tick={{ fontSize: 11 }}
                 className="text-muted-foreground"
+                tickLine={false}
+                axisLine={false}
                 tickFormatter={(v: number) => v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`}
               />
               <Tooltip content={<RevenueTooltip />} />
-              <Line
+              <Area
                 type="monotone"
                 dataKey="revenue"
-                stroke="hsl(var(--primary))"
-                strokeWidth={2.5}
+                stroke="url(#revAreaStroke)"
+                strokeWidth={3}
+                fill="url(#revAreaFill)"
                 dot={false}
-                activeDot={{ r: 5, strokeWidth: 2 }}
+                activeDot={{ r: 5, strokeWidth: 2, fill: '#8b5cf6' }}
               />
-            </LineChart>
+            </AreaChart>
           </ResponsiveContainer>
         )}
       </div>
@@ -73,21 +89,23 @@ export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: R
               {topServices.map((svc, i) => {
                 const maxRevenue = topServices[0]?.revenue || 1;
                 const pct = Math.round((svc.revenue / maxRevenue) * 100);
+                const color = SERVICE_COLORS[i % SERVICE_COLORS.length];
                 return (
                   <div key={svc.name} className="space-y-1">
                     <div className="flex items-center justify-between text-sm">
-                      <span className="font-medium text-foreground truncate max-w-[60%]">
-                        {i + 1}. {svc.name}
+                      <span className="flex min-w-0 items-center gap-2 font-medium text-foreground">
+                        <span className="size-2.5 shrink-0 rounded-full" style={{ backgroundColor: color }} />
+                        <span className="truncate">{i + 1}. {svc.name}</span>
                       </span>
                       <div className="flex items-center gap-3 text-xs text-muted-foreground shrink-0">
                         <span>{svc.count} bookings</span>
                         <span className="font-semibold text-foreground">{formatINR(svc.revenue)}</span>
                       </div>
                     </div>
-                    <div className="h-2 w-full rounded-full bg-muted overflow-hidden">
+                    <div className="h-2.5 w-full rounded-full bg-muted overflow-hidden">
                       <div
-                        className="h-full rounded-full bg-gradient-to-r from-primary/70 to-primary transition-all duration-500"
-                        style={{ width: `${pct}%` }}
+                        className="h-full rounded-full transition-all duration-500"
+                        style={{ width: `${pct}%`, background: `linear-gradient(to right, ${color}b3, ${color})` }}
                       />
                     </div>
                   </div>
@@ -112,9 +130,10 @@ export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: R
                     nameKey="method"
                     cx="50%"
                     cy="50%"
-                    outerRadius={80}
-                    innerRadius={45}
+                    outerRadius={82}
+                    innerRadius={48}
                     paddingAngle={2}
+                    cornerRadius={5}
                     label={({ method, percent }: any) => `${(method || '').toUpperCase()} ${((percent || 0) * 100).toFixed(0)}%`}
                     labelLine={false}
                   >
