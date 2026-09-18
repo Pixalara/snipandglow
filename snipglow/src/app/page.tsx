@@ -774,7 +774,7 @@ export default function HomePage() {
           {/* Left */}
           <div className="flex flex-col gap-7 reveal-left min-w-0">
             {/* Badges */}
-            <div className="flex flex-wrap items-center gap-2">
+            <div className="flex flex-wrap items-center justify-center gap-2 lg:justify-start">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-medium">
                 <MetaMark className="h-3.5 w-6" />
                 <span className="font-bold text-[#0064E1]">Meta</span>
