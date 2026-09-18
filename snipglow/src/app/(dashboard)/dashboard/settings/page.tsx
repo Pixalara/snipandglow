@@ -20,6 +20,7 @@ import { readLoyaltyConfig } from '@/lib/loyalty-points';
 import { getSettings } from '@/lib/whatsapp/credential-store';
 import { PLATFORM_WA_NUMBER } from '@/lib/whatsapp/config';
 import { RenewButton } from './renew-button';
+import { realEmail } from '@/lib/auth/signup-state';
 
 export default async function SettingsPage() {
   const supabase = await createClient();
@@ -38,6 +39,20 @@ export default async function SettingsPage() {
     .single();
 
   if (!tenant) redirect('/dashboard');
+
+  // Owner's contact email. The admin panel updates the owner's employees.email
+  // (it intentionally does NOT change the auth login email, which stays as the
+  // phone-OTP <phone>@phone.snipandglow.com address). Read that same field here
+  // so admin edits show up and phone signups never display the synthetic email.
+  const { data: ownerRow } = await supabase
+    .from('employees')
+    .select('email')
+    .eq('tenant_id', tenantId)
+    .eq('role', 'owner')
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle();
+  const contactEmail = ((ownerRow?.email as string | null) ?? '').trim() || realEmail(user) || '';
 
   // Fetch primary branch details
   let branchName = '';
@@ -132,7 +147,7 @@ export default async function SettingsPage() {
     salonName: tenant.name ?? '',
     ownerName: tenant.owner_name ?? '',
     phone: tenant.phone ?? '',
-    email: user.email ?? '',
+    email: contactEmail,
     branchName: branchName,
     address: branchAddress,
     city: (settings.city as string) ?? '',

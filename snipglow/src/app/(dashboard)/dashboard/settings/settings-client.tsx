@@ -187,7 +187,7 @@ export function SalonProfileCard({ profile }: SalonProfileProps) {
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">Email</label>
                 <Input value={profile.email} disabled className="opacity-60" />
-                <p className="text-xs text-muted-foreground">Linked to your Google account</p>
+                <p className="text-xs text-muted-foreground">Contact email for invoices &amp; updates</p>
               </div>
               <div className="space-y-1.5">
                 <label className="text-xs font-medium text-muted-foreground">City</label>
