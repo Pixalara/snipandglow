@@ -273,6 +273,14 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
         </div>
       )}
 
+      {/* Charts */}
+      <RevenueCharts
+        stats={stats}
+        dailyRevenue={data.dailyRevenue}
+        topServices={data.topServices}
+        paymentBreakdown={data.paymentBreakdown}
+      />
+
       {/* KPI Cards */}
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5">
         <KPICard
@@ -367,12 +375,6 @@ export function RevenueDashboardClient({ data, currentPeriod }: RevenueDashboard
         />
       </div>
 
-      {/* Charts */}
-      <RevenueCharts
-        dailyRevenue={data.dailyRevenue}
-        topServices={data.topServices}
-        paymentBreakdown={data.paymentBreakdown}
-      />
     </div>
   );
 }

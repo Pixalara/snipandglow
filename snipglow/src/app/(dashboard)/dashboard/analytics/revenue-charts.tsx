@@ -13,13 +13,16 @@ import {
   Cell,
 } from 'recharts';
 import { formatINR } from '@/lib/utils';
-import type { DailyRevenue, ServiceRevenue, PaymentBreakdown } from './actions';
+import type { DailyRevenue, ServiceRevenue, PaymentBreakdown, RevenueStats } from './actions';
 
 interface RevenueChartsProps {
+  stats: RevenueStats;
   dailyRevenue: DailyRevenue[];
   topServices: ServiceRevenue[];
   paymentBreakdown: PaymentBreakdown[];
 }
+
+type Segment = { name: string; value: number; color: string };
 
 const PAYMENT_COLORS: Record<string, string> = {
   cash: '#10b981',
@@ -31,16 +34,53 @@ const PAYMENT_COLORS: Record<string, string> = {
 // Vibrant, cohesive palette for ranking the top services.
 const SERVICE_COLORS = ['#8b5cf6', '#d946ef', '#6366f1', '#06b6d4', '#10b981', '#f59e0b', '#f43f5e', '#3b82f6'];
 
-export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: RevenueChartsProps) {
+export function RevenueCharts({ stats, dailyRevenue, topServices, paymentBreakdown }: RevenueChartsProps) {
+  // Where every rupee of revenue goes: profit + operating expenses + product cost.
+  const moneyFlow: Segment[] = [
+    { name: 'Net Profit', value: Math.max(0, stats.netProfit), color: '#10b981' },
+    { name: 'Expenses', value: stats.totalExpenses, color: '#ef4444' },
+    { name: 'Product Cost', value: stats.productCost, color: '#f59e0b' },
+  ].filter((d) => d.value > 0);
+
+  const apptDone = stats.completedAppointments;
+  const apptCancelled = stats.cancelledAppointments;
+  const apptOther = Math.max(0, stats.totalAppointments - apptDone - apptCancelled);
+  const appointments: Segment[] = [
+    { name: 'Completed', value: apptDone, color: '#10b981' },
+    { name: 'Cancelled', value: apptCancelled, color: '#ef4444' },
+    { name: 'Scheduled', value: apptOther, color: '#6366f1' },
+  ].filter((d) => d.value > 0);
+  const completionRate = stats.totalAppointments > 0 ? Math.round((apptDone / stats.totalAppointments) * 100) : 0;
+
+  const returning = Math.max(0, stats.totalCustomers - stats.newCustomers);
+  const customers: Segment[] = [
+    { name: 'New', value: stats.newCustomers, color: '#8b5cf6' },
+    { name: 'Existing', value: returning, color: '#3b82f6' },
+  ].filter((d) => d.value > 0);
+
+  const payments: Segment[] = paymentBreakdown.map((p) => ({
+    name: p.method.toUpperCase(),
+    value: p.amount,
+    color: PAYMENT_COLORS[p.method] || PAYMENT_COLORS.other,
+  }));
+
+  const asMoney = (v: number) => formatINR(v);
+  const asCount = (v: number) => v.toLocaleString('en-IN');
+
   return (
     <div className="space-y-6">
-      {/* Revenue Over Time */}
+      {/* Revenue Over Time — hero chart */}
       <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-        <h3 className="text-sm font-semibold text-foreground mb-4">Revenue Over Time</h3>
+        <div className="mb-4 flex items-center justify-between gap-3">
+          <h3 className="text-sm font-semibold text-foreground">Revenue Over Time</h3>
+          <span className="rounded-full bg-emerald-100 px-2.5 py-0.5 text-xs font-semibold text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-300">
+            {formatINR(stats.totalRevenue)}
+          </span>
+        </div>
         {dailyRevenue.length === 0 ? (
           <EmptyChart message="No revenue data for this period" />
         ) : (
-          <ResponsiveContainer width="100%" height={280}>
+          <ResponsiveContainer width="100%" height={300}>
             <AreaChart data={dailyRevenue} margin={{ top: 5, right: 20, left: 10, bottom: 5 }}>
               <defs>
                 <linearGradient id="revAreaFill" x1="0" y1="0" x2="0" y2="1">
@@ -60,7 +100,7 @@ export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: R
                 className="text-muted-foreground"
                 tickLine={false}
                 axisLine={false}
-                tickFormatter={(v: number) => v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`}
+                tickFormatter={(v: number) => (v >= 1000 ? `₹${(v / 1000).toFixed(0)}k` : `₹${v}`)}
               />
               <Tooltip content={<RevenueTooltip />} />
               <Area
@@ -77,9 +117,15 @@ export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: R
         )}
       </div>
 
-      {/* Two-column layout: Top Services + Payment Breakdown */}
+      {/* Donut row — Money Flow (net profit), Appointments, Payment Methods */}
+      <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+        <DonutCard title="Money Flow" data={moneyFlow} format={asMoney} centerValue={formatINR(stats.netProfit)} centerLabel="Net Profit" />
+        <DonutCard title="Appointments" data={appointments} format={asCount} centerValue={`${completionRate}%`} centerLabel="Completed" footnote={`Avg ${formatINR(stats.avgRevenuePerAppointment)} / visit`} />
+        <DonutCard title="Payment Methods" data={payments} format={asMoney} />
+      </div>
+
+      {/* Top Services + New vs Returning customers */}
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
-        {/* Top Services */}
         <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
           <h3 className="text-sm font-semibold text-foreground mb-4">Top Services</h3>
           {topServices.length === 0 ? (
@@ -115,58 +161,92 @@ export function RevenueCharts({ dailyRevenue, topServices, paymentBreakdown }: R
           )}
         </div>
 
-        {/* Payment Method Breakdown */}
-        <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
-          <h3 className="text-sm font-semibold text-foreground mb-4">Payment Methods</h3>
-          {paymentBreakdown.length === 0 ? (
-            <EmptyChart message="No payment data" />
-          ) : (
-            <div className="flex flex-col items-center gap-4">
-              <ResponsiveContainer width="100%" height={200}>
-                <PieChart>
-                  <Pie
-                    data={paymentBreakdown}
-                    dataKey="amount"
-                    nameKey="method"
-                    cx="50%"
-                    cy="50%"
-                    outerRadius={82}
-                    innerRadius={48}
-                    paddingAngle={2}
-                    cornerRadius={5}
-                    label={({ method, percent }: any) => `${(method || '').toUpperCase()} ${((percent || 0) * 100).toFixed(0)}%`}
-                    labelLine={false}
-                  >
-                    {paymentBreakdown.map((entry) => (
-                      <Cell key={entry.method} fill={PAYMENT_COLORS[entry.method] || PAYMENT_COLORS.other} />
-                    ))}
-                  </Pie>
-                  <Tooltip content={<PaymentTooltip />} />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="flex flex-wrap justify-center gap-3">
-                {paymentBreakdown.map((p) => (
-                  <div key={p.method} className="flex items-center gap-1.5 text-xs">
-                    <div
-                      className="size-2.5 rounded-full"
-                      style={{ backgroundColor: PAYMENT_COLORS[p.method] || PAYMENT_COLORS.other }}
-                    />
-                    <span className="text-muted-foreground uppercase">{p.method}</span>
-                    <span className="font-medium text-foreground">{formatINR(p.amount)}</span>
-                    <span className="text-muted-foreground">({p.count})</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-        </div>
+        <DonutCard
+          title="New vs Returning Customers"
+          data={customers}
+          format={asCount}
+          centerValue={asCount(stats.newCustomers)}
+          centerLabel="New this period"
+        />
       </div>
     </div>
   );
 }
 
 // =============================================================================
-// Custom Tooltips
+// Reusable donut card — consistent premium look across all breakdowns.
+// =============================================================================
+
+function DonutCard({
+  title,
+  data,
+  format,
+  centerValue,
+  centerLabel,
+  footnote,
+}: {
+  title: string;
+  data: Segment[];
+  format: (v: number) => string;
+  centerValue?: string;
+  centerLabel?: string;
+  footnote?: string;
+}) {
+  const total = data.reduce((s, d) => s + d.value, 0);
+  return (
+    <div className="rounded-xl border border-border bg-card p-4 sm:p-5">
+      <h3 className="text-sm font-semibold text-foreground mb-4">{title}</h3>
+      {total <= 0 ? (
+        <EmptyChart message="No data" />
+      ) : (
+        <div className="flex flex-col items-center gap-4">
+          <div className="relative w-full" style={{ height: 200 }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={data}
+                  dataKey="value"
+                  nameKey="name"
+                  cx="50%"
+                  cy="50%"
+                  outerRadius={82}
+                  innerRadius={55}
+                  paddingAngle={2}
+                  cornerRadius={5}
+                  stroke="none"
+                >
+                  {data.map((d) => (
+                    <Cell key={d.name} fill={d.color} />
+                  ))}
+                </Pie>
+                <Tooltip content={<DonutTooltip total={total} format={format} />} />
+              </PieChart>
+            </ResponsiveContainer>
+            {(centerValue || centerLabel) && (
+              <div className="pointer-events-none absolute inset-0 flex flex-col items-center justify-center">
+                {centerValue && <span className="text-xl font-bold leading-none text-foreground">{centerValue}</span>}
+                {centerLabel && <span className="mt-1 text-[11px] text-muted-foreground">{centerLabel}</span>}
+              </div>
+            )}
+          </div>
+          <div className="flex flex-wrap justify-center gap-x-3 gap-y-1.5">
+            {data.map((d) => (
+              <div key={d.name} className="flex items-center gap-1.5 text-xs">
+                <span className="size-2.5 rounded-full" style={{ backgroundColor: d.color }} />
+                <span className="text-muted-foreground">{d.name}</span>
+                <span className="font-medium text-foreground">{format(d.value)}</span>
+              </div>
+            ))}
+          </div>
+          {footnote && <p className="text-xs font-medium text-muted-foreground">{footnote}</p>}
+        </div>
+      )}
+    </div>
+  );
+}
+
+// =============================================================================
+// Tooltips
 // =============================================================================
 
 function RevenueTooltip({ active, payload, label }: any) {
@@ -179,14 +259,15 @@ function RevenueTooltip({ active, payload, label }: any) {
   );
 }
 
-function PaymentTooltip({ active, payload }: any) {
+function DonutTooltip({ active, payload, total, format }: any) {
   if (!active || !payload?.length) return null;
-  const data = payload[0].payload as PaymentBreakdown;
+  const d = payload[0].payload as Segment;
+  const pct = total > 0 ? Math.round((d.value / total) * 100) : 0;
   return (
     <div className="rounded-lg border border-border bg-card px-3 py-2 shadow-lg">
-      <p className="text-xs text-muted-foreground uppercase">{data.method}</p>
-      <p className="text-sm font-semibold text-foreground">{formatINR(data.amount)}</p>
-      <p className="text-xs text-muted-foreground">{data.count} transactions</p>
+      <p className="text-xs text-muted-foreground">{d.name}</p>
+      <p className="text-sm font-semibold text-foreground">{format(d.value)}</p>
+      <p className="text-xs text-muted-foreground">{pct}% of total</p>
     </div>
   );
 }
