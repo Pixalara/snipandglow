@@ -1434,14 +1434,28 @@ export default function HomePage() {
         <div className="absolute inset-0 opacity-[0.03]" style={{ backgroundImage: 'radial-gradient(circle at 1px 1px, rgb(0 0 0) 1px, transparent 0)', backgroundSize: '40px 40px' }} />
         
         <div className="relative mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center mb-12 sm:mb-16 reveal">
+          <div className="text-center mb-10 sm:mb-12 reveal">
             <p className="text-xs font-semibold uppercase tracking-[0.2em] text-violet-600 mb-3">Pricing</p>
             <h2 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold text-slate-900 mb-4 tracking-tight" style={{ fontFamily: 'var(--font-jakarta)' }}>
               Simple, honest pricing
             </h2>
             <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-              Start with Essentials. Step up to Pro for your own WhatsApp number. Scale to Growth for multi-branch.
+              Every plan runs your whole salon — bookings, billing, staff and WhatsApp automation.
+              No setup fees, no contracts, cancel anytime.
             </p>
+
+            {/* Social proof + reassurance */}
+            <div className="mt-6 flex flex-col items-center gap-3.5">
+              <div className="inline-flex items-center gap-2.5 rounded-full border border-slate-200 bg-white px-4 py-2 shadow-sm">
+                <span className="flex">{[0, 1, 2, 3, 4].map((i) => (<Star key={i} className="h-3.5 w-3.5 fill-amber-400 text-amber-400" />))}</span>
+                <span className="text-sm text-slate-600">Loved by <span className="font-semibold text-slate-800">500+ salons &amp; spas</span></span>
+              </div>
+              <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm font-medium text-slate-500">
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> No credit card to start</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> Free setup &amp; onboarding</span>
+                <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-emerald-500" /> 15-day free trial</span>
+              </div>
+            </div>
           </div>
 
           {/* Billing cycle toggle */}
@@ -1750,19 +1764,28 @@ export default function HomePage() {
             </div>
 
           </div>
-          {/* Trust badges */}
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-8 reveal">
-            <div className="text-center rounded-xl border border-slate-200 p-4">
-              <p className="font-bold text-slate-900 text-sm">&#8377;0 setup fee</p>
-              <p className="text-xs text-slate-500 mt-1">We set up everything for free. No hidden onboarding charges.</p>
+          {/* Guarantee / reassurance strip */}
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 max-w-4xl mx-auto mt-10 reveal">
+            <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-emerald-50"><Wallet className="h-4 w-4 text-emerald-600" /></span>
+              <div>
+                <p className="font-bold text-slate-900 text-sm">&#8377;0 setup fee</p>
+                <p className="text-xs text-slate-500 mt-0.5">We set up everything for free. No hidden onboarding charges.</p>
+              </div>
             </div>
-            <div className="text-center rounded-xl border border-slate-200 p-4">
-              <p className="font-bold text-slate-900 text-sm">No hidden charges</p>
-              <p className="text-xs text-slate-500 mt-1">The price you see is exactly what you pay. No surprises.</p>
+            <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-violet-50"><Shield className="h-4 w-4 text-violet-600" /></span>
+              <div>
+                <p className="font-bold text-slate-900 text-sm">No hidden charges</p>
+                <p className="text-xs text-slate-500 mt-0.5">The price you see is exactly what you pay. No surprises.</p>
+              </div>
             </div>
-            <div className="text-center rounded-xl border border-slate-200 p-4">
-              <p className="font-bold text-slate-900 text-sm">7-day full refund</p>
-              <p className="text-xs text-slate-500 mt-1">No payment during your trial. After you pay, cancel within 7 days and we&apos;ll refund every rupee.</p>
+            <div className="flex items-start gap-3 rounded-2xl border border-slate-200 bg-white p-4 shadow-sm">
+              <span className="flex h-9 w-9 shrink-0 items-center justify-center rounded-xl bg-fuchsia-50"><CheckCircle2 className="h-4 w-4 text-fuchsia-600" /></span>
+              <div>
+                <p className="font-bold text-slate-900 text-sm">7-day money-back</p>
+                <p className="text-xs text-slate-500 mt-0.5">No payment during your trial. After you pay, cancel within 7 days for a full refund.</p>
+              </div>
             </div>
           </div>
 
