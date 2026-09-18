@@ -268,8 +268,8 @@ function ChannelDonut() {
   );
 }
 
-const HERO_TABS = ['Appointments', 'Analytics', 'WhatsApp', 'Billing'] as const;
-const HERO_SIDEBAR = [Calendar, BarChart3, MessageCircle, Wallet, Users, Settings];
+const HERO_TABS = ['Appointments', 'Analytics', 'WhatsApp', 'Billing', 'Customers', 'Inventory'] as const;
+const HERO_SIDEBAR = [Calendar, BarChart3, MessageCircle, Wallet, Users, Package];
 
 function HeroDashboard() {
   const [active, setActive] = useState(1);
@@ -319,13 +319,13 @@ function HeroDashboard() {
           {/* Main panel */}
           <div className="min-w-0 flex-1">
             {/* Tab switcher */}
-            <div className="flex items-center gap-1 border-b border-slate-100 px-2.5 py-2.5">
+            <div className="flex items-center gap-0.5 overflow-x-auto border-b border-slate-100 px-2 py-2.5" style={{ scrollbarWidth: 'none' }}>
               {HERO_TABS.map((label, i) => (
                 <button
                   key={label}
                   type="button"
                   onClick={() => setActive(i)}
-                  className={`rounded-full px-2.5 py-1 text-[10.5px] font-semibold transition-colors ${active === i ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+                  className={`shrink-0 whitespace-nowrap rounded-full px-2 py-1 text-[10px] font-semibold transition-colors ${active === i ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   {label}
                 </button>
@@ -517,6 +517,95 @@ function HeroDashboard() {
                   <button type="button" className="mt-auto flex items-center justify-center gap-1.5 rounded-lg py-2 text-[10.5px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}>
                     <MessageCircle className="h-3.5 w-3.5" /> Send bill on WhatsApp
                   </button>
+                </div>
+              </div>
+
+              {/* ── Customers ── */}
+              <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 4 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+                <div className="mb-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-900">Customers</p>
+                    <p className="text-[9.5px] text-slate-400">CRM · loyalty &amp; visit history</p>
+                  </div>
+                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[9px] font-bold text-violet-600">1,284 total</span>
+                </div>
+                <div className="mb-2.5 grid grid-cols-3 gap-2">
+                  {[
+                    { l: 'New this month', v: '+86', c: 'text-emerald-600' },
+                    { l: 'Repeat rate', v: '68%', c: 'text-violet-600' },
+                    { l: 'Avg spend', v: '₹1,450', c: 'text-fuchsia-600' },
+                  ].map((s) => (
+                    <div key={s.l} className="rounded-lg border border-slate-100 bg-white px-2 py-1.5 shadow-sm">
+                      <p className="text-[8px] font-medium text-slate-400">{s.l}</p>
+                      <p className={`text-[12px] font-extrabold ${s.c}`}>{s.v}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="mb-2.5 space-y-1.5">
+                  {[
+                    { i: 'PS', n: 'Priya Sharma', d: '18 visits · ₹24,600', tier: 'Gold', badge: 'bg-amber-50 text-amber-600', av: 'bg-fuchsia-100 text-fuchsia-700' },
+                    { i: 'AR', n: 'Anjali Rao', d: '12 visits · ₹18,400', tier: 'Gold', badge: 'bg-amber-50 text-amber-600', av: 'bg-violet-100 text-violet-700' },
+                    { i: 'MK', n: 'Meera Krishnan', d: '7 visits · ₹9,200', tier: 'Silver', badge: 'bg-slate-100 text-slate-500', av: 'bg-emerald-100 text-emerald-700' },
+                    { i: 'SP', n: 'Sneha Patel', d: '4 visits · ₹5,600', tier: 'Regular', badge: 'bg-blue-50 text-blue-600', av: 'bg-blue-100 text-blue-700' },
+                  ].map((c) => (
+                    <div key={c.n} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${c.av}`}>{c.i}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-semibold text-slate-800">{c.n}</p>
+                        <p className="truncate text-[9px] text-slate-400">{c.d}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[8.5px] font-bold ${c.badge}`}>{c.tier}</span>
+                    </div>
+                  ))}
+                </div>
+                <div className="flex items-center gap-2 rounded-xl border border-fuchsia-100 bg-fuchsia-50/60 px-3 py-2">
+                  <Gift className="h-3.5 w-3.5 shrink-0 text-fuchsia-600" />
+                  <p className="text-[9.5px] text-slate-600"><span className="font-bold text-slate-800">3 birthdays</span> this week — auto WhatsApp wishes scheduled 🎂</p>
+                </div>
+              </div>
+
+              {/* ── Inventory ── */}
+              <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 5 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+                <div className="mb-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-900">Inventory</p>
+                    <p className="text-[9.5px] text-slate-400">Stock &amp; retail products</p>
+                  </div>
+                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-600">142 products</span>
+                </div>
+                <div className="mb-2.5 grid grid-cols-3 gap-2">
+                  {[
+                    { l: 'In stock', v: '136', c: 'text-emerald-600' },
+                    { l: 'Low stock', v: '6', c: 'text-amber-600' },
+                    { l: 'Retail (mo)', v: '₹42k', c: 'text-violet-600' },
+                  ].map((s) => (
+                    <div key={s.l} className="rounded-lg border border-slate-100 bg-white px-2 py-1.5 shadow-sm">
+                      <p className="text-[8px] font-medium text-slate-400">{s.l}</p>
+                      <p className={`text-[12px] font-extrabold ${s.c}`}>{s.v}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="space-y-2">
+                  {[
+                    { n: 'Argan Hair Serum', cat: 'Hair care', stock: 24, max: 40, low: false },
+                    { n: 'Keratin Shampoo', cat: 'Hair care', stock: 8, max: 40, low: true },
+                    { n: 'Vitamin C Serum', cat: 'Skin care', stock: 31, max: 40, low: false },
+                    { n: 'Nail Polish — Ruby', cat: 'Nails', stock: 4, max: 30, low: true },
+                    { n: 'Sheet Face Mask', cat: 'Skin care', stock: 52, max: 60, low: false },
+                  ].map((p) => (
+                    <div key={p.n} className="rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
+                      <div className="mb-1 flex items-center justify-between gap-2">
+                        <div className="min-w-0">
+                          <p className="truncate text-[10.5px] font-semibold text-slate-800">{p.n}</p>
+                          <p className="truncate text-[8px] text-slate-400">{p.cat}</p>
+                        </div>
+                        <span className={`shrink-0 text-[9px] font-bold ${p.low ? 'text-amber-600' : 'text-slate-500'}`}>{p.stock} left{p.low ? ' · Low' : ''}</span>
+                      </div>
+                      <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                        <div className={`h-full rounded-full ${p.low ? 'bg-gradient-to-r from-amber-400 to-orange-500' : 'bg-gradient-to-r from-emerald-400 to-teal-500'}`} style={{ width: `${Math.round((p.stock / p.max) * 100)}%` }} />
+                      </div>
+                    </div>
+                  ))}
                 </div>
               </div>
 
@@ -757,39 +846,37 @@ export default function HomePage() {
       {/* ===== OFFICIAL META TECH PROVIDER ===== */}
       <MetaTechProviderStrip />
 
-      {/* ===== BENEFIT CARDS — full-width infinite marquee ===== */}
-      <section className="py-6 sm:py-8 bg-white border-b border-slate-100 overflow-hidden">
-        <div className="relative w-full overflow-hidden benefit-marquee-mask">
-          <div className="flex gap-3 benefit-marquee px-2">
+      {/* ===== FEATURE CARDS GRID ===== */}
+      <section className="py-14 sm:py-20 bg-white">
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="mx-auto mb-10 max-w-2xl text-center reveal sm:mb-14">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-fuchsia-600">Everything included</p>
+            <h2 className="text-3xl font-extrabold tracking-tight text-slate-900 sm:text-4xl lg:text-[2.75rem]" style={{ fontFamily: 'var(--font-jakarta)' }}>
+              One app for your whole salon
+            </h2>
+            <p className="mt-4 text-base leading-relaxed text-slate-500 sm:text-lg">
+              From WhatsApp bookings to billing, inventory and win-back campaigns — every tool your
+              salon needs, working together in one place.
+            </p>
+          </div>
+
+          <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {[
-              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
-              { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
-              { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
-              { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
-              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
-              { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
-              { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
-              { icon: '📦', title: 'Product Inventory', desc: 'Track stock & sell retail on any bill', accent: 'from-teal-500 to-cyan-500', ring: 'ring-teal-100', titleColor: 'text-teal-700' },
-              // Duplicate for seamless loop
-              { icon: '🔔', title: 'Reduce No-Shows', desc: 'WhatsApp reminders before every appointment', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
-              { icon: '💳', title: 'Customer Wallet', desc: 'Prepaid balance, auto-deduct on bills & receipts', accent: 'from-emerald-500 to-teal-500', ring: 'ring-emerald-100', titleColor: 'text-emerald-700' },
-              { icon: '🔄', title: 'Bring Back Old Clients', desc: '30-day & 60-day win-back messages', accent: 'from-violet-500 to-purple-500', ring: 'ring-violet-100', titleColor: 'text-violet-700' },
-              { icon: '⭐', title: 'More Repeat Visits', desc: 'Feedback, memberships & rebooking nudges', accent: 'from-amber-500 to-yellow-500', ring: 'ring-amber-100', titleColor: 'text-amber-700' },
-              { icon: '🧾', title: 'Bill Faster', desc: 'GST-ready invoices in seconds', accent: 'from-fuchsia-500 to-violet-500', ring: 'ring-fuchsia-100', titleColor: 'text-fuchsia-700' },
-              { icon: '📲', title: 'WhatsApp Booking', desc: 'Clients book without calling', accent: 'from-green-500 to-teal-500', ring: 'ring-green-100', titleColor: 'text-green-700' },
-              { icon: '📊', title: 'Revenue Reports', desc: 'Daily, weekly & monthly insights', accent: 'from-blue-500 to-indigo-500', ring: 'ring-blue-100', titleColor: 'text-blue-700' },
-              { icon: '📦', title: 'Product Inventory', desc: 'Track stock & sell retail on any bill', accent: 'from-teal-500 to-cyan-500', ring: 'ring-teal-100', titleColor: 'text-teal-700' },
-            ].map(({ icon, title, desc, accent, ring, titleColor }, i) => (
-              <div
-                key={i}
-                className={`group relative shrink-0 w-[160px] sm:w-[185px] rounded-2xl border border-white/80 bg-white/80 backdrop-blur-sm p-4 shadow-sm ring-1 ${ring} hover:shadow-lg hover:-translate-y-1 transition-all duration-300`}
-              >
-                <div className={`inline-flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br ${accent} text-lg mb-3 shadow-md shadow-slate-200/60`}>
-                  <span className="drop-shadow-sm">{icon}</span>
+              { Icon: MessageCircle, t: 'WhatsApp Booking', d: 'Clients book 24/7 on WhatsApp or your booking link — no calls, no app downloads.' },
+              { Icon: BarChart3, t: 'Revenue Reports', d: 'Daily, weekly and monthly insights on sales, staff and services at a glance.' },
+              { Icon: Package, t: 'Product Inventory', d: 'Track stock, get low-stock alerts and sell retail products on any bill.' },
+              { Icon: Bell, t: 'Reduce No-Shows', d: 'Automatic WhatsApp reminders before every appointment keep your chairs full.' },
+              { Icon: Wallet, t: 'Customer Wallet', d: 'Prepaid balances that auto-deduct on bills, with GST-ready WhatsApp receipts.' },
+              { Icon: Repeat2, t: 'Bring Back Old Clients', d: '30-day and 60-day win-back messages that quietly refill your slow days.' },
+            ].map((f, i) => (
+              <div key={f.t} className="reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+                <div className="group h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-violet-200 hover:shadow-xl hover:shadow-violet-200/40 sm:p-7">
+                  <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 shadow-lg shadow-fuchsia-500/25 transition-transform duration-300 group-hover:scale-110">
+                    <f.Icon className="h-6 w-6 text-white" />
+                  </div>
+                  <h3 className="text-lg font-bold tracking-tight text-slate-900">{f.t}</h3>
+                  <p className="mt-2 text-sm leading-relaxed text-slate-500">{f.d}</p>
                 </div>
-                <p className={`text-sm font-bold ${titleColor} leading-tight mb-1`}>{title}</p>
-                <p className="text-xs text-slate-500 leading-snug">{desc}</p>
-                <div className={`absolute inset-x-0 bottom-0 h-1 rounded-b-2xl bg-gradient-to-r ${accent} opacity-0 group-hover:opacity-100 transition-opacity`} />
               </div>
             ))}
           </div>
