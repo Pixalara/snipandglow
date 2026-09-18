@@ -121,17 +121,8 @@ function RollingText({ items }: { items: typeof ROLLING_ITEMS }) {
 // Tech Provider badges (hero chip, trust strip, footer).
 function MetaMark({ className = 'h-5 w-8' }: { className?: string }) {
   return (
-    <svg viewBox="0 0 640 512" className={className} aria-hidden="true">
-      <defs>
-        <linearGradient id="sng-meta-grad" x1="0" y1="0" x2="640" y2="512" gradientUnits="userSpaceOnUse">
-          <stop stopColor="#0082FB" />
-          <stop offset="1" stopColor="#0064E1" />
-        </linearGradient>
-      </defs>
-      <path
-        fill="url(#sng-meta-grad)"
-        d="M640 317.9c0 91.3-39.4 148.5-110.3 148.5c-62.6 0-95.8-34.6-156.9-136.6l-31.4-52.6c-8.3-12.5-14.5-24.2-21.2-35c-20.1 33.8-47.1 83-47.1 83c-67 116.6-104.6 141.2-156.9 141.2C43.42 466.4 0 409.1 0 320.5c0-143 79.78-278.1 183.9-278.1c50.2 0 93.8 24.68 144.8 89.5c37.1-50.1 78.1-89.5 130.6-89.5c99.1 0 180.7 125.7 180.7 275.5M287.4 192.2c-42.9-62.1-70.9-80.5-104.4-80.5c-61.9 0-113.78 106.1-113.78 210c0 48.5 18.48 75.7 49.58 75.7c30.2 0 49-19 103.2-103.8c0 0 24.7-39.1 65.4-101.4m243.8 205.2c32.2 0 46.9-27.5 46.9-74.9c0-124.2-54.3-225.42-123.2-225.42c-33.2 0-61.1 25.92-94.9 78.02c9.4 13.8 19.1 29 29.3 45.4l37.5 62.4c58.7 94.1 73.5 114.5 104.4 114.5"
-      />
+    <svg viewBox="0 0 640 512" className={className} aria-hidden="true" fill="#0081FB">
+      <path d="M640 317.9c0 91.3-39.4 148.5-110.3 148.5c-62.6 0-95.8-34.6-156.9-136.6l-31.4-52.6c-8.3-12.5-14.5-24.2-21.2-35c-20.1 33.8-47.1 83-47.1 83c-67 116.6-104.6 141.2-156.9 141.2C43.42 466.4 0 409.1 0 320.5c0-143 79.78-278.1 183.9-278.1c50.2 0 93.8 24.68 144.8 89.5c37.1-50.1 78.1-89.5 130.6-89.5c99.1 0 180.7 125.7 180.7 275.5M287.4 192.2c-42.9-62.1-70.9-80.5-104.4-80.5c-61.9 0-113.78 106.1-113.78 210c0 48.5 18.48 75.7 49.58 75.7c30.2 0 49-19 103.2-103.8c0 0 24.7-39.1 65.4-101.4m243.8 205.2c32.2 0 46.9-27.5 46.9-74.9c0-124.2-54.3-225.42-123.2-225.42c-33.2 0-61.1 25.92-94.9 78.02c9.4 13.8 19.1 29 29.3 45.4l37.5 62.4c58.7 94.1 73.5 114.5 104.4 114.5" />
     </svg>
   );
 }
@@ -291,7 +282,7 @@ function HeroDashboard() {
     >
       {/* Ambient glow */}
       <div
-        className="absolute -inset-8 -z-10 rounded-[44px] blur-3xl"
+        className="absolute inset-0 -z-10 rounded-[44px] blur-3xl"
         style={{ background: 'radial-gradient(ellipse at 50% 35%, rgba(139,92,246,0.20), rgba(217,70,239,0.10), transparent 70%)' }}
       />
 
@@ -339,12 +330,12 @@ function HeroDashboard() {
 
               {/* ── Appointments ── */}
               <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 0 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-                <div className="mb-2.5 flex items-center justify-between">
-                  <div>
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-[13px] font-bold text-slate-900">Today&apos;s appointments</p>
-                    <p className="text-[9.5px] text-slate-400">Thursday, 12 June · JK Salon &amp; Spa</p>
+                    <p className="truncate text-[9.5px] text-slate-400">Thursday, 12 June · JK Salon &amp; Spa</p>
                   </div>
-                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">18 booked</span>
+                  <span className="shrink-0 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">18 booked</span>
                 </div>
                 <div className="mb-2.5 grid grid-cols-3 gap-2">
                   {[
@@ -443,11 +434,11 @@ function HeroDashboard() {
               {/* ── WhatsApp templates ── */}
               <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 2 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
                 <div className="mb-2.5 flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[13px] font-bold text-slate-900">WhatsApp templates</p>
-                    <p className="text-[9.5px] text-slate-400">Approved on Meta · sent from your number</p>
+                    <p className="truncate text-[9.5px] text-slate-400">Approved on Meta · sent from your number</p>
                   </div>
-                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600"><CheckCircle2 className="h-2.5 w-2.5" /> 5 approved</span>
+                  <span className="shrink-0 inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600"><CheckCircle2 className="h-2.5 w-2.5" /> 5 approved</span>
                 </div>
                 <div className="mb-2.5 rounded-xl border border-slate-100 p-2.5" style={{ background: '#e5ddd5' }}>
                   <div className="max-w-[86%] rounded-lg rounded-tl-sm bg-white px-2.5 py-1.5 shadow-sm">
@@ -524,12 +515,12 @@ function HeroDashboard() {
 
               {/* ── Customers ── */}
               <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 4 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
-                <div className="mb-2.5 flex items-center justify-between">
-                  <div>
+                <div className="mb-2.5 flex items-center justify-between gap-2">
+                  <div className="min-w-0">
                     <p className="text-[13px] font-bold text-slate-900">Customers</p>
-                    <p className="text-[9.5px] text-slate-400">CRM · loyalty &amp; visit history</p>
+                    <p className="truncate text-[9.5px] text-slate-400">CRM · loyalty &amp; visit history</p>
                   </div>
-                  <span className="rounded-full bg-violet-50 px-2 py-0.5 text-[9px] font-bold text-violet-600">1,284 total</span>
+                  <span className="shrink-0 rounded-full bg-violet-50 px-2 py-0.5 text-[9px] font-bold text-violet-600">1,284 total</span>
                 </div>
                 <div className="mb-2.5 grid grid-cols-3 gap-2">
                   {[
@@ -569,11 +560,11 @@ function HeroDashboard() {
               {/* ── Inventory ── */}
               <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 5 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
                 <div className="mb-2.5 flex items-center justify-between">
-                  <div>
+                  <div className="min-w-0">
                     <p className="text-[13px] font-bold text-slate-900">Inventory</p>
-                    <p className="text-[9.5px] text-slate-400">Stock &amp; retail products</p>
+                    <p className="truncate text-[9.5px] text-slate-400">Stock &amp; retail products</p>
                   </div>
-                  <span className="rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-600">142 products</span>
+                  <span className="shrink-0 rounded-full bg-blue-50 px-2 py-0.5 text-[9px] font-bold text-blue-600">142 products</span>
                 </div>
                 <div className="mb-2.5 grid grid-cols-3 gap-2">
                   {[
@@ -2791,7 +2782,7 @@ function LiveActivityToast() {
 
   return (
     <div
-      className={`fixed left-3 sm:left-6 bottom-24 lg:bottom-6 z-40 flex max-w-[72vw] sm:max-w-xs items-center gap-2.5 sm:gap-3 rounded-2xl border border-slate-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg shadow-slate-200/60 transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
+      className={`fixed left-3 sm:left-6 bottom-24 lg:bottom-6 z-40 hidden sm:flex max-w-[72vw] sm:max-w-xs items-center gap-2.5 sm:gap-3 rounded-2xl border border-slate-200 bg-white px-3 sm:px-4 py-2.5 sm:py-3 shadow-lg shadow-slate-200/60 transition-all duration-500 ${visible ? 'opacity-100 translate-y-0' : 'opacity-0 translate-y-4 pointer-events-none'}`}
       role="status"
       aria-live="polite"
     >
