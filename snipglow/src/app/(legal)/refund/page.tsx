@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Refund Policy — snipandglow',
+  title: 'Refund Policy - snipandglow',
   description: 'No charge during your free trial and a 7-day grace-period full refund after your first payment.',
 };
 
@@ -16,7 +16,7 @@ export default function RefundPolicyPage() {
       <p>
         At snipandglow, we want you to be completely satisfied with our salon management platform.
         You are never charged during your free trial, and after your first payment you are protected
-        by a 7-day grace period — so there is no risk in trying us out.
+        by a 7-day grace period - so there is no risk in trying us out.
       </p>
 
       <h2>1. No Charge During Your Free Trial</h2>
@@ -26,15 +26,15 @@ export default function RefundPolicyPage() {
         begin. You only pay once you choose to subscribe after the trial ends.
       </p>
 
-      <h2>2. 7-Day Grace Period — Full Refund</h2>
+      <h2>2. 7-Day Grace Period - Full Refund</h2>
       <p>
         After your free trial, once you make your first payment, you get a <strong>7-day grace
         period</strong>. If you decide snipandglow isn&apos;t right for you within those 7 days, you
-        can cancel and receive a <strong>full refund — no questions asked</strong>.
+        can cancel and receive a <strong>full refund - no questions asked</strong>.
       </p>
       <ul>
         <li>The 7-day grace period starts from the date of your first subscription payment</li>
-        <li>This applies to <strong>both monthly and yearly</strong> billing on all plans — Essentials, Pro, and Growth</li>
+        <li>This applies to <strong>both monthly and yearly</strong> billing on all plans - Essentials, Pro, and Growth</li>
         <li>The free trial period itself is free and is separate from this 7-day refund window</li>
       </ul>
 
@@ -58,7 +58,7 @@ export default function RefundPolicyPage() {
         <li>Refunds are processed within <strong>5–7 business days</strong> of approval</li>
         <li>The refund will be credited to your original payment method (bank account or UPI)</li>
         <li>You will receive an email confirmation once the refund is initiated</li>
-        <li>Bank processing times may vary — please allow up to 10 business days for the amount to reflect in your account</li>
+        <li>Bank processing times may vary - please allow up to 10 business days for the amount to reflect in your account</li>
       </ul>
 
       <h2>5. Non-Refundable Items</h2>

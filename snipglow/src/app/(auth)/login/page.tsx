@@ -110,7 +110,7 @@ export default function LoginPage() {
         return;
       }
 
-      // 2. Gate passed — sign in with the resolved email + password (sets cookies).
+      // 2. Gate passed - sign in with the resolved email + password (sets cookies).
       const supabase = createClient();
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: data.email,

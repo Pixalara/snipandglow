@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Privacy Policy — SnipandGlow',
+  title: 'Privacy Policy - SnipandGlow',
   description: 'Learn how SnipandGlow collects, uses, and protects your personal data. Compliant with Meta WhatsApp Business API policies.',
 };
 
@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
       <h2>5. Third-Party Services</h2>
       <p>We share data with the following third-party services only as necessary to operate our platform:</p>
       <ul>
-        <li><strong>Google OAuth:</strong> For secure authentication — we receive your name and email from Google</li>
+        <li><strong>Google OAuth:</strong> For secure authentication - we receive your name and email from Google</li>
         <li><strong>Meta / WhatsApp Business API:</strong> To send and receive WhatsApp messages on behalf of salon owners to their customers. Meta processes message delivery and may retain message metadata per their own privacy policy</li>
         <li><strong>Vercel:</strong> For hosting and serving the web application</li>
         <li><strong>Razorpay:</strong> For processing subscription payments securely</li>

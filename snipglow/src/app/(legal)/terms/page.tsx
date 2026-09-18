@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 
 export const metadata: Metadata = {
-  title: 'Terms and Conditions — snipandglow',
+  title: 'Terms and Conditions - snipandglow',
   description: 'Terms and conditions for using the snipandglow salon management platform.',
 };
 
@@ -47,7 +47,7 @@ export default function TermsPage() {
         <li>You must provide accurate and complete information during registration</li>
         <li>You are responsible for maintaining the security of your account credentials</li>
         <li>You must notify us immediately of any unauthorized access to your account</li>
-        <li>One account per salon business — multiple branches are managed within a single account</li>
+        <li>One account per salon business - multiple branches are managed within a single account</li>
         <li>We reserve the right to suspend or terminate accounts that violate these Terms</li>
       </ul>
 

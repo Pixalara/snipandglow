@@ -3,7 +3,7 @@ import Link from 'next/link';
 import blogPosts from '@/data/blog-posts.json';
 
 export const metadata: Metadata = {
-  title: 'Blog — Salon Management Tips & Guides',
+  title: 'Blog - Salon Management Tips & Guides',
   description: 'Expert tips on salon management, WhatsApp automation, appointment booking, and growing your salon business in India.',
 };
 

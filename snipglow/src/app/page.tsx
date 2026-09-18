@@ -154,7 +154,7 @@ function MetaTechProviderStrip() {
           <p className="max-w-2xl text-sm sm:text-base text-slate-500 leading-relaxed">
             Snip &amp; Glow is a verified{' '}
             <span className="font-semibold text-slate-700">Meta Business Tech Provider</span>. Your bookings,
-            reminders and campaigns run on WhatsApp&apos;s official API — secure, compliant and built to scale.
+            reminders and campaigns run on WhatsApp&apos;s official API - secure, compliant and built to scale.
           </p>
           <div className="mt-1 flex flex-wrap items-center justify-center gap-x-6 gap-y-2.5 text-xs sm:text-sm font-medium text-slate-500">
             <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-[#0082FB]" /> Verified Business API</span>
@@ -170,7 +170,7 @@ function MetaTechProviderStrip() {
 // =============================================================================
 // Interactive product dashboard shown in the hero.
 // Auto-rotating slides (Appointments / Analytics / WhatsApp / Billing) with
-// hand-built SVG charts — no external chart dependency.
+// hand-built SVG charts - no external chart dependency.
 // =============================================================================
 
 // Smooth cubic-bezier path through a set of points (Catmull-Rom style).
@@ -562,7 +562,7 @@ function HeroDashboard() {
                 </div>
                 <div className="flex items-center gap-2 rounded-xl border border-fuchsia-100 bg-fuchsia-50/60 px-3 py-2">
                   <Gift className="h-3.5 w-3.5 shrink-0 text-fuchsia-600" />
-                  <p className="text-[9.5px] text-slate-600"><span className="font-bold text-slate-800">3 birthdays</span> this week — auto WhatsApp wishes scheduled 🎂</p>
+                  <p className="text-[9.5px] text-slate-600"><span className="font-bold text-slate-800">3 birthdays</span> this week - auto WhatsApp wishes scheduled 🎂</p>
                 </div>
               </div>
 
@@ -592,7 +592,7 @@ function HeroDashboard() {
                     { n: 'Argan Hair Serum', cat: 'Hair care', stock: 24, max: 40, low: false },
                     { n: 'Keratin Shampoo', cat: 'Hair care', stock: 8, max: 40, low: true },
                     { n: 'Vitamin C Serum', cat: 'Skin care', stock: 31, max: 40, low: false },
-                    { n: 'Nail Polish — Ruby', cat: 'Nails', stock: 4, max: 30, low: true },
+                    { n: 'Nail Polish - Ruby', cat: 'Nails', stock: 4, max: 30, low: true },
                     { n: 'Sheet Face Mask', cat: 'Skin care', stock: 52, max: 60, low: false },
                   ].map((p) => (
                     <div key={p.n} className="rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
@@ -805,7 +805,7 @@ export default function HomePage() {
             </h1>
 
             <p className="max-w-xl text-base sm:text-lg text-slate-500 leading-relaxed">
-              Bookings, reminders, billing and win-back campaigns — all automated on the official
+              Bookings, reminders, billing and win-back campaigns - all automated on the official
               WhatsApp Business Platform. Set it up once and keep every chair full.
             </p>
 
@@ -857,7 +857,7 @@ export default function HomePage() {
               One app for your whole salon
             </h2>
             <p className="mt-4 text-base leading-relaxed text-slate-500 sm:text-lg">
-              From WhatsApp bookings to billing, inventory and win-back campaigns — every tool your
+              From WhatsApp bookings to billing, inventory and win-back campaigns - every tool your
               salon needs, working together in one place.
             </p>
           </div>
@@ -865,7 +865,7 @@ export default function HomePage() {
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {[
               { Icon: Calendar, t: 'Smart Appointments', d: 'Online booking with instant WhatsApp confirmation. Clients reschedule or cancel with a tap.' },
-              { Icon: MessageCircle, t: 'WhatsApp Automation', d: 'Booking confirmations, 24-hour reminders and re-booking nudges — all sent automatically.' },
+              { Icon: MessageCircle, t: 'WhatsApp Automation', d: 'Booking confirmations, 24-hour reminders and re-booking nudges - all sent automatically.' },
               { Icon: Bell, t: 'Reduce No-Shows', d: 'Automatic reminders before every appointment keep your chairs full.' },
               { Icon: FileText, t: 'Billing & Invoices', d: 'GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.' },
               { Icon: Wallet, t: 'Customer Wallet', d: 'Prepaid balances that auto-deduct on bills, with instant WhatsApp receipts.' },
@@ -879,7 +879,7 @@ export default function HomePage() {
               { Icon: Gift, t: 'Membership & Loyalty', d: 'Membership plans with auto-discounts that reward regulars and boost repeat visits.' },
               { Icon: Star, t: 'Customer Feedback', d: 'Auto-collect ratings on WhatsApp. 5-star reviews go to Google; low ratings alert you instantly.' },
               { Icon: Megaphone, t: 'WhatsApp Broadcast', d: 'Birthday wishes, festival offers and flash sales to all customers in one click.' },
-              { Icon: Shield, t: 'Audit Trails', d: 'Track every action — who did what and when. Full transparency across billing, bookings and staff.' },
+              { Icon: Shield, t: 'Audit Trails', d: 'Track every action - who did what and when. Full transparency across billing, bookings and staff.' },
               { Icon: Headphones, t: '24-hour Support', d: 'Report any issue from the dashboard. Real humans reply on WhatsApp within 24 hours.' },
             ].map((f, i) => (
               <div key={f.t} className="reveal" style={{ transitionDelay: `${(i % 3) * 90}ms` }}>
@@ -950,10 +950,10 @@ export default function HomePage() {
                   One platform to run your entire salon
                 </h2>
                 <p className="mt-5 max-w-xl text-base sm:text-lg text-slate-500 leading-relaxed">
-                  Running a salon means being receptionist, accountant, marketer and manager — all at once.
+                  Running a salon means being receptionist, accountant, marketer and manager - all at once.
                   Snip &amp; Glow brings it together: appointments, billing, inventory, staff payroll and
                   WhatsApp marketing in a single dashboard. Whether it&apos;s one chair or a chain of
-                  branches, you always know what&apos;s booked, what&apos;s selling and what&apos;s due — so
+                  branches, you always know what&apos;s booked, what&apos;s selling and what&apos;s due - so
                   you spend less time on admin and more time with clients.
                 </p>
                 <div className="mt-8 flex flex-col sm:flex-row gap-3">
@@ -1688,7 +1688,7 @@ export default function HomePage() {
               Simple, honest pricing
             </h2>
             <p className="text-base sm:text-lg text-slate-500 max-w-2xl mx-auto leading-relaxed">
-              Every plan runs your whole salon — bookings, billing, staff and WhatsApp automation.
+              Every plan runs your whole salon - bookings, billing, staff and WhatsApp automation.
               No setup fees, no contracts, cancel anytime.
             </p>
 
@@ -2065,7 +2065,7 @@ export default function HomePage() {
           {/* 3-column requirement cards */}
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6 reveal">
 
-            {/* Card 1 — Legal Business Name */}
+            {/* Card 1 - Legal Business Name */}
             <div className="rounded-2xl border border-violet-100 bg-white shadow-sm shadow-violet-100/50 p-6 flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-violet-500 to-indigo-500 shadow-md shadow-violet-200">
@@ -2094,7 +2094,7 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Card 2 — Business Address & Phone */}
+            {/* Card 2 - Business Address & Phone */}
             <div className="rounded-2xl border border-indigo-100 bg-white shadow-sm shadow-indigo-100/50 p-6 flex flex-col gap-4">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-indigo-500 to-blue-500 shadow-md shadow-indigo-200">
@@ -2123,7 +2123,7 @@ export default function HomePage() {
               </ul>
             </div>
 
-            {/* Card 3 — Additional Prerequisites */}
+            {/* Card 3 - Additional Prerequisites */}
             <div className="rounded-2xl border border-blue-100 bg-white shadow-sm shadow-blue-100/50 p-6 flex flex-col gap-4 sm:col-span-2 lg:col-span-1">
               <div className="flex items-center gap-3">
                 <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-blue-500 to-cyan-500 shadow-md shadow-blue-200">
@@ -2193,7 +2193,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      {/* ===== WHY SNIP & GLOW — COMPARISON ===== */}
+      {/* ===== WHY SNIP & GLOW - COMPARISON ===== */}
       <section className="py-14 sm:py-20 relative overflow-hidden" style={{ background: 'linear-gradient(180deg, #fafafa 0%, #faf5ff 50%, #fafafa 100%)' }}>
         {/* Soft brand glow */}
         <div className="absolute -top-24 left-1/2 -translate-x-1/2 h-72 w-[36rem] rounded-full bg-violet-200/40 blur-3xl pointer-events-none" />

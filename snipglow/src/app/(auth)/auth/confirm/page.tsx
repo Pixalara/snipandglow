@@ -7,7 +7,7 @@ import { createClient } from '@/lib/supabase/client';
 import { nextSignupStep } from '@/lib/auth/signup-state';
 
 // =============================================================================
-// Auth Confirm — the browser-side completion of an OAuth sign-in. It handles two
+// Auth Confirm - the browser-side completion of an OAuth sign-in. It handles two
 // cases, both of which can only finish in the browser:
 //   1. IMPLICIT flow: the access token arrives in the URL hash (#access_token=)
 //      and is auto-read on client init.
@@ -15,7 +15,7 @@ import { nextSignupStep } from '@/lib/auth/signup-state';
 //      side, but when its copy of the code verifier is missing (e.g. a transient
 //      failure, or the flow started on a different host) it forwards the code
 //      here. The browser client holds the verifier and auto-exchanges the code
-//      on init via detectSessionInUrl — which is precisely why we must NOT call
+//      on init via detectSessionInUrl - which is precisely why we must NOT call
 //      exchangeCodeForSession by hand (see the effect below).
 //
 // The routing decision (dashboard vs finish-signup) lives in `nextSignupStep`,
@@ -32,7 +32,7 @@ export default function AuthConfirmPage() {
     async (user: User) => {
       const supabase = createClient();
 
-      // An existing salon member goes straight in — never re-verified.
+      // An existing salon member goes straight in - never re-verified.
       const { data: employee } = await supabase
         .from('employees')
         .select('tenant_id, branch_id, role')
@@ -63,8 +63,8 @@ export default function AuthConfirmPage() {
   useEffect(() => {
     const supabase = createClient();
 
-    // Resolve exactly once. Whichever signal arrives first — an auth event, an
-    // already-established session, or the fail-safe timeout — wins; the rest
+    // Resolve exactly once. Whichever signal arrives first - an auth event, an
+    // already-established session, or the fail-safe timeout - wins; the rest
     // become no-ops.
     let settled = false;
     const enter = (user: User) => {
@@ -82,7 +82,7 @@ export default function AuthConfirmPage() {
     // from /api/auth/callback) are auto-processed by the client on init: the
     // browser owns the code verifier and exchanges it itself via
     // detectSessionInUrl. We deliberately do NOT call exchangeCodeForSession
-    // here — the code is single-use and the verifier is deleted after the first
+    // here - the code is single-use and the verifier is deleted after the first
     // exchange, so a manual retry would fail and bounce an already-signed-in
     // user back to /login. We just wait for the resulting session.
     const { data: { subscription } } = supabase.auth.onAuthStateChange((event, session) => {
@@ -95,13 +95,13 @@ export default function AuthConfirmPage() {
 
     // The singleton client may have finished initialising (and its exchange)
     // before this effect subscribed, in which case SIGNED_IN won't replay.
-    // Reading the session directly closes that gap — getSession() awaits init.
+    // Reading the session directly closes that gap - getSession() awaits init.
     void supabase.auth.getSession().then(({ data: { session } }) => {
       if (session?.user) enter(session.user);
     });
 
     // Unrecoverable: the code was already consumed, or this browser never held
-    // the verifier. Don't spin on the loader forever — return to a clean login.
+    // the verifier. Don't spin on the loader forever - return to a clean login.
     const failSafe = setTimeout(bail, 10000);
 
     return () => {

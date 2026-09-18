@@ -132,7 +132,7 @@ function VerifyOtpContent() {
           return;
         }
 
-        // Session is set — redirect
+        // Session is set - redirect
         window.location.href = data.redirect || '/dashboard';
       } else {
         router.push(data.redirect || '/dashboard');
@@ -176,7 +176,7 @@ function VerifyOtpContent() {
           <div className="flex items-start gap-3 rounded-xl bg-emerald-50 border border-emerald-100 px-4 py-3">
             <CheckCircle2 className="size-5 text-emerald-600 shrink-0 mt-0.5" />
             <p className="text-sm text-emerald-800">
-              Your WhatsApp number is confirmed — you&apos;ll verify this same number during signup,
+              Your WhatsApp number is confirmed - you&apos;ll verify this same number during signup,
               so nothing here is wasted.
             </p>
           </div>

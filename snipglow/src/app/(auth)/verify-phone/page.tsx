@@ -176,7 +176,7 @@ export default function VerifyPhonePage() {
 
   return (
     <div className="space-y-8">
-      {/* Existing-account popup — blocks duplicate signup */}
+      {/* Existing-account popup - blocks duplicate signup */}
       {existing && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
           <div className="absolute inset-0 bg-black/50 backdrop-blur-sm" onClick={() => setExisting(null)} aria-hidden="true" />
@@ -220,7 +220,7 @@ export default function VerifyPhonePage() {
         </div>
         <h1 className="text-2xl font-bold text-slate-900 tracking-tight">Verify Your Phone</h1>
         <p className="text-sm text-slate-500">
-          Hi {userName}! One last step — verify your WhatsApp number for secure access.
+          Hi {userName}! One last step - verify your WhatsApp number for secure access.
         </p>
       </div>
 
