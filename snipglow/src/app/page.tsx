@@ -167,17 +167,117 @@ function MetaTechProviderStrip() {
 
 // =============================================================================
 // Interactive product dashboard shown in the hero.
-// Auto-rotating slides (Appointments / Analytics / Billing) in a browser frame.
+// Auto-rotating slides (Appointments / Analytics / WhatsApp / Billing) with
+// hand-built SVG charts — no external chart dependency.
 // =============================================================================
-const HERO_TABS = ['Appointments', 'Analytics', 'Billing'] as const;
+
+// Smooth cubic-bezier path through a set of points (Catmull-Rom style).
+function buildSmoothPath(pts: Array<{ x: number; y: number }>): string {
+  if (pts.length < 2) return '';
+  let d = `M ${pts[0].x.toFixed(1)} ${pts[0].y.toFixed(1)}`;
+  for (let i = 0; i < pts.length - 1; i++) {
+    const p0 = pts[i - 1] ?? pts[i];
+    const p1 = pts[i];
+    const p2 = pts[i + 1];
+    const p3 = pts[i + 2] ?? p2;
+    const cp1x = p1.x + (p2.x - p0.x) / 6;
+    const cp1y = p1.y + (p2.y - p0.y) / 6;
+    const cp2x = p2.x - (p3.x - p1.x) / 6;
+    const cp2y = p2.y - (p3.y - p1.y) / 6;
+    d += ` C ${cp1x.toFixed(1)} ${cp1y.toFixed(1)}, ${cp2x.toFixed(1)} ${cp2y.toFixed(1)}, ${p2.x.toFixed(1)} ${p2.y.toFixed(1)}`;
+  }
+  return d;
+}
+
+// Revenue area chart (7-day trend).
+function RevenueAreaChart() {
+  const data = [42, 58, 50, 74, 63, 90, 78];
+  const W = 300;
+  const H = 92;
+  const padX = 4;
+  const padY = 10;
+  const max = Math.max(...data) * 1.12;
+  const pts = data.map((v, i) => ({
+    x: padX + (i * (W - padX * 2)) / (data.length - 1),
+    y: H - padY - (v / max) * (H - padY * 2),
+  }));
+  const line = buildSmoothPath(pts);
+  const area = `${line} L ${(W - padX).toFixed(1)} ${H.toFixed(1)} L ${padX.toFixed(1)} ${H.toFixed(1)} Z`;
+  return (
+    <svg viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="none" className="h-[84px] w-full">
+      <defs>
+        <linearGradient id="sng-rev-fill" x1="0" y1="0" x2="0" y2="1">
+          <stop offset="0" stopColor="#8b5cf6" stopOpacity="0.30" />
+          <stop offset="1" stopColor="#8b5cf6" stopOpacity="0" />
+        </linearGradient>
+        <linearGradient id="sng-rev-line" x1="0" y1="0" x2="1" y2="0">
+          <stop offset="0" stopColor="#d946ef" />
+          <stop offset="1" stopColor="#7c3aed" />
+        </linearGradient>
+      </defs>
+      {[0.34, 0.68].map((g) => (
+        <line key={g} x1="0" y1={(H * g).toFixed(1)} x2={W} y2={(H * g).toFixed(1)} stroke="#eef2f7" strokeWidth="1" vectorEffect="non-scaling-stroke" />
+      ))}
+      <path d={area} fill="url(#sng-rev-fill)" />
+      <path d={line} fill="none" stroke="url(#sng-rev-line)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" vectorEffect="non-scaling-stroke" />
+    </svg>
+  );
+}
+
+// Bookings-by-channel donut / pie chart.
+function ChannelDonut() {
+  const segs = [
+    { label: 'WhatsApp', value: 62, color: '#22c55e' },
+    { label: 'Web link', value: 24, color: '#7c3aed' },
+    { label: 'Walk-in', value: 14, color: '#f59e0b' },
+  ];
+  const r = 40;
+  const sw = 15;
+  const circ = 2 * Math.PI * r;
+  let offset = 0;
+  return (
+    <div className="flex items-center gap-3">
+      <div className="relative shrink-0" style={{ width: 76, height: 76 }}>
+        <svg viewBox="0 0 100 100" className="h-full w-full -rotate-90">
+          <circle cx="50" cy="50" r={r} fill="none" stroke="#f1f5f9" strokeWidth={sw} />
+          {segs.map((s) => {
+            const len = (s.value / 100) * circ;
+            const dash = `${len.toFixed(2)} ${(circ - len).toFixed(2)}`;
+            const node = (
+              <circle key={s.label} cx="50" cy="50" r={r} fill="none" stroke={s.color} strokeWidth={sw} strokeDasharray={dash} strokeDashoffset={(-offset).toFixed(2)} />
+            );
+            offset += len;
+            return node;
+          })}
+        </svg>
+        <div className="absolute inset-0 flex flex-col items-center justify-center">
+          <span className="text-[12px] font-extrabold leading-none text-slate-900">142</span>
+          <span className="text-[6.5px] text-slate-400">bookings</span>
+        </div>
+      </div>
+      <div className="min-w-0 flex-1 space-y-1.5">
+        {segs.map((s) => (
+          <div key={s.label} className="flex items-center gap-1.5">
+            <span className="h-2 w-2 shrink-0 rounded-full" style={{ background: s.color }} />
+            <span className="truncate text-[9px] text-slate-500">{s.label}</span>
+            <span className="ml-auto text-[9px] font-bold text-slate-700">{s.value}%</span>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+const HERO_TABS = ['Appointments', 'Analytics', 'WhatsApp', 'Billing'] as const;
+const HERO_SIDEBAR = [Calendar, BarChart3, MessageCircle, Wallet, Users, Settings];
 
 function HeroDashboard() {
-  const [active, setActive] = useState(0);
+  const [active, setActive] = useState(1);
   const [paused, setPaused] = useState(false);
 
   useEffect(() => {
     if (paused) return;
-    const t = setInterval(() => setActive((i) => (i + 1) % HERO_TABS.length), 3600);
+    const t = setInterval(() => setActive((i) => (i + 1) % HERO_TABS.length), 4200);
     return () => clearInterval(t);
   }, [paused]);
 
@@ -206,14 +306,11 @@ function HeroDashboard() {
         </div>
 
         <div className="flex">
-          {/* Mini sidebar */}
+          {/* Sidebar */}
           <div className="hidden w-12 shrink-0 flex-col items-center gap-3.5 bg-slate-900 py-4 sm:flex">
             <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-600 text-[11px] font-black text-white">S</div>
-            {[Calendar, BarChart3, Wallet, Users, Settings].map((Icon, i) => (
-              <div
-                key={i}
-                className={`flex h-7 w-7 items-center justify-center rounded-lg ${i === active ? 'bg-white/15 text-white' : 'text-slate-500'}`}
-              >
+            {HERO_SIDEBAR.map((Icon, i) => (
+              <div key={i} className={`flex h-7 w-7 items-center justify-center rounded-lg ${i === active ? 'bg-white/15 text-white' : 'text-slate-500'}`}>
                 <Icon className="h-3.5 w-3.5" />
               </div>
             ))}
@@ -222,13 +319,13 @@ function HeroDashboard() {
           {/* Main panel */}
           <div className="min-w-0 flex-1">
             {/* Tab switcher */}
-            <div className="flex items-center gap-1 border-b border-slate-100 px-3 py-2.5">
+            <div className="flex items-center gap-1 border-b border-slate-100 px-2.5 py-2.5">
               {HERO_TABS.map((label, i) => (
                 <button
                   key={label}
                   type="button"
                   onClick={() => setActive(i)}
-                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${active === i ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+                  className={`rounded-full px-2.5 py-1 text-[10.5px] font-semibold transition-colors ${active === i ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'}`}
                 >
                   {label}
                 </button>
@@ -236,28 +333,42 @@ function HeroDashboard() {
             </div>
 
             {/* Viewport */}
-            <div className="relative h-[290px] overflow-hidden bg-slate-50/60 sm:h-[300px]">
+            <div className="relative h-[372px] overflow-hidden bg-slate-50/60 sm:h-[392px]">
 
-              {/* Appointments */}
-              <div className={`absolute inset-0 p-3.5 transition-all duration-500 ${active === 0 ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-3 opacity-0'}`}>
+              {/* ── Appointments ── */}
+              <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 0 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
                 <div className="mb-2.5 flex items-center justify-between">
                   <div>
                     <p className="text-[13px] font-bold text-slate-900">Today&apos;s appointments</p>
-                    <p className="text-[9.5px] text-slate-400">Thursday, 12 June</p>
+                    <p className="text-[9.5px] text-slate-400">Thursday, 12 June · JK Salon &amp; Spa</p>
                   </div>
                   <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">18 booked</span>
                 </div>
+                <div className="mb-2.5 grid grid-cols-3 gap-2">
+                  {[
+                    { l: 'Confirmed', v: '14', c: 'text-emerald-600' },
+                    { l: 'Pending', v: '3', c: 'text-amber-600' },
+                    { l: 'Expected', v: '₹38k', c: 'text-violet-600' },
+                  ].map((s) => (
+                    <div key={s.l} className="rounded-lg border border-slate-100 bg-white px-2 py-1.5 shadow-sm">
+                      <p className="text-[8px] font-medium text-slate-400">{s.l}</p>
+                      <p className={`text-[12px] font-extrabold ${s.c}`}>{s.v}</p>
+                    </div>
+                  ))}
+                </div>
                 <div className="space-y-1.5">
                   {[
-                    { t: '10:00', i: 'PS', n: 'Priya Sharma', s: 'Hair Spa + Cut', st: 'Confirmed', badge: 'bg-emerald-50 text-emerald-600', av: 'bg-fuchsia-100 text-fuchsia-700' },
-                    { t: '11:30', i: 'AR', n: 'Anjali Rao', s: 'Bridal Facial', st: 'In chair', badge: 'bg-violet-50 text-violet-600', av: 'bg-violet-100 text-violet-700' },
-                    { t: '01:00', i: 'MK', n: 'Meera Krishnan', s: 'Manicure', st: 'Reminded', badge: 'bg-amber-50 text-amber-600', av: 'bg-emerald-100 text-emerald-700' },
-                    { t: '03:30', i: 'SP', n: 'Sneha Patel', s: 'Keratin Treatment', st: 'Confirmed', badge: 'bg-emerald-50 text-emerald-600', av: 'bg-blue-100 text-blue-700' },
+                    { t: '10:00', i: 'PS', n: 'Priya Sharma', s: 'Hair Spa + Cut · Neha', st: 'Confirmed', badge: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-400', av: 'bg-fuchsia-100 text-fuchsia-700' },
+                    { t: '11:30', i: 'AR', n: 'Anjali Rao', s: 'Bridal Facial · Simran', st: 'In chair', badge: 'bg-violet-50 text-violet-600', bar: 'bg-violet-400', av: 'bg-violet-100 text-violet-700' },
+                    { t: '01:00', i: 'MK', n: 'Meera Krishnan', s: 'Manicure · Farah', st: 'Reminded', badge: 'bg-amber-50 text-amber-600', bar: 'bg-amber-400', av: 'bg-emerald-100 text-emerald-700' },
+                    { t: '03:30', i: 'SP', n: 'Sneha Patel', s: 'Keratin · Neha', st: 'Confirmed', badge: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-400', av: 'bg-blue-100 text-blue-700' },
+                    { t: '05:00', i: 'RD', n: 'Ritu Desai', s: 'Hair Colour · Simran', st: 'Confirmed', badge: 'bg-emerald-50 text-emerald-600', bar: 'bg-emerald-400', av: 'bg-amber-100 text-amber-700' },
                   ].map((r) => (
-                    <div key={r.t} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
-                      <span className="w-9 shrink-0 text-[10px] font-bold text-slate-400">{r.t}</span>
+                    <div key={r.t} className="flex items-center gap-2 overflow-hidden rounded-xl border border-slate-100 bg-white pr-2.5 shadow-sm">
+                      <span className={`w-1 self-stretch shrink-0 ${r.bar}`} />
+                      <span className="w-9 shrink-0 py-2 text-[10px] font-bold text-slate-400">{r.t}</span>
                       <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${r.av}`}>{r.i}</span>
-                      <div className="min-w-0 flex-1">
+                      <div className="min-w-0 flex-1 py-2">
                         <p className="truncate text-[11px] font-semibold text-slate-800">{r.n}</p>
                         <p className="truncate text-[9px] text-slate-400">{r.s}</p>
                       </div>
@@ -267,66 +378,141 @@ function HeroDashboard() {
                 </div>
               </div>
 
-              {/* Analytics */}
-              <div className={`absolute inset-0 p-3.5 transition-all duration-500 ${active === 1 ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}>
+              {/* ── Analytics ── */}
+              <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 1 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
                 <div className="mb-2.5 flex items-center justify-between">
                   <p className="text-[13px] font-bold text-slate-900">Business overview</p>
                   <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-500">This week</span>
                 </div>
-                <div className="mb-3 grid grid-cols-3 gap-2">
+                <div className="mb-2.5 grid grid-cols-3 gap-2">
                   {[
                     { l: 'Revenue', v: '₹1.24L', d: '+18%' },
                     { l: 'Bookings', v: '142', d: '+9%' },
                     { l: 'No-shows', v: '3%', d: '-64%' },
                   ].map((c) => (
-                    <div key={c.l} className="rounded-xl border border-slate-100 bg-white p-2 shadow-sm">
-                      <p className="text-[8.5px] font-medium text-slate-400">{c.l}</p>
-                      <p className="text-[14px] font-extrabold leading-tight text-slate-900">{c.v}</p>
-                      <p className="text-[8.5px] font-bold text-emerald-600">{c.d}</p>
+                    <div key={c.l} className="rounded-lg border border-slate-100 bg-white px-2 py-1.5 shadow-sm">
+                      <p className="text-[8px] font-medium text-slate-400">{c.l}</p>
+                      <p className="text-[13px] font-extrabold leading-tight text-slate-900">{c.v}</p>
+                      <p className="text-[8px] font-bold text-emerald-600">{c.d}</p>
                     </div>
                   ))}
                 </div>
-                <div className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
-                  <p className="mb-2 text-[9.5px] font-semibold text-slate-500">Revenue this week</p>
-                  <div className="flex h-24 items-end justify-between gap-1.5">
-                    {[45, 62, 38, 78, 55, 88, 70].map((h, i) => (
-                      <div key={i} className="flex flex-1 flex-col items-center gap-1">
-                        <div className="w-full rounded-t bg-gradient-to-t from-fuchsia-500 to-violet-400" style={{ height: `${h}%` }} />
-                        <span className="text-[7px] text-slate-300">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
-                      </div>
+                <div className="mb-2.5 rounded-xl border border-slate-100 bg-white p-2.5 shadow-sm">
+                  <div className="mb-1 flex items-center justify-between">
+                    <p className="text-[9.5px] font-semibold text-slate-500">Revenue this week</p>
+                    <span className="inline-flex items-center gap-1 text-[8.5px] font-bold text-emerald-600"><TrendingUp className="h-2.5 w-2.5" /> +18%</span>
+                  </div>
+                  <RevenueAreaChart />
+                  <div className="mt-1 flex justify-between px-1">
+                    {['M', 'T', 'W', 'T', 'F', 'S', 'S'].map((d, i) => (
+                      <span key={i} className="text-[7px] text-slate-300">{d}</span>
                     ))}
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-2.5">
+                  <div className="rounded-xl border border-slate-100 bg-white p-2.5 shadow-sm">
+                    <p className="mb-1.5 text-[9.5px] font-semibold text-slate-500">Bookings by channel</p>
+                    <ChannelDonut />
+                  </div>
+                  <div className="rounded-xl border border-slate-100 bg-white p-2.5 shadow-sm">
+                    <p className="mb-1.5 text-[9.5px] font-semibold text-slate-500">Top services</p>
+                    <div className="space-y-1.5">
+                      {[
+                        { s: 'Hair', v: 42, c: 'from-fuchsia-500 to-violet-500' },
+                        { s: 'Skin', v: 28, c: 'from-violet-500 to-indigo-500' },
+                        { s: 'Nails', v: 18, c: 'from-emerald-500 to-teal-500' },
+                        { s: 'Spa', v: 12, c: 'from-amber-500 to-orange-500' },
+                      ].map((b) => (
+                        <div key={b.s}>
+                          <div className="mb-0.5 flex items-center justify-between">
+                            <span className="text-[8.5px] text-slate-500">{b.s}</span>
+                            <span className="text-[8.5px] font-bold text-slate-600">{b.v}%</span>
+                          </div>
+                          <div className="h-1.5 w-full overflow-hidden rounded-full bg-slate-100">
+                            <div className={`h-full rounded-full bg-gradient-to-r ${b.c}`} style={{ width: `${Math.round((b.v / 42) * 100)}%` }} />
+                          </div>
+                        </div>
+                      ))}
+                    </div>
                   </div>
                 </div>
               </div>
 
-              {/* Billing */}
-              <div className={`absolute inset-0 p-3.5 transition-all duration-500 ${active === 2 ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}>
+              {/* ── WhatsApp templates ── */}
+              <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 2 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
+                <div className="mb-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-900">WhatsApp templates</p>
+                    <p className="text-[9.5px] text-slate-400">Approved on Meta · sent from your number</p>
+                  </div>
+                  <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600"><CheckCircle2 className="h-2.5 w-2.5" /> 5 approved</span>
+                </div>
+                <div className="mb-2.5 rounded-xl border border-slate-100 p-2.5" style={{ background: '#e5ddd5' }}>
+                  <div className="max-w-[86%] rounded-lg rounded-tl-sm bg-white px-2.5 py-1.5 shadow-sm">
+                    <p className="text-[10px] font-bold text-[#075e54]">Booking confirmed ✅</p>
+                    <p className="text-[9px] leading-snug text-slate-600">Hi Priya! Your appointment at JK Salon &amp; Spa is confirmed for Thu, 12 Jun at 10:00 AM. Reply RESCHEDULE to change.</p>
+                    <p className="mt-0.5 text-right text-[7px] text-slate-400">10:24 AM ✓✓</p>
+                  </div>
+                </div>
+                <div className="space-y-1.5">
+                  {[
+                    { Icon: CheckCircle2, n: 'Booking Confirmation', cat: 'Utility', box: 'bg-emerald-50', ic: 'text-emerald-600' },
+                    { Icon: Bell, n: 'Appointment Reminder', cat: 'Utility', box: 'bg-violet-50', ic: 'text-violet-600' },
+                    { Icon: FileText, n: 'Bill / Receipt', cat: 'Utility', box: 'bg-blue-50', ic: 'text-blue-600' },
+                    { Icon: Star, n: 'Feedback Request', cat: 'Marketing', box: 'bg-amber-50', ic: 'text-amber-600' },
+                    { Icon: Gift, n: 'Win-back Offer', cat: 'Marketing', box: 'bg-fuchsia-50', ic: 'text-fuchsia-600' },
+                  ].map((tpl) => (
+                    <div key={tpl.n} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-lg ${tpl.box}`}><tpl.Icon className={`h-3.5 w-3.5 ${tpl.ic}`} /></span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-semibold text-slate-800">{tpl.n}</p>
+                        <p className="text-[8.5px] text-slate-400">{tpl.cat}</p>
+                      </div>
+                      <span className="inline-flex items-center gap-1 rounded-full bg-emerald-50 px-2 py-0.5 text-[8px] font-bold text-emerald-600"><span className="h-1.5 w-1.5 rounded-full bg-emerald-500" /> Approved</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* ── Billing ── */}
+              <div className={`absolute inset-0 overflow-hidden p-3.5 transition-opacity duration-500 ${active === 3 ? 'opacity-100' : 'pointer-events-none opacity-0'}`}>
                 <div className="flex h-full flex-col rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
                   <div className="mb-2 flex items-center justify-between border-b border-slate-100 pb-2">
                     <div className="flex items-center gap-2">
                       <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white"><Scissors className="h-3.5 w-3.5" /></span>
                       <div>
                         <p className="text-[11px] font-bold text-slate-900">JK Salon &amp; Spa</p>
-                        <p className="text-[8px] text-slate-400">Invoice #INV-2048</p>
+                        <p className="text-[8px] text-slate-400">Invoice #INV-2048 · 12 Jun</p>
                       </div>
                     </div>
                     <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[8.5px] font-bold text-emerald-600">Paid</span>
                   </div>
-                  <div className="space-y-1.5">
+                  <div className="space-y-2">
                     {[
-                      { s: 'Hair Spa + Cut', p: '₹1,200' },
-                      { s: 'Bridal Facial', p: '₹2,500' },
-                      { s: 'Product · Argan Serum', p: '₹650' },
+                      { s: 'Hair Spa + Cut', q: 'Neha', p: '₹1,200' },
+                      { s: 'Bridal Facial', q: 'Simran', p: '₹2,500' },
+                      { s: 'Argan Serum (retail)', q: 'x1', p: '₹650' },
                     ].map((li) => (
-                      <div key={li.s} className="flex items-center justify-between text-[10px]">
-                        <span className="text-slate-500">{li.s}</span>
-                        <span className="font-semibold text-slate-700">{li.p}</span>
+                      <div key={li.s} className="flex items-center justify-between">
+                        <div>
+                          <p className="text-[10.5px] font-medium text-slate-700">{li.s}</p>
+                          <p className="text-[8px] text-slate-400">{li.q}</p>
+                        </div>
+                        <span className="text-[10.5px] font-semibold text-slate-700">{li.p}</span>
                       </div>
                     ))}
                   </div>
-                  <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
-                    <span className="text-[10px] font-medium text-slate-400">Total (incl. GST)</span>
-                    <span className="text-[15px] font-extrabold text-slate-900">₹4,350</span>
+                  <div className="mt-2 space-y-1 border-t border-slate-100 pt-2">
+                    <div className="flex items-center justify-between text-[9px] text-slate-400">
+                      <span>Subtotal</span><span>₹4,350</span>
+                    </div>
+                    <div className="flex items-center justify-between text-[9px] text-slate-400">
+                      <span>GST (18%)</span><span>₹783</span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-[10px] font-medium text-slate-500">Total</span>
+                      <span className="text-[15px] font-extrabold text-slate-900">₹5,133</span>
+                    </div>
                   </div>
                   <button type="button" className="mt-auto flex items-center justify-center gap-1.5 rounded-lg py-2 text-[10.5px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}>
                     <MessageCircle className="h-3.5 w-3.5" /> Send bill on WhatsApp
