@@ -31,6 +31,8 @@ import {
   Smartphone,
   Package,
   Settings,
+  BadgeCheck,
+  Lock,
 } from 'lucide-react';
 
 // Animated counter that counts up when scrolled into view
@@ -899,27 +901,27 @@ export default function HomePage() {
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="flex flex-col items-center gap-5">
             <p className="text-center text-sm sm:text-base font-semibold text-slate-700">
-              Trusted by <span className="text-violet-600">500+ salons &amp; spas</span> across India
+              Trusted by <span className="text-violet-600">1,000+ salons &amp; spas</span> across India
             </p>
-            <div className="flex flex-wrap items-center justify-center gap-x-6 gap-y-3 sm:gap-x-10">
+            <div className="flex flex-wrap items-center justify-center gap-2.5 sm:gap-3">
               {[
-                { icon: '🇮🇳', label: 'Made in India' },
-                { icon: '🏛️', label: 'DPIIT Recognized Startup' },
-                { icon: '💬', label: 'Built on WhatsApp Business' },
-                { icon: '🔒', label: 'AES-256 Encrypted' },
-                { icon: '🧾', label: 'GST-Ready Billing' },
-              ].map(({ icon, label }) => (
-                <div key={label} className="inline-flex items-center gap-2">
-                  <span className="text-lg">{icon}</span>
-                  <span className="text-xs sm:text-sm font-medium text-slate-600">{label}</span>
+                { icon: <span className="text-sm leading-none">🇮🇳</span>, label: 'Made in India' },
+                { icon: <BadgeCheck className="h-4 w-4 text-violet-600" />, label: 'DPIIT Recognized Technology Company' },
+                { icon: <MessageCircle className="h-4 w-4 text-green-600" />, label: 'Built on WhatsApp Business' },
+                { icon: <Lock className="h-4 w-4 text-emerald-600" />, label: 'AES-256 Encrypted' },
+                { icon: <FileText className="h-4 w-4 text-blue-600" />, label: 'GST-Ready Billing' },
+              ].map((b) => (
+                <div key={b.label} className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-white px-3.5 py-1.5 shadow-sm">
+                  {b.icon}
+                  <span className="whitespace-nowrap text-xs sm:text-[13px] font-semibold text-slate-700">{b.label}</span>
                 </div>
               ))}
             </div>
             <div className="flex flex-wrap items-center justify-center gap-x-8 gap-y-3 pt-1">
               {[
-                { value: 500, suffix: '+', label: 'Active salons' },
-                { value: 12, suffix: '+', label: 'Cities across India' },
-                { value: 2, suffix: 'L+', label: 'WhatsApp messages sent' },
+                { value: 1000, suffix: '+', label: 'Active salons' },
+                { value: 50, suffix: '+', label: 'Cities across India' },
+                { value: 5, suffix: 'L+', label: 'WhatsApp messages sent' },
                 { value: 70, suffix: '%', label: 'Fewer no-shows' },
               ].map(({ value, suffix, label }) => (
                 <div key={label} className="text-center">
