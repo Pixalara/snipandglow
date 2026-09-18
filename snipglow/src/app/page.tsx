@@ -650,6 +650,80 @@ export default function HomePage() {
         </div>
       </section>
 
+      {/* ===== ONE PLATFORM (WHY) ===== */}
+      <section className="py-14 sm:py-20" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f5f3ff 55%, #ffffff 100%)' }}>
+        <div className="mx-auto max-w-7xl px-4 sm:px-6">
+          <div className="rounded-[28px] border border-slate-200 bg-white/80 backdrop-blur p-6 sm:p-10 lg:p-14 shadow-xl shadow-slate-200/50">
+            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+              {/* Left */}
+              <div className="reveal-left">
+                <span className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-violet-700">
+                  <span className="h-1.5 w-1.5 rounded-full bg-violet-500" /> Why Snip &amp; Glow
+                </span>
+                <h2 className="mt-4 text-3xl sm:text-4xl lg:text-[2.75rem] font-extrabold leading-[1.1] tracking-tight text-slate-900" style={{ fontFamily: 'var(--font-jakarta)' }}>
+                  One platform to run your entire salon
+                </h2>
+                <p className="mt-5 max-w-xl text-base sm:text-lg text-slate-500 leading-relaxed">
+                  Running a salon means being receptionist, accountant, marketer and manager — all at once.
+                  Snip &amp; Glow brings it together: appointments, billing, inventory, staff payroll and
+                  WhatsApp marketing in a single dashboard. Whether it&apos;s one chair or a chain of
+                  branches, you always know what&apos;s booked, what&apos;s selling and what&apos;s due — so
+                  you spend less time on admin and more time with clients.
+                </p>
+                <div className="mt-8 flex flex-col sm:flex-row gap-3">
+                  <Link
+                    href="/signup"
+                    className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-colors"
+                  >
+                    Start free trial <ArrowRight className="h-4 w-4" />
+                  </Link>
+                  <a
+                    href="#how-it-works"
+                    className="inline-flex items-center justify-center gap-2 rounded-full border border-slate-200 bg-white px-7 py-3.5 text-sm font-semibold text-slate-700 hover:border-slate-300 hover:bg-slate-50 transition-colors"
+                  >
+                    See how it works
+                  </a>
+                </div>
+              </div>
+
+              {/* Right - all-in-one modules visual */}
+              <div className="relative reveal-right">
+                <div
+                  className="absolute -inset-4 -z-10 rounded-[36px] blur-3xl"
+                  style={{ background: 'radial-gradient(ellipse at 60% 40%, rgba(139,92,246,0.18), rgba(217,70,239,0.08), transparent 70%)' }}
+                />
+                <div className="rounded-3xl border border-slate-200 bg-white p-4 sm:p-5 shadow-xl shadow-slate-300/30">
+                  <div className="mb-3 flex items-center justify-between px-1">
+                    <p className="text-sm font-bold text-slate-900">Your salon, one dashboard</p>
+                    <span className="inline-flex items-center gap-1.5 text-[10px] font-semibold text-emerald-600">
+                      <span className="h-1.5 w-1.5 rounded-full bg-emerald-500 animate-pulse" /> Live
+                    </span>
+                  </div>
+                  <div className="grid grid-cols-2 gap-2.5 sm:gap-3">
+                    {[
+                      { Icon: Calendar, t: 'Appointments', s: 'Bookings & calendar', box: 'bg-violet-50', ic: 'text-violet-600' },
+                      { Icon: FileText, t: 'Billing & POS', s: 'GST-ready invoices', box: 'bg-emerald-50', ic: 'text-emerald-600' },
+                      { Icon: MessageCircle, t: 'WhatsApp', s: 'Reminders & campaigns', box: 'bg-green-50', ic: 'text-green-600' },
+                      { Icon: Package, t: 'Inventory', s: 'Stock & retail sales', box: 'bg-blue-50', ic: 'text-blue-600' },
+                      { Icon: Users, t: 'Staff & Payroll', s: 'Shifts & salaries', box: 'bg-amber-50', ic: 'text-amber-600' },
+                      { Icon: BarChart3, t: 'Analytics', s: 'Revenue insights', box: 'bg-fuchsia-50', ic: 'text-fuchsia-600' },
+                    ].map((m) => (
+                      <div key={m.t} className="rounded-2xl border border-slate-100 bg-white p-3 sm:p-3.5 shadow-sm transition-transform hover:-translate-y-0.5">
+                        <div className={`mb-2 flex h-9 w-9 items-center justify-center rounded-xl ${m.box}`}>
+                          <m.Icon className={`h-4 w-4 ${m.ic}`} />
+                        </div>
+                        <p className="text-[12.5px] font-bold leading-tight text-slate-800">{m.t}</p>
+                        <p className="mt-0.5 text-[10.5px] leading-tight text-slate-400">{m.s}</p>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
       <section className="py-14 sm:py-20 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
