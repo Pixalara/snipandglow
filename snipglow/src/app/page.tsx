@@ -276,7 +276,7 @@ function HeroDashboard() {
 
   return (
     <div
-      className="relative mx-auto w-full max-w-[540px]"
+      className="relative mx-auto w-full min-w-0 max-w-[540px]"
       onMouseEnter={() => setPaused(true)}
       onMouseLeave={() => setPaused(false)}
     >
@@ -830,7 +830,7 @@ export default function HomePage() {
           </div>
 
           {/* Right - Interactive dashboard showcase */}
-          <div className="relative reveal-right mt-6 lg:mt-0">
+          <div className="relative reveal-right mt-6 lg:mt-0 min-w-0 max-w-full overflow-hidden lg:overflow-visible">
             <HeroDashboard />
           </div>
         </div>
