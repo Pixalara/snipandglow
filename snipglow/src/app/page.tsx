@@ -797,7 +797,7 @@ export default function HomePage() {
 
             {/* Editorial headline */}
             <h1
-              className="text-[2.5rem] leading-[1.05] sm:text-6xl lg:text-[4.25rem] font-extrabold tracking-tight text-slate-900"
+              className="text-[2rem] leading-[1.1] sm:text-5xl lg:text-[4.25rem] font-extrabold tracking-tight text-slate-900"
               style={{ fontFamily: 'var(--font-jakarta)' }}
             >
               Turn WhatsApp into your salon&apos;s{' '}
@@ -940,7 +940,7 @@ export default function HomePage() {
       <section className="py-14 sm:py-20" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f5f3ff 55%, #ffffff 100%)' }}>
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="rounded-[28px] border border-slate-200 bg-white/80 backdrop-blur p-6 sm:p-10 lg:p-14 shadow-xl shadow-slate-200/50">
-            <div className="grid lg:grid-cols-2 gap-10 lg:gap-16 items-center">
+            <div className="grid md:grid-cols-2 gap-10 lg:gap-16 items-center">
               {/* Left */}
               <div className="reveal-left">
                 <span className="inline-flex items-center gap-2 rounded-full bg-violet-100 px-3 py-1 text-[11px] font-bold uppercase tracking-widest text-violet-700">
@@ -1013,7 +1013,7 @@ export default function HomePage() {
       {/* ===== EFFORTLESS BOOKINGS VIA WHATSAPP ===== */}
       <section className="py-14 sm:py-20 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             {/* Left - Image */}
             <div className="relative reveal-left">
@@ -1096,7 +1096,7 @@ export default function HomePage() {
       </section>
       <section className="py-14 sm:py-20 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             {/* Left - Content */}
             <div className="reveal-left">
@@ -1194,7 +1194,7 @@ export default function HomePage() {
       {/* ===== ANALYTICS & DASHBOARD ===== */}
       <section className="py-14 sm:py-20 bg-white overflow-hidden">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-12 lg:gap-16 items-center">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-12 lg:gap-16 items-center">
 
             {/* Left - Image */}
             <div className="relative reveal-left">
@@ -1220,7 +1220,7 @@ export default function HomePage() {
                   <p className="text-slate-500 text-base leading-relaxed mb-4">
                     Visual reporting on revenue trends, top services, staff performance, and retention metrics.
                   </p>
-                  <div className="grid grid-cols-2 gap-2">
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
                     {[
                       'Revenue analytics',
                       'Appointment trends',
@@ -1723,7 +1723,7 @@ export default function HomePage() {
             <span className="inline-flex items-center rounded-full bg-emerald-100 px-2.5 py-1 text-xs font-bold text-emerald-700">Save up to 40%</span>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-6 lg:gap-8 max-w-7xl mx-auto reveal">
 
             {/* ── ESSENTIALS ─────────────────────────────────── */}
             <div className="relative flex flex-col rounded-3xl overflow-hidden border border-fuchsia-200 bg-gradient-to-b from-fuchsia-50 to-white shadow-md hover:shadow-xl transition-shadow duration-300">
@@ -1735,7 +1735,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
+              <div className="grid grid-rows-[auto_auto_auto_1fr] p-6 lg:p-10 h-full">
                 {/* Row 1 - Header (description grows) */}
                 <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-400 shadow-lg shadow-fuchsia-400/30 mb-4">
@@ -1834,7 +1834,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
+              <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-6 lg:p-10 h-full">
                 {/* Row 1 - Header */}
                 <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-violet-400 to-violet-500 shadow-lg shadow-violet-500/40 mb-4">
@@ -1930,7 +1930,7 @@ export default function HomePage() {
                 </div>
               </div>
 
-              <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-8 sm:p-10 h-full">
+              <div className="relative grid grid-rows-[auto_auto_auto_1fr] p-6 lg:p-10 h-full">
                 {/* Row 1 - Header */}
                 <div className="mb-8 flex flex-col">
                   <div className="inline-flex items-center justify-center h-12 w-12 rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-500 shadow-lg shadow-violet-500/30 mb-4">
