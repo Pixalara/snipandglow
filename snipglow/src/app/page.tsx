@@ -165,6 +165,212 @@ function MetaTechProviderStrip() {
   );
 }
 
+// =============================================================================
+// Interactive product dashboard shown in the hero.
+// Auto-rotating slides (Appointments / Analytics / Billing) in a browser frame.
+// =============================================================================
+const HERO_TABS = ['Appointments', 'Analytics', 'Billing'] as const;
+
+function HeroDashboard() {
+  const [active, setActive] = useState(0);
+  const [paused, setPaused] = useState(false);
+
+  useEffect(() => {
+    if (paused) return;
+    const t = setInterval(() => setActive((i) => (i + 1) % HERO_TABS.length), 3600);
+    return () => clearInterval(t);
+  }, [paused]);
+
+  return (
+    <div
+      className="relative mx-auto w-full max-w-[540px]"
+      onMouseEnter={() => setPaused(true)}
+      onMouseLeave={() => setPaused(false)}
+    >
+      {/* Ambient glow */}
+      <div
+        className="absolute -inset-8 -z-10 rounded-[44px] blur-3xl"
+        style={{ background: 'radial-gradient(ellipse at 50% 35%, rgba(139,92,246,0.20), rgba(217,70,239,0.10), transparent 70%)' }}
+      />
+
+      {/* Browser window */}
+      <div className="relative overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-2xl shadow-slate-400/25">
+        {/* Title bar */}
+        <div className="flex h-9 items-center gap-1.5 border-b border-slate-100 bg-slate-50 px-4">
+          <span className="h-2.5 w-2.5 rounded-full" style={{ background: '#ff5f57' }} />
+          <span className="h-2.5 w-2.5 rounded-full" style={{ background: '#febc2e' }} />
+          <span className="h-2.5 w-2.5 rounded-full" style={{ background: '#28c840' }} />
+          <div className="mx-auto flex items-center gap-1.5 rounded-md border border-slate-200 bg-white px-3 py-0.5 text-[10px] font-medium text-slate-400">
+            <Shield className="h-2.5 w-2.5 text-emerald-500" /> app.snipandglow.com
+          </div>
+        </div>
+
+        <div className="flex">
+          {/* Mini sidebar */}
+          <div className="hidden w-12 shrink-0 flex-col items-center gap-3.5 bg-slate-900 py-4 sm:flex">
+            <div className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-600 text-[11px] font-black text-white">S</div>
+            {[Calendar, BarChart3, Wallet, Users, Settings].map((Icon, i) => (
+              <div
+                key={i}
+                className={`flex h-7 w-7 items-center justify-center rounded-lg ${i === active ? 'bg-white/15 text-white' : 'text-slate-500'}`}
+              >
+                <Icon className="h-3.5 w-3.5" />
+              </div>
+            ))}
+          </div>
+
+          {/* Main panel */}
+          <div className="min-w-0 flex-1">
+            {/* Tab switcher */}
+            <div className="flex items-center gap-1 border-b border-slate-100 px-3 py-2.5">
+              {HERO_TABS.map((label, i) => (
+                <button
+                  key={label}
+                  type="button"
+                  onClick={() => setActive(i)}
+                  className={`rounded-full px-3 py-1 text-[11px] font-semibold transition-colors ${active === i ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'}`}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
+
+            {/* Viewport */}
+            <div className="relative h-[290px] overflow-hidden bg-slate-50/60 sm:h-[300px]">
+
+              {/* Appointments */}
+              <div className={`absolute inset-0 p-3.5 transition-all duration-500 ${active === 0 ? 'translate-x-0 opacity-100' : 'pointer-events-none -translate-x-3 opacity-0'}`}>
+                <div className="mb-2.5 flex items-center justify-between">
+                  <div>
+                    <p className="text-[13px] font-bold text-slate-900">Today&apos;s appointments</p>
+                    <p className="text-[9.5px] text-slate-400">Thursday, 12 June</p>
+                  </div>
+                  <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[9px] font-bold text-emerald-600">18 booked</span>
+                </div>
+                <div className="space-y-1.5">
+                  {[
+                    { t: '10:00', i: 'PS', n: 'Priya Sharma', s: 'Hair Spa + Cut', st: 'Confirmed', badge: 'bg-emerald-50 text-emerald-600', av: 'bg-fuchsia-100 text-fuchsia-700' },
+                    { t: '11:30', i: 'AR', n: 'Anjali Rao', s: 'Bridal Facial', st: 'In chair', badge: 'bg-violet-50 text-violet-600', av: 'bg-violet-100 text-violet-700' },
+                    { t: '01:00', i: 'MK', n: 'Meera Krishnan', s: 'Manicure', st: 'Reminded', badge: 'bg-amber-50 text-amber-600', av: 'bg-emerald-100 text-emerald-700' },
+                    { t: '03:30', i: 'SP', n: 'Sneha Patel', s: 'Keratin Treatment', st: 'Confirmed', badge: 'bg-emerald-50 text-emerald-600', av: 'bg-blue-100 text-blue-700' },
+                  ].map((r) => (
+                    <div key={r.t} className="flex items-center gap-2.5 rounded-xl border border-slate-100 bg-white px-2.5 py-2 shadow-sm">
+                      <span className="w-9 shrink-0 text-[10px] font-bold text-slate-400">{r.t}</span>
+                      <span className={`flex h-7 w-7 shrink-0 items-center justify-center rounded-full text-[9px] font-bold ${r.av}`}>{r.i}</span>
+                      <div className="min-w-0 flex-1">
+                        <p className="truncate text-[11px] font-semibold text-slate-800">{r.n}</p>
+                        <p className="truncate text-[9px] text-slate-400">{r.s}</p>
+                      </div>
+                      <span className={`shrink-0 rounded-full px-2 py-0.5 text-[8.5px] font-bold ${r.badge}`}>{r.st}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Analytics */}
+              <div className={`absolute inset-0 p-3.5 transition-all duration-500 ${active === 1 ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}>
+                <div className="mb-2.5 flex items-center justify-between">
+                  <p className="text-[13px] font-bold text-slate-900">Business overview</p>
+                  <span className="rounded-full bg-slate-100 px-2 py-0.5 text-[9px] font-semibold text-slate-500">This week</span>
+                </div>
+                <div className="mb-3 grid grid-cols-3 gap-2">
+                  {[
+                    { l: 'Revenue', v: '₹1.24L', d: '+18%' },
+                    { l: 'Bookings', v: '142', d: '+9%' },
+                    { l: 'No-shows', v: '3%', d: '-64%' },
+                  ].map((c) => (
+                    <div key={c.l} className="rounded-xl border border-slate-100 bg-white p-2 shadow-sm">
+                      <p className="text-[8.5px] font-medium text-slate-400">{c.l}</p>
+                      <p className="text-[14px] font-extrabold leading-tight text-slate-900">{c.v}</p>
+                      <p className="text-[8.5px] font-bold text-emerald-600">{c.d}</p>
+                    </div>
+                  ))}
+                </div>
+                <div className="rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
+                  <p className="mb-2 text-[9.5px] font-semibold text-slate-500">Revenue this week</p>
+                  <div className="flex h-24 items-end justify-between gap-1.5">
+                    {[45, 62, 38, 78, 55, 88, 70].map((h, i) => (
+                      <div key={i} className="flex flex-1 flex-col items-center gap-1">
+                        <div className="w-full rounded-t bg-gradient-to-t from-fuchsia-500 to-violet-400" style={{ height: `${h}%` }} />
+                        <span className="text-[7px] text-slate-300">{['M', 'T', 'W', 'T', 'F', 'S', 'S'][i]}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              </div>
+
+              {/* Billing */}
+              <div className={`absolute inset-0 p-3.5 transition-all duration-500 ${active === 2 ? 'translate-x-0 opacity-100' : 'pointer-events-none translate-x-3 opacity-0'}`}>
+                <div className="flex h-full flex-col rounded-xl border border-slate-100 bg-white p-3 shadow-sm">
+                  <div className="mb-2 flex items-center justify-between border-b border-slate-100 pb-2">
+                    <div className="flex items-center gap-2">
+                      <span className="flex h-7 w-7 items-center justify-center rounded-lg bg-gradient-to-br from-fuchsia-500 to-violet-600 text-white"><Scissors className="h-3.5 w-3.5" /></span>
+                      <div>
+                        <p className="text-[11px] font-bold text-slate-900">JK Salon &amp; Spa</p>
+                        <p className="text-[8px] text-slate-400">Invoice #INV-2048</p>
+                      </div>
+                    </div>
+                    <span className="rounded-full bg-emerald-50 px-2 py-0.5 text-[8.5px] font-bold text-emerald-600">Paid</span>
+                  </div>
+                  <div className="space-y-1.5">
+                    {[
+                      { s: 'Hair Spa + Cut', p: '₹1,200' },
+                      { s: 'Bridal Facial', p: '₹2,500' },
+                      { s: 'Product · Argan Serum', p: '₹650' },
+                    ].map((li) => (
+                      <div key={li.s} className="flex items-center justify-between text-[10px]">
+                        <span className="text-slate-500">{li.s}</span>
+                        <span className="font-semibold text-slate-700">{li.p}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="mt-2 flex items-center justify-between border-t border-slate-100 pt-2">
+                    <span className="text-[10px] font-medium text-slate-400">Total (incl. GST)</span>
+                    <span className="text-[15px] font-extrabold text-slate-900">₹4,350</span>
+                  </div>
+                  <button type="button" className="mt-auto flex items-center justify-center gap-1.5 rounded-lg py-2 text-[10.5px] font-bold text-white" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}>
+                    <MessageCircle className="h-3.5 w-3.5" /> Send bill on WhatsApp
+                  </button>
+                </div>
+              </div>
+
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Floating badges */}
+      <div className="absolute -left-6 -top-5 hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-slate-300/40 lg:flex">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full" style={{ background: 'linear-gradient(135deg, #25d366, #128c7e)' }}><MessageCircle className="h-3.5 w-3.5 text-white" /></span>
+        <div>
+          <p className="text-[10.5px] font-bold leading-tight text-slate-900">New booking</p>
+          <p className="text-[9px] leading-tight text-slate-400">via WhatsApp · just now</p>
+        </div>
+      </div>
+      <div className="absolute -bottom-5 -right-5 hidden items-center gap-2 rounded-2xl border border-slate-200 bg-white px-3 py-2 shadow-lg shadow-slate-300/40 lg:flex">
+        <span className="flex h-7 w-7 items-center justify-center rounded-full bg-violet-100"><TrendingUp className="h-3.5 w-3.5 text-violet-600" /></span>
+        <div>
+          <p className="text-[10.5px] font-bold leading-tight text-slate-900">+28% retention</p>
+          <p className="text-[9px] leading-tight text-slate-400">this month</p>
+        </div>
+      </div>
+
+      {/* Progress dots */}
+      <div className="mt-5 flex items-center justify-center gap-1.5">
+        {HERO_TABS.map((label, i) => (
+          <button
+            key={label}
+            type="button"
+            onClick={() => setActive(i)}
+            aria-label={`Show ${label}`}
+            className={`h-1.5 rounded-full transition-all ${active === i ? 'w-6 bg-slate-900' : 'w-1.5 bg-slate-300 hover:bg-slate-400'}`}
+          />
+        ))}
+      </div>
+    </div>
+  );
+}
+
 export default function HomePage() {
   const [showDemoModal, setShowDemoModal] = useState(false);
   const [showContactModal, setShowContactModal] = useState(false);
@@ -296,11 +502,11 @@ export default function HomePage() {
           />
         </div>
 
-        <div className="relative mx-auto max-w-4xl px-4 sm:px-6 flex flex-col items-center text-center w-full">
+        <div className="relative mx-auto max-w-7xl px-4 sm:px-6 grid lg:grid-cols-2 gap-12 lg:gap-16 items-center w-full">
           {/* Left */}
-          <div className="flex flex-col items-center gap-7 reveal min-w-0 w-full">
+          <div className="flex flex-col gap-7 reveal-left min-w-0">
             {/* Badges */}
-            <div className="flex flex-wrap items-center justify-center gap-2">
+            <div className="flex flex-wrap items-center gap-2">
               <span className="inline-flex items-center gap-1.5 rounded-full border border-blue-100 bg-blue-50 px-3 py-1.5 text-xs font-medium">
                 <MetaMark className="h-3.5 w-6" />
                 <span className="font-bold text-[#0064E1]">Meta</span>
@@ -327,12 +533,12 @@ export default function HomePage() {
             </p>
 
             {/* Rolling value line */}
-            <div className="flex justify-center text-lg sm:text-xl min-h-[32px]">
+            <div className="text-lg sm:text-xl min-h-[32px]">
               <RollingText items={ROLLING_ITEMS} />
             </div>
 
             {/* CTAs */}
-            <div className="flex flex-col sm:flex-row gap-3 justify-center">
+            <div className="flex flex-col sm:flex-row gap-3">
               <Link
                 href="/signup"
                 className="inline-flex items-center justify-center gap-2 rounded-full bg-slate-900 px-7 py-3.5 text-sm font-semibold text-white shadow-lg shadow-slate-900/10 hover:bg-slate-800 transition-colors"
@@ -348,11 +554,16 @@ export default function HomePage() {
             </div>
 
             {/* Risk reversal */}
-            <div className="flex flex-wrap items-center justify-center gap-x-5 gap-y-2 text-xs sm:text-sm text-slate-500">
+            <div className="flex flex-wrap items-center gap-x-5 gap-y-2 text-xs sm:text-sm text-slate-500">
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> 15-day free trial</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> No credit card</span>
               <span className="inline-flex items-center gap-1.5"><CheckCircle2 className="h-4 w-4 text-violet-500" /> Setup in 10 minutes</span>
             </div>
+          </div>
+
+          {/* Right - Interactive dashboard showcase */}
+          <div className="relative reveal-right mt-6 lg:mt-0">
+            <HeroDashboard />
           </div>
         </div>
       </section>
