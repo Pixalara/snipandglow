@@ -847,7 +847,7 @@ export default function HomePage() {
       <MetaTechProviderStrip />
 
       {/* ===== FEATURE CARDS GRID ===== */}
-      <section className="py-14 sm:py-20 bg-white">
+      <section id="features" className="py-14 sm:py-20 bg-white">
         <div className="mx-auto max-w-7xl px-4 sm:px-6">
           <div className="mx-auto mb-10 max-w-2xl text-center reveal sm:mb-14">
             <p className="mb-3 text-xs font-semibold uppercase tracking-widest text-fuchsia-600">Everything included</p>
@@ -862,14 +862,25 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 gap-5 sm:grid-cols-2 sm:gap-6 lg:grid-cols-3">
             {[
-              { Icon: MessageCircle, t: 'WhatsApp Booking', d: 'Clients book 24/7 on WhatsApp or your booking link — no calls, no app downloads.' },
-              { Icon: BarChart3, t: 'Revenue Reports', d: 'Daily, weekly and monthly insights on sales, staff and services at a glance.' },
+              { Icon: Calendar, t: 'Smart Appointments', d: 'Online booking with instant WhatsApp confirmation. Clients reschedule or cancel with a tap.' },
+              { Icon: MessageCircle, t: 'WhatsApp Automation', d: 'Booking confirmations, 24-hour reminders and re-booking nudges — all sent automatically.' },
+              { Icon: Bell, t: 'Reduce No-Shows', d: 'Automatic reminders before every appointment keep your chairs full.' },
+              { Icon: FileText, t: 'Billing & Invoices', d: 'GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.' },
+              { Icon: Wallet, t: 'Customer Wallet', d: 'Prepaid balances that auto-deduct on bills, with instant WhatsApp receipts.' },
               { Icon: Package, t: 'Product Inventory', d: 'Track stock, get low-stock alerts and sell retail products on any bill.' },
-              { Icon: Bell, t: 'Reduce No-Shows', d: 'Automatic WhatsApp reminders before every appointment keep your chairs full.' },
-              { Icon: Wallet, t: 'Customer Wallet', d: 'Prepaid balances that auto-deduct on bills, with GST-ready WhatsApp receipts.' },
+              { Icon: BarChart3, t: 'Analytics & Reports', d: 'Revenue trends, top services, staff performance and retention at a glance.' },
+              { Icon: Users, t: 'Client CRM', d: 'Full client history, visit notes, preferences and loyalty points in one place.' },
+              { Icon: Zap, t: 'Smart Automation', d: 'Birthday wishes, festival offers and win-back campaigns running on autopilot.' },
               { Icon: Repeat2, t: 'Bring Back Old Clients', d: '30-day and 60-day win-back messages that quietly refill your slow days.' },
+              { Icon: TrendingUp, t: 'Expense & Payroll', d: 'Track salon expenses and manage staff salaries, bonuses and deductions.' },
+              { Icon: Target, t: 'Lead Management', d: 'Capture leads from walk-ins, social and referrals, then convert them into regulars.' },
+              { Icon: Gift, t: 'Membership & Loyalty', d: 'Membership plans with auto-discounts that reward regulars and boost repeat visits.' },
+              { Icon: Star, t: 'Customer Feedback', d: 'Auto-collect ratings on WhatsApp. 5-star reviews go to Google; low ratings alert you instantly.' },
+              { Icon: Megaphone, t: 'WhatsApp Broadcast', d: 'Birthday wishes, festival offers and flash sales to all customers in one click.' },
+              { Icon: Shield, t: 'Audit Trails', d: 'Track every action — who did what and when. Full transparency across billing, bookings and staff.' },
+              { Icon: Headphones, t: '24-hour Support', d: 'Report any issue from the dashboard. Real humans reply on WhatsApp within 24 hours.' },
             ].map((f, i) => (
-              <div key={f.t} className="reveal" style={{ transitionDelay: `${i * 80}ms` }}>
+              <div key={f.t} className="reveal" style={{ transitionDelay: `${(i % 3) * 90}ms` }}>
                 <div className="group h-full rounded-2xl border border-slate-200 bg-white p-6 shadow-sm transition-all duration-300 hover:-translate-y-1.5 hover:border-violet-200 hover:shadow-xl hover:shadow-violet-200/40 sm:p-7">
                   <div className="mb-5 flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-fuchsia-500 to-violet-600 shadow-lg shadow-fuchsia-500/25 transition-transform duration-300 group-hover:scale-110">
                     <f.Icon className="h-6 w-6 text-white" />
@@ -1659,44 +1670,6 @@ export default function HomePage() {
               Switch to the smart way
               <ArrowRight className="h-4 w-4" />
             </Link>
-          </div>
-        </div>
-      </section>
-
-      {/* ===== FEATURES GRID ===== */}
-      <section id="features" className="pt-10 pb-8 sm:pt-14 sm:pb-10 relative" style={{ background: 'linear-gradient(180deg, #ffffff 0%, #f8fafc 15%, #f8fafc 85%, #ffffff 100%)' }}>
-        <div className="mx-auto max-w-7xl px-4 sm:px-6">
-          <div className="text-center mb-8 reveal">
-            <p className="text-xs font-semibold uppercase tracking-widest text-fuchsia-600 mb-3">Features</p>
-            <h2 className="text-2xl sm:text-3xl lg:text-4xl font-extrabold text-slate-900 mb-4 tracking-tight">Everything your salon needs</h2>
-            <p className="text-slate-500 max-w-xl mx-auto text-sm sm:text-base">One platform. No juggling apps.</p>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-5 sm:gap-6">
-            {[
-              { icon: Calendar, title: 'Smart Appointments', desc: 'Online booking with instant WhatsApp confirmation. Clients can reschedule or cancel with a tap.', color: 'bg-fuchsia-100 text-fuchsia-600' },
-              { icon: MessageCircle, title: 'WhatsApp Automation', desc: 'Booking confirmations, 24h reminders, and re-booking nudges - all sent automatically.', color: 'bg-green-100 text-green-600' },
-              { icon: FileText, title: 'Billing & Invoices', desc: 'Generate GST-ready invoices in seconds. Track payments and outstanding dues effortlessly.', color: 'bg-fuchsia-100 text-fuchsia-600' },
-              { icon: Wallet, title: 'Customer Wallet', desc: 'Prepaid balance per customer — top up, auto-deduct on bills, with instant WhatsApp receipts.', color: 'bg-emerald-100 text-emerald-600' },
-              { icon: Package, title: 'Product Inventory', desc: 'Track retail products, stock levels, and purchase costs. Sell products on any bill — stock updates automatically.', color: 'bg-teal-100 text-teal-600' },
-              { icon: Users, title: 'Client Management', desc: 'Full client history, visit notes, preferences, and loyalty points in one place.', color: 'bg-violet-100 text-violet-600' },
-              { icon: BarChart3, title: 'Analytics Dashboard', desc: 'Revenue trends, top services, staff performance, and retention metrics at a glance.', color: 'bg-purple-100 text-purple-600' },
-              { icon: Zap, title: 'Smart Automation', desc: 'Auto-reminders, birthday wishes, win-back campaigns - all running on autopilot while you focus on clients.', color: 'bg-fuchsia-100 text-fuchsia-600' },
-              { icon: Wallet, title: 'Expense & Payroll', desc: 'Track all salon expenses, manage staff salaries, bonuses, and deductions in one place.', color: 'bg-amber-100 text-amber-600' },
-              { icon: Target, title: 'Lead Management', desc: 'Capture leads from walk-ins, social media & referrals. Track follow-ups and convert them into loyal customers.', color: 'bg-blue-100 text-blue-600' },
-              { icon: Shield, title: 'Membership & Loyalty', desc: 'Create membership plans with auto-discounts. Reward loyal customers and increase repeat visits.', color: 'bg-emerald-100 text-emerald-600' },
-              { icon: Star, title: 'Customer Feedback', desc: 'Auto-collect ratings via WhatsApp after every visit. 5★ reviews go to Google, low ratings alert you instantly.', color: 'bg-amber-100 text-amber-600' },
-              { icon: Headphones, title: '24hr Support', desc: 'Report any issue from the dashboard. Our team responds within 24 hours on WhatsApp. No chatbots, real humans.', color: 'bg-indigo-100 text-indigo-600' },
-              { icon: FileText, title: 'Audit Trails', desc: 'Track every action - who did what and when. Full transparency for billing, appointments, and staff activity.', color: 'bg-slate-100 text-slate-600' },
-              { icon: Megaphone, title: 'WhatsApp Broadcast', desc: 'Send birthday wishes, festival offers, flash sales & win-back campaigns to all customers with one click.', color: 'bg-green-100 text-green-600' },
-            ].map(({ icon: Icon, title, desc, color }) => (
-              <div key={title} className="bg-white rounded-2xl p-5 sm:p-6 border border-slate-100 shadow-sm hover:shadow-md transition-shadow reveal-scale">
-                <div className={`h-10 w-10 rounded-xl flex items-center justify-center mb-4 ${color}`}>
-                  <Icon className="h-5 w-5" />
-                </div>
-                <h3 className="text-base font-semibold text-slate-900 mb-2">{title}</h3>
-                <p className="text-sm text-slate-500 leading-relaxed">{desc}</p>
-              </div>
-            ))}
           </div>
         </div>
       </section>
