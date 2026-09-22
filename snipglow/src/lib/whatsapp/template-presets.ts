@@ -37,7 +37,6 @@ export const MARKETING_TEMPLATE_PRESETS: MarketingTemplatePreset[] = [
         'To book, just send "Hi" to this chat and we\'ll help you pick a service, date and time in seconds. 💇✨\n\n' +
         'We can\'t wait to pamper you!',
       exampleParams: ['Priya', 'Bhakti Beauty Care'],
-      footerText: 'Reply STOP to unsubscribe.',
     },
   },
   {
