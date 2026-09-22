@@ -7,6 +7,7 @@ import { after } from 'next/server';
 import { normalizePhone, toTitleCase, isValidDateOfBirth } from '@/lib/utils';
 import { istCurrentMonth } from '@/lib/attendance';
 import { sendBillReceiptWithPdf } from '@/lib/invoice/send-bill-receipt';
+import { sendWelcomeMessage } from '@/lib/whatsapp/send-welcome';
 import type { ActionResult, Customer, CreateCustomerInput, UpdateCustomerInput, Membership, PaymentMethod } from '@/types';
 
 /** Shown when a phone can't be understood. Names the international case, since
@@ -479,7 +480,7 @@ export async function purchaseMembership(
 export async function createCustomerWithMembership(
   input: CreateCustomerInput,
   membershipId?: string
-): Promise<ActionResult<Customer>> {
+): Promise<ActionResult<{ customer: Customer; welcomeSent: boolean }>> {
   const supabase = await createClient();
 
   const { data: { user } } = await supabase.auth.getUser();
@@ -555,8 +556,16 @@ export async function createCustomerWithMembership(
     }
   }
 
+  const created = data as Customer;
+
+  // Best-effort welcome message. sendWelcomeMessage self-skips fast unless the
+  // tenant is Pro/Growth with a connected dedicated number AND the
+  // welcome_new_customer template is APPROVED, and can never throw - so it is
+  // safe to await here so the UI can confirm whether it actually sent.
+  const welcomeSent = await sendWelcomeMessage(tenantId, { name: created.name, phone: created.phone });
+
   revalidatePath('/dashboard/customers');
-  return { success: true, data: data as Customer };
+  return { success: true, data: { customer: created, welcomeSent } };
 }
 
 /**

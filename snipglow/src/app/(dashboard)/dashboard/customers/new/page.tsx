@@ -93,7 +93,13 @@ export default function NewCustomerPage() {
       );
 
       if (result.success) {
-        toast.success(`${name.trim() || 'Customer'} added.`);
+        if (result.data.welcomeSent) {
+          toast.success(`${result.data.customer.name} added`, {
+            description: 'Welcome message sent on WhatsApp ✅',
+          });
+        } else {
+          toast.success(`${result.data.customer.name} added.`);
+        }
         router.push('/dashboard/customers');
       } else {
         setError(result.error);
