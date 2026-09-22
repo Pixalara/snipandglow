@@ -2172,7 +2172,7 @@ export default function HomePage() {
               </p>
             </div>
             <a
-              href={`https://wa.me/919449602995?text=${encodeURIComponent('Hi, I want to upgrade to Pro plan and need help with WhatsApp setup.')}`}
+              href={`https://wa.me/919459086057?text=${encodeURIComponent('Hi, I want to upgrade to Pro plan and need help with WhatsApp setup.')}`}
               target="_blank"
               rel="noopener noreferrer"
               className="shrink-0 inline-flex items-center gap-2 px-4 py-2 rounded-xl bg-emerald-600 text-white text-xs font-semibold hover:bg-emerald-700 transition-colors shadow-sm shadow-emerald-200 whitespace-nowrap"
@@ -2659,7 +2659,7 @@ export default function HomePage() {
 
       {/* Floating WhatsApp Button with pulse glow ring */}
       <a
-        href="https://wa.me/919449602995?text=Hi%2C%20I%27m%20interested%20in%20SnipandGlow%20for%20my%20salon"
+        href="https://wa.me/919459086057?text=Hi%2C%20I%27m%20interested%20in%20SnipandGlow%20for%20my%20salon"
         target="_blank"
         rel="noopener noreferrer"
         className="fixed bottom-24 lg:bottom-6 right-6 z-50 group"

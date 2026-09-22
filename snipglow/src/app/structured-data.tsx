@@ -68,7 +68,7 @@ export function StructuredData() {
     ],
     contactPoint: {
       '@type': 'ContactPoint',
-      telephone: '+91-9449602995',
+      telephone: '+91-9459086057',
       contactType: 'sales',
       areaServed: 'IN',
       availableLanguage: ['English', 'Hindi'],
