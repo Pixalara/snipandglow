@@ -23,6 +23,24 @@ export interface MarketingTemplatePreset {
 
 export const MARKETING_TEMPLATE_PRESETS: MarketingTemplatePreset[] = [
   {
+    key: 'welcome_new_customer',
+    label: 'Welcome new customer',
+    description: 'Greet a newly added customer and invite them to book on WhatsApp by just sending "Hi".',
+    variableLabels: ['Customer name', 'Salon name'],
+    definition: {
+      name: 'welcome_new_customer',
+      language: 'en',
+      category: 'MARKETING',
+      bodyText:
+        'Hi {{1}}! 👋 Welcome to {{2}}.\n\n' +
+        'You can now book your appointments right here on WhatsApp - no phone calls or apps needed.\n\n' +
+        'To book, just send "Hi" to this chat and we\'ll help you pick a service, date and time in seconds. 💇✨\n\n' +
+        'We can\'t wait to pamper you!',
+      exampleParams: ['Priya', 'Bhakti Beauty Care'],
+      footerText: 'Reply STOP to unsubscribe.',
+    },
+  },
+  {
     key: 'birthday_offer',
     label: 'Birthday offer',
     description: 'Wish a customer on their birthday with a limited-time discount.',
