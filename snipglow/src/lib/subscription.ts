@@ -175,8 +175,16 @@ export function getBillingCycle(settings: Record<string, unknown> | null | undef
 // in `tenants.settings`; when present it REPLACES the list price everywhere the
 // customer sees or pays a price (dashboard label + Razorpay order amount).
 //
-//   settings.custom_monthly_price     ₹/month when billed monthly
-//   settings.custom_yearly_per_month  ₹/month (effective) when billed yearly
+//   settings.custom_monthly_price   ₹/month when billed monthly
+//   settings.custom_yearly_price    flat ₹/year (total) when billed yearly
+//
+// The yearly override is a FLAT ANNUAL total (e.g. ₹9,000/yr) — the number the
+// admin negotiates and the tenant is charged once a year. The per-month figure
+// shown in the UI is derived from it (total ÷ 12) for display only.
+//
+// Legacy: older tenants may still carry `custom_yearly_per_month` (a ₹/month
+// value). It is read as a fallback (× 12) so a negotiated rate is never
+// silently lost; the admin form rewrites it to `custom_yearly_price` on save.
 //
 // Either may be set independently. Unset/invalid → fall back to PLAN_PRICING.
 // =============================================================================
@@ -189,14 +197,22 @@ function overrideValue(settings: Record<string, unknown> | null | undefined, key
 }
 
 export interface CustomPricing {
+  /** Negotiated ₹/month when billed monthly, or null for list price. */
   monthly: number | null;
-  yearlyPerMonth: number | null;
+  /** Negotiated flat ₹/year (total) when billed yearly, or null for list price. */
+  yearlyTotal: number | null;
 }
 
 export function getCustomPricing(settings: Record<string, unknown> | null | undefined): CustomPricing {
+  // Prefer the flat annual total; fall back to the legacy per-month key (× 12)
+  // so a tenant priced under the old model keeps their negotiated rate.
+  const legacyPerMonth = overrideValue(settings, 'custom_yearly_per_month');
+  const yearlyTotal =
+    overrideValue(settings, 'custom_yearly_price') ??
+    (legacyPerMonth !== null ? legacyPerMonth * 12 : null);
   return {
     monthly: overrideValue(settings, 'custom_monthly_price'),
-    yearlyPerMonth: overrideValue(settings, 'custom_yearly_per_month'),
+    yearlyTotal,
   };
 }
 
@@ -206,11 +222,22 @@ export function hasCustomPrice(
   cycle: BillingCycle
 ): boolean {
   const c = getCustomPricing(settings);
-  return (cycle === 'yearly' ? c.yearlyPerMonth : c.monthly) !== null;
+  return (cycle === 'yearly' ? c.yearlyTotal : c.monthly) !== null;
+}
+
+/** Total charged for a full year — the negotiated flat annual rate if set, else list. */
+export function effectiveYearlyTotal(
+  tier: string | null | undefined,
+  settings?: Record<string, unknown> | null
+): number {
+  const custom = getCustomPricing(settings);
+  return custom.yearlyTotal ?? planYearlyTotal(tier);
 }
 
 /**
  * The ₹/month this tenant actually pays — custom rate if set, else list price.
+ * On the yearly cycle this is DERIVED from the annual total (÷ 12) for display;
+ * the exact amount charged for the year is effectiveYearlyTotal / amountPayable.
  * This is the single source of truth for both display and charging.
  */
 export function effectiveMonthlyPrice(
@@ -219,22 +246,13 @@ export function effectiveMonthlyPrice(
   settings?: Record<string, unknown> | null
 ): number {
   const custom = getCustomPricing(settings);
-  if (cycle === 'yearly' && custom.yearlyPerMonth) return custom.yearlyPerMonth;
-  if (cycle === 'monthly' && custom.monthly) return custom.monthly;
-  return planMonthlyPrice(tier, cycle);
-}
-
-/** Total charged for a full year (custom rate aware). */
-export function effectiveYearlyTotal(
-  tier: string | null | undefined,
-  settings?: Record<string, unknown> | null
-): number {
-  return effectiveMonthlyPrice(tier, 'yearly', settings) * 12;
+  if (cycle === 'monthly') return custom.monthly ?? planMonthlyPrice(tier, 'monthly');
+  return Math.round(effectiveYearlyTotal(tier, settings) / 12);
 }
 
 /**
  * The amount to charge right now, in RUPEES, for one billing period.
- * monthly → 1 month · yearly → 12 months.
+ * monthly → 1 month · yearly → 12 months (the flat annual total).
  */
 export function amountPayable(
   tier: string | null | undefined,

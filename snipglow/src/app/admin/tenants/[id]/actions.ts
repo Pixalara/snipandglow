@@ -489,10 +489,11 @@ export async function adminActivateSubscription(
 // =============================================================================
 // Admin — set a tenant's subscription/trial expiry to an EXACT date.
 //
-// Lets admins give a trial more time (future date) OR prepone the expiry to a
-// past/near date to verify that an expired account is correctly locked out of
-// dashboard features. Setting subscription_end is enough: getSubscriptionState
-// computes "expired" from this date at read time.
+// A FUTURE date marks the tenant ACTIVE (paid) until then — this is the usual
+// way to grant a negotiated term after taking payment offline. A PAST/today
+// date expires the account, so you can verify an expired account is correctly
+// locked out of dashboard features. Setting subscription_end is enough:
+// getSubscriptionState computes "expired" from this date at read time.
 // =============================================================================
 
 export async function adminSetSubscriptionEnd(
@@ -527,15 +528,16 @@ export async function adminSetSubscriptionEnd(
 
   // Flip status to match the chosen date:
   //  • past / today  → expired (locks the dashboard so you can test the gate)
-  //  • future        → keep trial/active as-is; re-open an expired/cancelled
-  //                    account as a trial so it regains access.
+  //  • future        → active: a future end date means the tenant is paid/valid
+  //                    until then. Converts trial/expired/cancelled/past_due to
+  //                    active; an already-active tenant simply stays active.
   const currentStatus = (tenant as any).subscription_status as string;
   const isPast = parsed.getTime() <= Date.now();
   let newStatus = currentStatus;
   if (isPast) {
     newStatus = 'expired';
-  } else if (currentStatus === 'expired' || currentStatus === 'cancelled') {
-    newStatus = 'trial';
+  } else if (currentStatus !== 'active') {
+    newStatus = 'active';
   }
 
   const { error } = await (admin
@@ -578,6 +580,10 @@ export async function adminSetSubscriptionEnd(
 // Sets/clears a discounted rate for one salon. Once saved, BOTH the price shown
 // in their dashboard AND the Razorpay order amount use this rate instead of the
 // plan list price. Pass null to clear an override and revert to list pricing.
+//
+// The yearly override is a FLAT ANNUAL total (e.g. ₹9,000/yr), stored under
+// `custom_yearly_price`. The legacy per-month key (`custom_yearly_per_month`) is
+// always removed on save so it can never shadow the new value.
 // =============================================================================
 
 export async function adminUpdateTenantPricing(
@@ -585,8 +591,8 @@ export async function adminUpdateTenantPricing(
   input: {
     /** ₹/month charged when billed monthly. null → use list price. */
     custom_monthly_price: number | null;
-    /** ₹/month (effective) charged when billed yearly. null → use list price. */
-    custom_yearly_per_month: number | null;
+    /** Flat ₹/year (total) charged when billed yearly. null → use list price. */
+    custom_yearly_price: number | null;
   }
 ): Promise<{ success: boolean; error?: string }> {
   const user = await requireAdmin();
@@ -601,7 +607,7 @@ export async function adminUpdateTenantPricing(
   };
 
   const monthly = clean(input.custom_monthly_price);
-  const yearlyPerMonth = clean(input.custom_yearly_per_month);
+  const yearlyTotal = clean(input.custom_yearly_price);
 
   const admin = createAdminClient();
   const { data: tenant } = await (admin
@@ -619,8 +625,11 @@ export async function adminUpdateTenantPricing(
   if (monthly === null) delete updatedSettings.custom_monthly_price;
   else updatedSettings.custom_monthly_price = monthly;
 
-  if (yearlyPerMonth === null) delete updatedSettings.custom_yearly_per_month;
-  else updatedSettings.custom_yearly_per_month = yearlyPerMonth;
+  // We store a FLAT ANNUAL total now. Always drop the legacy per-month key so
+  // stale data can't shadow the new value via the read-time fallback.
+  delete updatedSettings.custom_yearly_per_month;
+  if (yearlyTotal === null) delete updatedSettings.custom_yearly_price;
+  else updatedSettings.custom_yearly_price = yearlyTotal;
 
   const { error } = await (admin
     .from('tenants' as any)
@@ -642,7 +651,7 @@ export async function adminUpdateTenantPricing(
       tenant_name: tenant.name,
       plan_tier: tenant.plan_tier,
       custom_monthly_price: monthly,
-      custom_yearly_per_month: yearlyPerMonth,
+      custom_yearly_price: yearlyTotal,
     },
   });
 

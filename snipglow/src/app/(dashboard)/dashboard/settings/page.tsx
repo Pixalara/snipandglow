@@ -203,7 +203,10 @@ export default async function SettingsPage() {
                   {isExpired ? 'Subscription Expired' : isTrial ? 'Free Trial' : 'Active Subscription'}
                 </p>
                 <p className="text-sm text-muted-foreground">
-                  SnipandGlow — {planLabel(planTier)} Plan · {billingCycleLabel(billingCycle)} (₹{planMonthly.toLocaleString('en-IN')}/mo)
+                  SnipandGlow — {planLabel(planTier)} Plan · {billingCycleLabel(billingCycle)}
+                  {billingCycle === 'yearly'
+                    ? ` (₹${renewalAmount.toLocaleString('en-IN')}/yr · ₹${planMonthly.toLocaleString('en-IN')}/mo)`
+                    : ` (₹${planMonthly.toLocaleString('en-IN')}/mo)`}
                 </p>
               </div>
             </div>

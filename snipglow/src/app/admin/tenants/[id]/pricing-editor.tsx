@@ -18,7 +18,7 @@ export function PricingEditor({
   listMonthly,
   listYearlyPerMonth,
   customMonthly,
-  customYearlyPerMonth,
+  customYearlyTotal,
   billingCycle,
 }: {
   tenantId: string;
@@ -26,11 +26,11 @@ export function PricingEditor({
   listMonthly: number;
   listYearlyPerMonth: number;
   customMonthly: number | null;
-  customYearlyPerMonth: number | null;
+  customYearlyTotal: number | null;
   billingCycle: 'monthly' | 'yearly';
 }) {
   const [monthly, setMonthly] = useState(customMonthly ? String(customMonthly) : '');
-  const [yearly, setYearly] = useState(customYearlyPerMonth ? String(customYearlyPerMonth) : '');
+  const [yearly, setYearly] = useState(customYearlyTotal ? String(customYearlyTotal) : '');
   const [isPending, startTransition] = useTransition();
   const [msg, setMsg] = useState<{ ok: boolean; text: string } | null>(null);
 
@@ -42,20 +42,26 @@ export function PricingEditor({
   };
 
   const nextMonthly = parse(monthly);
-  const nextYearly = parse(yearly);
+  const nextYearlyTotal = parse(yearly); // flat ₹/year total
+
+  // List annual = list per-month × 12 (the standard yearly bill).
+  const listYearlyTotal = listYearlyPerMonth * 12;
 
   // What the tenant will actually be charged after saving.
   const effMonthly = nextMonthly ?? listMonthly;
-  const effYearlyPm = nextYearly ?? listYearlyPerMonth;
+  const effYearlyTotal = nextYearlyTotal ?? listYearlyTotal;
   const chargeNow =
-    billingCycle === 'yearly' ? effYearlyPm * 12 : effMonthly;
+    billingCycle === 'yearly' ? effYearlyTotal : effMonthly;
+
+  // Per-month equivalent of the annual figure being typed (display only).
+  const yearlyPerMonthPreview = nextYearlyTotal ? Math.round(nextYearlyTotal / 12) : null;
 
   function save(clear = false) {
     setMsg(null);
     startTransition(async () => {
       const res = await adminUpdateTenantPricing(tenantId, {
         custom_monthly_price: clear ? null : nextMonthly,
-        custom_yearly_per_month: clear ? null : nextYearly,
+        custom_yearly_price: clear ? null : nextYearlyTotal,
       });
       if (res.success) {
         if (clear) { setMonthly(''); setYearly(''); }
@@ -75,7 +81,7 @@ export function PricingEditor({
         <div className="flex items-center gap-2">
           <IndianRupee className="size-4 text-muted-foreground" />
           <h2 className="text-sm font-semibold text-foreground">Payment Settings</h2>
-          {(customMonthly || customYearlyPerMonth) && (
+          {(customMonthly || customYearlyTotal) && (
             <span className="ml-1 rounded-full bg-amber-500/15 px-2 py-0.5 text-[10px] font-semibold text-amber-600 dark:text-amber-400">
               CUSTOM RATE
             </span>
@@ -112,7 +118,7 @@ export function PricingEditor({
 
           <div>
             <label className="text-xs font-medium text-muted-foreground">
-              Yearly rate (₹/month, billed ×12)
+              Yearly rate (₹/year total)
             </label>
             <div className="relative mt-1">
               <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-sm text-muted-foreground">₹</span>
@@ -123,13 +129,14 @@ export function PricingEditor({
                 inputMode="numeric"
                 value={yearly}
                 onChange={(e) => setYearly(e.target.value)}
-                placeholder={String(listYearlyPerMonth)}
+                placeholder={String(listYearlyTotal)}
                 className={inputCls}
               />
             </div>
             <p className="text-[11px] text-muted-foreground mt-1">
-              Blank = list price ₹{listYearlyPerMonth.toLocaleString('en-IN')}/mo · ₹
-              {(listYearlyPerMonth * 12).toLocaleString('en-IN')}/yr
+              {yearlyPerMonthPreview
+                ? `≈ ₹${yearlyPerMonthPreview.toLocaleString('en-IN')}/mo · charged once per year`
+                : `Blank = list price ₹${listYearlyTotal.toLocaleString('en-IN')}/yr (₹${listYearlyPerMonth.toLocaleString('en-IN')}/mo)`}
             </p>
           </div>
         </div>
@@ -173,7 +180,7 @@ export function PricingEditor({
           >
             {isPending ? 'Saving…' : 'Save pricing'}
           </button>
-          {(customMonthly || customYearlyPerMonth) && (
+          {(customMonthly || customYearlyTotal) && (
             <button
               onClick={() => save(true)}
               disabled={isPending}

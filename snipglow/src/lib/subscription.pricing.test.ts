@@ -23,7 +23,12 @@ describe('effectiveMonthlyPrice', () => {
     expect(effectiveMonthlyPrice('starter', 'monthly', { custom_monthly_price: 799 })).toBe(799);
   });
 
-  it('uses the admin-set yearly rate for the yearly cycle', () => {
+  it('derives the ₹/month from a flat annual override on the yearly cycle', () => {
+    // ₹9,000/yr negotiated → shown as ₹750/mo.
+    expect(effectiveMonthlyPrice('pro', 'yearly', { custom_yearly_price: 9000 })).toBe(750);
+  });
+
+  it('reads the legacy per-month yearly key (× 12 then ÷ 12) for the yearly cycle', () => {
     expect(effectiveMonthlyPrice('starter', 'yearly', { custom_yearly_per_month: 699 })).toBe(699);
   });
 
@@ -57,7 +62,12 @@ describe('amountPayable', () => {
     expect(amountPayable('starter', 'monthly', { custom_monthly_price: 799 })).toBe(799);
   });
 
-  it('charges twelve months on the yearly cycle', () => {
+  it('charges the flat annual override on the yearly cycle', () => {
+    // ₹9,000/yr negotiated is charged exactly, NOT re-derived from a rounded ₹/mo.
+    expect(amountPayable('pro', 'yearly', { custom_yearly_price: 9000 })).toBe(9000);
+  });
+
+  it('charges the legacy per-month yearly key × 12', () => {
     expect(amountPayable('starter', 'yearly', { custom_yearly_per_month: 699 })).toBe(699 * 12);
   });
 
@@ -73,17 +83,41 @@ describe('amountPayable', () => {
 });
 
 describe('effectiveYearlyTotal', () => {
-  it('is twelve times the effective monthly rate', () => {
+  it('returns the flat annual override verbatim', () => {
+    expect(effectiveYearlyTotal('pro', { custom_yearly_price: 9000 })).toBe(9000);
+  });
+
+  it('falls back to the legacy per-month key × 12', () => {
     expect(effectiveYearlyTotal('starter', { custom_yearly_per_month: 500 })).toBe(6000);
+  });
+
+  it('falls back to the plan list annual when no override is set', () => {
+    expect(effectiveYearlyTotal('pro', {})).toBe(PLAN_PRICING.pro.yearlyPerMonth * 12);
   });
 });
 
 describe('getCustomPricing / hasCustomPrice', () => {
   it('reports which cycles are overridden', () => {
-    expect(getCustomPricing({ custom_monthly_price: 799 })).toEqual({ monthly: 799, yearlyPerMonth: null });
+    expect(getCustomPricing({ custom_monthly_price: 799 })).toEqual({ monthly: 799, yearlyTotal: null });
     expect(hasCustomPrice({ custom_monthly_price: 799 }, 'monthly')).toBe(true);
     expect(hasCustomPrice({ custom_monthly_price: 799 }, 'yearly')).toBe(false);
     expect(hasCustomPrice({}, 'monthly')).toBe(false);
+  });
+
+  it('reads a flat annual yearly override', () => {
+    expect(getCustomPricing({ custom_yearly_price: 9000 })).toEqual({ monthly: null, yearlyTotal: 9000 });
+    expect(hasCustomPrice({ custom_yearly_price: 9000 }, 'yearly')).toBe(true);
+    expect(hasCustomPrice({ custom_yearly_price: 9000 }, 'monthly')).toBe(false);
+  });
+
+  it('derives yearlyTotal from the legacy per-month key (× 12)', () => {
+    expect(getCustomPricing({ custom_yearly_per_month: 700 })).toEqual({ monthly: null, yearlyTotal: 8400 });
+  });
+
+  it('prefers the new flat annual key over the legacy per-month key', () => {
+    expect(
+      getCustomPricing({ custom_yearly_price: 9000, custom_yearly_per_month: 700 }).yearlyTotal
+    ).toBe(9000);
   });
 
   it('rounds fractional rupee inputs', () => {

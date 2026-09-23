@@ -229,7 +229,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         listMonthly={planPricing(tenant.plan_tier).monthly}
         listYearlyPerMonth={planPricing(tenant.plan_tier).yearlyPerMonth}
         customMonthly={getCustomPricing(tenant.settings).monthly}
-        customYearlyPerMonth={getCustomPricing(tenant.settings).yearlyPerMonth}
+        customYearlyTotal={getCustomPricing(tenant.settings).yearlyTotal}
         billingCycle={getBillingCycle(tenant.settings)}
       />
 
