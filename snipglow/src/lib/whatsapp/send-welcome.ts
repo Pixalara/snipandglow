@@ -20,7 +20,12 @@ import { listTenantTemplates } from './template-store';
 import { sendMessage } from './templates';
 import { logWhatsAppMessage } from './log-message';
 
-const WELCOME_TEMPLATE = 'welcome_new_customer';
+// Accepted welcome-template names, newest first. A list (not one constant) so a
+// re-submitted template - e.g. `welcome_new_customer_v2` created after the first
+// got stuck in Meta review - keeps working: whichever name is APPROVED first on
+// the tenant's WABA is the one we send. Meta locks a deleted template's name for
+// ~30 days, so a fresh submission must use a new name; this makes that seamless.
+const WELCOME_TEMPLATE_NAMES = ['welcome_new_customer_v2', 'welcome_new_customer'];
 
 export async function sendWelcomeMessage(
   tenantId: string,
@@ -33,9 +38,11 @@ export async function sendWelcomeMessage(
     const credentials = await getDedicatedCredentialsForTenant(tenantId);
     if (!credentials) return false;
 
-    // Gate 2 — the welcome template must be APPROVED on this tenant's WABA.
+    // Gate 2 — an accepted welcome template must be APPROVED on this tenant's WABA.
     const templates = await listTenantTemplates(tenantId);
-    const tpl = templates.find((t) => t.name === WELCOME_TEMPLATE && t.status === 'APPROVED');
+    const tpl = templates.find(
+      (t) => WELCOME_TEMPLATE_NAMES.includes(t.name) && t.status === 'APPROVED'
+    );
     if (!tpl) return false;
 
     const admin = createAdminClient();
@@ -50,7 +57,7 @@ export async function sendWelcomeMessage(
     const res = await sendMessage(credentials, phone, {
       type: 'template',
       template: {
-        name: WELCOME_TEMPLATE,
+        name: tpl.name,
         language: { code: tpl.language || 'en' },
         components: [
           {
@@ -68,7 +75,7 @@ export async function sendWelcomeMessage(
       tenant_id: tenantId,
       phone,
       direction: 'outbound',
-      template_name: WELCOME_TEMPLATE,
+      template_name: tpl.name,
       status: res.success ? 'sent' : 'failed',
       metadata: { customer_name: customer.name, trigger: 'customer_created' },
     });
