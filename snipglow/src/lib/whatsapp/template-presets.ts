@@ -23,15 +23,12 @@ export interface MarketingTemplatePreset {
 
 export const MARKETING_TEMPLATE_PRESETS: MarketingTemplatePreset[] = [
   {
-    key: 'welcome_new_customer_v2',
+    key: 'welcome_new_customer',
     label: 'Welcome new customer',
-    // v2 name: Meta locks a deleted template's name for ~30 days, so a fresh
-    // submission (after the first stalled in review) must use a new name.
-    // send-welcome.ts accepts both v2 and the original, so either works.
     description: 'Greet a newly added customer and invite them to book on WhatsApp by just sending "Hi".',
     variableLabels: ['Customer name', 'Salon name'],
     definition: {
-      name: 'welcome_new_customer_v2',
+      name: 'welcome_new_customer',
       language: 'en',
       category: 'MARKETING',
       bodyText:
