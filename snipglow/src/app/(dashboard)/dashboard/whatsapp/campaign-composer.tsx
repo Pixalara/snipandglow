@@ -64,7 +64,13 @@ export function CampaignComposer() {
     const t = templates.find((x) => x.id === id);
     const n = t ? placeholderCount(t.bodyText) : 0;
     setTemplateId(id);
-    setValues(Array(n).fill(''));
+    // Pre-fill each variable with the approved template's example value (Meta
+    // requires one example per variable). This means a fixed value like the
+    // salon name is ready to send without retyping, so the send button is not
+    // silently blocked on an empty field. The value stays editable and is shown
+    // in the live preview; personalized variables ignore it in favour of the
+    // customer's own name.
+    setValues(Array.from({ length: n }, (_, i) => (t?.exampleParams[i] ?? '').trim()));
     // Personalize the first variable with the customer's name by default —
     // most templates open with "Hi {{1}}".
     setPersonalize(Array.from({ length: n }, (_, i) => i === 0));
@@ -393,17 +399,34 @@ export function CampaignComposer() {
             )}
 
             {!confirming ? (
-              <button
-                onClick={() => setConfirming(true)}
-                disabled={!canSend}
-                className={cn(
-                  'flex h-11 w-full items-center justify-center gap-2 rounded-xl font-semibold text-white transition',
-                  canSend ? 'bg-emerald-600 hover:bg-emerald-500' : 'cursor-not-allowed bg-slate-300 dark:bg-slate-700'
+              <>
+                <button
+                  onClick={() => setConfirming(true)}
+                  disabled={!canSend}
+                  className={cn(
+                    'flex h-11 w-full items-center justify-center gap-2 rounded-xl font-semibold text-white transition',
+                    canSend ? 'bg-emerald-600 hover:bg-emerald-500' : 'cursor-not-allowed bg-slate-300 dark:bg-slate-700'
+                  )}
+                >
+                  <Send className="size-4" />
+                  Review &amp; send to {selectedCount} customer{selectedCount !== 1 ? 's' : ''}
+                </button>
+                {/* Explain why the button is disabled — otherwise it just greys
+                    out with no reason and the sender is stuck. */}
+                {!canSend && !isSending && (
+                  <p className="mt-2 text-center text-[11px] text-amber-600 dark:text-amber-400">
+                    {!template
+                      ? 'Pick an approved template above to start.'
+                      : selectedCount === 0
+                        ? 'Select at least one customer below to send to.'
+                        : overLimit
+                          ? `Select at most ${MAX_RECIPIENTS} customers per campaign.`
+                          : !valuesFilled
+                            ? 'Enter a value for each message variable in step 2 above.'
+                            : ''}
+                  </p>
                 )}
-              >
-                <Send className="size-4" />
-                Review &amp; send to {selectedCount} customer{selectedCount !== 1 ? 's' : ''}
-              </button>
+              </>
             ) : (
               <div className="space-y-3">
                 <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
