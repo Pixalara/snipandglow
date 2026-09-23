@@ -114,6 +114,7 @@ describe('announcement templates', () => {
   it('exposes all presets to the admin UI', () => {
     expect(CAMPAIGN_PRESETS.map((p) => p.key)).toEqual([
       'welcome',
+      'retention_toolkit',
       'wallet',
       'online_renewal',
       'renewal_reminder',

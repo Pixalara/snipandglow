@@ -215,6 +215,46 @@ export const DEFAULT_CAMPAIGN: AnnouncementCampaign = {
 };
 
 /**
+ * Preset: retention toolkit - Memberships, Loyalty and Customer Wallet.
+ *
+ * One "keep your customers coming back" campaign that pitches the three
+ * retention features together, because they compound: a member who also earns
+ * loyalty points and carries a wallet balance has three reasons to return. The
+ * bullets are benefit-led (what it does for the salon) and each ends by naming
+ * exactly where to switch it on, so the email doubles as a how-to.
+ */
+export const RETENTION_TOOLKIT_CAMPAIGN: AnnouncementCampaign = {
+  subject: 'Turn one-time clients into regulars - 3 tools built into SnipandGlow',
+  eyebrow: 'Grow retention \u00b7 3 built-in tools',
+  headline: 'Keep your customers coming back, automatically',
+  greeting: 'Hi {salon},',
+  intro:
+    'winning a brand-new client costs far more than keeping a happy one. The good news: three retention features are already built into your SnipandGlow dashboard - at no extra cost - and together they turn first-time visitors into loyal regulars. Here is how salons put each one to work.',
+  bullets: [
+    {
+      title: 'Memberships - lock in months of repeat visits',
+      body: 'Sell a plan once (say, 20% off for a year) and clients keep coming back to use the value they have already paid for. You take revenue upfront, and they have a reason to return instead of trying the salon down the road. Create plans under Memberships and assign one in a tap.',
+    },
+    {
+      title: 'Loyalty tiers - reward every single visit',
+      body: 'Clients climb from Regular to Silver, Gold and VIP as they visit more, so there is always a next reward to chase. It runs automatically on every bill - no cards, no manual tracking. Set your tier thresholds under Settings.',
+    },
+    {
+      title: 'Customer Wallet - prepaid balance that brings them back',
+      body: 'Let regulars load balance in advance, with an optional bonus for topping up, and spend it on future visits. Money already sitting in the wallet is a visit already committed. Add balance from any customer\u2019s profile.',
+    },
+    {
+      title: 'Stack them and stay top of mind',
+      body: 'The three compound: a member who also earns points and carries a wallet balance rarely goes anywhere else. Pair them with automatic WhatsApp birthday wishes and win-back reminders, and your chairs stay full.',
+    },
+  ],
+  ctaLabel: 'Set up my retention tools',
+  ctaUrl: 'https://snipandglow.com/dashboard/memberships',
+  footerNote:
+    'Where to find them: Memberships in the sidebar, Loyalty tiers under Settings, and Wallet on any customer\u2019s profile.',
+};
+
+/**
  * Preset: Ganesh Chaturthi festival greeting from Pixalara.
  *
  * A warm, non-salesy wish (no product bullets) with a centered 3D Ganesha hero
@@ -249,6 +289,7 @@ export const GANESH_CHATURTHI_CAMPAIGN: AnnouncementCampaign = {
 export const CAMPAIGN_PRESETS: { key: string; label: string; campaign: AnnouncementCampaign }[] = [
   // Welcome first: it's the one needed every time a new salon signs up.
   { key: 'welcome', label: 'Welcome', campaign: WELCOME_CAMPAIGN },
+  { key: 'retention_toolkit', label: 'Retention Toolkit', campaign: RETENTION_TOOLKIT_CAMPAIGN },
   { key: 'wallet', label: 'Customer Wallet', campaign: DEFAULT_CAMPAIGN },
   { key: 'online_renewal', label: 'Online Renewals', campaign: ONLINE_RENEWAL_CAMPAIGN },
   { key: 'renewal_reminder', label: 'Renewal Reminder', campaign: RENEWAL_REMINDER_CAMPAIGN },
