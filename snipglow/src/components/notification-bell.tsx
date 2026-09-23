@@ -31,11 +31,37 @@ export function NotificationBell() {
 
   const unreadCount = notifications.filter(n => !n.is_read).length;
 
-  // Fetch on mount and every 30 seconds
+  // Poll for new notifications — but only while the tab is actually visible, and
+  // at a gentler cadence. A background tab used to keep hitting the server every
+  // 30s (auth check + query) for hours on end, which was the single biggest
+  // driver of serverless invocations / Active CPU. Now it polls every 90s while
+  // visible, pauses completely when the tab is hidden, and refreshes instantly
+  // the moment the user comes back.
   useEffect(() => {
-    fetchNotifications();
-    const interval = setInterval(fetchNotifications, 30000);
-    return () => clearInterval(interval);
+    let interval: ReturnType<typeof setInterval> | null = null;
+
+    function startPolling() {
+      if (interval) return;
+      fetchNotifications();
+      interval = setInterval(fetchNotifications, 90000);
+    }
+    function stopPolling() {
+      if (interval) {
+        clearInterval(interval);
+        interval = null;
+      }
+    }
+    function handleVisibility() {
+      if (document.visibilityState === 'visible') startPolling();
+      else stopPolling();
+    }
+
+    if (document.visibilityState === 'visible') startPolling();
+    document.addEventListener('visibilitychange', handleVisibility);
+    return () => {
+      stopPolling();
+      document.removeEventListener('visibilitychange', handleVisibility);
+    };
   }, []);
 
   // Close on outside click
