@@ -1,12 +1,15 @@
 // =============================================================================
 // Auto welcome message for newly added customers.
 //
-// Best-effort: sends the approved `welcome_new_customer` MARKETING template from
-// the tenant's OWN (dedicated) WhatsApp number, but ONLY when BOTH gates pass:
+// Best-effort: sends the tenant's approved welcome MARKETING template from their
+// OWN (dedicated) WhatsApp number, but ONLY when BOTH gates pass:
 //   1. The tenant is Pro/Growth with a connected dedicated number
 //      (getDedicatedCredentialsForTenant returns null in every other case, so it
 //      never falls back to the shared Snip and Glow number for marketing).
-//   2. The `welcome_new_customer` template is APPROVED on their WABA.
+//   2. An approved welcome template exists on their WABA. It is resolved LIVE
+//      from Meta (so one created directly in WhatsApp Manager counts, not only
+//      ones made via our composer) and sent in that template's OWN language, so
+//      a Gujarati template is delivered in Gujarati automatically.
 //
 // This must NEVER throw or block: the customer has already been created by the
 // time this runs, and a WhatsApp hiccup must not fail that. Returns true only
@@ -16,11 +19,17 @@
 
 import { createAdminClient } from '@/lib/supabase/admin';
 import { getDedicatedCredentialsForTenant } from './tenant-router';
-import { listTenantTemplates } from './template-store';
+import { listTemplates } from './template-management';
 import { sendMessage } from './templates';
 import { logWhatsAppMessage } from './log-message';
 
-const WELCOME_TEMPLATE = 'welcome_new_customer';
+// Accepted welcome-template names, in PRIORITY order (first APPROVED match wins).
+// Resolved live from the tenant's WABA, so a template the salon created directly
+// in WhatsApp Manager - e.g. a Gujarati one - is used without needing our local
+// mirror. A localized name is listed first so it wins over the default English
+// template when both are approved. The matched template's own language is used
+// when sending, so `gu` content is delivered in Gujarati.
+const WELCOME_TEMPLATE_NAMES = ['welcome_message_v1', 'welcome_new_customer_v2', 'welcome_new_customer'];
 
 export async function sendWelcomeMessage(
   tenantId: string,
@@ -33,9 +42,18 @@ export async function sendWelcomeMessage(
     const credentials = await getDedicatedCredentialsForTenant(tenantId);
     if (!credentials) return false;
 
-    // Gate 2 — the welcome template must be APPROVED on this tenant's WABA.
-    const templates = await listTenantTemplates(tenantId);
-    const tpl = templates.find((t) => t.name === WELCOME_TEMPLATE && t.status === 'APPROVED');
+    // Gate 2 — an approved welcome template must exist on this tenant's WABA.
+    // Read live (includes Manager-created templates), then pick the first name
+    // in our priority list that has an APPROVED template, and keep its language.
+    const remote = await listTemplates(credentials);
+    let tpl: { name: string; language: string } | undefined;
+    for (const name of WELCOME_TEMPLATE_NAMES) {
+      const match = remote.find((t) => t.name === name && t.status === 'APPROVED');
+      if (match) {
+        tpl = { name: match.name, language: match.language || 'en' };
+        break;
+      }
+    }
     if (!tpl) return false;
 
     const admin = createAdminClient();
@@ -50,8 +68,8 @@ export async function sendWelcomeMessage(
     const res = await sendMessage(credentials, phone, {
       type: 'template',
       template: {
-        name: WELCOME_TEMPLATE,
-        language: { code: tpl.language || 'en' },
+        name: tpl.name,
+        language: { code: tpl.language },
         components: [
           {
             type: 'body',
@@ -68,9 +86,9 @@ export async function sendWelcomeMessage(
       tenant_id: tenantId,
       phone,
       direction: 'outbound',
-      template_name: WELCOME_TEMPLATE,
+      template_name: tpl.name,
       status: res.success ? 'sent' : 'failed',
-      metadata: { customer_name: customer.name, trigger: 'customer_created' },
+      metadata: { customer_name: customer.name, trigger: 'customer_created', language: tpl.language },
     });
 
     return res.success;
