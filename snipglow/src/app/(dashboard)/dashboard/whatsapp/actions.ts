@@ -31,19 +31,21 @@ import { notifyAdminOfSetupRequest } from '@/lib/whatsapp/setup-request-alert';
 import { getDedicatedCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import {
   createTemplate,
-  listTemplates,
+  fetchTemplateDefinitions,
   normalizeTemplateName,
   type TemplateCategory,
   type TemplateStatus,
+  type MetaTemplateFull,
 } from '@/lib/whatsapp/template-management';
 import {
   listTenantTemplates,
   upsertSubmittedTemplate,
   updateTemplateStatus,
   type TemplateRow,
+  type SubmittedTemplateInput,
 } from '@/lib/whatsapp/template-store';
 import { sendMessage } from '@/lib/whatsapp/templates';
-import { getMetaAppId } from '@/lib/whatsapp/config';
+import { getMetaAppId, type WhatsAppCredentials } from '@/lib/whatsapp/config';
 import { uploadResumableImage } from '@/lib/whatsapp/media-upload';
 import {
   uploadMarketingImage as storeMarketingImage,
@@ -795,14 +797,94 @@ export async function uploadMarketingTemplateImage(
   return { ok: true, url: up.url };
 }
 
+/** Parse a full Meta template (with components) into a local mirror-row input. */
+function metaTemplateToMirrorInput(t: MetaTemplateFull): SubmittedTemplateInput | null {
+  const comps = t.components || [];
+  const body = comps.find((c) => (c.type || '').toUpperCase() === 'BODY');
+  if (!body?.text) return null; // a template with no body isn't sendable/previewable
+  const header = comps.find((c) => (c.type || '').toUpperCase() === 'HEADER');
+  const footer = comps.find((c) => (c.type || '').toUpperCase() === 'FOOTER');
+  const headerIsText = header ? (header.format || 'TEXT').toUpperCase() === 'TEXT' : false;
+  return {
+    name: t.name,
+    language: t.language || 'en',
+    category: t.category || 'MARKETING',
+    bodyText: body.text,
+    headerText: headerIsText ? header?.text ?? null : null,
+    // Meta doesn't return a re-sendable public image URL, so only templates whose
+    // banner we uploaded via the composer carry header_image_url — leave it null
+    // here and never overwrite an existing one (we only insert NEW templates).
+    headerImageUrl: null,
+    footerText: footer?.text ?? null,
+    exampleParams: body.example?.body_text?.[0] ?? [],
+    status: t.status,
+    metaTemplateId: t.id ?? null,
+  };
+}
+
 /**
- * List the requesting owner's marketing templates (newest first). Tolerant:
- * returns [] for a non-Pro/non-owner caller rather than throwing, so the UI can
- * render its empty/upsell state.
+ * Pull the tenant's MARKETING templates from their WABA into our local mirror so
+ * the dashboard shows EVERY template — including ones created directly in
+ * WhatsApp Manager, which never went through our composer. New templates are
+ * inserted with full content; already-mirrored ones only get their status
+ * refreshed, so we never clobber a composer-uploaded banner URL (which Meta
+ * can't return). Best-effort: any failure leaves the cached mirror untouched.
+ */
+async function syncMarketingTemplatesFromMeta(
+  tenantId: string,
+  credentials: WhatsAppCredentials
+): Promise<void> {
+  try {
+    const res = await fetchTemplateDefinitions(credentials);
+    if (!res.ok) return;
+
+    const existing = await listTenantTemplates(tenantId);
+    const known = new Set(existing.map((r) => `${r.name}|${r.language}`));
+
+    for (const t of res.templates) {
+      if ((t.category || '').toUpperCase() !== 'MARKETING') continue;
+      const key = `${t.name}|${t.language || 'en'}`;
+
+      if (known.has(key)) {
+        // Keep status fresh without overwriting the body/banner we already hold.
+        // (Skip REJECTED so a webhook-provided rejection reason isn't cleared.)
+        if (t.status !== 'REJECTED') {
+          await updateTemplateStatus({
+            metaTemplateId: t.id,
+            name: t.name,
+            language: t.language,
+            status: t.status,
+          });
+        }
+        continue;
+      }
+
+      // New to us (e.g. created in WhatsApp Manager) — insert a full mirror row.
+      const input = metaTemplateToMirrorInput(t);
+      if (input) {
+        try {
+          await upsertSubmittedTemplate(tenantId, input);
+        } catch (err) {
+          console.error('[syncMarketingTemplates] insert failed for', t.name, err);
+        }
+      }
+    }
+  } catch (err) {
+    console.error('[syncMarketingTemplatesFromMeta] failed (non-fatal):', err);
+  }
+}
+
+/**
+ * List the requesting owner's marketing templates (newest first). Syncs live
+ * from the tenant's WABA first, so templates created directly in WhatsApp
+ * Manager appear here too. Tolerant: returns [] for a non-Pro/non-owner caller
+ * (and on any sync failure falls back to the cached mirror).
  */
 export async function getMarketingTemplates(): Promise<MarketingTemplateView[]> {
   try {
     const { tenantId } = await assertProOwner();
+    const credentials = await getDedicatedCredentialsForTenant(tenantId);
+    if (credentials) await syncMarketingTemplatesFromMeta(tenantId, credentials);
     const rows = await listTenantTemplates(tenantId);
     return rows.map(toTemplateView);
   } catch {
@@ -927,23 +1009,7 @@ export async function reconcileMarketingTemplates(): Promise<MarketingTemplateVi
   }
 
   const credentials = await getDedicatedCredentialsForTenant(tenantId);
-  if (credentials) {
-    try {
-      const remote = await listTemplates(credentials);
-      for (const t of remote) {
-        // Don't clobber a REJECTED row's webhook-provided reason on reconcile.
-        if (t.status === 'REJECTED') continue;
-        await updateTemplateStatus({
-          metaTemplateId: t.metaTemplateId,
-          name: t.name,
-          language: t.language,
-          status: t.status,
-        });
-      }
-    } catch (err) {
-      console.error('[reconcileMarketingTemplates] failed:', err);
-    }
-  }
+  if (credentials) await syncMarketingTemplatesFromMeta(tenantId, credentials);
 
   const rows = await listTenantTemplates(tenantId);
   return rows.map(toTemplateView);
