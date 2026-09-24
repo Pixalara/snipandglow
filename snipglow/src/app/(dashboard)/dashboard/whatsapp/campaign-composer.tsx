@@ -276,6 +276,12 @@ export function CampaignComposer() {
               {/* Live preview */}
               <div className="rounded-xl bg-[#e5ddd5] p-3 dark:bg-slate-800">
                 <div className="max-w-[85%] rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm text-slate-800 shadow-sm dark:bg-slate-700 dark:text-slate-100">
+                  {template.headerImageUrl && (
+                    <>
+                      {/* eslint-disable-next-line @next/next/no-img-element */}
+                      <img src={template.headerImageUrl} alt="Header" className="mb-2 w-full rounded-lg object-cover" />
+                    </>
+                  )}
                   <p className="whitespace-pre-wrap">{preview()}</p>
                   {template.footerText && (
                     <p className="mt-1 text-[11px] text-slate-400">{template.footerText}</p>

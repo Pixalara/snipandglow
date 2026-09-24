@@ -22,6 +22,7 @@ export interface TemplateRow {
   status: TemplateStatus;
   body_text: string;
   header_text: string | null;
+  header_image_url: string | null;
   footer_text: string | null;
   example_params: string[];
   meta_template_id: string | null;
@@ -31,7 +32,7 @@ export interface TemplateRow {
 }
 
 const COLUMNS =
-  'id, tenant_id, name, language, category, status, body_text, header_text, footer_text, example_params, meta_template_id, rejection_reason, created_at, updated_at';
+  'id, tenant_id, name, language, category, status, body_text, header_text, header_image_url, footer_text, example_params, meta_template_id, rejection_reason, created_at, updated_at';
 
 /** All templates for a tenant, newest first. */
 export async function listTenantTemplates(tenantId: string): Promise<TemplateRow[]> {
@@ -51,6 +52,7 @@ export interface SubmittedTemplateInput {
   category: string;
   bodyText: string;
   headerText?: string | null;
+  headerImageUrl?: string | null;
   footerText?: string | null;
   exampleParams: string[];
   status: TemplateStatus;
@@ -78,6 +80,7 @@ export async function upsertSubmittedTemplate(
     status: input.status,
     body_text: input.bodyText,
     header_text: input.headerText ?? null,
+    header_image_url: input.headerImageUrl ?? null,
     footer_text: input.footerText ?? null,
     example_params: input.exampleParams,
     meta_template_id: input.metaTemplateId ?? null,

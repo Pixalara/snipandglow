@@ -23,19 +23,21 @@ export interface MediaUploadResult {
 }
 
 /**
- * Upload a document (e.g. a sample PDF) via the resumable upload API and return
- * its reusable media handle. `appId` is the Meta App ID; `accessToken` should be
- * the token that will also create the template (self-consistent ownership).
+ * Upload any small sample file (document OR image) via the resumable upload API
+ * and return its reusable media handle for template creation. `appId` is the
+ * Meta App ID; `accessToken` should be the token that will also create the
+ * template (self-consistent ownership). The sample is only used for Meta's
+ * preview/review — the real media is attached at send time by link.
  */
-export async function uploadResumableDocument(
+export async function uploadResumableMedia(
   appId: string,
   accessToken: string,
   bytes: Buffer,
   fileName: string,
-  fileType = 'application/pdf'
+  fileType: string
 ): Promise<MediaUploadResult> {
   if (!appId) return { ok: false, error: 'META_APP_ID is not configured.' };
-  if (!bytes?.length) return { ok: false, error: 'Sample document is empty.' };
+  if (!bytes?.length) return { ok: false, error: 'Sample file is empty.' };
 
   try {
     // 1) Start an upload session.
@@ -72,4 +74,26 @@ export async function uploadResumableDocument(
   } catch {
     return { ok: false, error: 'Could not reach the upload API.' };
   }
+}
+
+/** Back-compat: upload a sample PDF document header (used by the template cloner). */
+export function uploadResumableDocument(
+  appId: string,
+  accessToken: string,
+  bytes: Buffer,
+  fileName: string,
+  fileType = 'application/pdf'
+): Promise<MediaUploadResult> {
+  return uploadResumableMedia(appId, accessToken, bytes, fileName, fileType);
+}
+
+/** Upload a sample image header (JPG/PNG) for a marketing template. */
+export function uploadResumableImage(
+  appId: string,
+  accessToken: string,
+  bytes: Buffer,
+  fileName: string,
+  fileType: string
+): Promise<MediaUploadResult> {
+  return uploadResumableMedia(appId, accessToken, bytes, fileName, fileType);
 }

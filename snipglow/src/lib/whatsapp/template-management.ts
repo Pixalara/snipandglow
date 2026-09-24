@@ -41,6 +41,12 @@ export interface TemplateDefinition {
   exampleParams: string[];
   /** Optional static text header (no variables supported here by design). */
   headerText?: string;
+  /**
+   * Optional IMAGE header. The Meta media handle returned by the resumable
+   * upload API (uploadResumableImage), set when the tenant attaches a banner.
+   * Takes precedence over headerText — a template may have only one header.
+   */
+  headerImageHandle?: string;
   footerText?: string;
 }
 
@@ -187,7 +193,11 @@ export interface CreateTemplatePayload {
 export function buildCreatePayload(def: TemplateDefinition): CreateTemplatePayload {
   const components: CreateComponent[] = [];
 
-  if (def.headerText && def.headerText.trim()) {
+  // A template can carry at most ONE header. Prefer an image banner when one was
+  // uploaded, else fall back to a static text header.
+  if (def.headerImageHandle && def.headerImageHandle.trim()) {
+    components.push({ type: 'HEADER', format: 'IMAGE', example: { header_handle: [def.headerImageHandle.trim()] } });
+  } else if (def.headerText && def.headerText.trim()) {
     components.push({ type: 'HEADER', format: 'TEXT', text: def.headerText.trim() });
   }
 

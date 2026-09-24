@@ -15,6 +15,8 @@ import {
   AlertTriangle,
   PauseCircle,
   RefreshCw,
+  ImagePlus,
+  X,
 } from 'lucide-react';
 import { MARKETING_TEMPLATE_PRESETS, type MarketingTemplatePreset } from '@/lib/whatsapp/template-presets';
 import { extractPlaceholders } from '@/lib/whatsapp/template-management';
@@ -65,6 +67,8 @@ export function TemplateComposer() {
   const [footer, setFooter] = useState('');
   const [examples, setExamples] = useState<string[]>([]);
   const [labels, setLabels] = useState<string[]>([]);
+  const [imageUrl, setImageUrl] = useState('');
+  const [imageUploading, setImageUploading] = useState(false);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -121,6 +125,7 @@ export function TemplateComposer() {
     setFooter(p.definition.footerText ?? '');
     setExamples([...p.definition.exampleParams]);
     setLabels(p.variableLabels);
+    setImageUrl('');
     setError(null);
     setNotice(null);
   }
@@ -131,6 +136,27 @@ export function TemplateComposer() {
     setFooter('');
     setExamples([]);
     setLabels([]);
+    setImageUrl('');
+  }
+
+  async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    e.target.value = ''; // allow re-selecting the same file after a remove
+    if (!file) return;
+    setError(null);
+    setImageUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('image', file);
+      const { uploadMarketingTemplateImage } = await import('./actions');
+      const res = await uploadMarketingTemplateImage(fd);
+      if (res.ok) setImageUrl(res.url);
+      else setError(res.error);
+    } catch {
+      setError('Could not upload the image. Please try again.');
+    } finally {
+      setImageUploading(false);
+    }
   }
 
   const canSubmit = name.trim().length > 0 && body.trim().length > 0 && !submitting;
@@ -147,6 +173,7 @@ export function TemplateComposer() {
         bodyText: body,
         exampleParams: examples,
         footerText: footer.trim() || null,
+        headerImageUrl: imageUrl || null,
       });
       if (res.ok) {
         setNotice('Sent to WhatsApp for approval. Its status will update here once Meta reviews it (usually within a day).');
@@ -267,13 +294,54 @@ export function TemplateComposer() {
           />
         </div>
 
+        {/* Header image (optional) */}
+        <div>
+          <label className="text-xs font-medium text-muted-foreground">Header image (optional)</label>
+          {imageUrl ? (
+            <div className="mt-1 flex items-center gap-3">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={imageUrl} alt="Header preview" className="h-16 w-28 rounded-lg border border-border object-cover" />
+              <button
+                type="button"
+                onClick={() => setImageUrl('')}
+                className="inline-flex items-center gap-1 text-xs text-muted-foreground hover:text-red-600"
+              >
+                <X className="size-3.5" /> Remove
+              </button>
+            </div>
+          ) : (
+            <label className="mt-1 flex h-10 w-full cursor-pointer items-center justify-center gap-2 rounded-xl border border-dashed border-border bg-background text-sm text-muted-foreground hover:border-emerald-400 hover:text-foreground">
+              {imageUploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
+              {imageUploading ? 'Uploading...' : 'Upload a JPG or PNG banner'}
+              <input
+                type="file"
+                accept="image/jpeg,image/png"
+                className="hidden"
+                onChange={handleImageSelect}
+                disabled={imageUploading}
+              />
+            </label>
+          )}
+          <p className="mt-1 text-[11px] text-muted-foreground">
+            Shown as a banner above your message. JPG or PNG, landscape (about 1.91:1, e.g. 1200x628), max 5 MB.
+          </p>
+        </div>
+
         {/* Live preview */}
-        {body.trim() && (
+        {(body.trim() || imageUrl) && (
           <div className="rounded-xl bg-[#e5ddd5] dark:bg-slate-800 p-4">
             <div className="bg-white dark:bg-slate-700 rounded-xl rounded-tl-sm p-3 max-w-[320px] shadow-sm">
-              <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed">
-                {previewText(body, examples)}
-              </p>
+              {imageUrl && (
+                <>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={imageUrl} alt="Header" className="mb-2 w-full rounded-lg object-cover" />
+                </>
+              )}
+              {body.trim() && (
+                <p className="text-sm text-slate-800 dark:text-slate-200 whitespace-pre-line leading-relaxed">
+                  {previewText(body, examples)}
+                </p>
+              )}
               {footer.trim() && (
                 <p className="text-[11px] text-slate-400 mt-2 whitespace-pre-line">{footer}</p>
               )}

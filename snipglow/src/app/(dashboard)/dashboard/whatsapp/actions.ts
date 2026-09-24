@@ -43,6 +43,12 @@ import {
   type TemplateRow,
 } from '@/lib/whatsapp/template-store';
 import { sendMessage } from '@/lib/whatsapp/templates';
+import { getMetaAppId } from '@/lib/whatsapp/config';
+import { uploadResumableImage } from '@/lib/whatsapp/media-upload';
+import {
+  uploadMarketingImage as storeMarketingImage,
+  MARKETING_IMAGE_MAX_BYTES,
+} from '@/lib/storage/upload-marketing-image';
 import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
 
 // =============================================================================
@@ -737,6 +743,7 @@ export interface MarketingTemplateView {
   status: TemplateStatus;
   bodyText: string;
   footerText: string | null;
+  headerImageUrl: string | null;
   exampleParams: string[];
   rejectionReason: string | null;
   createdAt: string;
@@ -751,10 +758,41 @@ function toTemplateView(row: TemplateRow): MarketingTemplateView {
     status: row.status,
     bodyText: row.body_text,
     footerText: row.footer_text,
+    headerImageUrl: row.header_image_url,
     exampleParams: Array.isArray(row.example_params) ? row.example_params : [],
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
   };
+}
+
+/**
+ * Upload a marketing-template header image to the tenant's public `marketing`
+ * storage bucket and return its permanent public URL. The composer calls this
+ * first, then passes the URL into {@link submitMarketingTemplate}. Pro/owner
+ * gated; JPG/PNG up to 5 MB (the formats + size WhatsApp accepts for headers).
+ */
+export async function uploadMarketingTemplateImage(
+  formData: FormData
+): Promise<{ ok: true; url: string } | { ok: false; error: string }> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch {
+    return { ok: false, error: 'Only the salon owner on a Pro plan can add template images.' };
+  }
+
+  const file = formData.get('image');
+  if (!(file instanceof File) || file.size === 0) return { ok: false, error: 'Please choose an image.' };
+  const type = (file.type || '').toLowerCase();
+  if (type !== 'image/jpeg' && type !== 'image/jpg' && type !== 'image/png') {
+    return { ok: false, error: 'Use a JPG or PNG image (those are the formats WhatsApp accepts).' };
+  }
+  if (file.size > MARKETING_IMAGE_MAX_BYTES) return { ok: false, error: 'Image must be under 5 MB.' };
+
+  const bytes = Buffer.from(await file.arrayBuffer());
+  const up = await storeMarketingImage(tenantId, bytes, file.type);
+  if (!up.ok) return { ok: false, error: up.error };
+  return { ok: true, url: up.url };
 }
 
 /**
@@ -794,6 +832,7 @@ export async function submitMarketingTemplate(input: {
   exampleParams: string[];
   footerText?: string | null;
   headerText?: string | null;
+  headerImageUrl?: string | null;
   category?: TemplateCategory;
   language?: string;
 }): Promise<SubmitTemplateResult> {
@@ -812,6 +851,28 @@ export async function submitMarketingTemplate(input: {
     return { ok: false, reason: 'not_connected' };
   }
 
+  // If the owner attached a banner, convert its stored public URL into a Meta
+  // media handle — required to create an IMAGE-header template. Done here (not
+  // at upload time) so the handle is fresh at create and travels with the token
+  // that owns the template.
+  let headerImageHandle: string | undefined;
+  const headerImageUrl = input.headerImageUrl?.trim() || null;
+  if (headerImageUrl) {
+    const appId = getMetaAppId();
+    if (!appId) return { ok: false, reason: 'Image headers need META_APP_ID configured on the server.' };
+    try {
+      const imgRes = await fetch(headerImageUrl);
+      if (!imgRes.ok) return { ok: false, reason: 'Could not read the uploaded image. Please re-upload and try again.' };
+      const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+      const buf = Buffer.from(await imgRes.arrayBuffer());
+      const up = await uploadResumableImage(appId, credentials.accessToken, buf, 'marketing-header', contentType);
+      if (!up.ok || !up.handle) return { ok: false, reason: up.error || 'Could not upload the image to WhatsApp.' };
+      headerImageHandle = up.handle;
+    } catch {
+      return { ok: false, reason: 'Could not process the image. Please try again.' };
+    }
+  }
+
   const definition = {
     name: normalizeTemplateName(input.name),
     language: input.language || 'en',
@@ -819,6 +880,7 @@ export async function submitMarketingTemplate(input: {
     bodyText: input.bodyText,
     exampleParams: input.exampleParams ?? [],
     headerText: input.headerText ?? undefined,
+    headerImageHandle,
     footerText: input.footerText ?? undefined,
   };
 
@@ -834,6 +896,7 @@ export async function submitMarketingTemplate(input: {
       category: definition.category,
       bodyText: definition.bodyText,
       headerText: definition.headerText ?? null,
+      headerImageUrl,
       footerText: definition.footerText ?? null,
       exampleParams: definition.exampleParams,
       status: result.status ?? 'PENDING',
@@ -1028,12 +1091,22 @@ export async function sendMarketingCampaign(input: SendCampaignInput): Promise<S
       text: personalize.has(i) ? (c.name || 'there') : (values[i] ?? '').trim(),
     }));
 
+    // Attach the approved template's banner (if any) as the IMAGE header, then
+    // the body variables. Same banner link for every recipient.
+    const components: Array<Record<string, unknown>> = [];
+    if (tpl.header_image_url) {
+      components.push({ type: 'header', parameters: [{ type: 'image', image: { link: tpl.header_image_url } }] });
+    }
+    if (placeholderCount > 0) {
+      components.push({ type: 'body', parameters });
+    }
+
     const res = await sendMessage(credentials, phoneDigits, {
       type: 'template',
       template: {
         name: tpl.name,
         language: { code: tpl.language || 'en' },
-        components: placeholderCount > 0 ? [{ type: 'body', parameters }] : [],
+        components,
       },
     });
 
