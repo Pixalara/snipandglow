@@ -186,12 +186,12 @@ export default async function SettingsPage() {
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
             <div className="flex items-center gap-3">
               <div className={`flex size-12 items-center justify-center rounded-xl ${
-                isExpired ? 'bg-red-100 dark:bg-red-900/30' :
+                isExpired ? 'bg-amber-100 dark:bg-amber-900/30' :
                 isTrial ? 'bg-blue-100 dark:bg-blue-900/30' :
                 'bg-emerald-100 dark:bg-emerald-900/30'
               }`}>
                 {isExpired ? (
-                  <AlertTriangle className="size-6 text-red-600 dark:text-red-400" />
+                  <AlertTriangle className="size-6 text-amber-600 dark:text-amber-400" />
                 ) : isTrial ? (
                   <Clock className="size-6 text-blue-600 dark:text-blue-400" />
                 ) : (
@@ -200,7 +200,7 @@ export default async function SettingsPage() {
               </div>
               <div>
                 <p className="text-lg font-bold text-foreground">
-                  {isExpired ? 'Subscription Expired' : isTrial ? 'Free Trial' : 'Active Subscription'}
+                  {isExpired ? 'Renewal Due' : isTrial ? 'Free Trial' : 'Active Subscription'}
                 </p>
                 <p className="text-sm text-muted-foreground">
                   SnipandGlow — {planLabel(planTier)} Plan · {billingCycleLabel(billingCycle)}
@@ -213,14 +213,14 @@ export default async function SettingsPage() {
 
             {/* Status Badge */}
             <span className={`inline-flex items-center gap-1.5 rounded-full px-3 py-1.5 text-xs font-semibold ${
-              isExpired ? 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300' :
+              isExpired ? 'bg-amber-100 text-amber-800 dark:bg-amber-900/30 dark:text-amber-300' :
               isTrial ? 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300' :
               'bg-emerald-100 text-emerald-800 dark:bg-emerald-900/30 dark:text-emerald-300'
             }`}>
               <span className={`size-2 rounded-full ${
-                isExpired ? 'bg-red-500' : isTrial ? 'bg-blue-500' : 'bg-emerald-500'
+                isExpired ? 'bg-amber-500' : isTrial ? 'bg-blue-500' : 'bg-emerald-500'
               }`} />
-              {isExpired ? 'Expired' : isTrial ? 'Trial Period' : 'Active'}
+              {isExpired ? 'Renewal Due' : isTrial ? 'Trial Period' : 'Active'}
             </span>
           </div>
 
@@ -241,18 +241,18 @@ export default async function SettingsPage() {
             )}
             {subscriptionEnd && (
               <div className={`rounded-lg px-4 py-3 ${
-                isExpired ? 'bg-red-50 dark:bg-red-900/10 border border-red-200 dark:border-red-800/30' :
+                isExpired ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30' :
                 daysRemaining <= 7 ? 'bg-amber-50 dark:bg-amber-900/10 border border-amber-200 dark:border-amber-800/30' :
                 'bg-muted/50'
               }`}>
                 <div className="flex items-center gap-2 mb-1">
                   <Clock className="size-3.5 text-muted-foreground" />
                   <p className="text-xs text-muted-foreground">
-                    {isExpired ? 'Expired On' : isTrial ? 'Trial Ends' : 'Renews On'}
+                    {isExpired ? 'Renewal Due' : isTrial ? 'Trial Ends' : 'Renews On'}
                   </p>
                 </div>
                 <p className={`text-sm font-semibold ${
-                  isExpired ? 'text-red-700 dark:text-red-400' :
+                  isExpired ? 'text-amber-700 dark:text-amber-400' :
                   daysRemaining <= 7 ? 'text-amber-700 dark:text-amber-400' :
                   'text-foreground'
                 }`}>
@@ -269,17 +269,17 @@ export default async function SettingsPage() {
 
           {/* Expired State — Upgrade CTA */}
           {isExpired && (
-            <div className="rounded-xl border border-red-200 bg-red-50 dark:border-red-800/30 dark:bg-red-900/10 p-5 space-y-4">
+            <div className="rounded-xl border border-amber-200 bg-amber-50 dark:border-amber-800/30 dark:bg-amber-900/10 p-5 space-y-4">
               <div className="flex items-start gap-3">
-                <AlertTriangle className="size-5 text-red-600 dark:text-red-400 shrink-0 mt-0.5" />
+                <AlertTriangle className="size-5 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
                 <div>
-                  <p className="text-sm font-semibold text-red-800 dark:text-red-200">Your subscription has expired</p>
-                  <p className="text-sm text-red-700 dark:text-red-300 mt-1">
-                    All features are locked except Dashboard and Settings. Complete your payment to continue managing appointments, billing, customers, and more.
+                  <p className="text-sm font-semibold text-amber-800 dark:text-amber-200">Your plan is due for renewal</p>
+                  <p className="text-sm text-amber-700 dark:text-amber-300 mt-1">
+                    All features are locked except Dashboard and Settings. Renew now to continue managing appointments, billing, customers, and more.
                   </p>
                 </div>
               </div>
-              <RenewButton label={`Complete Payment — ₹${renewalAmount.toLocaleString('en-IN')}`} />
+              <RenewButton label={`Renew Now — ₹${renewalAmount.toLocaleString('en-IN')}`} />
             </div>
           )}
 
