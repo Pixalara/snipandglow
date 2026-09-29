@@ -267,3 +267,53 @@ export function amountPayable(
 export function billingCycleLabel(cycle: BillingCycle): string {
   return cycle === 'monthly' ? 'Monthly' : 'Yearly';
 }
+
+// =============================================================================
+// Display status ("badge") — the SINGLE source of truth for how a tenant's
+// subscription reads across the admin.
+//
+// Derived from the real dates, not just the stored status, so that:
+//   • a trial or paid period that has LAPSED reads "Renewal Due" (it never
+//     reverts to "Trial" once the first trial is over), and
+//   • the moment a tenant renews (status → active, end pushed to the future)
+//     it reads "Active" again automatically.
+//
+// "Renewal Due" is a DISPLAY label only — there is no such DB status. It covers
+// both an explicit `expired` status and any trial/subscription whose end date
+// has passed. `cancelled` stays its own label. No schema change needed.
+// =============================================================================
+
+export type SubscriptionBadgeKey = 'active' | 'trial' | 'renewal_due' | 'cancelled';
+
+export interface SubscriptionBadge {
+  key: SubscriptionBadgeKey;
+  label: string;
+}
+
+/** The status to DISPLAY for a tenant, derived from getSubscriptionState. */
+export function subscriptionBadge(tenant: TenantSubscriptionFields | null | undefined): SubscriptionBadge {
+  const status = (tenant?.subscription_status ?? 'active').toLowerCase();
+  // A deliberate cancellation keeps its own label.
+  if (status === 'cancelled') return { key: 'cancelled', label: 'Cancelled' };
+  const state = getSubscriptionState(tenant);
+  // Lapsed trial OR lapsed/expired paid subscription → needs renewing.
+  if (state.isExpired) return { key: 'renewal_due', label: 'Renewal Due' };
+  // Still inside the free trial window.
+  if (state.isTrial) return { key: 'trial', label: 'Trial' };
+  return { key: 'active', label: 'Active' };
+}
+
+/** Tailwind classes for a status badge, keyed by {@link subscriptionBadge}. */
+export function subscriptionBadgeClass(key: SubscriptionBadgeKey): string {
+  switch (key) {
+    case 'active':
+      return 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400';
+    case 'trial':
+      return 'bg-blue-500/15 text-blue-600 dark:text-blue-400';
+    case 'renewal_due':
+      return 'bg-amber-500/15 text-amber-600 dark:text-amber-400';
+    case 'cancelled':
+    default:
+      return 'bg-slate-500/15 text-slate-600 dark:text-slate-300';
+  }
+}

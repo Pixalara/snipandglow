@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin } from '@/lib/admin/auth';
 import { formatISTDate } from '@/lib/datetime';
-import { planLabel, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
+import { planLabel, getBillingCycle, billingCycleLabel, subscriptionBadge, subscriptionBadgeClass } from '@/lib/subscription';
 
 export default async function AdminSubscriptionsPage() {
   await requireAdmin();
@@ -13,11 +13,13 @@ export default async function AdminSubscriptionsPage() {
     .order('subscription_status')
     .order('created_at', { ascending: false }) as any);
 
+  // Group by the DERIVED badge, so a lapsed trial/subscription counts as
+  // "Renewal Due" rather than lingering under Trial/Active.
   const statusGroups = {
-    active: (tenants ?? []).filter((t: any) => t.subscription_status === 'active'),
-    trial: (tenants ?? []).filter((t: any) => t.subscription_status === 'trial'),
-    expired: (tenants ?? []).filter((t: any) => t.subscription_status === 'expired'),
-    cancelled: (tenants ?? []).filter((t: any) => t.subscription_status === 'cancelled'),
+    active: (tenants ?? []).filter((t: any) => subscriptionBadge(t).key === 'active'),
+    trial: (tenants ?? []).filter((t: any) => subscriptionBadge(t).key === 'trial'),
+    renewal_due: (tenants ?? []).filter((t: any) => subscriptionBadge(t).key === 'renewal_due'),
+    cancelled: (tenants ?? []).filter((t: any) => subscriptionBadge(t).key === 'cancelled'),
   };
 
   return (
@@ -30,8 +32,8 @@ export default async function AdminSubscriptionsPage() {
       {/* Status summary */}
       <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
         <StatusCard label="Active" count={statusGroups.active.length} color="text-emerald-500" />
-        <StatusCard label="Trial" count={statusGroups.trial.length} color="text-amber-500" />
-        <StatusCard label="Expired" count={statusGroups.expired.length} color="text-red-500" />
+        <StatusCard label="Trial" count={statusGroups.trial.length} color="text-blue-500" />
+        <StatusCard label="Renewal Due" count={statusGroups.renewal_due.length} color="text-amber-500" />
         <StatusCard label="Cancelled" count={statusGroups.cancelled.length} color="text-slate-500" />
       </div>
 
@@ -60,12 +62,7 @@ export default async function AdminSubscriptionsPage() {
                   <td className="px-4 py-3 text-xs text-foreground/80">{planLabel(t.plan_tier)}</td>
                   <td className="px-4 py-3 text-xs text-foreground/80">{billingCycleLabel(getBillingCycle(t.settings))}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                      t.subscription_status === 'trial' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                      t.subscription_status === 'expired' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                      'bg-muted text-muted-foreground'
-                    }`}>{t.subscription_status}</span>
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${subscriptionBadgeClass(subscriptionBadge(t).key)}`}>{subscriptionBadge(t).label}</span>
                   </td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{formatISTDate(t.subscription_start)}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{formatISTDate(t.subscription_end)}</td>

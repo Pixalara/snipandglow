@@ -18,6 +18,7 @@ import {
   billingCycleLabel,
   planPricing,
   getCustomPricing,
+  subscriptionBadge,
 } from '@/lib/subscription';
 
 // =============================================================================
@@ -137,7 +138,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         <div>
           <Link href="/admin/tenants" className="text-xs text-muted-foreground hover:text-foreground">← Back to Tenants</Link>
           <h1 className="text-2xl font-bold text-foreground mt-1">{tenant.name}</h1>
-          <p className="text-sm text-muted-foreground">{tenant.tenant_code} · {tenant.subscription_status}</p>
+          <p className="text-sm text-muted-foreground">{tenant.tenant_code} · {subscriptionBadge(tenant).label}</p>
         </div>
         <Link
           href={`/admin/force-delete?tenant=${tenantId}`}
@@ -155,7 +156,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
           <Field label="Email" value={ownerEmail} />
           <Field label="Plan" value={planLabel(tenant.plan_tier)} />
           <Field label="Billing Cycle" value={billingCycleLabel(getBillingCycle(tenant.settings))} />
-          <Field label="Status" value={tenant.subscription_status} />
+          <Field label="Status" value={subscriptionBadge(tenant).label} />
           <Field label="Created" value={formatISTDate(tenant.created_at)} />
           <Field label="Subscription Start" value={formatISTDate(tenant.subscription_start)} />
           <Field label="Subscription End" value={formatISTDate(tenant.subscription_end)} />
@@ -218,7 +219,7 @@ export default async function AdminTenantDetailPage({ params }: { params: Promis
         tenantId={tenantId}
         currentPlan={tenant.plan_tier || 'starter'}
         currentBillingCycle={getBillingCycle(tenant.settings)}
-        subscriptionStatus={tenant.subscription_status}
+        subscriptionStatus={subscriptionBadge(tenant).label}
         subscriptionEnd={tenant.subscription_end ?? null}
       />
 

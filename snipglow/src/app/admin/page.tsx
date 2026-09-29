@@ -1,6 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { formatISTDate, todayIST } from '@/lib/datetime';
+import { subscriptionBadge, subscriptionBadgeClass } from '@/lib/subscription';
 import Link from 'next/link';
 
 // =============================================================================
@@ -18,10 +19,7 @@ export default async function AdminOverviewPage() {
   // Parallel queries for all metrics
   const [
     tenantsRes,
-    activeRes,
-    trialRes,
-    expiredRes,
-    cancelledRes,
+    subsRes,
     customersRes,
     appointmentsRes,
     todayApptsRes,
@@ -31,10 +29,9 @@ export default async function AdminOverviewPage() {
     whatsappFailedRes,
   ] = await Promise.all([
     admin.from('tenants').select('id', { count: 'exact', head: true }),
-    (admin.from('tenants').select('id', { count: 'exact', head: true }).eq('subscription_status', 'active') as any),
-    (admin.from('tenants').select('id', { count: 'exact', head: true }).eq('subscription_status', 'trial') as any),
-    (admin.from('tenants').select('id', { count: 'exact', head: true }).eq('subscription_status', 'expired') as any),
-    (admin.from('tenants').select('id', { count: 'exact', head: true }).eq('subscription_status', 'cancelled') as any),
+    // Status counts are DERIVED from dates (a lapsed trial/sub = "Renewal Due"),
+    // so fetch the fields and tally in JS rather than count by raw status.
+    (admin.from('tenants').select('subscription_status, subscription_start, subscription_end, created_at') as any),
     admin.from('customers').select('id', { count: 'exact', head: true }),
     admin.from('appointments').select('id', { count: 'exact', head: true }),
     admin.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', today),
@@ -44,10 +41,17 @@ export default async function AdminOverviewPage() {
     (admin.from('whatsapp_sessions' as any).select('id', { count: 'exact', head: true }).eq('direction', 'outbound').eq('status', 'failed') as any),
   ]);
 
+  // Tally the derived status badges across all tenants.
+  const subTally: Record<string, number> = { active: 0, trial: 0, renewal_due: 0, cancelled: 0 };
+  for (const t of (subsRes?.data ?? []) as any[]) {
+    const key = subscriptionBadge(t).key;
+    subTally[key] = (subTally[key] ?? 0) + 1;
+  }
+
   // Recent tenants
   const { data: recentTenants } = await (admin
     .from('tenants' as any)
-    .select('id, name, tenant_code, subscription_status, created_at')
+    .select('id, name, tenant_code, subscription_status, subscription_start, subscription_end, created_at')
     .order('created_at', { ascending: false })
     .limit(5) as any);
 
@@ -89,10 +93,10 @@ export default async function AdminOverviewPage() {
 
   const metrics = [
     { label: 'Total Tenants', value: tenantsRes.count ?? 0, color: 'text-blue-500' },
-    { label: 'Active', value: activeRes.count ?? 0, color: 'text-emerald-500' },
-    { label: 'Trial', value: trialRes.count ?? 0, color: 'text-amber-500' },
-    { label: 'Expired', value: expiredRes.count ?? 0, color: 'text-red-500' },
-    { label: 'Cancelled', value: cancelledRes.count ?? 0, color: 'text-slate-500' },
+    { label: 'Active', value: subTally.active, color: 'text-emerald-500' },
+    { label: 'Trial', value: subTally.trial, color: 'text-blue-500' },
+    { label: 'Renewal Due', value: subTally.renewal_due, color: 'text-amber-500' },
+    { label: 'Cancelled', value: subTally.cancelled, color: 'text-slate-500' },
     { label: 'Total Customers', value: customersRes.count ?? 0, color: 'text-violet-500' },
     { label: 'Total Appointments', value: appointmentsRes.count ?? 0, color: 'text-cyan-500' },
     { label: "Today's Appointments", value: todayApptsRes.count ?? 0, color: 'text-pink-500' },
@@ -167,12 +171,8 @@ export default async function AdminOverviewPage() {
                 <p className="text-sm font-medium text-foreground">{t.name}</p>
                 <p className="text-xs text-muted-foreground">{t.tenant_code} · {formatISTDate(t.created_at)}</p>
               </div>
-              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                t.subscription_status === 'trial' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                'bg-red-500/15 text-red-600 dark:text-red-400'
-              }`}>
-                {t.subscription_status}
+              <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${subscriptionBadgeClass(subscriptionBadge(t).key)}`}>
+                {subscriptionBadge(t).label}
               </span>
             </div>
           ))}

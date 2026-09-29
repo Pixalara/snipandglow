@@ -1,7 +1,7 @@
 import { createAdminClient } from '@/lib/supabase/admin';
 import { requireAdmin, logAdminAction } from '@/lib/admin/auth';
 import { formatISTDate } from '@/lib/datetime';
-import { planLabel, getBillingCycle, billingCycleLabel } from '@/lib/subscription';
+import { planLabel, getBillingCycle, billingCycleLabel, subscriptionBadge, subscriptionBadgeClass } from '@/lib/subscription';
 import Link from 'next/link';
 
 // =============================================================================
@@ -15,7 +15,7 @@ export default async function AdminTenantsPage() {
   // Fetch all tenants with stats
   const { data: tenants } = await (admin
     .from('tenants' as any)
-    .select('id, name, tenant_code, owner_name, phone, plan_tier, subscription_status, created_at, settings')
+    .select('id, name, tenant_code, owner_name, phone, plan_tier, subscription_status, subscription_start, subscription_end, created_at, settings')
     .order('created_at', { ascending: false }) as any);
 
   // Get counts per tenant
@@ -68,13 +68,8 @@ export default async function AdminTenantsPage() {
                   <p className="truncate text-sm font-semibold text-foreground">{t.name}</p>
                   <p className="font-mono text-[11px] text-muted-foreground">{t.tenant_code}</p>
                 </div>
-                <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                  t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                  t.subscription_status === 'trial' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                  t.subscription_status === 'expired' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                  'bg-muted text-muted-foreground'
-                }`}>
-                  {t.subscription_status}
+                <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${subscriptionBadgeClass(subscriptionBadge(t).key)}`}>
+                  {subscriptionBadge(t).label}
                 </span>
               </div>
 
@@ -142,13 +137,8 @@ export default async function AdminTenantsPage() {
                   </td>
                   <td className="px-4 py-3 text-xs text-foreground/80">{billingCycleLabel(getBillingCycle(t.settings))}</td>
                   <td className="px-4 py-3">
-                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
-                      t.subscription_status === 'active' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' :
-                      t.subscription_status === 'trial' ? 'bg-amber-500/15 text-amber-600 dark:text-amber-400' :
-                      t.subscription_status === 'expired' ? 'bg-red-500/15 text-red-600 dark:text-red-400' :
-                      'bg-muted text-muted-foreground'
-                    }`}>
-                      {t.subscription_status}
+                    <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${subscriptionBadgeClass(subscriptionBadge(t).key)}`}>
+                      {subscriptionBadge(t).label}
                     </span>
                   </td>
                   <td className="px-4 py-3 text-foreground/80">{customerCounts[t.id] || 0}</td>
