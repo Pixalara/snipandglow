@@ -105,7 +105,7 @@ export const WELCOME_CAMPAIGN: AnnouncementCampaign = {
   headline: 'Your salon is all set up on SnipandGlow',
   greeting: 'Hi {salon},',
   intro:
-    'welcome to SnipandGlow, and thank you for coming on board. Your account is ready to use. Here are the four things to set up first - most salons finish all of them in about ten minutes.',
+    'welcome to SnipandGlow, and thank you for coming on board. Your account is ready to use. Start with the first four - most salons set these up in about ten minutes - then explore the rest of what your salon can do.',
   bullets: [
     {
       title: '1. Add your services',
@@ -122,6 +122,22 @@ export const WELCOME_CAMPAIGN: AnnouncementCampaign = {
     {
       title: '4. Manage billing',
       body: 'Generate a GST-ready bill in seconds from Billing. Search services by name or category, apply discounts, and the receipt reaches your client on WhatsApp instantly.',
+    },
+    {
+      title: '5. Let clients book on WhatsApp',
+      body: 'Share your booking link or QR code and clients book themselves on WhatsApp - no calls, no app to install. Each booking drops straight onto your calendar.',
+    },
+    {
+      title: '6. Reminders and win-backs on autopilot',
+      body: 'Appointment reminders go out automatically to cut no-shows, and birthday wishes and "we miss you" messages quietly bring lapsed clients back.',
+    },
+    {
+      title: '7. Wallet, memberships and loyalty',
+      body: 'Let regulars prepay into a wallet, sell membership plans, and reward every visit with loyalty tiers - the tools that turn first-time visitors into regulars.',
+    },
+    {
+      title: '8. Reports that show what is working',
+      body: 'See revenue, busiest hours, top services and staff performance at a glance from Analytics, so you always know what is growing your salon.',
     },
   ],
   ctaLabel: 'Open my dashboard',
