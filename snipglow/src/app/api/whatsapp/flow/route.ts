@@ -655,7 +655,20 @@ async function processBooking(data: any, flowToken: string) {
               { type: 'button', sub_type: 'url', index: '2', parameters: [{ type: 'text', text: calendarToken }] },
             ],
           },
-        })
+        }).then((res) =>
+          // Log to whatsapp_sessions so WhatsApp-flow bookings are visible in
+          // admin WhatsApp Health with their real send status / error.
+          admin.from('whatsapp_sessions').insert({
+            tenant_id: primaryService.tenant_id,
+            message_id: res.messageId || `booking_${Date.now()}`,
+            phone: customerPhone || customer_phone,
+            direction: 'outbound',
+            template_name: isReschedule ? 'appointment_rescheduled_v1' : 'booking_confirmation_v2',
+            status: res.success ? 'sent' : 'failed',
+            error_details: res.error ?? null,
+            metadata: { customer_name: customerName, source: 'whatsapp_flow' },
+          } as any)
+        )
       ),
       // Owner notification + in-app notification (fire-and-forget)
       isReschedule

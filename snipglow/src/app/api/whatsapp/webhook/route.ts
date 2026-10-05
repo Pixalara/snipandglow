@@ -1253,6 +1253,24 @@ async function handleButtonReply(tenant: TenantContext, phone: string, name: str
           },
         });
         console.log('[Webhook] Template send result:', JSON.stringify(templateResult));
+
+        // Log to whatsapp_sessions so WhatsApp-chat bookings show up in admin
+        // WhatsApp Health, with their real send status / error (and the real
+        // wamid so the delivery webhook can flip it to delivered/failed).
+        try {
+          await (admin.from('whatsapp_sessions').insert({
+            tenant_id: tenant.tenantId,
+            message_id: templateResult.messageId || `booking_${Date.now()}`,
+            phone,
+            direction: 'outbound',
+            template_name: 'booking_confirmation_v2',
+            status: templateResult.success ? 'sent' : 'failed',
+            error_details: templateResult.error ?? null,
+            metadata: { customer_name: name, source: 'whatsapp_flow' },
+          } as any) as any);
+        } catch (logErr) {
+          console.error('[Webhook] Failed to log booking confirmation:', logErr);
+        }
         break;
       }
 
