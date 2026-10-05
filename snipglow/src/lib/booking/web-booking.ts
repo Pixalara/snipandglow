@@ -434,7 +434,7 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
         [`${serviceNames} at ${salonName || 'Salon'}`, date, time, endTime, salonName || ''].join('|')
       ).toString('base64url');
 
-      await Promise.allSettled([
+      const [confirmRes] = await Promise.allSettled([
         sendMessage(credentials, phoneDigits, {
           type: 'template',
           template: {
@@ -463,6 +463,22 @@ export async function createWebBooking(input: CreateWebBookingInput): Promise<Cr
           { customer_name: customerName, customer_phone: phoneDigits }
         ),
       ]);
+
+      // Log the booking confirmation to whatsapp_sessions. Web booking is the
+      // primary path for dedicated tenants, so this is what makes a "message
+      // the salon → book" test visible in admin WhatsApp Health — with the real
+      // send status/error and Meta's wamid for delivery-status correlation.
+      const confirm = confirmRes.status === 'fulfilled' ? confirmRes.value : null;
+      await (admin.from('whatsapp_sessions').insert({
+        tenant_id: tenantId,
+        message_id: confirm?.messageId || `booking_${Date.now()}`,
+        phone: phoneDigits,
+        direction: 'outbound',
+        template_name: 'booking_confirmation_v2',
+        status: confirm?.success ? 'sent' : 'failed',
+        error_details: confirm?.error ?? (confirmRes.status === 'rejected' ? String(confirmRes.reason).slice(0, 500) : null),
+        metadata: { customer_name: customerName, source: 'web_booking' },
+      } as any) as any);
     }
   } catch (err) {
     console.error('[WebBooking] notification error (non-fatal):', err);
