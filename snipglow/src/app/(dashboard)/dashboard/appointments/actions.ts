@@ -154,7 +154,7 @@ export async function createAppointment(
         const phone = customer.phone.replace(/\D/g, '');
 
         // Send booking_confirmation_v2 template
-        await sendMessage(credentials, phone, {
+        const rBooking = await sendMessage(credentials, phone, {
           type: 'template',
           template: {
             name: 'booking_confirmation_v2',
@@ -178,6 +178,21 @@ export async function createAppointment(
             ],
           },
         });
+
+        // Log to whatsapp_sessions so booking confirmations show up in admin
+        // WhatsApp Health and any send failure (paused template, billing block)
+        // is captured instead of silently swallowed. Store Meta's real wamid so
+        // the delivery-status webhook can flip this row to delivered/failed.
+        await (admin.from('whatsapp_sessions').insert({
+          tenant_id: tenantId,
+          message_id: rBooking.messageId || `booking_${Date.now()}`,
+          phone,
+          direction: 'outbound',
+          template_name: 'booking_confirmation_v2',
+          status: rBooking.success ? 'sent' : 'failed',
+          error_details: rBooking.error ?? null,
+          metadata: { customer_name: customer.name },
+        } as any) as any);
       }
     }
   } catch (err) {
