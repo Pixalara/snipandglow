@@ -181,6 +181,7 @@ export default async function AdminWhatsAppPage() {
             <thead>
               <tr className="border-b border-border">
                 <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Time (IST)</th>
+                <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Tenant</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Phone</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Direction</th>
                 <th className="px-4 py-2 text-left text-xs font-medium text-muted-foreground">Template</th>
@@ -192,7 +193,14 @@ export default async function AdminWhatsAppPage() {
               {(recentMessages ?? []).map((m: any) => (
                 <tr key={m.id} className="hover:bg-accent/40">
                   <td className="px-4 py-2 text-xs text-muted-foreground whitespace-nowrap">{formatISTDateTime(m.created_at)}</td>
-                  <td className="px-4 py-2 text-xs text-foreground/80">{m.phone}</td>
+                  <td className="px-4 py-2 text-xs text-foreground/80">
+                    {m.tenant_id ? (
+                      <Link href={`/admin/tenants/${m.tenant_id}`} className="hover:underline">
+                        {tenantNames.get(m.tenant_id) ?? m.tenant_id}
+                      </Link>
+                    ) : '—'}
+                  </td>
+                  <td className="px-4 py-2 text-xs text-foreground/80 font-mono whitespace-nowrap">{m.phone}</td>
                   <td className="px-4 py-2">
                     <span className={`text-xs px-1.5 py-0.5 rounded ${m.direction === 'outbound' ? 'bg-blue-500/15 text-blue-600 dark:text-blue-400' : 'bg-violet-500/15 text-violet-600 dark:text-violet-400'}`}>
                       {m.direction === 'outbound' ? '↑ sent' : '↓ received'}
