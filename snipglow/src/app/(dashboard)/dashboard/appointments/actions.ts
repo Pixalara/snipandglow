@@ -1118,7 +1118,7 @@ async function notifyCustomerCancellation(appointment: any) {
 
     // Send cancellation message
     const phone = customer.phone.replace(/\D/g, '');
-    await sendMessage(credentials, phone, {
+    const rCancel = await sendMessage(credentials, phone, {
       type: 'interactive',
       interactive: {
         type: 'button',
@@ -1136,11 +1136,12 @@ async function notifyCustomerCancellation(appointment: any) {
     // Log to whatsapp_sessions
     await (admin.from('whatsapp_sessions').insert({
       tenant_id: appointment.tenant_id,
-      message_id: `cancel_${Date.now()}`,
+      message_id: rCancel.messageId || `cancel_${Date.now()}`,
       phone,
       direction: 'outbound',
       template_name: 'appointment_cancelled',
-      status: 'sent',
+      status: rCancel.success ? 'sent' : 'failed',
+      error_details: rCancel.error ?? null,
       metadata: { customer_name: customer.name },
     } as any) as any);
   } catch (err) {
@@ -1196,7 +1197,7 @@ async function notifyCustomerReschedule(
 
     // Send reschedule message
     const phone = customer.phone.replace(/\D/g, '');
-    await sendMessage(credentials, phone, {
+    const rResched = await sendMessage(credentials, phone, {
       type: 'interactive',
       interactive: {
         type: 'button',
@@ -1215,11 +1216,12 @@ async function notifyCustomerReschedule(
     // Log to whatsapp_sessions
     await (admin.from('whatsapp_sessions').insert({
       tenant_id: appointment.tenant_id,
-      message_id: `resched_${Date.now()}`,
+      message_id: rResched.messageId || `resched_${Date.now()}`,
       phone,
       direction: 'outbound',
       template_name: 'appointment_rescheduled',
-      status: 'sent',
+      status: rResched.success ? 'sent' : 'failed',
+      error_details: rResched.error ?? null,
       metadata: { customer_name: customer.name },
     } as any) as any);
   } catch (err) {

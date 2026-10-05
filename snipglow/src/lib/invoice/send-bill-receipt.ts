@@ -281,11 +281,12 @@ export async function sendBillReceiptWithPdf(input: SendBillReceiptInput): Promi
     // Log the bill send with diagnostics so PDF-attach issues are debuggable from the DB.
     await (admin.from('whatsapp_sessions').insert({
       tenant_id: tenantId,
-      message_id: `bill_${Date.now()}`,
+      message_id: sendResult.messageId || `bill_${Date.now()}`,
       phone,
       direction: 'outbound',
       template_name: v2Error ? 'bill_receipt_v1' : 'bill_receipt_v2',
-      status: 'sent',
+      status: sendResult.success ? 'sent' : 'failed',
+      error_details: sendResult.error ?? null,
       metadata: {
         customer_name: customer.name,
         pdf_url: pdfDownloadUrl,
@@ -406,7 +407,7 @@ export async function sendWalletRechargeReceipt(input: {
     // Generate + upload the recharge PDF (best-effort, time-bounded).
     const { url: pdfUrl, error: pdfErr } = await generateAndUploadPdf(tenantId, invoiceNumber);
 
-    let sendResult: { success: boolean; error?: string } = { success: false, error: pdfErr ?? 'no PDF' };
+    let sendResult: { success: boolean; error?: string; messageId?: string } = { success: false, error: pdfErr ?? 'no PDF' };
 
     if (pdfUrl) {
       // wallet_recharge_v1: {{1}} name, {{2}} salon, {{3}} amount, {{4}} balance, {{5}} receipt no.
@@ -466,11 +467,12 @@ export async function sendWalletRechargeReceipt(input: {
 
     await (admin.from('whatsapp_sessions').insert({
       tenant_id: tenantId,
-      message_id: `wallet_${Date.now()}`,
+      message_id: sendResult.messageId || `wallet_${Date.now()}`,
       phone,
       direction: 'outbound',
       template_name: 'wallet_recharge_v1',
-      status: 'sent',
+      status: sendResult.success ? 'sent' : 'failed',
+      error_details: sendResult.error ?? null,
       metadata: {
         customer_name: customer.name,
         amount,

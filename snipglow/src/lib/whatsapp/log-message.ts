@@ -18,6 +18,16 @@ export async function logWhatsAppMessage(
     direction: 'inbound' | 'outbound';
     template_name: string | null;
     status: string;
+    /**
+     * Meta's real message id (wamid) returned by sendMessage. Storing it lets
+     * the delivery-status webhook correlate the callback and flip this row to
+     * delivered/failed. Without it (synthetic fallback) the row is stuck at its
+     * initial status forever — which is exactly how a billing block showed as
+     * "sent" while nothing delivered.
+     */
+    messageId?: string | null;
+    /** Human-readable error ("code: title") when the send failed. */
+    errorDetails?: string | null;
     metadata?: Record<string, unknown>;
   }
 ): Promise<void> {
@@ -25,12 +35,13 @@ export async function logWhatsAppMessage(
     const category = getTemplateCategory(params.template_name, params.direction);
     await (admin.from('whatsapp_sessions').insert({
       tenant_id: params.tenant_id,
-      message_id: `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
+      message_id: params.messageId || `msg_${Date.now()}_${Math.random().toString(36).slice(2, 7)}`,
       phone: params.phone,
       direction: params.direction,
       template_name: params.template_name,
       template_category: category,
       status: params.status,
+      error_details: params.errorDetails ?? null,
       metadata: params.metadata ?? {},
     } as any) as any);
   } catch (err) {

@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       if (!salonName) continue;
 
       // Send renewal_reminder template
-      await sendMessage(await credsFor(customer.tenant_id), phone, {
+      const r30 = await sendMessage(await credsFor(customer.tenant_id), phone, {
         type: 'template',
         template: {
           name: 'renewal_reminder',
@@ -141,11 +141,12 @@ export async function GET(request: NextRequest) {
       // Log to whatsapp_sessions
       await (admin.from('whatsapp_sessions').insert({
         tenant_id: customer.tenant_id,
-        message_id: `winback30_${Date.now()}_${phone}`,
+        message_id: r30.messageId || `winback30_${Date.now()}_${phone}`,
         phone,
         direction: 'outbound',
         template_name: 'renewal_reminder',
-        status: 'sent',
+        status: r30.success ? 'sent' : 'failed',
+        error_details: r30.error ?? null,
         metadata: { customer_name: customer.name, customer_id: customer.id, type: 'winback_30d' },
       } as any) as any);
 
@@ -188,7 +189,7 @@ export async function GET(request: NextRequest) {
       if (!salonName) continue;
 
       // Send winback_60_day template
-      await sendMessage(await credsFor(customer.tenant_id), phone, {
+      const r60 = await sendMessage(await credsFor(customer.tenant_id), phone, {
         type: 'template',
         template: {
           name: 'winback_60_day',
@@ -208,11 +209,12 @@ export async function GET(request: NextRequest) {
       // Log to whatsapp_sessions
       await (admin.from('whatsapp_sessions').insert({
         tenant_id: customer.tenant_id,
-        message_id: `winback60_${Date.now()}_${phone}`,
+        message_id: r60.messageId || `winback60_${Date.now()}_${phone}`,
         phone,
         direction: 'outbound',
         template_name: 'winback_60_day',
-        status: 'sent',
+        status: r60.success ? 'sent' : 'failed',
+        error_details: r60.error ?? null,
         metadata: { customer_name: customer.name, customer_id: customer.id, type: 'winback_60d' },
       } as any) as any);
 

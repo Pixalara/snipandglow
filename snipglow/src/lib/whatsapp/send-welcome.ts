@@ -88,6 +88,8 @@ export async function sendWelcomeMessage(
       direction: 'outbound',
       template_name: tpl.name,
       status: res.success ? 'sent' : 'failed',
+      messageId: res.messageId ?? null,
+      errorDetails: res.error ?? null,
       metadata: { customer_name: customer.name, trigger: 'customer_created', language: tpl.language },
     });
 

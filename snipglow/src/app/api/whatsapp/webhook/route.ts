@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
         // Handle status updates
         if (value.statuses) {
-          await handleStatuses(value.statuses);
+          await handleStatuses(value.statuses, value.metadata);
         }
 
         // Handle incoming messages
@@ -92,12 +92,85 @@ export async function POST(request: NextRequest) {
 
 // =============================================================================
 // Status Handler
+//
+// Applies Meta's delivery-status callbacks (sent → delivered → read, or failed)
+// to the matching outbound row (by the real wamid). Two things this fixes:
+//   • A failed delivery now flips the row to 'failed' and records the error, so
+//     the dashboard reflects reality instead of a permanent "sent".
+//   • An account-level failure (billing/eligibility/lock) fires a one-time admin
+//     alert, so a payment lapse is caught in minutes, not a day.
 // =============================================================================
 
-async function handleStatuses(statuses: any[]) {
+// Statuses only move forward: a late 'sent' must never overwrite a later
+// 'delivered'/'read'/'failed'. Each incoming status may update rows only in an
+// earlier state. Unknown statuses fall through and update unconditionally.
+const STATUS_ALLOWED_PREV: Record<string, string[]> = {
+  sent: ['pending'],
+  delivered: ['pending', 'sent'],
+  read: ['pending', 'sent', 'delivered'],
+  failed: ['pending', 'sent'],
+};
+
+// Meta error codes that mean the whole ACCOUNT has a problem (worth alerting),
+// as opposed to a one-off per-recipient failure. 131042 is the billing one that
+// silently stops delivery while sends keep getting accepted.
+const ACCOUNT_LEVEL_ERROR_CODES = new Set<number>([131042, 131031, 131045]);
+
+async function handleStatuses(statuses: any[], metadata?: any) {
   const admin = createAdminClient();
   for (const s of statuses) {
-    await (admin.from('whatsapp_sessions').update({ status: s.status }).eq('message_id', s.id) as any);
+    const status: string = s?.status ?? '';
+    if (!status || !s?.id) continue;
+
+    const errors = Array.isArray(s.errors) ? s.errors : [];
+    const err = errors[0];
+    const errorCode = err?.code != null ? Number(err.code) : null;
+    const errorTitle: string = err?.title || err?.message || err?.error_data?.details || '';
+    const errorDetails =
+      status === 'failed'
+        ? errorCode != null
+          ? `${errorCode}: ${errorTitle}`.trim()
+          : errorTitle || 'failed'
+        : null;
+
+    const patch: Record<string, unknown> = { status };
+    if (errorDetails) patch.error_details = errorDetails;
+
+    try {
+      const allowedPrev = STATUS_ALLOWED_PREV[status];
+      let q: any = admin.from('whatsapp_sessions').update(patch as any).eq('message_id', s.id);
+      if (allowedPrev) q = q.in('status', allowedPrev);
+      await q;
+    } catch (e) {
+      console.error('[Webhook] status update failed:', e);
+    }
+
+    // Account-level failure → alert once per (number, code) per hour.
+    if (status === 'failed' && errorCode != null && ACCOUNT_LEVEL_ERROR_CODES.has(errorCode)) {
+      try {
+        const phoneNumberId = metadata?.phone_number_id ?? 'unknown';
+        const hourBucket = new Date().toISOString().slice(0, 13); // yyyy-mm-ddTHH (UTC)
+        const dedupeKey = `wa-fail-alert:${phoneNumberId}:${errorCode}:${hourBucket}`;
+        // Reuse the idempotency table to claim the alert slot: a fresh insert
+        // means we're first this hour and should send; a conflict means skip.
+        const { data: claim } = await (admin
+          .from('whatsapp_processed_messages' as any)
+          .upsert({ message_id: dedupeKey }, { onConflict: 'message_id', ignoreDuplicates: true })
+          .select('message_id') as any);
+        if (Array.isArray(claim) && claim.length > 0) {
+          const { sendDeliveryFailureAlert } = await import('@/lib/whatsapp/delivery-alert');
+          await sendDeliveryFailureAlert({
+            errorCode,
+            errorTitle,
+            displayPhone: metadata?.display_phone_number ?? null,
+            phoneNumberId: metadata?.phone_number_id ?? null,
+            recipient: s.recipient_id ?? null,
+          });
+        }
+      } catch (e) {
+        console.error('[Webhook] delivery-failure alert failed:', e);
+      }
+    }
   }
 }
 

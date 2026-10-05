@@ -1182,11 +1182,12 @@ export async function sendMarketingCampaign(input: SendCampaignInput): Promise<S
     try {
       await (admin.from('whatsapp_sessions').insert({
         tenant_id: tenantId,
-        message_id: `campaign_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
+        message_id: res.messageId || `campaign_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
         phone: phoneDigits,
         direction: 'outbound',
         template_name: tpl.name,
         status: res.success ? 'sent' : 'failed',
+        error_details: res.error ?? null,
         metadata: { customer_name: c.name, campaign: true, error: res.error ?? null },
       } as any) as any);
     } catch {
