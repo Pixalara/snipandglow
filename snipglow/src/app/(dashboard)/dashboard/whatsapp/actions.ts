@@ -63,6 +63,7 @@ import {
   MARKETING_IMAGE_MAX_BYTES,
 } from '@/lib/storage/upload-marketing-image';
 import { planIncludesDedicatedWhatsApp } from '@/lib/subscription';
+import { processCampaignBatch, type CampaignProgress } from '@/lib/whatsapp/campaign-runner';
 
 // =============================================================================
 // Dedicated WhatsApp Onboarding — auth guard + state read
@@ -1063,10 +1064,6 @@ export async function reconcileMarketingTemplates(): Promise<MarketingTemplateVi
 // per-recipient name personalization, throttled, and logged.
 // =============================================================================
 
-/** Max recipients per campaign — keeps the send within a serverless timeout and
- *  is a sensible guard-rail for a single blast. */
-const MAX_CAMPAIGN_RECIPIENTS = 200;
-
 export interface CampaignCustomer {
   id: string;
   name: string;
@@ -1086,14 +1083,25 @@ export async function getCampaignCustomers(): Promise<CampaignCustomer[]> {
   }
 
   const admin = createAdminClient();
-  const { data } = await (admin
-    .from('customers')
-    .select('id, name, phone, gender, date_of_birth, last_visit_at')
-    .eq('tenant_id', tenantId)
-    .order('name', { ascending: true })
-    .limit(1000) as any);
 
-  return ((data ?? []) as any[]).map((c) => ({
+  // Page through the customer list so a campaign can target everyone, not just
+  // the first slice. Capped so the in-browser picker stays responsive.
+  const PAGE = 1000;
+  const MAX = 5000;
+  const rows: any[] = [];
+  for (let from = 0; from < MAX; from += PAGE) {
+    const { data } = await (admin
+      .from('customers')
+      .select('id, name, phone, gender, date_of_birth, last_visit_at')
+      .eq('tenant_id', tenantId)
+      .order('name', { ascending: true })
+      .range(from, from + PAGE - 1) as any);
+    const batch = (data ?? []) as any[];
+    rows.push(...batch);
+    if (batch.length < PAGE) break;
+  }
+
+  return rows.map((c) => ({
     id: c.id,
     name: c.name,
     phone: c.phone,
@@ -1103,181 +1111,301 @@ export async function getCampaignCustomers(): Promise<CampaignCustomer[]> {
   }));
 }
 
-export interface SendCampaignInput {
+export interface CreateCampaignInput {
   templateId: string;
+  /** Candidate customer ids (manual selection, or "select all" of a filter). */
   customerIds: string[];
   /** One value per template variable (index-aligned to {{1}}..{{N}}). */
   variableValues: string[];
   /** 0-based variable indexes to personalize with each customer's name. */
   personalizeIndexes: number[];
+  /** Human-readable audience note for history (e.g. "All customers"). */
+  audienceLabel?: string;
+  /** When > 0, skip customers already sent a campaign within this many days. */
+  excludeContactedDays?: number;
 }
 
-export interface SendCampaignResult {
-  ok: boolean;
-  error?: string;
+export interface CampaignView {
+  id: string;
+  templateName: string;
+  status: 'draft' | 'sending' | 'paused' | 'completed' | 'cancelled' | 'failed';
+  audienceLabel: string | null;
+  total: number;
   sent: number;
   failed: number;
-  total: number;
+  pending: number;
+  error: string | null;
+  createdAt: string;
 }
 
-export async function sendMarketingCampaign(input: SendCampaignInput): Promise<SendCampaignResult> {
+export interface CreateCampaignResult {
+  ok: boolean;
+  error?: string;
+  campaign?: CampaignView;
+}
+
+function toCampaignView(p: CampaignProgress): CampaignView {
+  return {
+    id: p.id,
+    templateName: p.templateName,
+    status: p.status,
+    audienceLabel: p.audienceLabel,
+    total: p.total,
+    sent: p.sent,
+    failed: p.failed,
+    pending: p.pending,
+    error: p.error,
+    createdAt: p.createdAt,
+  };
+}
+
+// First batch sent synchronously so the owner sees instant progress; the rest
+// drips via nudgeCampaign (progress screen) and the campaign-drip cron. Kept
+// small so the create action stays within the serverless time budget.
+const FIRST_BATCH = 15;
+// Recipients the owner's progress screen sends per poll tick.
+const NUDGE_BATCH = 20;
+// Recipients inserted per bulk insert statement.
+const INSERT_CHUNK = 500;
+
+/**
+ * Create a WhatsApp marketing campaign and begin sending.
+ *
+ * Resolves the audience server-side (never trusting client phones), writes the
+ * campaign plus a per-recipient ledger, sends a first batch immediately, and
+ * leaves the remainder to {@link nudgeCampaign} and the drip cron. There is NO
+ * 200-recipient cap — a campaign of any size completes over time while recording
+ * exactly who was contacted.
+ */
+export async function createMarketingCampaign(input: CreateCampaignInput): Promise<CreateCampaignResult> {
   let tenantId: string;
   try {
     ({ tenantId } = await assertProOwner());
   } catch (err) {
     const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
-    return { ok: false, error: reason, sent: 0, failed: 0, total: 0 };
+    return { ok: false, error: reason };
   }
 
   // Must send from the tenant's OWN number where the template lives.
   const credentials = await getDedicatedCredentialsForTenant(tenantId);
-  if (!credentials) return { ok: false, error: 'not_connected', sent: 0, failed: 0, total: 0 };
+  if (!credentials) return { ok: false, error: 'not_connected' };
 
   // Template must exist locally AND be APPROVED.
   const tpl = (await listTenantTemplates(tenantId)).find((r) => r.id === input.templateId);
-  if (!tpl) return { ok: false, error: 'Template not found.', sent: 0, failed: 0, total: 0 };
+  if (!tpl) return { ok: false, error: 'Template not found.' };
   if (tpl.status !== 'APPROVED') {
-    return { ok: false, error: 'This template is not approved yet, so it can\u2019t be sent.', sent: 0, failed: 0, total: 0 };
+    return { ok: false, error: 'This template is not approved yet, so it can\u2019t be sent.' };
   }
 
-  // How many variables the template body needs.
+  // Validate the variable values the sender will use (Meta rejects blanks).
   const placeholderCount = new Set(
     [...tpl.body_text.matchAll(/\{\{\s*(\d+)\s*\}\}/g)].map((m) => Number(m[1]))
   ).size;
-
   const personalize = new Set((input.personalizeIndexes ?? []).map(Number));
   const values = input.variableValues ?? [];
-
-  // Every non-personalized variable must have a value (Meta rejects blanks).
   for (let i = 0; i < placeholderCount; i++) {
     if (!personalize.has(i) && !(values[i] ?? '').trim()) {
-      return { ok: false, error: `Please fill in every template value (variable ${i + 1}).`, sent: 0, failed: 0, total: 0 };
+      return { ok: false, error: `Please fill in every template value (variable ${i + 1}).` };
     }
   }
 
-  // Carousel templates carry their cards (image + text) locally. Each card's
-  // image is supplied at SEND time as a public link, with a sequential
-  // card_index. Our card bodies and buttons are static, so they need no
-  // per-send parameters (only the top message-bubble variables, if any).
   const isCarousel = (tpl.template_type ?? 'standard') === 'carousel';
   const carouselCards = Array.isArray(tpl.cards) ? tpl.cards : [];
   if (isCarousel) {
-    if (carouselCards.length < 2) {
-      return { ok: false, error: 'This carousel has no cards to send.', sent: 0, failed: 0, total: 0 };
-    }
+    if (carouselCards.length < 2) return { ok: false, error: 'This carousel has no cards to send.' };
     const missing = carouselCards.findIndex((c) => !c.image_url);
-    if (missing !== -1) {
-      return { ok: false, error: `Card ${missing + 1} is missing its image.`, sent: 0, failed: 0, total: 0 };
-    }
+    if (missing !== -1) return { ok: false, error: `Card ${missing + 1} is missing its image.` };
   }
 
   const ids = Array.from(new Set((input.customerIds ?? []).filter(Boolean)));
-  if (ids.length === 0) return { ok: false, error: 'Select at least one customer.', sent: 0, failed: 0, total: 0 };
-  if (ids.length > MAX_CAMPAIGN_RECIPIENTS) {
-    return {
-      ok: false,
-      error: `Please select up to ${MAX_CAMPAIGN_RECIPIENTS} customers per campaign.`,
-      sent: 0,
-      failed: 0,
-      total: 0,
-    };
-  }
+  if (ids.length === 0) return { ok: false, error: 'Select at least one customer.' };
+
+  const admin = createAdminClient();
 
   // Re-resolve recipients server-side (never trust client-supplied phones).
-  const admin = createAdminClient();
   const { data: custRows } = await (admin
     .from('customers')
     .select('id, name, phone')
     .eq('tenant_id', tenantId)
     .in('id', ids) as any);
 
+  // Optionally skip anyone already sent a campaign within the recent window.
+  let excludeIds = new Set<string>();
+  const days = Math.max(0, Math.floor(input.excludeContactedDays ?? 0));
+  if (days > 0) {
+    const cutoff = new Date(Date.now() - days * 86_400_000).toISOString();
+    const { data: recent } = await (admin
+      .from('whatsapp_campaign_recipients' as any)
+      .select('customer_id')
+      .eq('tenant_id', tenantId)
+      .eq('status', 'sent')
+      .gte('sent_at', cutoff) as any);
+    excludeIds = new Set(
+      ((recent ?? []) as Array<{ customer_id: string | null }>)
+        .map((r) => r.customer_id)
+        .filter(Boolean) as string[]
+    );
+  }
+
   const seen = new Set<string>();
   const recipients = ((custRows ?? []) as Array<{ id: string; name: string; phone: string }>).filter((c) => {
+    if (excludeIds.has(c.id)) return false;
     const digits = (c.phone || '').replace(/\D/g, '');
     if (!digits || seen.has(digits)) return false;
     seen.add(digits);
     return true;
   });
 
-  const total = recipients.length;
-  if (total === 0) return { ok: false, error: 'No valid recipients found.', sent: 0, failed: 0, total: 0 };
-
-  let sent = 0;
-  let failed = 0;
-
-  for (const c of recipients) {
-    const phoneDigits = (c.phone || '').replace(/\D/g, '');
-    const parameters = Array.from({ length: placeholderCount }, (_, i) => ({
-      type: 'text',
-      text: personalize.has(i) ? (c.name || 'there') : (values[i] ?? '').trim(),
-    }));
-
-    // Build the per-recipient components. Carousel: optional message-bubble body
-    // variables + a carousel component whose every card supplies its image link
-    // and card_index. Standard: optional IMAGE-header banner + body variables.
-    const components: Array<Record<string, unknown>> = [];
-    if (isCarousel) {
-      if (placeholderCount > 0) {
-        components.push({ type: 'body', parameters });
-      }
-      components.push({
-        type: 'carousel',
-        cards: carouselCards.map((card, idx) => ({
-          card_index: idx,
-          components: [
-            { type: 'header', parameters: [{ type: 'image', image: { link: card.image_url } }] },
-          ],
-        })),
-      });
-    } else {
-      // Attach the approved template's banner (if any) as the IMAGE header, then
-      // the body variables. Same banner link for every recipient.
-      if (tpl.header_image_url) {
-        components.push({ type: 'header', parameters: [{ type: 'image', image: { link: tpl.header_image_url } }] });
-      }
-      if (placeholderCount > 0) {
-        components.push({ type: 'body', parameters });
-      }
-    }
-
-    const res = await sendMessage(credentials, phoneDigits, {
-      type: 'template',
-      template: {
-        name: tpl.name,
-        language: { code: tpl.language || 'en' },
-        components,
-      },
-    });
-
-    if (res.success) sent++;
-    else failed++;
-
-    try {
-      await (admin.from('whatsapp_sessions').insert({
-        tenant_id: tenantId,
-        message_id: res.messageId || `campaign_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`,
-        phone: phoneDigits,
-        direction: 'outbound',
-        template_name: tpl.name,
-        status: res.success ? 'sent' : 'failed',
-        error_details: res.error ?? null,
-        metadata: { customer_name: c.name, campaign: true, error: res.error ?? null },
-      } as any) as any);
-    } catch {
-      /* logging is best-effort */
-    }
-
-    // Stay well under Meta's throughput ceiling.
-    await new Promise((r) => setTimeout(r, 60));
+  if (recipients.length === 0) {
+    return { ok: false, error: 'No valid recipients found (they may all have been messaged recently).' };
   }
 
-  return {
-    ok: failed === 0,
-    error: failed > 0 ? `${failed} message${failed > 1 ? 's' : ''} could not be delivered.` : undefined,
-    sent,
-    failed,
-    total,
-  };
+  // Create the campaign row.
+  const nowIso = new Date().toISOString();
+  const { data: campaignRow, error: campErr } = await (admin
+    .from('whatsapp_campaigns' as any)
+    .insert({
+      tenant_id: tenantId,
+      template_id: tpl.id,
+      template_name: tpl.name,
+      status: 'sending',
+      variable_values: values,
+      personalize_indexes: Array.from(personalize),
+      audience_label: input.audienceLabel ?? null,
+      total_count: recipients.length,
+      started_at: nowIso,
+    })
+    .select('id')
+    .single() as any);
+
+  if (campErr || !campaignRow?.id) {
+    return { ok: false, error: 'Could not start the campaign. Please try again.' };
+  }
+  const campaignId = campaignRow.id as string;
+
+  // Write the recipient ledger in chunks.
+  for (let i = 0; i < recipients.length; i += INSERT_CHUNK) {
+    const chunk = recipients.slice(i, i + INSERT_CHUNK).map((c) => ({
+      campaign_id: campaignId,
+      tenant_id: tenantId,
+      customer_id: c.id,
+      name: c.name,
+      phone: (c.phone || '').replace(/\D/g, ''),
+      status: 'pending',
+    }));
+    await (admin.from('whatsapp_campaign_recipients' as any).insert(chunk) as any);
+  }
+
+  // Send a first batch now for instant feedback; the rest drips in the background.
+  const progress = await processCampaignBatch(campaignId, FIRST_BATCH);
+  if (!progress) return { ok: false, error: 'Could not start the campaign. Please try again.' };
+  return { ok: true, campaign: toCampaignView(progress) };
+}
+
+/**
+ * Send the next batch of a campaign and return its live progress. Called
+ * repeatedly by the owner's progress screen; safe to run alongside the drip
+ * cron (claims are atomic). Scoped to the caller's tenant.
+ */
+export async function nudgeCampaign(campaignId: string): Promise<CampaignView | null> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch {
+    return null;
+  }
+  if (!(await ownsCampaign(tenantId, campaignId))) return null;
+  const progress = await processCampaignBatch(campaignId, NUDGE_BATCH);
+  return progress ? toCampaignView(progress) : null;
+}
+
+/** The tenant's campaigns, newest first, for the history list. */
+export async function listMarketingCampaigns(limit = 20): Promise<CampaignView[]> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch {
+    return [];
+  }
+  const admin = createAdminClient();
+  const { data } = await (admin
+    .from('whatsapp_campaigns' as any)
+    .select('id, template_name, status, audience_label, total_count, sent_count, failed_count, error, created_at')
+    .eq('tenant_id', tenantId)
+    .order('created_at', { ascending: false })
+    .limit(limit) as any);
+
+  return ((data ?? []) as any[]).map((c) => ({
+    id: c.id,
+    templateName: c.template_name,
+    status: c.status,
+    audienceLabel: c.audience_label,
+    total: c.total_count,
+    sent: c.sent_count,
+    failed: c.failed_count,
+    pending: Math.max((c.total_count ?? 0) - (c.sent_count ?? 0) - (c.failed_count ?? 0), 0),
+    error: c.error,
+    createdAt: c.created_at,
+  }));
+}
+
+async function ownsCampaign(tenantId: string, campaignId: string): Promise<boolean> {
+  const admin = createAdminClient();
+  const { data } = await (admin
+    .from('whatsapp_campaigns' as any)
+    .select('id')
+    .eq('id', campaignId)
+    .eq('tenant_id', tenantId)
+    .maybeSingle() as any);
+  return !!data?.id;
+}
+
+async function setCampaignStatus(
+  campaignId: string,
+  status: 'sending' | 'paused' | 'cancelled'
+): Promise<CampaignView | null> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch {
+    return null;
+  }
+  if (!(await ownsCampaign(tenantId, campaignId))) return null;
+
+  const admin = createAdminClient();
+  // Only move campaigns still in flight — never revive a finished/failed one.
+  const guard = status === 'sending' ? ['paused'] : ['sending', 'paused'];
+  await (admin
+    .from('whatsapp_campaigns' as any)
+    .update({ status, updated_at: new Date().toISOString() })
+    .eq('id', campaignId)
+    .eq('tenant_id', tenantId)
+    .in('status', guard) as any);
+
+  // Cancelling drops the remaining work so it can't resume by accident.
+  if (status === 'cancelled') {
+    await (admin
+      .from('whatsapp_campaign_recipients' as any)
+      .update({ status: 'skipped' })
+      .eq('campaign_id', campaignId)
+      .in('status', ['pending', 'processing']) as any);
+  }
+
+  // Resuming sends a batch immediately; pause/cancel just report fresh progress.
+  const progress = await processCampaignBatch(campaignId, status === 'sending' ? NUDGE_BATCH : 0);
+  return progress ? toCampaignView(progress) : null;
+}
+
+export async function pauseMarketingCampaign(campaignId: string): Promise<CampaignView | null> {
+  return setCampaignStatus(campaignId, 'paused');
+}
+
+export async function resumeMarketingCampaign(campaignId: string): Promise<CampaignView | null> {
+  return setCampaignStatus(campaignId, 'sending');
+}
+
+export async function cancelMarketingCampaign(campaignId: string): Promise<CampaignView | null> {
+  return setCampaignStatus(campaignId, 'cancelled');
 }
 
 // =============================================================================

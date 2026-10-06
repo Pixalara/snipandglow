@@ -1,22 +1,41 @@
 'use client';
 
-import { useEffect, useMemo, useState, useTransition } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   MessageCircle, Send, Search, Check, CheckCircle2, AlertTriangle, Loader2, Users, X, LayoutGrid,
+  Pause, Play, Ban, Clock,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
   getSendableTemplates,
   getCampaignCustomers,
-  sendMarketingCampaign,
+  createMarketingCampaign,
+  nudgeCampaign,
+  listMarketingCampaigns,
+  pauseMarketingCampaign,
+  resumeMarketingCampaign,
+  cancelMarketingCampaign,
   type MarketingTemplateView,
   type CampaignCustomer,
-  type SendCampaignResult,
+  type CampaignView,
 } from './actions';
 
-const MAX_RECIPIENTS = 200;
+// How many customer rows to render in the picker at once. "Select all" still
+// targets the whole filtered set — this only bounds the DOM so a 1000+ list
+// stays smooth. Large audiences are usually chosen via a filter + Select all.
+const MAX_VISIBLE_ROWS = 500;
+// How often the progress screen asks the server to send the next batch.
+const POLL_MS = 2500;
 
 type AudienceFilter = 'all' | 'male' | 'female' | 'lapsed' | 'birthday';
+
+const FILTER_LABEL: Record<AudienceFilter, string> = {
+  all: 'All customers',
+  male: 'Male customers',
+  female: 'Female customers',
+  lapsed: 'Lapsed 60d+',
+  birthday: 'Birthday this month',
+};
 
 function placeholderCount(body: string): number {
   return new Set([...body.matchAll(/\{\{\s*(\d+)\s*\}\}/g)].map((m) => Number(m[1]))).size;
@@ -30,10 +49,34 @@ function daysSince(iso: string | null): number {
   return (Date.now() - d) / 86_400_000;
 }
 
+const TERMINAL: CampaignView['status'][] = ['completed', 'cancelled', 'failed'];
+
+function statusChipClass(status: CampaignView['status']): string {
+  switch (status) {
+    case 'sending': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    case 'paused': return 'bg-amber-100 text-amber-700 dark:bg-amber-900/30 dark:text-amber-400';
+    case 'completed': return 'bg-emerald-100 text-emerald-700 dark:bg-emerald-900/30 dark:text-emerald-400';
+    case 'cancelled': return 'bg-slate-200 text-slate-600 dark:bg-slate-700 dark:text-slate-300';
+    case 'failed': return 'bg-red-100 text-red-700 dark:bg-red-900/30 dark:text-red-400';
+    default: return 'bg-muted text-muted-foreground';
+  }
+}
+
+function errorLabel(code: string | null): string | null {
+  if (!code) return null;
+  switch (code) {
+    case 'not_connected': return 'Your WhatsApp number is not connected.';
+    case 'template_unavailable': return 'The template is no longer approved.';
+    case 'carousel_invalid': return 'The carousel is missing images.';
+    default: return code;
+  }
+}
+
 export function CampaignComposer() {
   const [loading, setLoading] = useState(true);
   const [templates, setTemplates] = useState<MarketingTemplateView[]>([]);
   const [customers, setCustomers] = useState<CampaignCustomer[]>([]);
+  const [recent, setRecent] = useState<CampaignView[]>([]);
 
   const [templateId, setTemplateId] = useState<string | null>(null);
   const [values, setValues] = useState<string[]>([]);
@@ -43,19 +86,60 @@ export function CampaignComposer() {
   const [search, setSearch] = useState('');
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());
 
+  const [excludeOn, setExcludeOn] = useState(false);
+  const [excludeDays, setExcludeDays] = useState(30);
+
   const [confirming, setConfirming] = useState(false);
   const [isSending, startSend] = useTransition();
-  const [result, setResult] = useState<SendCampaignResult | null>(null);
+  const [active, setActive] = useState<CampaignView | null>(null);
   const [error, setError] = useState('');
+
+  const loadRecent = useCallback(async () => {
+    setRecent(await listMarketingCampaigns());
+  }, []);
 
   useEffect(() => {
     (async () => {
-      const [tpls, custs] = await Promise.all([getSendableTemplates(), getCampaignCustomers()]);
+      const [tpls, custs, camps] = await Promise.all([
+        getSendableTemplates(),
+        getCampaignCustomers(),
+        listMarketingCampaigns(),
+      ]);
       setTemplates(tpls.filter((t) => t.status === 'APPROVED'));
       setCustomers(custs);
+      setRecent(camps);
       setLoading(false);
     })();
   }, []);
+
+  // ── Drive an active campaign forward: each tick sends the next batch and
+  // refreshes progress until the campaign reaches a terminal state. ──
+  const activeId = active?.id ?? null;
+  const activeStatus = active?.status ?? null;
+  const pollingRef = useRef(false);
+  useEffect(() => {
+    if (!activeId || activeStatus !== 'sending') return;
+    let cancelled = false;
+    const tick = async () => {
+      if (pollingRef.current) return; // never overlap ticks
+      pollingRef.current = true;
+      try {
+        const next = await nudgeCampaign(activeId);
+        if (!cancelled && next) {
+          setActive(next);
+          if (TERMINAL.includes(next.status)) loadRecent();
+        }
+      } finally {
+        pollingRef.current = false;
+      }
+    };
+    const h = setInterval(tick, POLL_MS);
+    tick();
+    return () => {
+      cancelled = true;
+      clearInterval(h);
+    };
+  }, [activeId, activeStatus, loadRecent]);
 
   const template = useMemo(() => templates.find((t) => t.id === templateId) ?? null, [templates, templateId]);
   const varCount = template ? placeholderCount(template.bodyText) : 0;
@@ -64,17 +148,8 @@ export function CampaignComposer() {
     const t = templates.find((x) => x.id === id);
     const n = t ? placeholderCount(t.bodyText) : 0;
     setTemplateId(id);
-    // Pre-fill each variable with the approved template's example value (Meta
-    // requires one example per variable). This means a fixed value like the
-    // salon name is ready to send without retyping, so the send button is not
-    // silently blocked on an empty field. The value stays editable and is shown
-    // in the live preview; personalized variables ignore it in favour of the
-    // customer's own name.
     setValues(Array.from({ length: n }, (_, i) => (t?.exampleParams[i] ?? '').trim()));
-    // Personalize the first variable with the customer's name by default —
-    // most templates open with "Hi {{1}}".
     setPersonalize(Array.from({ length: n }, (_, i) => i === 0));
-    setResult(null);
     setError('');
     setConfirming(false);
   }
@@ -97,6 +172,7 @@ export function CampaignComposer() {
   }, [customers, filter, search]);
 
   const filteredIds = useMemo(() => filtered.map((c) => c.id), [filtered]);
+  const visible = useMemo(() => filtered.slice(0, MAX_VISIBLE_ROWS), [filtered]);
   const allFilteredSelected = filteredIds.length > 0 && filteredIds.every((id) => selectedIds.has(id));
   const selectedCount = selectedIds.size;
 
@@ -125,22 +201,35 @@ export function CampaignComposer() {
     [varCount, personalize, values]
   );
 
-  const overLimit = selectedCount > MAX_RECIPIENTS;
-  const canSend = !!template && selectedCount > 0 && !overLimit && valuesFilled && !isSending;
+  const canSend = !!template && selectedCount > 0 && valuesFilled && !isSending;
 
-  function handleSend() {
+  function resetComposer() {
+    setActive(null);
+    setSelectedIds(new Set());
+    setTemplateId(null);
+    setConfirming(false);
+    setError('');
+  }
+
+  function handleCreate() {
     if (!template) return;
     setError('');
     startSend(async () => {
-      const res = await sendMarketingCampaign({
+      const res = await createMarketingCampaign({
         templateId: template.id,
         customerIds: Array.from(selectedIds),
         variableValues: values,
         personalizeIndexes: personalize.map((p, i) => (p ? i : -1)).filter((i) => i >= 0),
+        audienceLabel: `${FILTER_LABEL[filter]} · ${selectedCount}`,
+        excludeContactedDays: excludeOn ? excludeDays : 0,
       });
-      setResult(res);
       setConfirming(false);
-      if (!res.ok && res.sent === 0) setError(res.error || 'Could not send the campaign.');
+      if (res.ok && res.campaign) {
+        setActive(res.campaign);
+        loadRecent();
+      } else {
+        setError(res.error || 'Could not start the campaign.');
+      }
     });
   }
 
@@ -153,6 +242,10 @@ export function CampaignComposer() {
     });
   }
 
+  async function doPause() { const v = await pauseMarketingCampaign(active!.id); if (v) { setActive(v); loadRecent(); } }
+  async function doResume() { const v = await resumeMarketingCampaign(active!.id); if (v) { setActive(v); loadRecent(); } }
+  async function doCancel() { const v = await cancelMarketingCampaign(active!.id); if (v) { setActive(v); loadRecent(); } }
+
   if (loading) {
     return (
       <div className="flex items-center justify-center gap-2 py-16 text-muted-foreground">
@@ -161,28 +254,78 @@ export function CampaignComposer() {
     );
   }
 
-  // ── Success screen ──
-  if (result && result.sent > 0) {
+  // ── Progress screen (an active / opened campaign) ──
+  if (active) {
+    const done = active.sent + active.failed;
+    const pct = active.total > 0 ? Math.round((done / active.total) * 100) : 0;
+    const terminal = TERMINAL.includes(active.status);
+    const errMsg = errorLabel(active.error);
     return (
-      <div className="rounded-xl border border-border bg-card p-8 text-center">
-        <div className="mx-auto flex size-14 items-center justify-center rounded-full bg-emerald-100 dark:bg-emerald-900/30">
-          <CheckCircle2 className="size-7 text-emerald-600 dark:text-emerald-400" />
+      <div className="space-y-4">
+        <div className="rounded-xl border border-border bg-card p-6">
+          <div className="flex items-center justify-between gap-3">
+            <div className="min-w-0">
+              <p className="truncate font-mono text-sm font-semibold text-foreground">{active.templateName}</p>
+              {active.audienceLabel && <p className="truncate text-xs text-muted-foreground">{active.audienceLabel}</p>}
+            </div>
+            <span className={cn('shrink-0 rounded-full px-2 py-0.5 text-[11px] font-medium capitalize', statusChipClass(active.status))}>
+              {active.status === 'sending' && <Loader2 className="mr-1 inline size-3 animate-spin" />}
+              {active.status}
+            </span>
+          </div>
+
+          <div className="mt-4">
+            <div className="h-2.5 w-full overflow-hidden rounded-full bg-muted">
+              <div
+                className={cn('h-full rounded-full transition-all', active.status === 'failed' ? 'bg-red-500' : 'bg-emerald-500')}
+                style={{ width: `${pct}%` }}
+              />
+            </div>
+            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
+              <span>{done} of {active.total} processed ({pct}%)</span>
+              <span className="flex items-center gap-3">
+                <span className="text-emerald-600 dark:text-emerald-400">{active.sent} sent</span>
+                {active.failed > 0 && <span className="text-red-600 dark:text-red-400">{active.failed} failed</span>}
+                {active.pending > 0 && <span>{active.pending} queued</span>}
+              </span>
+            </div>
+          </div>
+
+          {errMsg && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-xs text-red-600 dark:text-red-400">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0" /> {errMsg}
+            </div>
+          )}
+
+          {active.status === 'sending' && (
+            <p className="mt-3 text-[11px] text-muted-foreground">
+              Sending in the background. You can leave this page — it keeps going and you can reopen it from Recent campaigns below.
+            </p>
+          )}
+
+          <div className="mt-4 flex flex-wrap items-center gap-2">
+            {active.status === 'sending' && (
+              <button onClick={doPause} className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-background px-3 py-2 text-sm font-medium text-foreground hover:bg-muted">
+                <Pause className="size-4" /> Pause
+              </button>
+            )}
+            {active.status === 'paused' && (
+              <button onClick={doResume} className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500">
+                <Play className="size-4" /> Resume
+              </button>
+            )}
+            {!terminal && (
+              <button onClick={doCancel} className="inline-flex items-center gap-1.5 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm font-medium text-red-600 hover:bg-red-500/20 dark:text-red-400">
+                <Ban className="size-4" /> Cancel
+              </button>
+            )}
+            <button onClick={resetComposer} className="ml-auto inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white hover:bg-emerald-500">
+              <Send className="size-4" /> New campaign
+            </button>
+          </div>
         </div>
-        <h3 className="mt-4 text-lg font-bold text-foreground">Campaign sent</h3>
-        <p className="mt-1 text-sm text-muted-foreground">
-          Delivered to {result.sent} customer{result.sent !== 1 ? 's' : ''}
-          {result.failed > 0 && ` · ${result.failed} failed`}.
-        </p>
-        <button
-          onClick={() => {
-            setResult(null);
-            setSelectedIds(new Set());
-            setTemplateId(null);
-          }}
-          className="mt-5 inline-flex items-center justify-center rounded-lg bg-emerald-600 px-4 py-2 text-sm font-medium text-white hover:bg-emerald-500"
-        >
-          New campaign
-        </button>
+
+        <RecentCampaigns items={recent} activeId={active.id} onOpen={(c) => { setActive(c); }} />
       </div>
     );
   }
@@ -199,6 +342,7 @@ export function CampaignComposer() {
           <span className="font-medium">Carousel</span> tab and wait for Meta approval. Approved templates and
           carousels appear here, ready to send.
         </p>
+        {recent.length > 0 && <div className="mt-6 text-left"><RecentCampaigns items={recent} onOpen={(c) => setActive(c)} /></div>}
       </div>
     );
   }
@@ -395,52 +539,70 @@ export function CampaignComposer() {
                   No customers match this filter.
                 </p>
               ) : (
-                <ul className="max-h-72 divide-y divide-border overflow-y-auto rounded-lg border border-border">
-                  {filtered.map((c) => {
-                    const checked = selectedIds.has(c.id);
-                    return (
-                      <li key={c.id}>
-                        <button
-                          onClick={() => toggleCustomer(c.id)}
-                          className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted/40"
-                        >
-                          <span
-                            className={cn(
-                              'flex size-5 shrink-0 items-center justify-center rounded border transition',
-                              checked ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-border'
-                            )}
+                <>
+                  <ul className="max-h-72 divide-y divide-border overflow-y-auto rounded-lg border border-border">
+                    {visible.map((c) => {
+                      const checked = selectedIds.has(c.id);
+                      return (
+                        <li key={c.id}>
+                          <button
+                            onClick={() => toggleCustomer(c.id)}
+                            className="flex w-full items-center gap-3 px-3 py-2 text-left hover:bg-muted/40"
                           >
-                            {checked && <Check className="size-3.5" />}
-                          </span>
-                          <span className="min-w-0 flex-1">
-                            <span className="block truncate text-sm font-medium text-foreground">{c.name}</span>
-                            <span className="block truncate text-xs text-muted-foreground">{c.phone}</span>
-                          </span>
-                        </button>
-                      </li>
-                    );
-                  })}
-                </ul>
+                            <span
+                              className={cn(
+                                'flex size-5 shrink-0 items-center justify-center rounded border transition',
+                                checked ? 'border-emerald-500 bg-emerald-500 text-white' : 'border-border'
+                              )}
+                            >
+                              {checked && <Check className="size-3.5" />}
+                            </span>
+                            <span className="min-w-0 flex-1">
+                              <span className="block truncate text-sm font-medium text-foreground">{c.name}</span>
+                              <span className="block truncate text-xs text-muted-foreground">{c.phone}</span>
+                            </span>
+                          </button>
+                        </li>
+                      );
+                    })}
+                  </ul>
+                  {filtered.length > visible.length && (
+                    <p className="text-center text-[11px] text-muted-foreground">
+                      Showing {visible.length} of {filtered.length}. Use <span className="font-medium">Select all</span> or search to include the rest.
+                    </p>
+                  )}
+                </>
               )}
+
+              {/* Skip recently messaged */}
+              <label className="flex items-center gap-2 rounded-lg border border-border bg-background px-3 py-2 text-xs text-muted-foreground">
+                <input
+                  type="checkbox"
+                  checked={excludeOn}
+                  onChange={(e) => setExcludeOn(e.target.checked)}
+                  className="size-4 accent-emerald-600"
+                />
+                <Clock className="size-3.5" />
+                <span>Skip customers already messaged in the last</span>
+                <select
+                  value={excludeDays}
+                  onChange={(e) => setExcludeDays(Number(e.target.value))}
+                  disabled={!excludeOn}
+                  className="rounded-md border border-border bg-background px-1.5 py-0.5 text-xs text-foreground disabled:opacity-50"
+                >
+                  <option value={7}>7 days</option>
+                  <option value={15}>15 days</option>
+                  <option value={30}>30 days</option>
+                </select>
+              </label>
             </div>
           </section>
 
           {/* ── 4. Send ── */}
           <section className="rounded-xl border border-border bg-card p-4">
-            {overLimit && (
-              <div className="mb-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                You&apos;ve selected {selectedCount}. Please send to at most {MAX_RECIPIENTS} customers per campaign — deselect some.
-              </div>
-            )}
             {error && (
               <div className="mb-3 flex items-start gap-2 rounded-lg border border-red-500/40 bg-red-500/10 px-3 py-2 text-sm text-red-600">
-                <AlertTriangle className="mt-0.5 size-4 shrink-0" /> {error}
-              </div>
-            )}
-            {result && result.failed > 0 && result.sent > 0 && (
-              <div className="mb-3 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
-                Sent {result.sent}, {result.failed} failed.
+                <AlertTriangle className="mt-0.5 size-4 shrink-0" /> {errorLabel(error)}
               </div>
             )}
 
@@ -457,19 +619,15 @@ export function CampaignComposer() {
                   <Send className="size-4" />
                   Review &amp; send to {selectedCount} customer{selectedCount !== 1 ? 's' : ''}
                 </button>
-                {/* Explain why the button is disabled — otherwise it just greys
-                    out with no reason and the sender is stuck. */}
                 {!canSend && !isSending && (
                   <p className="mt-2 text-center text-[11px] text-amber-600 dark:text-amber-400">
                     {!template
                       ? 'Pick an approved template above to start.'
                       : selectedCount === 0
                         ? 'Select at least one customer below to send to.'
-                        : overLimit
-                          ? `Select at most ${MAX_RECIPIENTS} customers per campaign.`
-                          : !valuesFilled
-                            ? 'Enter a value for each message variable in step 2 above.'
-                            : ''}
+                        : !valuesFilled
+                          ? 'Enter a value for each message variable in step 2 above.'
+                          : ''}
                   </p>
                 )}
               </>
@@ -477,7 +635,8 @@ export function CampaignComposer() {
               <div className="space-y-3">
                 <div className="rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-300">
                   This sends a WhatsApp marketing message to <span className="font-semibold">{selectedCount}</span>{' '}
-                  customer{selectedCount !== 1 ? 's' : ''} from your number. WhatsApp bills each marketing message. Continue?
+                  customer{selectedCount !== 1 ? 's' : ''} from your number. WhatsApp bills each marketing message.
+                  Large audiences send in the background — you can watch progress here. Continue?
                 </div>
                 <div className="flex items-center gap-2">
                   <button
@@ -488,11 +647,11 @@ export function CampaignComposer() {
                     Cancel
                   </button>
                   <button
-                    onClick={handleSend}
+                    onClick={handleCreate}
                     disabled={isSending}
                     className="flex h-11 flex-1 items-center justify-center gap-2 rounded-xl bg-emerald-600 font-semibold text-white hover:bg-emerald-500 disabled:opacity-60"
                   >
-                    {isSending ? <><Loader2 className="size-4 animate-spin" /> Sending…</> : <><Send className="size-4" /> Yes, send now</>}
+                    {isSending ? <><Loader2 className="size-4 animate-spin" /> Starting…</> : <><Send className="size-4" /> Yes, start sending</>}
                   </button>
                 </div>
               </div>
@@ -501,8 +660,54 @@ export function CampaignComposer() {
               Only approved templates can be sent, from your own WhatsApp number.
             </p>
           </section>
+
+          <RecentCampaigns items={recent} onOpen={(c) => setActive(c)} />
         </>
       )}
+
+      {!template && recent.length > 0 && <RecentCampaigns items={recent} onOpen={(c) => setActive(c)} />}
     </div>
+  );
+}
+
+// =============================================================================
+// Recent campaigns — history + reopen progress.
+// =============================================================================
+function RecentCampaigns({ items, activeId, onOpen }: { items: CampaignView[]; activeId?: string; onOpen: (c: CampaignView) => void }) {
+  if (items.length === 0) return null;
+  return (
+    <section className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-5 py-3">
+        <h2 className="text-sm font-semibold text-foreground">Recent campaigns</h2>
+      </div>
+      <ul className="divide-y divide-border">
+        {items.map((c) => {
+          const done = c.sent + c.failed;
+          const pct = c.total > 0 ? Math.round((done / c.total) * 100) : 0;
+          return (
+            <li key={c.id}>
+              <button
+                onClick={() => onOpen(c)}
+                disabled={c.id === activeId}
+                className="flex w-full items-center gap-3 px-5 py-3 text-left hover:bg-muted/40 disabled:opacity-60"
+              >
+                <div className="min-w-0 flex-1">
+                  <div className="flex items-center gap-2">
+                    <span className="truncate font-mono text-xs font-medium text-foreground">{c.templateName}</span>
+                    <span className={cn('shrink-0 rounded-full px-1.5 py-0.5 text-[10px] font-medium capitalize', statusChipClass(c.status))}>
+                      {c.status}
+                    </span>
+                  </div>
+                  <p className="mt-0.5 truncate text-[11px] text-muted-foreground">
+                    {c.sent}/{c.total} sent{c.failed > 0 ? ` · ${c.failed} failed` : ''}{c.audienceLabel ? ` · ${c.audienceLabel}` : ''}
+                  </p>
+                </div>
+                <span className="shrink-0 text-xs text-muted-foreground">{pct}%</span>
+              </button>
+            </li>
+          );
+        })}
+      </ul>
+    </section>
   );
 }
