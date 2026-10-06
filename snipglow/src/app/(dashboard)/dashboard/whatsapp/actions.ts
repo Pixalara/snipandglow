@@ -760,6 +760,10 @@ export interface MarketingTemplateView {
   exampleParams: string[];
   rejectionReason: string | null;
   createdAt: string;
+  /** 'standard' or 'carousel' — lets the campaign UI render the right preview. */
+  templateType: 'standard' | 'carousel';
+  /** Carousel only: ordered cards (empty for standard templates). */
+  cards: Array<{ imageUrl: string; bodyText: string }>;
 }
 
 function toTemplateView(row: TemplateRow): MarketingTemplateView {
@@ -775,6 +779,10 @@ function toTemplateView(row: TemplateRow): MarketingTemplateView {
     exampleParams: Array.isArray(row.example_params) ? row.example_params : [],
     rejectionReason: row.rejection_reason,
     createdAt: row.created_at,
+    templateType: (row.template_type ?? 'standard') as 'standard' | 'carousel',
+    cards: Array.isArray(row.cards)
+      ? row.cards.map((c) => ({ imageUrl: c.image_url, bodyText: c.body_text }))
+      : [],
   };
 }
 
@@ -900,6 +908,24 @@ export async function getMarketingTemplates(): Promise<MarketingTemplateView[]> 
     // The single-message composer lists standard templates only; carousels have
     // their own builder + list.
     return rows.filter((r) => (r.template_type ?? 'standard') !== 'carousel').map(toTemplateView);
+  } catch {
+    return [];
+  }
+}
+
+/**
+ * List every template the owner can SEND a campaign with — both standard
+ * templates and carousels — newest first. Used by the campaign composer. Status
+ * is refreshed from Meta first (same as getMarketingTemplates). Tolerant: []
+ * for a non-Pro/non-owner caller. The composer filters to APPROVED.
+ */
+export async function getSendableTemplates(): Promise<MarketingTemplateView[]> {
+  try {
+    const { tenantId } = await assertProOwner();
+    const credentials = await getDedicatedCredentialsForTenant(tenantId);
+    if (credentials) await syncMarketingTemplatesFromMeta(tenantId, credentials);
+    const rows = await listTenantTemplates(tenantId);
+    return rows.map(toTemplateView);
   } catch {
     return [];
   }
@@ -1129,6 +1155,22 @@ export async function sendMarketingCampaign(input: SendCampaignInput): Promise<S
     }
   }
 
+  // Carousel templates carry their cards (image + text) locally. Each card's
+  // image is supplied at SEND time as a public link, with a sequential
+  // card_index. Our card bodies and buttons are static, so they need no
+  // per-send parameters (only the top message-bubble variables, if any).
+  const isCarousel = (tpl.template_type ?? 'standard') === 'carousel';
+  const carouselCards = Array.isArray(tpl.cards) ? tpl.cards : [];
+  if (isCarousel) {
+    if (carouselCards.length < 2) {
+      return { ok: false, error: 'This carousel has no cards to send.', sent: 0, failed: 0, total: 0 };
+    }
+    const missing = carouselCards.findIndex((c) => !c.image_url);
+    if (missing !== -1) {
+      return { ok: false, error: `Card ${missing + 1} is missing its image.`, sent: 0, failed: 0, total: 0 };
+    }
+  }
+
   const ids = Array.from(new Set((input.customerIds ?? []).filter(Boolean)));
   if (ids.length === 0) return { ok: false, error: 'Select at least one customer.', sent: 0, failed: 0, total: 0 };
   if (ids.length > MAX_CAMPAIGN_RECIPIENTS) {
@@ -1170,14 +1212,32 @@ export async function sendMarketingCampaign(input: SendCampaignInput): Promise<S
       text: personalize.has(i) ? (c.name || 'there') : (values[i] ?? '').trim(),
     }));
 
-    // Attach the approved template's banner (if any) as the IMAGE header, then
-    // the body variables. Same banner link for every recipient.
+    // Build the per-recipient components. Carousel: optional message-bubble body
+    // variables + a carousel component whose every card supplies its image link
+    // and card_index. Standard: optional IMAGE-header banner + body variables.
     const components: Array<Record<string, unknown>> = [];
-    if (tpl.header_image_url) {
-      components.push({ type: 'header', parameters: [{ type: 'image', image: { link: tpl.header_image_url } }] });
-    }
-    if (placeholderCount > 0) {
-      components.push({ type: 'body', parameters });
+    if (isCarousel) {
+      if (placeholderCount > 0) {
+        components.push({ type: 'body', parameters });
+      }
+      components.push({
+        type: 'carousel',
+        cards: carouselCards.map((card, idx) => ({
+          card_index: idx,
+          components: [
+            { type: 'header', parameters: [{ type: 'image', image: { link: card.image_url } }] },
+          ],
+        })),
+      });
+    } else {
+      // Attach the approved template's banner (if any) as the IMAGE header, then
+      // the body variables. Same banner link for every recipient.
+      if (tpl.header_image_url) {
+        components.push({ type: 'header', parameters: [{ type: 'image', image: { link: tpl.header_image_url } }] });
+      }
+      if (placeholderCount > 0) {
+        components.push({ type: 'body', parameters });
+      }
     }
 
     const res = await sendMessage(credentials, phoneDigits, {

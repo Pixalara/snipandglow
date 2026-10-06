@@ -2,11 +2,11 @@
 
 import { useEffect, useMemo, useState, useTransition } from 'react';
 import {
-  MessageCircle, Send, Search, Check, CheckCircle2, AlertTriangle, Loader2, Users, X,
+  MessageCircle, Send, Search, Check, CheckCircle2, AlertTriangle, Loader2, Users, X, LayoutGrid,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
-  getMarketingTemplates,
+  getSendableTemplates,
   getCampaignCustomers,
   sendMarketingCampaign,
   type MarketingTemplateView,
@@ -50,7 +50,7 @@ export function CampaignComposer() {
 
   useEffect(() => {
     (async () => {
-      const [tpls, custs] = await Promise.all([getMarketingTemplates(), getCampaignCustomers()]);
+      const [tpls, custs] = await Promise.all([getSendableTemplates(), getCampaignCustomers()]);
       setTemplates(tpls.filter((t) => t.status === 'APPROVED'));
       setCustomers(custs);
       setLoading(false);
@@ -195,8 +195,9 @@ export function CampaignComposer() {
         </div>
         <h3 className="mt-3 text-sm font-semibold text-foreground">No approved templates yet</h3>
         <p className="mx-auto mt-1 max-w-sm text-sm text-muted-foreground">
-          Create a marketing template in the <span className="font-medium">Marketing Templates</span> tab and wait for
-          Meta approval. Approved templates appear here, ready to send.
+          Create a template in the <span className="font-medium">Marketing Templates</span> or{' '}
+          <span className="font-medium">Carousel</span> tab and wait for Meta approval. Approved templates and
+          carousels appear here, ready to send.
         </p>
       </div>
     );
@@ -227,7 +228,25 @@ export function CampaignComposer() {
                   <CheckCircle2 className="size-2.5" /> Approved
                 </span>
               </div>
+              {t.templateType === 'carousel' && (
+                <span className="mt-1 inline-flex items-center gap-1 rounded-full bg-violet-100 px-1.5 py-0.5 text-[10px] font-medium text-violet-700 dark:bg-violet-900/30 dark:text-violet-300">
+                  <LayoutGrid className="size-2.5" /> Carousel · {t.cards.length} cards
+                </span>
+              )}
               <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">{t.bodyText}</p>
+              {t.templateType === 'carousel' && t.cards.length > 0 && (
+                <div className="mt-2 flex items-center gap-1">
+                  {t.cards.slice(0, 4).map((c, i) =>
+                    c.imageUrl ? (
+                      // eslint-disable-next-line @next/next/no-img-element
+                      <img key={i} src={c.imageUrl} alt="" className="size-9 rounded-md border border-border object-cover" />
+                    ) : (
+                      <div key={i} className="size-9 rounded-md border border-dashed border-border bg-muted/40" />
+                    )
+                  )}
+                  {t.cards.length > 4 && <span className="text-[10px] text-muted-foreground">+{t.cards.length - 4}</span>}
+                </div>
+              )}
             </button>
           ))}
         </div>
@@ -274,20 +293,41 @@ export function CampaignComposer() {
               ))}
 
               {/* Live preview */}
-              <div className="rounded-xl bg-[#e5ddd5] p-3 dark:bg-slate-800">
-                <div className="max-w-[85%] rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm text-slate-800 shadow-sm dark:bg-slate-700 dark:text-slate-100">
-                  {template.headerImageUrl && (
-                    <>
-                      {/* eslint-disable-next-line @next/next/no-img-element */}
-                      <img src={template.headerImageUrl} alt="Header" className="mb-2 w-full rounded-lg object-cover" />
-                    </>
-                  )}
-                  <p className="whitespace-pre-wrap">{preview()}</p>
-                  {template.footerText && (
-                    <p className="mt-1 text-[11px] text-slate-400">{template.footerText}</p>
-                  )}
+              {template.templateType === 'carousel' ? (
+                <div className="space-y-2 rounded-xl bg-[#e5ddd5] p-3 dark:bg-slate-800">
+                  <div className="max-w-[85%] rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm text-slate-800 shadow-sm dark:bg-slate-700 dark:text-slate-100">
+                    <p className="whitespace-pre-wrap">{preview()}</p>
+                  </div>
+                  <div className="flex gap-2 overflow-x-auto pb-1">
+                    {template.cards.map((c, i) => (
+                      <div key={i} className="w-[150px] shrink-0 overflow-hidden rounded-lg bg-white shadow-sm dark:bg-slate-700">
+                        {c.imageUrl ? (
+                          // eslint-disable-next-line @next/next/no-img-element
+                          <img src={c.imageUrl} alt={`Card ${i + 1}`} className="h-[120px] w-full object-cover" />
+                        ) : (
+                          <div className="h-[120px] w-full bg-slate-100 dark:bg-slate-600" />
+                        )}
+                        <p className="line-clamp-3 p-2 text-[11px] text-slate-700 dark:text-slate-200">{c.bodyText}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-              </div>
+              ) : (
+                <div className="rounded-xl bg-[#e5ddd5] p-3 dark:bg-slate-800">
+                  <div className="max-w-[85%] rounded-lg rounded-tl-none bg-white px-3 py-2 text-sm text-slate-800 shadow-sm dark:bg-slate-700 dark:text-slate-100">
+                    {template.headerImageUrl && (
+                      <>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img src={template.headerImageUrl} alt="Header" className="mb-2 w-full rounded-lg object-cover" />
+                      </>
+                    )}
+                    <p className="whitespace-pre-wrap">{preview()}</p>
+                    {template.footerText && (
+                      <p className="mt-1 text-[11px] text-slate-400">{template.footerText}</p>
+                    )}
+                  </div>
+                </div>
+              )}
             </div>
           </section>
 
