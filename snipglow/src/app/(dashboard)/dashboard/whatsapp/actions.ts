@@ -41,9 +41,20 @@ import {
   listTenantTemplates,
   upsertSubmittedTemplate,
   updateTemplateStatus,
+  getTenantTemplateById,
+  deleteTenantTemplate,
   type TemplateRow,
   type SubmittedTemplateInput,
+  type StoredCarouselCard,
+  type StoredCarouselButton,
 } from '@/lib/whatsapp/template-store';
+import {
+  createCarouselTemplate,
+  validateCarouselDefinition,
+  CAROUSEL_MAX_CARDS,
+  type CarouselButtonDef,
+  type CarouselTemplateDefinition,
+} from '@/lib/whatsapp/carousel-management';
 import { sendMessage } from '@/lib/whatsapp/templates';
 import { getMetaAppId, type WhatsAppCredentials } from '@/lib/whatsapp/config';
 import { uploadResumableImage } from '@/lib/whatsapp/media-upload';
@@ -886,7 +897,9 @@ export async function getMarketingTemplates(): Promise<MarketingTemplateView[]> 
     const credentials = await getDedicatedCredentialsForTenant(tenantId);
     if (credentials) await syncMarketingTemplatesFromMeta(tenantId, credentials);
     const rows = await listTenantTemplates(tenantId);
-    return rows.map(toTemplateView);
+    // The single-message composer lists standard templates only; carousels have
+    // their own builder + list.
+    return rows.filter((r) => (r.template_type ?? 'standard') !== 'carousel').map(toTemplateView);
   } catch {
     return [];
   }
@@ -1205,4 +1218,344 @@ export async function sendMarketingCampaign(input: SendCampaignInput): Promise<S
     failed,
     total,
   };
+}
+
+// =============================================================================
+// Marketing CAROUSEL templates — Pro/owner gated build + draft + submit.
+//
+// A carousel = a message bubble (BODY) + 2..10 image cards, each with offer text
+// and a shared set of buttons. The owner builds and previews it, saves drafts,
+// and submits it to Meta for approval on their OWN connected WABA. Submitting
+// uploads each card image to Meta (resumable upload -> handle) and creates the
+// template; the local mirror stores the full card content so the builder can
+// re-render and the (later) sender can attach each card's image by link.
+// =============================================================================
+
+export interface CarouselCardView {
+  imageUrl: string;
+  bodyText: string;
+}
+
+export interface CarouselButtonView {
+  type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+  text: string;
+  url: string | null;
+  phoneNumber: string | null;
+}
+
+export interface CarouselTemplateView {
+  id: string;
+  name: string;
+  language: string;
+  status: TemplateStatus;
+  bodyText: string;
+  exampleParams: string[];
+  cards: CarouselCardView[];
+  buttons: CarouselButtonView[];
+  rejectionReason: string | null;
+  createdAt: string;
+  metaTemplateId: string | null;
+}
+
+function toCarouselView(row: TemplateRow): CarouselTemplateView {
+  return {
+    id: row.id,
+    name: row.name,
+    language: row.language,
+    status: row.status,
+    bodyText: row.body_text,
+    exampleParams: Array.isArray(row.example_params) ? row.example_params : [],
+    cards: Array.isArray(row.cards)
+      ? row.cards.map((c) => ({ imageUrl: c.image_url, bodyText: c.body_text }))
+      : [],
+    buttons: Array.isArray(row.buttons)
+      ? row.buttons.map((b) => ({
+          type: b.type,
+          text: b.text,
+          url: b.url ?? null,
+          phoneNumber: b.phone_number ?? null,
+        }))
+      : [],
+    rejectionReason: row.rejection_reason,
+    createdAt: row.created_at,
+    metaTemplateId: row.meta_template_id,
+  };
+}
+
+/** Client-authored carousel payload (shared by draft save + submit). */
+export interface CarouselInput {
+  /** Row id when editing an existing draft (so a rename replaces, not clones). */
+  id?: string | null;
+  name: string;
+  bodyText: string;
+  bodyExampleParams: string[];
+  buttons: Array<{
+    type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+    text: string;
+    url?: string | null;
+    phoneNumber?: string | null;
+  }>;
+  cards: Array<{ imageUrl: string; bodyText: string }>;
+  language?: string;
+}
+
+function toStoredButtons(
+  buttons: CarouselInput['buttons']
+): StoredCarouselButton[] {
+  return (buttons ?? []).map((b) => ({
+    type: b.type,
+    text: b.text,
+    url: b.url ?? null,
+    phone_number: b.phoneNumber ?? null,
+  }));
+}
+
+function toStoredCards(cards: CarouselInput['cards']): StoredCarouselCard[] {
+  return (cards ?? []).map((c) => ({ image_url: c.imageUrl, body_text: c.bodyText }));
+}
+
+function toButtonDefs(buttons: CarouselInput['buttons']): CarouselButtonDef[] {
+  return (buttons ?? []).map((b) => ({
+    type: b.type,
+    text: b.text,
+    url: b.url ?? undefined,
+    phoneNumber: b.phoneNumber ?? undefined,
+  }));
+}
+
+/**
+ * List the owner's carousel templates (newest first). Refreshes approval status
+ * from Meta for already-submitted ones (never touches local card content).
+ * Tolerant: returns [] for a non-Pro/non-owner caller.
+ */
+export async function getCarouselTemplates(): Promise<CarouselTemplateView[]> {
+  try {
+    const { tenantId } = await assertProOwner();
+    const credentials = await getDedicatedCredentialsForTenant(tenantId);
+    if (credentials) await syncMarketingTemplatesFromMeta(tenantId, credentials);
+    const rows = await listTenantTemplates(tenantId);
+    return rows
+      .filter((r) => (r.template_type ?? 'standard') === 'carousel')
+      .map(toCarouselView);
+  } catch {
+    return [];
+  }
+}
+
+export type CarouselDraftResult =
+  | { ok: true; template: CarouselTemplateView }
+  | { ok: false; reason: string };
+
+/**
+ * Save (or update) a carousel as a local DRAFT so the owner can edit it over
+ * time before submitting. Requires only a name; cards/buttons may be partial.
+ * Refuses to overwrite a name already used by a non-draft (submitted) template.
+ */
+export async function saveCarouselDraft(input: CarouselInput): Promise<CarouselDraftResult> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, reason };
+  }
+
+  const name = normalizeTemplateName(input.name);
+  if (!input.name || !input.name.trim()) return { ok: false, reason: 'Give the carousel a name.' };
+  const language = input.language || 'en';
+
+  // Don't clobber an already-submitted template of the same name with a draft.
+  const existing = (await listTenantTemplates(tenantId)).find(
+    (r) => r.name === name && r.language === language
+  );
+  if (existing && existing.status !== 'DRAFT') {
+    return {
+      ok: false,
+      reason: 'A submitted template already uses this name. Pick a different name for your draft.',
+    };
+  }
+
+  try {
+    const row = await upsertSubmittedTemplate(tenantId, {
+      name,
+      language,
+      category: 'MARKETING',
+      templateType: 'carousel',
+      bodyText: input.bodyText ?? '',
+      exampleParams: input.bodyExampleParams ?? [],
+      cards: toStoredCards(input.cards),
+      buttons: toStoredButtons(input.buttons),
+      status: 'DRAFT',
+      metaTemplateId: null,
+    });
+    if (!row) return { ok: false, reason: 'Could not save the draft.' };
+    return { ok: true, template: toCarouselView(row) };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Could not save the draft.';
+    return { ok: false, reason };
+  }
+}
+
+export type SubmitCarouselResult =
+  | { ok: true; template: CarouselTemplateView }
+  | { ok: false; reason: string };
+
+/**
+ * Submit a carousel to Meta for approval on the owner's own WABA.
+ *
+ * Steps: Pro/owner guard -> require a connected dedicated number -> validate the
+ * definition -> upload every card image to Meta (resumable upload, in parallel)
+ * to obtain a per-card media handle -> create the template -> mirror it locally
+ * as PENDING with the full card content (the webhook flips the status later).
+ */
+export async function submitCarouselTemplate(input: CarouselInput): Promise<SubmitCarouselResult> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, reason };
+  }
+
+  const credentials = await getDedicatedCredentialsForTenant(tenantId);
+  if (!credentials) return { ok: false, reason: 'not_connected' };
+
+  const name = normalizeTemplateName(input.name);
+  const language = input.language || 'en';
+  const cards = input.cards ?? [];
+
+  if (cards.length > CAROUSEL_MAX_CARDS) {
+    return { ok: false, reason: `A carousel can have at most ${CAROUSEL_MAX_CARDS} cards.` };
+  }
+  const missingImage = cards.findIndex((c) => !c.imageUrl || !c.imageUrl.trim());
+  if (missingImage !== -1) {
+    return { ok: false, reason: `Add an image to card ${missingImage + 1} before submitting.` };
+  }
+
+  const appId = getMetaAppId();
+  if (!appId) return { ok: false, reason: 'Image cards need META_APP_ID configured on the server.' };
+
+  // Upload every card image to Meta -> media handle (parallel to stay fast).
+  let handles: string[];
+  try {
+    handles = await Promise.all(
+      cards.map(async (c, i) => {
+        const imgRes = await fetch(c.imageUrl);
+        if (!imgRes.ok) throw new Error(`Could not read the image on card ${i + 1}. Re-upload and try again.`);
+        const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+        const buf = Buffer.from(await imgRes.arrayBuffer());
+        const up = await uploadResumableImage(appId, credentials.accessToken, buf, `carousel-card-${i + 1}`, contentType);
+        if (!up.ok || !up.handle) throw new Error(up.error || `Could not upload card ${i + 1} image to WhatsApp.`);
+        return up.handle;
+      })
+    );
+  } catch (err) {
+    return { ok: false, reason: err instanceof Error ? err.message : 'Could not upload the card images.' };
+  }
+
+  const definition: CarouselTemplateDefinition = {
+    name,
+    language,
+    category: 'MARKETING',
+    bodyText: input.bodyText ?? '',
+    bodyExampleParams: input.bodyExampleParams ?? [],
+    buttons: toButtonDefs(input.buttons),
+    cards: cards.map((c, i) => ({ headerImageHandle: handles[i], bodyText: c.bodyText })),
+  };
+
+  const validation = validateCarouselDefinition(definition);
+  if (!validation.ok) return { ok: false, reason: validation.error };
+
+  const result = await createCarouselTemplate(credentials, definition);
+  if (!result.ok) return { ok: false, reason: result.error ?? 'The carousel could not be created.' };
+
+  try {
+    const row = await upsertSubmittedTemplate(tenantId, {
+      name,
+      language,
+      category: 'MARKETING',
+      templateType: 'carousel',
+      bodyText: definition.bodyText,
+      exampleParams: definition.bodyExampleParams ?? [],
+      cards: toStoredCards(input.cards),
+      buttons: toStoredButtons(input.buttons),
+      status: result.status ?? 'PENDING',
+      metaTemplateId: result.metaTemplateId ?? null,
+    });
+    if (!row) return { ok: false, reason: 'Saved to WhatsApp but failed to record it locally.' };
+    return { ok: true, template: toCarouselView(row) };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Failed to save the carousel.';
+    return { ok: false, reason };
+  }
+}
+
+/**
+ * Discard a local carousel. Only DRAFT and REJECTED rows can be deleted here —
+ * removing a PENDING/APPROVED template locally would desync it from Meta (it
+ * would still exist on the WABA), so those are left in place.
+ */
+export async function deleteCarouselTemplate(
+  id: string
+): Promise<{ ok: true } | { ok: false; reason: string }> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, reason };
+  }
+
+  const row = await getTenantTemplateById(tenantId, id);
+  if (!row) return { ok: false, reason: 'Carousel not found.' };
+  if (row.status !== 'DRAFT' && row.status !== 'REJECTED') {
+    return { ok: false, reason: 'Only drafts and rejected carousels can be deleted here.' };
+  }
+
+  const ok = await deleteTenantTemplate(tenantId, id);
+  return ok ? { ok: true } : { ok: false, reason: 'Could not delete the carousel.' };
+}
+
+/**
+ * Duplicate a carousel into a new editable DRAFT (name + "_copy"), so a tenant
+ * can reuse last festival's layout — swap the images and text, then submit.
+ */
+export async function duplicateCarouselTemplate(id: string): Promise<CarouselDraftResult> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, reason };
+  }
+
+  const row = await getTenantTemplateById(tenantId, id);
+  if (!row) return { ok: false, reason: 'Carousel not found.' };
+
+  // Find a free "<name>_copy[_n]" name for the duplicate.
+  const existingNames = new Set((await listTenantTemplates(tenantId)).map((r) => r.name));
+  const base = normalizeTemplateName(`${row.name}_copy`);
+  let candidate = base;
+  let n = 2;
+  while (existingNames.has(candidate)) candidate = normalizeTemplateName(`${base}_${n++}`);
+
+  try {
+    const created = await upsertSubmittedTemplate(tenantId, {
+      name: candidate,
+      language: row.language,
+      category: 'MARKETING',
+      templateType: 'carousel',
+      bodyText: row.body_text,
+      exampleParams: Array.isArray(row.example_params) ? row.example_params : [],
+      cards: Array.isArray(row.cards) ? row.cards : [],
+      buttons: Array.isArray(row.buttons) ? row.buttons : [],
+      status: 'DRAFT',
+      metaTemplateId: null,
+    });
+    if (!created) return { ok: false, reason: 'Could not duplicate the carousel.' };
+    return { ok: true, template: toCarouselView(created) };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Could not duplicate the carousel.';
+    return { ok: false, reason };
+  }
 }

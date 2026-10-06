@@ -38,6 +38,7 @@ import {
   type OnboardingStatus,
 } from '@/lib/whatsapp/onboarding-status';
 import { TemplateComposer } from './template-composer';
+import { CarouselComposer } from './carousel-composer';
 import { CampaignComposer } from './campaign-composer';
 
 // =============================================================================
@@ -89,7 +90,7 @@ const SHOW_CONNECT_CARD = false;
 export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
   // Marketing template creation is a paid-tier capability (own WABA required).
   const isPro = planTier === 'pro' || planTier === 'enterprise';
-  const [tab, setTab] = useState<'activity' | 'marketing' | 'campaign'>('activity');
+  const [tab, setTab] = useState<'activity' | 'marketing' | 'carousel' | 'campaign'>('activity');
 
   return (
     <div className="space-y-6">
@@ -117,6 +118,7 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
             {([
               { key: 'activity', label: 'Activity' },
               { key: 'marketing', label: 'Marketing Templates' },
+              { key: 'carousel', label: 'Carousel' },
               { key: 'campaign', label: 'Send Campaign' },
             ] as const).map((t) => (
               <button
@@ -140,6 +142,8 @@ export function WhatsAppClient({ planTier }: WhatsAppClientProps) {
             <WhatsAppLogsSection />
           ) : tab === 'marketing' ? (
             <TemplateComposer />
+          ) : tab === 'carousel' ? (
+            <CarouselComposer />
           ) : (
             <CampaignComposer />
           )}

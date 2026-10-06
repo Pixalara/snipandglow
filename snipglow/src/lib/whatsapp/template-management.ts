@@ -25,8 +25,12 @@ import { WA_BASE_URL } from './config';
 /** Meta template categories. We only create MARKETING here, but map them all. */
 export type TemplateCategory = 'MARKETING' | 'UTILITY' | 'AUTHENTICATION';
 
-/** Normalised review status, mirrored in the whatsapp_templates table. */
-export type TemplateStatus = 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAUSED' | 'DISABLED';
+/**
+ * Normalised review status, mirrored in the whatsapp_templates table. `DRAFT`
+ * is local-only (a carousel saved but not yet sent to Meta); Meta never reports
+ * it, so mapMetaTemplateStatus never returns DRAFT.
+ */
+export type TemplateStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'PAUSED' | 'DISABLED';
 
 /**
  * A template the owner wants to create. `bodyText` carries positional
