@@ -27,9 +27,13 @@ const TIME_BUDGET_MS = 50_000;
 const MAX_BATCHES_PER_CAMPAIGN = 60;
 
 export async function GET(request: NextRequest) {
-  const secret = request.nextUrl.searchParams.get('secret');
+  // Accept both auth styles: the external scheduler passes ?secret=…, while
+  // Vercel Cron sends an "Authorization: Bearer $CRON_SECRET" header.
   const cronSecret = process.env.CRON_SECRET;
-  if (cronSecret && secret !== cronSecret) {
+  const querySecret = request.nextUrl.searchParams.get('secret');
+  const authHeader = request.headers.get('authorization');
+  const authorized = !cronSecret || querySecret === cronSecret || authHeader === `Bearer ${cronSecret}`;
+  if (!authorized) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
   }
 
