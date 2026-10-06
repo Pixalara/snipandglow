@@ -538,7 +538,7 @@ export function CarouselComposer() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">Offer cards ({cards.length}/{MAX_CARDS})</p>
-              <p className="text-[11px] text-muted-foreground">2 to 10 cards. Square images (1:1, e.g. 1080×1080) look best.</p>
+              <p className="text-[11px] text-muted-foreground">2 to 10 cards. Use landscape images (1.91:1, e.g. 1125×600) — WhatsApp crops to a wide shape, so keep your logo & price centred.</p>
             </div>
             <button
               type="button"
@@ -564,7 +564,7 @@ export function CarouselComposer() {
                       {c.imageUrl ? (
                         <div className="relative">
                           {/* eslint-disable-next-line @next/next/no-img-element */}
-                          <img src={c.imageUrl} alt={`Card ${i + 1}`} className="size-24 rounded-lg border border-border object-cover" />
+                          <img src={c.imageUrl} alt={`Card ${i + 1}`} className="h-[76px] w-[145px] rounded-lg border border-border object-cover" />
                           <button
                             type="button"
                             onClick={() => setCards((prev) => prev.map((x) => (x.key === c.key ? { ...x, imageUrl: '' } : x)))}
@@ -574,7 +574,7 @@ export function CarouselComposer() {
                           </button>
                         </div>
                       ) : (
-                        <label className="flex size-24 cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-muted/30 text-[11px] text-muted-foreground hover:border-emerald-400 hover:text-foreground">
+                        <label className="flex h-[76px] w-[145px] cursor-pointer flex-col items-center justify-center gap-1 rounded-lg border border-dashed border-border bg-muted/30 text-[11px] text-muted-foreground hover:border-emerald-400 hover:text-foreground">
                           {c.uploading ? <Loader2 className="size-4 animate-spin" /> : <ImagePlus className="size-4" />}
                           {c.uploading ? 'Uploading' : 'Add image'}
                           <input type="file" accept="image/jpeg,image/png" className="hidden" onChange={(e) => handleCardImage(c.key, e)} disabled={c.uploading} />
@@ -787,12 +787,12 @@ function CarouselPreview({
       {cards.length > 0 && (
         <div className="flex gap-2 overflow-x-auto pb-2">
           {cards.map((c, i) => (
-            <div key={c.key} className="w-[180px] shrink-0 overflow-hidden rounded-xl bg-white dark:bg-slate-700 shadow-sm">
+            <div key={c.key} className="w-[200px] shrink-0 overflow-hidden rounded-xl bg-white dark:bg-slate-700 shadow-sm">
               {c.imageUrl ? (
                 // eslint-disable-next-line @next/next/no-img-element
-                <img src={c.imageUrl} alt={`Card ${i + 1}`} className="h-[180px] w-full object-cover" />
+                <img src={c.imageUrl} alt={`Card ${i + 1}`} className="aspect-[191/100] w-full object-cover" />
               ) : (
-                <div className="flex h-[180px] w-full items-center justify-center bg-slate-100 dark:bg-slate-600 text-[11px] text-slate-400">
+                <div className="flex aspect-[191/100] w-full items-center justify-center bg-slate-100 dark:bg-slate-600 text-[11px] text-slate-400">
                   <ImagePlus className="size-5" />
                 </div>
               )}

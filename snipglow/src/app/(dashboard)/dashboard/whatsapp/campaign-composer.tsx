@@ -300,12 +300,12 @@ export function CampaignComposer() {
                   </div>
                   <div className="flex gap-2 overflow-x-auto pb-1">
                     {template.cards.map((c, i) => (
-                      <div key={i} className="w-[150px] shrink-0 overflow-hidden rounded-lg bg-white shadow-sm dark:bg-slate-700">
+                      <div key={i} className="w-[170px] shrink-0 overflow-hidden rounded-lg bg-white shadow-sm dark:bg-slate-700">
                         {c.imageUrl ? (
                           // eslint-disable-next-line @next/next/no-img-element
-                          <img src={c.imageUrl} alt={`Card ${i + 1}`} className="h-[120px] w-full object-cover" />
+                          <img src={c.imageUrl} alt={`Card ${i + 1}`} className="aspect-[191/100] w-full object-cover" />
                         ) : (
-                          <div className="h-[120px] w-full bg-slate-100 dark:bg-slate-600" />
+                          <div className="aspect-[191/100] w-full bg-slate-100 dark:bg-slate-600" />
                         )}
                         <p className="line-clamp-3 p-2 text-[11px] text-slate-700 dark:text-slate-200">{c.bodyText}</p>
                       </div>
