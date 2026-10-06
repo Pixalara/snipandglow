@@ -1160,11 +1160,11 @@ function toCampaignView(p: CampaignProgress): CampaignView {
 }
 
 // First batch sent synchronously so the owner sees instant progress; the rest
-// drips via nudgeCampaign (progress screen) and the campaign-drip cron. Kept
-// small so the create action stays within the serverless time budget.
-const FIRST_BATCH = 15;
+// drips via nudgeCampaign (the progress screen). Sent with bounded concurrency,
+// so these stay within the serverless time budget even on the Hobby plan.
+const FIRST_BATCH = 20;
 // Recipients the owner's progress screen sends per poll tick.
-const NUDGE_BATCH = 20;
+const NUDGE_BATCH = 30;
 // Recipients inserted per bulk insert statement.
 const INSERT_CHUNK = 500;
 

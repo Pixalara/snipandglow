@@ -21,8 +21,9 @@ import { sendMessage } from '@/lib/whatsapp/templates';
  *  reclaimed to 'pending' so the campaign can always finish. */
 const STALE_PROCESSING_MINUTES = 5;
 
-/** Pause between sends — keeps throughput well under Meta's per-second ceiling. */
-const SEND_SPACING_MS = 60;
+/** How many sends run concurrently within a batch. Bounded so a tab-driven
+ *  nudge drains fast while staying well under Meta's throughput ceiling. */
+const SEND_CONCURRENCY = 5;
 
 export type CampaignStatus =
   | 'draft'
@@ -228,7 +229,7 @@ export async function processCampaignBatch(campaignId: string, limit: number): P
 
   const recipients = (claimed ?? []) as ClaimedRecipient[];
 
-  for (const r of recipients) {
+  const sendOne = async (r: ClaimedRecipient) => {
     const phoneDigits = (r.phone || '').replace(/\D/g, '');
     let res: { success: boolean; messageId?: string; error?: string };
 
@@ -270,9 +271,18 @@ export async function processCampaignBatch(campaignId: string, limit: number): P
     } catch {
       /* logging is best-effort */
     }
+  };
 
-    if (phoneDigits) await new Promise((resolve) => setTimeout(resolve, SEND_SPACING_MS));
-  }
+  // Drain the claimed batch with bounded concurrency — a shared cursor hands
+  // each worker the next recipient until the batch is done.
+  let cursor = 0;
+  const workers = Array.from({ length: Math.min(SEND_CONCURRENCY, recipients.length) }, async () => {
+    while (cursor < recipients.length) {
+      const r = recipients[cursor++];
+      await sendOne(r);
+    }
+  });
+  await Promise.all(workers);
 
   // Recompute totals and finish the campaign when nothing is outstanding.
   const counts = await liveCounts(admin, campaignId);

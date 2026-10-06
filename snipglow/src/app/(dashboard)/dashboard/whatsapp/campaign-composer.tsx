@@ -25,7 +25,7 @@ import {
 // stays smooth. Large audiences are usually chosen via a filter + Select all.
 const MAX_VISIBLE_ROWS = 500;
 // How often the progress screen asks the server to send the next batch.
-const POLL_MS = 2500;
+const POLL_MS = 1500;
 
 type AudienceFilter = 'all' | 'male' | 'female' | 'lapsed' | 'birthday';
 
@@ -281,13 +281,22 @@ export function CampaignComposer() {
                 style={{ width: `${pct}%` }}
               />
             </div>
-            <div className="mt-2 flex flex-wrap items-center justify-between gap-2 text-xs text-muted-foreground">
-              <span>{done} of {active.total} processed ({pct}%)</span>
-              <span className="flex items-center gap-3">
-                <span className="text-emerald-600 dark:text-emerald-400">{active.sent} sent</span>
-                {active.failed > 0 && <span className="text-red-600 dark:text-red-400">{active.failed} failed</span>}
-                {active.pending > 0 && <span>{active.pending} queued</span>}
-              </span>
+            <p className="mt-2 text-xs text-muted-foreground">{done} of {active.total} processed ({pct}%)</p>
+
+            {/* Live counts */}
+            <div className="mt-3 grid grid-cols-3 gap-2">
+              <div className="rounded-lg border border-border bg-background p-3 text-center">
+                <p className="text-xl font-bold tabular-nums text-emerald-600 dark:text-emerald-400">{active.sent}</p>
+                <p className="text-[11px] text-muted-foreground">Sent</p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3 text-center">
+                <p className="text-xl font-bold tabular-nums text-foreground">{active.pending}</p>
+                <p className="text-[11px] text-muted-foreground">In queue</p>
+              </div>
+              <div className="rounded-lg border border-border bg-background p-3 text-center">
+                <p className={cn('text-xl font-bold tabular-nums', active.failed > 0 ? 'text-red-600 dark:text-red-400' : 'text-foreground')}>{active.failed}</p>
+                <p className="text-[11px] text-muted-foreground">Failed</p>
+              </div>
             </div>
           </div>
 
@@ -298,9 +307,28 @@ export function CampaignComposer() {
           )}
 
           {active.status === 'sending' && (
-            <p className="mt-3 text-[11px] text-muted-foreground">
-              Sending in the background. You can leave this page — it keeps going and you can reopen it from Recent campaigns below.
-            </p>
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/50 bg-amber-500/10 px-3 py-3 text-xs text-amber-800 dark:text-amber-300">
+              <AlertTriangle className="mt-0.5 size-4 shrink-0 animate-pulse" />
+              <span>
+                <span className="font-semibold">Please keep this page open until sending finishes.</span>{' '}
+                Messages are sent while this screen is open. If you close the tab or navigate away, the campaign
+                pauses at {active.sent} sent — reopen it from Recent campaigns to send the remaining {active.pending}.
+              </span>
+            </div>
+          )}
+
+          {active.status === 'completed' && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-emerald-500/40 bg-emerald-500/10 px-3 py-2 text-xs text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="mt-0.5 size-4 shrink-0" />
+              <span>Done — {active.sent} message{active.sent !== 1 ? 's' : ''} sent{active.failed > 0 ? `, ${active.failed} failed` : ''}.</span>
+            </div>
+          )}
+
+          {active.status === 'paused' && (
+            <div className="mt-3 flex items-start gap-2 rounded-lg border border-amber-500/40 bg-amber-500/10 px-3 py-2 text-xs text-amber-700 dark:text-amber-400">
+              <Pause className="mt-0.5 size-4 shrink-0" />
+              <span>Paused at {active.sent} sent, {active.pending} still in queue. Resume to continue.</span>
+            </div>
           )}
 
           <div className="mt-4 flex flex-wrap items-center gap-2">
