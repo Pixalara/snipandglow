@@ -158,6 +158,31 @@ async function handleStatuses(statuses: any[], metadata?: any) {
           .upsert({ message_id: dedupeKey }, { onConflict: 'message_id', ignoreDuplicates: true })
           .select('message_id') as any);
         if (Array.isArray(claim) && claim.length > 0) {
+          // Resolve the dedicated tenant behind this sending number so we can
+          // alert the salon owner too, not just the platform team. Best-effort:
+          // a shared/platform number maps to no single tenant → platform-only.
+          let tenantEmail: string | null = null;
+          let salonName: string | null = null;
+          try {
+            if (phoneNumberId && phoneNumberId !== 'unknown') {
+              const { data: twsRows } = await (admin
+                .from('tenant_whatsapp_settings' as any)
+                .select('tenant_id')
+                .eq('phone_number_id', phoneNumberId)
+                .eq('mode', 'dedicated')
+                .limit(1) as any);
+              const tId = Array.isArray(twsRows) && twsRows[0]?.tenant_id ? String(twsRows[0].tenant_id) : null;
+              if (tId) {
+                const { getTenantOwnerEmail } = await import('@/lib/tenant/owner-email');
+                const info = await getTenantOwnerEmail(admin, tId);
+                tenantEmail = info.email;
+                salonName = info.salonName;
+              }
+            }
+          } catch (e) {
+            console.error('[Webhook] tenant alert-email resolve failed:', e);
+          }
+
           const { sendDeliveryFailureAlert } = await import('@/lib/whatsapp/delivery-alert');
           await sendDeliveryFailureAlert({
             errorCode,
@@ -165,6 +190,8 @@ async function handleStatuses(statuses: any[], metadata?: any) {
             displayPhone: metadata?.display_phone_number ?? null,
             phoneNumberId: metadata?.phone_number_id ?? null,
             recipient: s.recipient_id ?? null,
+            tenantEmail,
+            salonName,
           });
         }
       } catch (e) {

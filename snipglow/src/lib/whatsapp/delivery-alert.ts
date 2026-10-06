@@ -40,6 +40,32 @@ export interface DeliveryFailureAlert {
   phoneNumberId?: string | null;
   /** The customer number the message failed to reach. */
   recipient?: string | null;
+  /** The affected tenant's own email — alerted alongside the platform team. */
+  tenantEmail?: string | null;
+  /** The affected tenant's salon name, for subject/body context. */
+  salonName?: string | null;
+}
+
+/**
+ * Merge the platform alert recipients with the affected tenant's own email,
+ * de-duplicated case-insensitively (so a tenant that shares a platform address
+ * isn't emailed twice). Exported for testing. Never includes blanks or
+ * obviously-invalid entries.
+ */
+export function buildRecipientList(base: string[], tenantEmail?: string | null): string[] {
+  const out: string[] = [];
+  const seen = new Set<string>();
+  const push = (addr: string | null | undefined) => {
+    if (!addr) return;
+    const trimmed = addr.trim();
+    const key = trimmed.toLowerCase();
+    if (!key || !key.includes('@') || seen.has(key)) return;
+    seen.add(key);
+    out.push(trimmed);
+  };
+  base.forEach(push);
+  push(tenantEmail);
+  return out;
 }
 
 function esc(s: string): string {
@@ -55,7 +81,8 @@ export async function sendDeliveryFailureAlert(alert: DeliveryFailureAlert): Pro
 
     const isBilling = alert.errorCode === 131042;
     const meaning = CODE_MEANING[alert.errorCode] || alert.errorTitle || 'Account-level WhatsApp delivery failure.';
-    const subject = `${isBilling ? '🔴 WhatsApp BILLING issue' : '⚠️ WhatsApp delivery failing'} — error ${alert.errorCode}`;
+    const who = alert.salonName ? ` — ${alert.salonName}` : '';
+    const subject = `${isBilling ? '🔴 WhatsApp BILLING issue' : '⚠️ WhatsApp delivery failing'}${who} — error ${alert.errorCode}`;
     const whenIST = `${new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' })} IST`;
     const numberLine = alert.displayPhone
       ? `Sending number: ${alert.displayPhone}`
@@ -68,6 +95,7 @@ export async function sendDeliveryFailureAlert(alert: DeliveryFailureAlert): Pro
 
     const text = [
       `WhatsApp delivery is FAILING with error ${alert.errorCode}${alert.errorTitle ? ` (${alert.errorTitle})` : ''}.`,
+      alert.salonName ? `Salon: ${alert.salonName}` : '',
       '',
       meaning,
       '',
@@ -83,6 +111,7 @@ export async function sendDeliveryFailureAlert(alert: DeliveryFailureAlert): Pro
     const html = `<div style="font-family:Arial,Helvetica,sans-serif;font-size:14px;color:#0f172a;line-height:1.6;max-width:560px;">
       <h2 style="margin:0 0 10px;color:${isBilling ? '#b91c1c' : '#c2410c'};">${isBilling ? '🔴 WhatsApp billing issue detected' : '⚠️ WhatsApp delivery failing'}</h2>
       <p style="margin:0 0 10px;">WhatsApp delivery is failing with error <b>${alert.errorCode}</b>${alert.errorTitle ? ` (${esc(alert.errorTitle)})` : ''}.</p>
+      ${alert.salonName ? `<p style="margin:0 0 10px;">Salon: <b>${esc(alert.salonName)}</b></p>` : ''}
       <p style="margin:0 0 12px;padding:10px 12px;background:#fff7ed;border:1px solid #fed7aa;border-radius:8px;">${esc(meaning)}</p>
       ${numberLine ? `<p style="margin:0 0 4px;">${esc(numberLine)}</p>` : ''}
       ${alert.recipient ? `<p style="margin:0 0 4px;">First failing recipient: ${esc(alert.recipient)}</p>` : ''}
@@ -90,14 +119,15 @@ export async function sendDeliveryFailureAlert(alert: DeliveryFailureAlert): Pro
       <p style="margin:0;"><b>Action:</b> ${esc(action)}</p>
     </div>`;
 
+    const recipients = buildRecipientList(alertRecipients(), alert.tenantEmail);
     await Promise.all(
-      alertRecipients().map((to) =>
+      recipients.map((to) =>
         sendEmail({ to, subject, html, text }).catch((e) =>
           console.error('[wa-delivery-alert] email failed for', to, e)
         )
       )
     );
-    console.log('[wa-delivery-alert] alert sent for error', alert.errorCode);
+    console.log('[wa-delivery-alert] alert sent for error', alert.errorCode, 'to', recipients.length, 'recipient(s)');
   } catch (err) {
     console.error('[wa-delivery-alert] failed (non-fatal):', err);
   }
