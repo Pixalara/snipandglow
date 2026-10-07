@@ -3,14 +3,13 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Building2, Users, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee, MessageCircle, Mail, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Building2, CreditCard, Zap, FileText, Shield, Trash2, Headphones, IndianRupee, MessageCircle, Mail, Menu, X } from 'lucide-react';
 import { AdminThemeToggle } from './admin-theme-toggle';
 import { AdminClock } from './admin-clock';
 
 const navItems = [
   { label: 'Overview', href: '/admin', icon: LayoutDashboard },
   { label: 'Tenants', href: '/admin/tenants', icon: Building2 },
-  { label: 'Customers', href: '/admin/customers', icon: Users },
   { label: 'Subscriptions', href: '/admin/subscriptions', icon: CreditCard },
   { label: 'Payments', href: '/admin/payments', icon: IndianRupee },
   { label: 'Announcements', href: '/admin/announcements', icon: Mail },
