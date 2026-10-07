@@ -25,11 +25,11 @@ const plusJakartaSans = Plus_Jakarta_Sans({
 export const metadata: Metadata = {
   metadataBase: new URL('https://snipandglow.com'),
   title: {
-    default: 'Snip and Glow | WhatsApp Booking CRM for Salons and Spas',
+    default: 'Snip and Glow — Salon Software in India | WhatsApp Booking, Billing & CRM',
     template: '%s | Snip and Glow',
   },
   description:
-    'Snip and Glow helps salons, spas and beauty studios manage WhatsApp bookings, reminders, customers, staff and repeat-visit campaigns from one CRM.',
+    'SnipandGlow is affordable salon & spa software for India — WhatsApp bookings, automatic reminders, GST billing, customer CRM, staff scheduling, memberships and marketing broadcasts in one dashboard. Plans from ₹799/mo with a 15-day free trial.',
   keywords: [
     'salon management software India',
     'salon whatsapp marketing',
@@ -44,6 +44,12 @@ export const metadata: Metadata = {
     'WhatsApp salon booking',
     'spa management software',
     'salon renewal reminder software',
+    'best salon software in India',
+    'salon software India price',
+    'AI salon software India',
+    'salon software with WhatsApp',
+    'salon POS billing software India',
+    'salonboost alternative',
   ],
   authors: [{ name: 'Pixalara', url: 'https://pixalara.io' }],
   creator: 'Pixalara',
@@ -62,9 +68,9 @@ export const metadata: Metadata = {
     locale: 'en_IN',
     url: 'https://snipandglow.com',
     siteName: 'Snip and Glow',
-    title: 'Snip and Glow | WhatsApp Booking CRM for Salons and Spas',
+    title: 'Snip and Glow — Salon Software in India | WhatsApp Booking, Billing & CRM',
     description:
-      'Snip and Glow helps salons, spas and beauty studios manage WhatsApp bookings, reminders, customers, staff and repeat-visit campaigns from one CRM.',
+      'Affordable salon & spa software for India — WhatsApp bookings, reminders, GST billing, CRM and marketing broadcasts in one dashboard. Plans from ₹799/mo with a 15-day free trial.',
     images: [
       {
         url: '/og-image.png',
@@ -76,9 +82,9 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'Snip and Glow | WhatsApp Booking CRM for Salons and Spas',
+    title: 'Snip and Glow — Salon Software in India | WhatsApp Booking, Billing & CRM',
     description:
-      'Snip and Glow helps salons, spas and beauty studios manage WhatsApp bookings, reminders, customers and staff from one CRM.',
+      'Affordable salon & spa software for India — WhatsApp bookings, reminders, GST billing, CRM and marketing broadcasts in one dashboard. Plans from ₹799/mo with a 15-day free trial.',
     images: ['/og-image.png'],
     creator: '@pixalara',
   },
