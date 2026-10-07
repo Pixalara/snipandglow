@@ -16,6 +16,10 @@ const nextConfig: NextConfig = {
   experimental: {
     serverActions: {
       allowedOrigins: ['localhost:3000', 'snipandglow.com', 'www.snipandglow.com', 'snipandglow.pixalara.io'],
+      // Marketing/carousel images are allowed up to 5 MB; the Server Action body
+      // limit defaults to 1 MB, so raise it (with headroom) or uploads > 1 MB
+      // fail at the framework boundary before our upload code runs.
+      bodySizeLimit: '8mb',
     },
     optimizePackageImports: ['lucide-react', 'recharts', 'date-fns', 'date-fns-tz', '@supabase/supabase-js'],
   },

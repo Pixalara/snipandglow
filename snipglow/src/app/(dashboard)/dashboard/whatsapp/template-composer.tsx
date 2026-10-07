@@ -173,6 +173,10 @@ export function TemplateComposer() {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow re-selecting the same file after a remove
     if (!file) return;
+    if (file.size > 5 * 1024 * 1024) {
+      setError('Image must be under 5 MB. Please compress it and try again.');
+      return;
+    }
     setError(null);
     setImageUploading(true);
     try {
