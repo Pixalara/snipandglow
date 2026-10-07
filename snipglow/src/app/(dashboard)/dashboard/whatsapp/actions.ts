@@ -31,6 +31,7 @@ import { notifyAdminOfSetupRequest } from '@/lib/whatsapp/setup-request-alert';
 import { getDedicatedCredentialsForTenant } from '@/lib/whatsapp/tenant-router';
 import {
   createTemplate,
+  editTemplate,
   fetchTemplateDefinitions,
   normalizeTemplateName,
   type TemplateCategory,
@@ -1060,6 +1061,117 @@ export async function submitMarketingTemplate(input: {
     return { ok: true, template: toTemplateView(row) };
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'Failed to save the template.';
+    return { ok: false, reason };
+  }
+}
+
+/**
+ * Edit an EXISTING marketing template and re-submit it to Meta.
+ *
+ * The name and language cannot change (Meta rule), so the client only sends the
+ * editable content (body, examples, footer, header image, buttons). Editing is
+ * allowed only when the template is APPROVED / REJECTED / PAUSED; a successful
+ * edit flips it back to PENDING for re-review. Pro/owner gated.
+ */
+export async function editMarketingTemplate(input: {
+  id: string;
+  bodyText: string;
+  exampleParams: string[];
+  footerText?: string | null;
+  headerImageUrl?: string | null;
+  buttons?: Array<{ type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'; text: string; url?: string | null; phoneNumber?: string | null }>;
+}): Promise<SubmitTemplateResult> {
+  let tenantId: string;
+  try {
+    ({ tenantId } = await assertProOwner());
+  } catch (err) {
+    const reason = err instanceof AuthorizationError ? err.reason : 'not_authorized';
+    return { ok: false, reason };
+  }
+
+  const credentials = await getDedicatedCredentialsForTenant(tenantId);
+  if (!credentials) return { ok: false, reason: 'not_connected' };
+
+  const row = await getTenantTemplateById(tenantId, input.id);
+  if (!row) return { ok: false, reason: 'Template not found.' };
+  if (!row.meta_template_id) {
+    return { ok: false, reason: 'This template isn\u2019t synced with WhatsApp yet. Tap "Refresh status" and try again.' };
+  }
+  if (row.status === 'PENDING') {
+    return { ok: false, reason: 'This template is still in review \u2014 you can edit it once Meta finishes reviewing it.' };
+  }
+  if (row.status === 'DISABLED') {
+    return { ok: false, reason: 'This template is disabled and can no longer be edited.' };
+  }
+  if ((row.template_type ?? 'standard') === 'carousel') {
+    return { ok: false, reason: 'Carousels are edited from the Carousel tab.' };
+  }
+
+  // Convert a (possibly unchanged) banner URL into a fresh Meta media handle,
+  // required whenever the edited template keeps an IMAGE header.
+  let headerImageHandle: string | undefined;
+  const headerImageUrl = input.headerImageUrl?.trim() || null;
+  if (headerImageUrl) {
+    const appId = getMetaAppId();
+    if (!appId) return { ok: false, reason: 'Image headers need META_APP_ID configured on the server.' };
+    try {
+      const imgRes = await fetch(headerImageUrl);
+      if (!imgRes.ok) return { ok: false, reason: 'Could not read the header image. Please re-upload and try again.' };
+      const contentType = imgRes.headers.get('content-type') || 'image/jpeg';
+      const buf = Buffer.from(await imgRes.arrayBuffer());
+      const up = await uploadResumableImage(appId, credentials.accessToken, buf, 'marketing-header', contentType);
+      if (!up.ok || !up.handle) return { ok: false, reason: up.error || 'Could not upload the image to WhatsApp.' };
+      headerImageHandle = up.handle;
+    } catch {
+      return { ok: false, reason: 'Could not process the image. Please try again.' };
+    }
+  }
+
+  const definition = {
+    name: row.name,
+    language: row.language,
+    category: (row.category ?? 'MARKETING') as TemplateCategory,
+    bodyText: input.bodyText,
+    exampleParams: input.exampleParams ?? [],
+    // Preserve an existing text header only when no image header is set.
+    headerText: !headerImageUrl ? (row.header_text ?? undefined) : undefined,
+    headerImageHandle,
+    footerText: input.footerText ?? undefined,
+    buttons: input.buttons ?? undefined,
+  };
+
+  const result = await editTemplate(credentials, row.meta_template_id, definition);
+  if (!result.ok) {
+    return { ok: false, reason: result.error ?? 'Template could not be updated.' };
+  }
+
+  const storedButtons = (input.buttons ?? [])
+    .filter((b) => (b.text ?? '').trim())
+    .map((b) => ({
+      type: b.type,
+      text: b.text.trim(),
+      url: b.type === 'URL' ? (b.url || '').trim() : null,
+      phone_number: b.type === 'PHONE_NUMBER' ? (b.phoneNumber || '').trim() : null,
+    }));
+
+  try {
+    const updated = await upsertSubmittedTemplate(tenantId, {
+      name: row.name,
+      language: row.language,
+      category: row.category,
+      bodyText: definition.bodyText,
+      headerText: definition.headerText ?? null,
+      headerImageUrl,
+      footerText: definition.footerText ?? null,
+      exampleParams: definition.exampleParams,
+      status: 'PENDING',
+      metaTemplateId: row.meta_template_id,
+      buttons: storedButtons.length ? storedButtons : null,
+    });
+    if (!updated) return { ok: false, reason: 'Edited on WhatsApp but failed to update it locally.' };
+    return { ok: true, template: toTemplateView(updated) };
+  } catch (err) {
+    const reason = err instanceof Error ? err.message : 'Failed to save the edit.';
     return { ok: false, reason };
   }
 }

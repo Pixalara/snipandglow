@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { Button } from '@/components/ui/button';
 import {
   Megaphone,
@@ -21,6 +21,7 @@ import {
   Phone,
   ExternalLink,
   Reply,
+  Pencil,
 } from 'lucide-react';
 import { MARKETING_TEMPLATE_PRESETS, type MarketingTemplatePreset } from '@/lib/whatsapp/template-presets';
 import { extractPlaceholders } from '@/lib/whatsapp/template-management';
@@ -88,6 +89,8 @@ export function TemplateComposer() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const formRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     void refresh();
@@ -143,6 +146,7 @@ export function TemplateComposer() {
     setImageUrl('');
     // Seed a "Book Now" quick reply so preset templates can book out of the box.
     setButtons([{ type: 'QUICK_REPLY', text: 'Book Now', url: '', phoneNumber: '' }]);
+    setEditingId(null);
     setError(null);
     setNotice(null);
   }
@@ -155,6 +159,23 @@ export function TemplateComposer() {
     setLabels([]);
     setImageUrl('');
     setButtons([]);
+    setEditingId(null);
+  }
+
+  // Load an existing template into the form to edit it. Name/language are fixed;
+  // saving sends it back to Meta for review.
+  function startEdit(t: MarketingTemplateView) {
+    setEditingId(t.id);
+    setName(t.name);
+    setBody(t.bodyText);
+    setFooter(t.footerText ?? '');
+    setExamples([...t.exampleParams]);
+    setLabels([]);
+    setImageUrl(t.headerImageUrl ?? '');
+    setButtons(t.buttons.map((b) => ({ type: b.type, text: b.text, url: b.url ?? '', phoneNumber: b.phoneNumber ?? '' })));
+    setError(null);
+    setNotice(null);
+    formRef.current?.scrollIntoView({ behavior: 'smooth', block: 'start' });
   }
 
   function addButton() {
@@ -200,25 +221,39 @@ export function TemplateComposer() {
     setSubmitting(true);
     setError(null);
     setNotice(null);
+    const payloadButtons = buttons
+      .filter((b) => b.text.trim())
+      .map((b) => ({
+        type: b.type,
+        text: b.text.trim(),
+        url: b.url.trim() || null,
+        phoneNumber: b.phoneNumber.trim() || null,
+      }));
     try {
-      const { submitMarketingTemplate } = await import('./actions');
-      const res = await submitMarketingTemplate({
-        name,
-        bodyText: body,
-        exampleParams: examples,
-        footerText: footer.trim() || null,
-        headerImageUrl: imageUrl || null,
-        buttons: buttons
-          .filter((b) => b.text.trim())
-          .map((b) => ({
-            type: b.type,
-            text: b.text.trim(),
-            url: b.url.trim() || null,
-            phoneNumber: b.phoneNumber.trim() || null,
-          })),
-      });
+      const actions = await import('./actions');
+      const res = editingId
+        ? await actions.editMarketingTemplate({
+            id: editingId,
+            bodyText: body,
+            exampleParams: examples,
+            footerText: footer.trim() || null,
+            headerImageUrl: imageUrl || null,
+            buttons: payloadButtons,
+          })
+        : await actions.submitMarketingTemplate({
+            name,
+            bodyText: body,
+            exampleParams: examples,
+            footerText: footer.trim() || null,
+            headerImageUrl: imageUrl || null,
+            buttons: payloadButtons,
+          });
       if (res.ok) {
-        setNotice('Sent to WhatsApp for approval. Its status will update here once Meta reviews it (usually within a day).');
+        setNotice(
+          editingId
+            ? 'Changes submitted — your template is back in review with Meta (usually approved within a day).'
+            : 'Sent to WhatsApp for approval. Its status will update here once Meta reviews it (usually within a day).'
+        );
         resetForm();
         await refresh();
       } else if (res.reason === 'not_connected') {
@@ -226,7 +261,7 @@ export function TemplateComposer() {
       } else if (res.reason === 'not_pro') {
         setError('Marketing templates are available on the Pro plan.');
       } else if (res.reason === 'not_owner' || res.reason === 'not_authenticated') {
-        setError('Only the salon owner can create templates.');
+        setError('Only the salon owner can create or edit templates.');
       } else {
         setError(res.reason);
       }
@@ -275,17 +310,28 @@ export function TemplateComposer() {
       </div>
 
       {/* Composer form */}
-      <div className="rounded-2xl border border-border bg-card p-5 space-y-4">
+      <div ref={formRef} className="rounded-2xl border border-border bg-card p-5 space-y-4">
+        {editingId && (
+          <div className="flex items-start gap-2 rounded-lg border border-amber-300 bg-amber-50 dark:border-amber-800/40 dark:bg-amber-900/10 px-3 py-2">
+            <AlertTriangle className="size-4 text-amber-600 dark:text-amber-400 shrink-0 mt-0.5" />
+            <p className="text-xs text-amber-700 dark:text-amber-300">
+              Editing a template sends it back to WhatsApp for review (usually approved within a day). The template name can&apos;t be changed.
+            </p>
+          </div>
+        )}
         <div>
           <label className="text-xs font-medium text-muted-foreground">Template name</label>
           <input
             value={name}
             onChange={(e) => setName(e.target.value)}
             placeholder="e.g. birthday_offer"
-            className="mt-1 w-full h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+            disabled={!!editingId}
+            className="mt-1 w-full h-10 rounded-xl border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40 disabled:opacity-60 disabled:cursor-not-allowed"
           />
           <p className="text-[11px] text-muted-foreground mt-1">
-            Lowercase letters, numbers and underscores only. We tidy it automatically.
+            {editingId
+              ? 'The name is fixed once a template exists on WhatsApp.'
+              : 'Lowercase letters, numbers and underscores only. We tidy it automatically.'}
           </p>
         </div>
 
@@ -487,11 +533,11 @@ export function TemplateComposer() {
             className="rounded-xl gap-1.5 bg-emerald-600 hover:bg-emerald-700 text-white"
           >
             {submitting ? <Loader2 className="size-4 animate-spin" /> : <Send className="size-4" />}
-            {submitting ? 'Submitting...' : 'Submit for approval'}
+            {submitting ? 'Submitting...' : editingId ? 'Save changes & re-submit' : 'Submit for approval'}
           </Button>
-          {(name || body || footer) && (
+          {(name || body || footer || editingId) && (
             <Button variant="outline" className="rounded-xl" onClick={resetForm} disabled={submitting}>
-              Clear
+              {editingId ? 'Cancel edit' : 'Clear'}
             </Button>
           )}
         </div>
@@ -552,6 +598,17 @@ export function TemplateComposer() {
                     <p className="text-[11px] text-red-600 dark:text-red-400 mt-2">
                       Reason: {t.rejectionReason.replace(/_/g, ' ').toLowerCase()}
                     </p>
+                  )}
+                  {(t.status === 'APPROVED' || t.status === 'REJECTED' || t.status === 'PAUSED') && (
+                    <div className="mt-3 flex justify-end border-t border-border pt-2.5">
+                      <button
+                        type="button"
+                        onClick={() => startEdit(t)}
+                        className="inline-flex items-center gap-1.5 rounded-lg border border-border px-2.5 py-1 text-xs font-medium text-foreground transition-colors hover:bg-muted"
+                      >
+                        <Pencil className="size-3" /> Edit
+                      </button>
+                    </div>
                   )}
                 </div>
               );

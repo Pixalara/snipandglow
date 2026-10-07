@@ -332,6 +332,56 @@ export async function postTemplate(
 }
 
 /**
+ * Edit an EXISTING template on the tenant's WABA by its Meta template id.
+ *
+ * Meta rules we respect: the name and language are immutable (only components —
+ * and optionally category — can change), a template can only be edited while it
+ * is APPROVED / REJECTED / PAUSED (not while PENDING), and a successful edit
+ * sends it back to PENDING for re-review. Meta also limits edit frequency (≈ once
+ * per 24h, a handful per month); any such limit surfaces as the API error.
+ */
+export async function editTemplate(
+  credentials: WhatsAppCredentials,
+  metaTemplateId: string,
+  def: TemplateDefinition
+): Promise<CreateTemplateResult> {
+  const validation = validateDefinition(def);
+  if (!validation.ok) return { ok: false, error: validation.error };
+  const payload = buildCreatePayload(def);
+  // Only components are editable here; name/language stay as they are.
+  return postTemplateEdit(credentials, metaTemplateId, { components: payload.components });
+}
+
+/** POST an edit to `/{message_template_id}`. Returns PENDING on success. */
+export async function postTemplateEdit(
+  credentials: WhatsAppCredentials,
+  metaTemplateId: string,
+  body: { components: CreateComponent[]; category?: TemplateCategory }
+): Promise<CreateTemplateResult> {
+  try {
+    const res = await fetch(`${WA_BASE_URL}/${metaTemplateId}`, {
+      method: 'POST',
+      headers: {
+        Authorization: `Bearer ${credentials.accessToken}`,
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    });
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) {
+      const msg = data?.error?.error_user_msg || data?.error?.message || `Meta API error (${res.status})`;
+      console.error('[WA Templates] edit failed:', msg);
+      return { ok: false, error: msg };
+    }
+    // A successful edit puts the template back into review.
+    return { ok: true, metaTemplateId, status: 'PENDING' };
+  } catch (err) {
+    console.error('[WA Templates] edit network error:', err);
+    return { ok: false, error: 'Could not reach WhatsApp. Please try again.' };
+  }
+}
+
+/**
  * List the templates that currently exist on the tenant's WABA. Used to
  * reconcile our local mirror (statuses can change on Meta's side). Returns an
  * empty list on any failure — callers treat it as "nothing to reconcile".
