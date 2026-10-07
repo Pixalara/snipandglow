@@ -25,8 +25,6 @@ export default async function AdminOverviewPage() {
     todayApptsRes,
     monthApptsRes,
     whatsappSentRes,
-    whatsappDeliveredRes,
-    whatsappFailedRes,
   ] = await Promise.all([
     admin.from('tenants').select('id', { count: 'exact', head: true }),
     // Status counts are DERIVED from dates (a lapsed trial/sub = "Renewal Due"),
@@ -37,8 +35,6 @@ export default async function AdminOverviewPage() {
     admin.from('appointments').select('id', { count: 'exact', head: true }).eq('appointment_date', today),
     admin.from('appointments').select('id', { count: 'exact', head: true }).gte('appointment_date', monthStart),
     (admin.from('whatsapp_sessions' as any).select('id', { count: 'exact', head: true }).eq('direction', 'outbound') as any),
-    (admin.from('whatsapp_sessions' as any).select('id', { count: 'exact', head: true }).eq('direction', 'outbound').eq('status', 'delivered') as any),
-    (admin.from('whatsapp_sessions' as any).select('id', { count: 'exact', head: true }).eq('direction', 'outbound').eq('status', 'failed') as any),
   ]);
 
   // Tally the derived status badges across all tenants.
@@ -102,8 +98,6 @@ export default async function AdminOverviewPage() {
     { label: "Today's Appointments", value: todayApptsRes.count ?? 0, color: 'text-pink-500' },
     { label: 'This Month Appointments', value: monthApptsRes.count ?? 0, color: 'text-indigo-500' },
     { label: 'WhatsApp Sent', value: whatsappSentRes.count ?? 0, color: 'text-green-500' },
-    { label: 'WhatsApp Delivered', value: whatsappDeliveredRes.count ?? 0, color: 'text-green-400' },
-    { label: 'WhatsApp Failed', value: whatsappFailedRes.count ?? 0, color: 'text-red-400' },
   ];
 
   return (

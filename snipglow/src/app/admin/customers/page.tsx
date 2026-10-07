@@ -8,7 +8,7 @@ export default async function AdminCustomersPage() {
 
   const { data: customers } = await admin
     .from('customers')
-    .select('id, name, phone, email, total_visits, total_spent, tenant_id, created_at')
+    .select('id, phone, email, total_visits, total_spent, tenant_id, created_at')
     .order('created_at', { ascending: false })
     .limit(200);
 
@@ -32,7 +32,6 @@ export default async function AdminCustomersPage() {
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-border">
-                <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Phone</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Email</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-muted-foreground uppercase">Salon</th>
@@ -44,7 +43,6 @@ export default async function AdminCustomersPage() {
             <tbody className="divide-y divide-border">
               {(customers ?? []).map((c) => (
                 <tr key={c.id} className="hover:bg-accent/40">
-                  <td className="px-4 py-3 text-foreground font-medium">{c.name}</td>
                   <td className="px-4 py-3 text-foreground/80">{c.phone}</td>
                   <td className="px-4 py-3 text-muted-foreground">{c.email || '—'}</td>
                   <td className="px-4 py-3 text-xs text-muted-foreground">{tenantMap[c.tenant_id]?.code} — {tenantMap[c.tenant_id]?.name}</td>
