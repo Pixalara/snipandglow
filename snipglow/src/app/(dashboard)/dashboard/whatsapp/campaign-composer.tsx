@@ -3,7 +3,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, useTransition } from 'react';
 import {
   MessageCircle, Send, Search, Check, CheckCircle2, AlertTriangle, Loader2, Users, X, LayoutGrid,
-  Pause, Play, Ban, Clock,
+  Pause, Play, Ban, Clock, Phone, ExternalLink, Reply,
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import {
@@ -70,6 +70,24 @@ function errorLabel(code: string | null): string | null {
     case 'carousel_invalid': return 'The carousel is missing images.';
     default: return code;
   }
+}
+
+/** WhatsApp-style button chips shown under a template preview. */
+function TemplateButtonChips({ buttons }: { buttons: MarketingTemplateView['buttons'] }) {
+  if (!buttons || buttons.length === 0) return null;
+  return (
+    <div className="mt-1 border-t border-slate-100 dark:border-slate-600">
+      {buttons.map((b, i) => (
+        <div
+          key={i}
+          className="flex items-center justify-center gap-1.5 border-b border-slate-100 py-1.5 text-xs font-medium text-sky-600 last:border-0 dark:border-slate-600 dark:text-sky-400"
+        >
+          {b.type === 'PHONE_NUMBER' ? <Phone className="size-3" /> : b.type === 'URL' ? <ExternalLink className="size-3" /> : <Reply className="size-3" />}
+          {b.text}
+        </div>
+      ))}
+    </div>
+  );
 }
 
 export function CampaignComposer() {
@@ -480,6 +498,9 @@ export function CampaignComposer() {
                           <div className="aspect-[191/100] w-full bg-slate-100 dark:bg-slate-600" />
                         )}
                         <p className="line-clamp-3 p-2 text-[11px] text-slate-700 dark:text-slate-200">{c.bodyText}</p>
+                        <div className="px-2 pb-1.5">
+                          <TemplateButtonChips buttons={template.buttons} />
+                        </div>
                       </div>
                     ))}
                   </div>
@@ -497,6 +518,7 @@ export function CampaignComposer() {
                     {template.footerText && (
                       <p className="mt-1 text-[11px] text-slate-400">{template.footerText}</p>
                     )}
+                    <TemplateButtonChips buttons={template.buttons} />
                   </div>
                 </div>
               )}
