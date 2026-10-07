@@ -173,8 +173,8 @@ export function TemplateComposer() {
     const file = e.target.files?.[0];
     e.target.value = ''; // allow re-selecting the same file after a remove
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be under 5 MB. Please compress it and try again.');
+    if (file.size > 4 * 1024 * 1024) {
+      setError('Image must be under 4 MB. Please compress it and try again.');
       return;
     }
     setError(null);
@@ -428,7 +428,7 @@ export function TemplateComposer() {
             </label>
           )}
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Shown as a banner above your message. JPG or PNG, landscape (about 1.91:1, e.g. 1200x628), max 5 MB.
+            Shown as a banner above your message. JPG or PNG, landscape (about 1.91:1, e.g. 1200x628), max 4 MB.
           </p>
         </div>
 

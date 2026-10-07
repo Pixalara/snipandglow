@@ -229,8 +229,8 @@ export function CarouselComposer() {
     const file = e.target.files?.[0];
     e.target.value = '';
     if (!file) return;
-    if (file.size > 5 * 1024 * 1024) {
-      setError('Image must be under 5 MB. Please compress it and try again.');
+    if (file.size > 4 * 1024 * 1024) {
+      setError('Image must be under 4 MB. Please compress it and try again.');
       return;
     }
     setError(null);

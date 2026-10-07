@@ -814,7 +814,7 @@ export async function uploadMarketingTemplateImage(
   if (type !== 'image/jpeg' && type !== 'image/jpg' && type !== 'image/png') {
     return { ok: false, error: 'Use a JPG or PNG image (those are the formats WhatsApp accepts).' };
   }
-  if (file.size > MARKETING_IMAGE_MAX_BYTES) return { ok: false, error: 'Image must be under 5 MB.' };
+  if (file.size > MARKETING_IMAGE_MAX_BYTES) return { ok: false, error: 'Image must be under 4 MB.' };
 
   const bytes = Buffer.from(await file.arrayBuffer());
   const up = await storeMarketingImage(tenantId, bytes, file.type);

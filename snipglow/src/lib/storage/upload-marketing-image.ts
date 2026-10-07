@@ -8,7 +8,8 @@
 //         a stale image after a re-upload).
 //
 // FORMAT: WhatsApp image headers accept only JPG and PNG (no WEBP/GIF/SVG), and
-// cap the file at 5 MB — enforced here so a bad file fails fast, before we ever
+// cap the file at 4 MB (safely under Vercel's serverless request-body limit) —
+// enforced here so a bad file fails fast, before we ever
 // call Meta.
 // =============================================================================
 
@@ -24,7 +25,7 @@ const EXT_BY_TYPE: Record<string, string> = {
 };
 
 /** Max header image size WhatsApp accepts. */
-export const MARKETING_IMAGE_MAX_BYTES = 5 * 1024 * 1024;
+export const MARKETING_IMAGE_MAX_BYTES = 4 * 1024 * 1024;
 
 export type MarketingImageUploadResult =
   | { ok: true; url: string; path: string }
