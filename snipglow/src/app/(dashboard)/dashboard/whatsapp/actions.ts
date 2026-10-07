@@ -765,6 +765,8 @@ export interface MarketingTemplateView {
   templateType: 'standard' | 'carousel';
   /** Carousel only: ordered cards (empty for standard templates). */
   cards: Array<{ imageUrl: string; bodyText: string }>;
+  /** Action buttons shared by the message (quick reply / url / call). */
+  buttons: Array<{ type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'; text: string; url: string | null; phoneNumber: string | null }>;
 }
 
 function toTemplateView(row: TemplateRow): MarketingTemplateView {
@@ -783,6 +785,9 @@ function toTemplateView(row: TemplateRow): MarketingTemplateView {
     templateType: (row.template_type ?? 'standard') as 'standard' | 'carousel',
     cards: Array.isArray(row.cards)
       ? row.cards.map((c) => ({ imageUrl: c.image_url, bodyText: c.body_text }))
+      : [],
+    buttons: Array.isArray(row.buttons)
+      ? row.buttons.map((b) => ({ type: b.type, text: b.text, url: b.url ?? null, phoneNumber: b.phone_number ?? null }))
       : [],
   };
 }
@@ -825,6 +830,19 @@ function metaTemplateToMirrorInput(t: MetaTemplateFull): SubmittedTemplateInput 
   const header = comps.find((c) => (c.type || '').toUpperCase() === 'HEADER');
   const footer = comps.find((c) => (c.type || '').toUpperCase() === 'FOOTER');
   const headerIsText = header ? (header.format || 'TEXT').toUpperCase() === 'TEXT' : false;
+  const buttonsComp = comps.find((c) => (c.type || '').toUpperCase() === 'BUTTONS');
+  const storedButtons = (buttonsComp?.buttons ?? [])
+    .map((b) => {
+      const bt = (b.type || '').toUpperCase();
+      if (bt !== 'QUICK_REPLY' && bt !== 'URL' && bt !== 'PHONE_NUMBER') return null;
+      return {
+        type: bt as 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER',
+        text: b.text || '',
+        url: bt === 'URL' ? (b.url ?? null) : null,
+        phone_number: bt === 'PHONE_NUMBER' ? (b.phone_number ?? null) : null,
+      };
+    })
+    .filter((b): b is NonNullable<typeof b> => b !== null);
   return {
     name: t.name,
     language: t.language || 'en',
@@ -839,6 +857,7 @@ function metaTemplateToMirrorInput(t: MetaTemplateFull): SubmittedTemplateInput 
     exampleParams: body.example?.body_text?.[0] ?? [],
     status: t.status,
     metaTemplateId: t.id ?? null,
+    buttons: storedButtons.length ? storedButtons : null,
   };
 }
 
@@ -957,6 +976,7 @@ export async function submitMarketingTemplate(input: {
   headerImageUrl?: string | null;
   category?: TemplateCategory;
   language?: string;
+  buttons?: Array<{ type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER'; text: string; url?: string | null; phoneNumber?: string | null }>;
 }): Promise<SubmitTemplateResult> {
   let tenantId: string;
   try {
@@ -1004,12 +1024,23 @@ export async function submitMarketingTemplate(input: {
     headerText: input.headerText ?? undefined,
     headerImageHandle,
     footerText: input.footerText ?? undefined,
+    buttons: input.buttons ?? undefined,
   };
 
   const result = await createTemplate(credentials, definition);
   if (!result.ok) {
     return { ok: false, reason: result.error ?? 'Template could not be created.' };
   }
+
+  // Mirror the buttons locally so the composer/campaign preview can render them.
+  const storedButtons = (input.buttons ?? [])
+    .filter((b) => (b.text ?? '').trim())
+    .map((b) => ({
+      type: b.type,
+      text: b.text.trim(),
+      url: b.type === 'URL' ? (b.url || '').trim() : null,
+      phone_number: b.type === 'PHONE_NUMBER' ? (b.phoneNumber || '').trim() : null,
+    }));
 
   try {
     const row = await upsertSubmittedTemplate(tenantId, {
@@ -1023,6 +1054,7 @@ export async function submitMarketingTemplate(input: {
       exampleParams: definition.exampleParams,
       status: result.status ?? 'PENDING',
       metaTemplateId: result.metaTemplateId ?? null,
+      buttons: storedButtons.length ? storedButtons : null,
     });
     if (!row) return { ok: false, reason: 'Saved to WhatsApp but failed to record it locally.' };
     return { ok: true, template: toTemplateView(row) };

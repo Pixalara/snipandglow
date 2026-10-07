@@ -37,6 +37,23 @@ export type TemplateStatus = 'DRAFT' | 'PENDING' | 'APPROVED' | 'REJECTED' | 'PA
  * placeholders ({{1}}, {{2}}, …) and `exampleParams` supplies one sample value
  * per placeholder (Meta requires examples and rejects blanks).
  */
+/**
+ * An action button a tenant can attach to a template. QUICK_REPLY sends the
+ * label back to our webhook (so "Book Now" triggers the booking flow); URL
+ * opens a fixed link; PHONE_NUMBER dials. URLs must be static (no {{ }}) so no
+ * per-send parameter is ever required.
+ */
+export interface TemplateButtonInput {
+  type: 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+  text: string;
+  url?: string | null;
+  phoneNumber?: string | null;
+}
+
+/** Max action buttons on a single template (Meta allows more, but 3 keeps the
+ *  mix simple and reliably approvable). */
+export const TEMPLATE_MAX_BUTTONS = 3;
+
 export interface TemplateDefinition {
   name: string;
   language?: string;
@@ -52,6 +69,8 @@ export interface TemplateDefinition {
    */
   headerImageHandle?: string;
   footerText?: string;
+  /** Optional action buttons (quick reply, static URL, or call). */
+  buttons?: TemplateButtonInput[];
 }
 
 export interface CreateTemplateResult {
@@ -134,6 +153,23 @@ export function validateDefinition(def: TemplateDefinition): { ok: true } | { ok
     return { ok: false, error: 'Every placeholder needs a non-empty example value for Meta to approve it.' };
   }
 
+  const buttons = (def.buttons ?? []).filter((b) => (b.text ?? '').trim() || b.url || b.phoneNumber);
+  if (buttons.length > TEMPLATE_MAX_BUTTONS) {
+    return { ok: false, error: `A template can have at most ${TEMPLATE_MAX_BUTTONS} buttons.` };
+  }
+  for (const b of buttons) {
+    if (!b.text || !b.text.trim()) return { ok: false, error: 'Every button needs a label.' };
+    if (b.text.trim().length > 25) return { ok: false, error: 'Button labels must be 25 characters or fewer.' };
+    if (b.type === 'URL') {
+      const u = (b.url || '').trim();
+      if (!/^https?:\/\//i.test(u)) return { ok: false, error: `Add a valid https link for the "${b.text.trim()}" button.` };
+      if (/\{\{\s*\d+\s*\}\}/.test(u)) return { ok: false, error: 'Website buttons must use a fixed link (no {{ }} variables).' };
+    }
+    if (b.type === 'PHONE_NUMBER' && !(b.phoneNumber || '').trim()) {
+      return { ok: false, error: `Add a phone number for the "${b.text.trim()}" button.` };
+    }
+  }
+
   return { ok: true };
 }
 
@@ -213,6 +249,21 @@ export function buildCreatePayload(def: TemplateDefinition): CreateTemplatePaylo
 
   if (def.footerText && def.footerText.trim()) {
     components.push({ type: 'FOOTER', text: def.footerText.trim() });
+  }
+
+  // Buttons are baked into the approved template, so they need no per-send
+  // parameters as long as URLs stay static (enforced in validateDefinition).
+  const buttons = (def.buttons ?? []).filter((b) => (b.text ?? '').trim());
+  if (buttons.length) {
+    components.push({
+      type: 'BUTTONS',
+      buttons: buttons.map((b) => {
+        const btn: CreateButton = { type: b.type, text: b.text.trim() };
+        if (b.type === 'URL') btn.url = (b.url || '').trim();
+        if (b.type === 'PHONE_NUMBER') btn.phone_number = (b.phoneNumber || '').trim();
+        return btn;
+      }),
+    });
   }
 
   return {

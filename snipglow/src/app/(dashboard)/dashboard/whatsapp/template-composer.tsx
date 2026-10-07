@@ -17,6 +17,10 @@ import {
   RefreshCw,
   ImagePlus,
   X,
+  Plus,
+  Phone,
+  ExternalLink,
+  Reply,
 } from 'lucide-react';
 import { MARKETING_TEMPLATE_PRESETS, type MarketingTemplatePreset } from '@/lib/whatsapp/template-presets';
 import { extractPlaceholders } from '@/lib/whatsapp/template-management';
@@ -58,6 +62,15 @@ function previewText(body: string, examples: string[]): string {
   });
 }
 
+type BtnType = 'QUICK_REPLY' | 'URL' | 'PHONE_NUMBER';
+interface BtnState {
+  type: BtnType;
+  text: string;
+  url: string;
+  phoneNumber: string;
+}
+const MAX_BUTTONS = 3;
+
 export function TemplateComposer() {
   const [templates, setTemplates] = useState<MarketingTemplateView[]>([]);
   const [loading, setLoading] = useState(true);
@@ -70,6 +83,7 @@ export function TemplateComposer() {
   const [labels, setLabels] = useState<string[]>([]);
   const [imageUrl, setImageUrl] = useState('');
   const [imageUploading, setImageUploading] = useState(false);
+  const [buttons, setButtons] = useState<BtnState[]>([]);
 
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -127,6 +141,8 @@ export function TemplateComposer() {
     setExamples([...p.definition.exampleParams]);
     setLabels(p.variableLabels);
     setImageUrl('');
+    // Seed a "Book Now" quick reply so preset templates can book out of the box.
+    setButtons([{ type: 'QUICK_REPLY', text: 'Book Now', url: '', phoneNumber: '' }]);
     setError(null);
     setNotice(null);
   }
@@ -138,6 +154,19 @@ export function TemplateComposer() {
     setExamples([]);
     setLabels([]);
     setImageUrl('');
+    setButtons([]);
+  }
+
+  function addButton() {
+    setButtons((prev) =>
+      prev.length >= MAX_BUTTONS ? prev : [...prev, { type: 'QUICK_REPLY', text: 'Book Now', url: '', phoneNumber: '' }]
+    );
+  }
+  function updateButton(i: number, patch: Partial<BtnState>) {
+    setButtons((prev) => prev.map((b, idx) => (idx === i ? { ...b, ...patch } : b)));
+  }
+  function removeButton(i: number) {
+    setButtons((prev) => prev.filter((_, idx) => idx !== i));
   }
 
   async function handleImageSelect(e: React.ChangeEvent<HTMLInputElement>) {
@@ -175,6 +204,14 @@ export function TemplateComposer() {
         exampleParams: examples,
         footerText: footer.trim() || null,
         headerImageUrl: imageUrl || null,
+        buttons: buttons
+          .filter((b) => b.text.trim())
+          .map((b) => ({
+            type: b.type,
+            text: b.text.trim(),
+            url: b.url.trim() || null,
+            phoneNumber: b.phoneNumber.trim() || null,
+          })),
       });
       if (res.ok) {
         setNotice('Sent to WhatsApp for approval. Its status will update here once Meta reviews it (usually within a day).');
@@ -295,6 +332,69 @@ export function TemplateComposer() {
           />
         </div>
 
+        {/* Buttons (optional) */}
+        <div className="rounded-xl border border-border bg-muted/20 p-4 space-y-3">
+          <div className="flex items-start justify-between gap-2">
+            <div>
+              <p className="text-sm font-medium text-foreground">Buttons (optional)</p>
+              <p className="text-[11px] text-muted-foreground">
+                Add up to {MAX_BUTTONS}. A <span className="font-medium">Quick reply</span> labelled &ldquo;Book Now&rdquo; lets
+                customers book an appointment straight from the message.
+              </p>
+            </div>
+            {buttons.length < MAX_BUTTONS && (
+              <button
+                type="button"
+                onClick={addButton}
+                className="inline-flex shrink-0 items-center gap-1 text-xs text-emerald-600 dark:text-emerald-400 hover:underline"
+              >
+                <Plus className="size-3.5" /> Add button
+              </button>
+            )}
+          </div>
+          {buttons.map((b, i) => (
+            <div key={i} className="rounded-lg border border-border bg-background p-3 space-y-2">
+              <div className="flex items-center gap-2">
+                <select
+                  value={b.type}
+                  onChange={(e) => updateButton(i, { type: e.target.value as BtnType })}
+                  className="h-9 rounded-lg border border-border bg-background px-2 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                >
+                  <option value="QUICK_REPLY">Quick reply</option>
+                  <option value="URL">Visit website</option>
+                  <option value="PHONE_NUMBER">Call</option>
+                </select>
+                <input
+                  value={b.text}
+                  onChange={(e) => updateButton(i, { text: e.target.value })}
+                  maxLength={25}
+                  placeholder="Button label (e.g. Book Now)"
+                  className="flex-1 h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+                <button type="button" onClick={() => removeButton(i)} className="text-muted-foreground hover:text-red-600" aria-label="Remove button">
+                  <X className="size-4" />
+                </button>
+              </div>
+              {b.type === 'URL' && (
+                <input
+                  value={b.url}
+                  onChange={(e) => updateButton(i, { url: e.target.value })}
+                  placeholder="https://your-booking-link.com"
+                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              )}
+              {b.type === 'PHONE_NUMBER' && (
+                <input
+                  value={b.phoneNumber}
+                  onChange={(e) => updateButton(i, { phoneNumber: e.target.value })}
+                  placeholder="+91 94590 86057"
+                  className="w-full h-9 rounded-lg border border-border bg-background px-3 text-sm text-foreground focus:outline-none focus:ring-2 focus:ring-emerald-500/40"
+                />
+              )}
+            </div>
+          ))}
+        </div>
+
         {/* Header image (optional) */}
         <div>
           <label className="text-xs font-medium text-muted-foreground">Header image (optional)</label>
@@ -347,6 +447,18 @@ export function TemplateComposer() {
                 <p className="text-[11px] text-slate-400 mt-2 whitespace-pre-line">{footer}</p>
               )}
               <p className="text-[10px] text-slate-400 text-right mt-2">10:00 AM ✓✓</p>
+              {buttons.filter((b) => b.text.trim()).length > 0 && (
+                <div className="mt-1.5 border-t border-slate-100 dark:border-slate-600">
+                  {buttons
+                    .filter((b) => b.text.trim())
+                    .map((b, i) => (
+                      <div key={i} className="flex items-center justify-center gap-1.5 border-b border-slate-100 py-2 text-sm font-medium text-sky-600 last:border-0 dark:border-slate-600 dark:text-sky-400">
+                        {b.type === 'PHONE_NUMBER' ? <Phone className="size-3.5" /> : b.type === 'URL' ? <ExternalLink className="size-3.5" /> : <Reply className="size-3.5" />}
+                        {b.text.trim()}
+                      </div>
+                    ))}
+                </div>
+              )}
             </div>
           </div>
         )}
@@ -419,6 +531,19 @@ export function TemplateComposer() {
                     </span>
                   </div>
                   <p className="text-xs text-muted-foreground mt-1.5 whitespace-pre-line line-clamp-3">{t.bodyText}</p>
+                  {t.buttons.length > 0 && (
+                    <div className="mt-2 flex flex-wrap gap-1">
+                      {t.buttons.map((b, i) => (
+                        <span
+                          key={i}
+                          className="inline-flex items-center gap-1 rounded-full bg-sky-50 px-2 py-0.5 text-[10px] font-medium text-sky-700 dark:bg-sky-900/20 dark:text-sky-300"
+                        >
+                          {b.type === 'PHONE_NUMBER' ? <Phone className="size-2.5" /> : b.type === 'URL' ? <ExternalLink className="size-2.5" /> : <Reply className="size-2.5" />}
+                          {b.text}
+                        </span>
+                      ))}
+                    </div>
+                  )}
                   {t.status === 'REJECTED' && t.rejectionReason && (
                     <p className="text-[11px] text-red-600 dark:text-red-400 mt-2">
                       Reason: {t.rejectionReason.replace(/_/g, ' ').toLowerCase()}
