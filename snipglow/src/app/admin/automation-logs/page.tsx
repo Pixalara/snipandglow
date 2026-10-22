@@ -82,7 +82,7 @@ export default async function AdminAutomationLogsPage() {
   // Fetch recent logs across all tenants
   const { data: logs } = await (admin
     .from('whatsapp_sessions' as any)
-    .select('id, tenant_id, phone, direction, template_name, status, created_at, metadata')
+    .select('id, tenant_id, phone, direction, template_name, status, created_at, metadata, error_details')
     .order('created_at', { ascending: false })
     .limit(200) as any);
 
@@ -137,7 +137,14 @@ export default async function AdminAutomationLogsPage() {
                     {tenantMap[log.tenant_id]?.code || '—'}
                   </td>
                   <td className="px-4 py-2.5 text-xs text-muted-foreground">{log.phone || '—'}</td>
-                  <td className="px-4 py-2.5 text-xs text-foreground/80 max-w-xs">{getDescription(log)}</td>
+                  <td className="px-4 py-2.5 text-xs text-foreground/80 max-w-xs">
+                    {getDescription(log)}
+                    {log.status === 'failed' && log.error_details && (
+                      <span className="block mt-0.5 text-[11px] leading-snug text-red-500/90 whitespace-normal break-words">
+                        ⚠ {log.error_details}
+                      </span>
+                    )}
+                  </td>
                   <td className="px-4 py-2.5">
                     <span className={`text-xs px-1.5 py-0.5 rounded ${log.direction === 'outbound' ? 'bg-emerald-500/15 text-emerald-600 dark:text-emerald-400' : 'bg-blue-500/15 text-blue-600 dark:text-blue-400'}`}>
                       {log.direction === 'outbound' ? '↑ sent' : '↓ received'}
