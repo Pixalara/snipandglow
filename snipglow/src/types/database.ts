@@ -47,6 +47,12 @@ export interface TenantSettings {
   logo_url?: string;
   /** Subscription billing cycle. Defaults to 'yearly' when absent. */
   billing_cycle?: 'monthly' | 'yearly';
+  /**
+   * Opt-in for automatic WhatsApp win-back / renewal reminders (30-day
+   * `renewal_reminder` + 60-day `winback_60_day`). Absent or false means the
+   * win-back cron skips this tenant — the feature is strictly opt-in.
+   */
+  winback_enabled?: boolean;
   [key: string]: unknown;
 }
 

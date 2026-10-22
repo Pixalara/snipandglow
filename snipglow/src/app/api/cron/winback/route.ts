@@ -45,15 +45,25 @@ export async function GET(request: NextRequest) {
   // Build the set of eligible tenant ids up front.
   const { data: eligibleTenants } = await (admin
     .from('tenants' as any)
-    .select('id, plan_tier, subscription_status')
+    .select('id, plan_tier, subscription_status, settings')
     .in('plan_tier', ['pro', 'enterprise'])
     .neq('subscription_status', 'expired')
     .neq('subscription_status', 'cancelled') as any);
-  const eligibleTenantIds = new Set<string>((eligibleTenants ?? []).map((t: any) => t.id));
 
-  // If no Pro/Growth tenants exist, there's nothing to send.
+  // Win-back is strictly OPT-IN. On top of the plan gate, a tenant only receives
+  // win-back messages after turning on "Win-back Reminders" in Settings
+  // (settings.winback_enabled === true). Absent or false ⇒ excluded. This is
+  // what makes the Settings toggle authoritative — the feature sends nothing
+  // until a tenant explicitly enables it.
+  const eligibleTenantIds = new Set<string>(
+    (eligibleTenants ?? [])
+      .filter((t: any) => (t?.settings?.winback_enabled ?? false) === true)
+      .map((t: any) => t.id)
+  );
+
+  // If no tenant has opted in, there's nothing to send.
   if (eligibleTenantIds.size === 0) {
-    return NextResponse.json({ status: 'ok', sent_30d: 0, sent_60d: 0, note: 'no Pro/Growth tenants' });
+    return NextResponse.json({ status: 'ok', sent_30d: 0, sent_60d: 0, note: 'no opted-in Pro/Growth tenants' });
   }
 
   // Get IST date

@@ -3,7 +3,7 @@
 import { useState, useTransition, useEffect, useRef } from 'react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
-import { updateGstSettings, updateSalonProfile, updateSalonLogo, updateDiscountSettings, updateLoyaltySettings } from './actions';
+import { updateGstSettings, updateSalonProfile, updateSalonLogo, updateDiscountSettings, updateLoyaltySettings, updateWinbackSettings } from './actions';
 import { Receipt, CheckCircle2, AlertTriangle, Scissors, Phone, Mail, MapPin, User, Clock, Pencil, Percent, QrCode, ExternalLink, Smartphone, Users, TrendingUp, Star, MessageCircle, Lock, ShieldCheck, Gift, Coins, Upload, Loader2 } from 'lucide-react';
 import { pointsForSpend, pointsToRupees } from '@/lib/loyalty-points';
 
@@ -660,6 +660,124 @@ export function DiscountSettingsCard({ discountEnabled: initialEnabled, discount
             {isPending ? 'Saving...' : 'Save Discount Settings'}
           </Button>
         </div>
+      </div>
+    </div>
+  );
+}
+
+
+// =============================================================================
+// WhatsApp Win-back Reminder Settings Card
+// =============================================================================
+
+interface WinbackSettingsProps {
+  winbackEnabled: boolean;
+}
+
+export function WinbackSettingsCard({ winbackEnabled: initialEnabled }: WinbackSettingsProps) {
+  const [isPending, startTransition] = useTransition();
+  const [enabled, setEnabled] = useState(initialEnabled);
+  const [error, setError] = useState('');
+  const [success, setSuccess] = useState(false);
+
+  // Single boolean — save immediately on toggle, and revert the switch if the
+  // server rejects it so the UI never disagrees with what's stored.
+  function handleToggle(next: boolean) {
+    setEnabled(next);
+    setError('');
+    setSuccess(false);
+    startTransition(async () => {
+      const result = await updateWinbackSettings({ winback_enabled: next });
+      if (result.success) {
+        setSuccess(true);
+        setTimeout(() => setSuccess(false), 3000);
+      } else {
+        setEnabled(!next);
+        setError(result.error);
+      }
+    });
+  }
+
+  return (
+    <div className="rounded-xl border border-border bg-card overflow-hidden">
+      <div className="border-b border-border px-6 py-4 bg-muted/30">
+        <div className="flex items-center gap-2">
+          <MessageCircle className="size-4 text-muted-foreground" />
+          <h2 className="text-sm font-semibold text-foreground">Win-back Reminders</h2>
+          {enabled ? (
+            <span className="inline-flex items-center gap-1 rounded-full bg-emerald-100 dark:bg-emerald-900/30 px-2 py-0.5 text-xs font-medium text-emerald-700 dark:text-emerald-400">
+              <CheckCircle2 className="size-3" />
+              On
+            </span>
+          ) : (
+            <span className="inline-flex items-center gap-1 rounded-full bg-muted px-2 py-0.5 text-xs font-medium text-muted-foreground">
+              Off
+            </span>
+          )}
+        </div>
+      </div>
+      <div className="p-6 space-y-5">
+        <p className="text-sm text-muted-foreground">
+          Automatically send a friendly WhatsApp reminder to customers who haven&apos;t
+          visited in a while — a 30-day nudge and a 60-day follow-up — inviting them to
+          rebook. This stays off until you switch it on.
+        </p>
+
+        {/* Toggle */}
+        <div className="flex items-center justify-between">
+          <div>
+            <p className="text-sm font-medium text-foreground">Send win-back reminders</p>
+            <p className="text-xs text-muted-foreground">30-day &amp; 60-day WhatsApp messages to lapsed customers</p>
+          </div>
+          <button
+            type="button"
+            role="switch"
+            aria-checked={enabled}
+            aria-label="Toggle win-back reminders"
+            disabled={isPending}
+            onClick={() => handleToggle(!enabled)}
+            className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-60 ${
+              enabled ? 'bg-primary' : 'bg-slate-300 dark:bg-slate-600'
+            }`}
+          >
+            <span
+              className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow-lg ring-0 transition duration-200 ease-in-out ${
+                enabled ? 'translate-x-5' : 'translate-x-0'
+              }`}
+            />
+          </button>
+        </div>
+
+        {enabled ? (
+          <div className="rounded-lg bg-emerald-50 dark:bg-emerald-900/10 border border-emerald-200 dark:border-emerald-800/30 px-4 py-3">
+            <div className="flex items-center gap-2">
+              <MessageCircle className="size-4 text-emerald-600 dark:text-emerald-400" />
+              <p className="text-sm text-emerald-800 dark:text-emerald-200">
+                Win-back reminders are on. Lapsed customers will get an automatic WhatsApp nudge to rebook.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="rounded-lg bg-muted/50 px-4 py-3">
+            <p className="text-sm text-muted-foreground">
+              Win-back reminders are off. No automatic reminder messages will be sent.
+            </p>
+          </div>
+        )}
+
+        {error && (
+          <div className="flex items-center gap-2 rounded-xl border border-red-200 bg-red-50 p-3 dark:border-red-900/50 dark:bg-red-900/20">
+            <AlertTriangle className="size-4 text-red-600 shrink-0" />
+            <p className="text-sm text-red-800 dark:text-red-200">{error}</p>
+          </div>
+        )}
+
+        {success && (
+          <div className="flex items-center gap-2 rounded-xl border border-emerald-200 bg-emerald-50 p-3 dark:border-emerald-900/50 dark:bg-emerald-900/20">
+            <CheckCircle2 className="size-4 text-emerald-600" />
+            <p className="text-sm text-emerald-800 dark:text-emerald-200">Saved!</p>
+          </div>
+        )}
       </div>
     </div>
   );

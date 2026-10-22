@@ -2,7 +2,7 @@ import { redirect } from 'next/navigation';
 import Link from 'next/link';
 import { createClient } from '@/lib/supabase/server';
 import { isAdminEmail } from '@/lib/admin/auth';
-import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard, DiscountSettingsCard, LoyaltySettingsCard } from './settings-client';
+import { GstSettingsCard, SalonProfileCard, QrCodeGeneratorCard, WhatsAppBookingLinkCard, GoogleReviewLinkCard, SalonTimingsCard, BlockCalendarCard, BlockSlotsCard, BookingCapacityCard, DiscountSettingsCard, LoyaltySettingsCard, WinbackSettingsCard } from './settings-client';
 import {
   Settings,
   CreditCard,
@@ -115,6 +115,9 @@ export default async function SettingsPage() {
   // Discount settings
   const discountEnabled = (settings.discount_enabled as boolean) ?? false;
   const discountValue = (settings.discount_value as number) ?? 0;
+
+  // WhatsApp win-back reminders — strictly opt-in, off unless explicitly enabled.
+  const winbackEnabled = (settings.winback_enabled as boolean) ?? false;
 
   // Loyalty points config (schemaless keys in settings JSONB, with defaults).
   const loyalty = readLoyaltyConfig(settings);
@@ -477,6 +480,9 @@ export default async function SettingsPage() {
         salonName={tenant.name ?? ''}
         whatsappNumber={bookingWhatsAppNumber}
       />
+
+      {/* WhatsApp Win-back Reminders (opt-in) */}
+      <WinbackSettingsCard winbackEnabled={winbackEnabled} />
 
       {/* Google Review Link */}
       <GoogleReviewLinkCard
