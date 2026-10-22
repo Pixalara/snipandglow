@@ -201,8 +201,11 @@ export function TemplateComposer() {
     setError(null);
     setImageUploading(true);
     try {
+      // Fit to WhatsApp's wide banner first so square/tall images aren't cropped.
+      const { fitToWhatsAppCard } = await import('@/lib/images/fit-landscape');
+      const fitted = await fitToWhatsAppCard(file);
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append('image', fitted);
       const { uploadMarketingTemplateImage } = await import('./actions');
       const res = await uploadMarketingTemplateImage(fd);
       if (res.ok) setImageUrl(res.url);
@@ -474,7 +477,7 @@ export function TemplateComposer() {
             </label>
           )}
           <p className="mt-1 text-[11px] text-muted-foreground">
-            Shown as a banner above your message. JPG or PNG, landscape (about 1.91:1, e.g. 1200x628), max 4 MB.
+            Shown as a banner above your message. JPG or PNG, max 4 MB. Any shape works — we fit it to WhatsApp&apos;s wide banner (with a soft blurred backdrop) so nothing is cropped; landscape (about 1.91:1) looks sharpest.
           </p>
         </div>
 

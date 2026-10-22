@@ -236,8 +236,11 @@ export function CarouselComposer() {
     setError(null);
     setCards((prev) => prev.map((c) => (c.key === key ? { ...c, uploading: true } : c)));
     try {
+      // Fit to WhatsApp's wide card first so square/tall images aren't cropped.
+      const { fitToWhatsAppCard } = await import('@/lib/images/fit-landscape');
+      const fitted = await fitToWhatsAppCard(file);
       const fd = new FormData();
-      fd.append('image', file);
+      fd.append('image', fitted);
       const { uploadMarketingTemplateImage } = await import('./actions');
       const res = await uploadMarketingTemplateImage(fd);
       if (res.ok) {
@@ -542,7 +545,7 @@ export function CarouselComposer() {
           <div className="flex items-center justify-between">
             <div>
               <p className="text-sm font-semibold text-foreground">Offer cards ({cards.length}/{MAX_CARDS})</p>
-              <p className="text-[11px] text-muted-foreground">2 to 10 cards. Use landscape images (1.91:1, e.g. 1125×600) — WhatsApp crops to a wide shape, so keep your logo & price centred.</p>
+              <p className="text-[11px] text-muted-foreground">2 to 10 cards. Any shape works — square or tall images are fitted to WhatsApp&apos;s wide card with a soft blurred backdrop, so nothing is cropped. Landscape (1.91:1, e.g. 1200×628) looks sharpest.</p>
             </div>
             <button
               type="button"
